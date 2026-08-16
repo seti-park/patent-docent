@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+*.swp
+
+# Node (studio 렌더 도구용 — 실제 도입은 후속 발주)
+node_modules/
+
+# 주의: runs/ 는 무시하지 않는다.
+# 런 산출물의 동결 재료(15-frozen/)와 전량 편집 도면(30-figures/assets/)은 1급 자산이다 (D12).
