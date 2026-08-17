@@ -75,19 +75,31 @@ class ReadView:
     # -- 서지 머리 ----------------------------------------------------------
 
     def bibliographic_head(self) -> str:
-        """청구항 구간 헤더 **이전**의 머리글(제목·서지·초록 자리).
+        """제목·서지·초록이 있는 **머리글**.
 
-        구간 헤더의 위치는 `reader-rules.yaml#claim_inventory.section.headings` 가 정한
-        패턴으로 찾는다 — 구간 파서와 같은 규칙 데이터를 쓰되, 파싱은 하지 않는다.
+        경계는 아래 둘 중 **먼저 오는 것**이다.
+          ① 첫 `[nnnn]` 문단 로케이터 — 여기서부터는 명세서 본문이다.
+          ② 청구항 구간 헤더(`reader-rules.yaml#claim_inventory.section.headings`).
+
+        ★ ①이 필요한 이유(2026-08-18 실특허 스모크에서 실측 적발). 구현 초판은 경계를
+        ②만으로 잡았는데, **실제 공개공보는 청구항을 문서 끝에 둔다.** 그 배치에서
+        "청구항 헤더 이전"은 명세서 전문을 포함하며, 실측에서 293KB 원천의 서지 머리가
+        285KB(= 문서의 97%)로 나왔다 — 슬라이싱이 아니라 통째로 넘기는 것이다.
+        합성 픽스처는 청구항을 앞쪽에 두어 이 결함을 가렸다. 레인에 원천 전문을 주지
+        않는다는 규율(`contracts/stages/read.yaml`)은 비용이 아니라 **주의 집중**의
+        문제이므로, 경계는 "본문이 시작되는 자리"여야 한다.
         """
-        best = None
+        bounds: list[int] = []
+        marker = PARAGRAPH_MARKER.search(self.source_text)
+        if marker:
+            bounds.append(marker.start())
         for pattern in self.rules.inventory_heading_patterns:
             match = pattern.search(self.source_text)
-            if match and (best is None or match.start() < best):
-                best = match.start()
-        if best is None:
+            if match:
+                bounds.append(match.start())
+        if not bounds:
             return ""
-        return self.source_text[:best]
+        return self.source_text[: min(bounds)]
 
     # -- 명세서 문단 --------------------------------------------------------
 

@@ -725,6 +725,47 @@ def test_source_refuses_to_write_00_source_twice(tmp_path) -> None:
         )
 
 
+def test_bibliographic_head_stops_at_the_body_not_at_the_claims_heading() -> None:
+    """서지 머리가 명세서 본문까지 삼키면, 레인에 조각이 아니라 원천 전문을 넘기게 된다.
+
+    ★ 회귀 표본이다(2026-08-18 실특허 스모크 실측). 구현 초판은 경계를 청구항 구간 헤더로만
+    잡았는데 **실제 공개공보는 청구항을 문서 끝에 둔다** — 그 배치에서 293KB 원천의 서지 머리가
+    285KB(문서의 97%)로 나왔다. 합성 픽스처는 청구항을 앞쪽에 두어 이 결함을 가렸으므로,
+    이 테스트는 **실물 배치**(서지 → 본문 → 청구항)를 명시적으로 재현한다.
+    """
+    source_text = (
+        "United States\n"
+        "Patent Application Publication: 00000000\n"
+        "Publication Date: May 28, 2026\n"
+        "\n"
+        "## EXAMPLE TITLE\n"
+        "\n"
+        "### Abstract\n"
+        "\n"
+        "An abstract sentence.\n"
+        "\n"
+        "### Background/Summary\n"
+        "\n"
+        + "".join(
+            f"[{n:04d}] Body paragraph {n} that must not be counted as bibliographic head.\n"
+            for n in range(1, 40)
+        )
+        + "\n"
+        "## Claims\n"
+        "\n"
+        "1. A device comprising: a widget.\n"
+    )
+    head = ReadView(source_text, RULES).bibliographic_head()
+    assert "[0001]" not in head, "서지 머리가 명세서 본문 문단을 삼켰다"
+    assert "1. A device comprising" not in head, "서지 머리가 청구항까지 삼켰다"
+    assert "EXAMPLE TITLE" in head, "서지 머리가 제목을 놓쳤다"
+    assert "An abstract sentence." in head, "서지 머리가 초록을 놓쳤다"
+    # 문서의 절반을 넘기면 그것은 슬라이스가 아니라 전문 전달이다.
+    assert len(head) < len(source_text) / 2, (
+        f"서지 머리가 원천의 {len(head) / len(source_text):.0%} 를 차지한다 — 슬라이싱이 아니다"
+    )
+
+
 # ===========================================================================
 # 2. 레인 계약
 # ===========================================================================

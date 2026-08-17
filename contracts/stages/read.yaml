@@ -76,6 +76,13 @@ outputs:
   - 10-read/positioning.md
   - 10-read/drop-signal.md
   - 10-read/convergence.json        # 계약 = contracts/schemas/convergence.schema.json
+  - 10-read/lanes/                  # 레인 요청·응답 전량 + lane-log.json
+
+# ★ 레인 기록이 필수 산출인 이유. 레인 호출을 파일로 남기지 않으면 "어떤 프롬프트에 어떤
+#   모델이 무엇을 답했는가"가 세션 안에서만 존재하고 사후 감사에 닿지 않는다. 재료 명세는
+#   무엇이 나왔는지만 말하고 어떻게 나왔는지는 말하지 않는다. lane-log.json 은 요청 모델·
+#   effort 와 **실제로 돌아간** 모델·effort 를 나란히 적어 조용한 대체를 드러낸다
+#   (SPEC §7.3 펜 배정 규율 3·4의 정신을 독해 레인에 적용).
 
 optional_outputs: []
 
