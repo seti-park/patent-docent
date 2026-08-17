@@ -5,9 +5,12 @@
 `docs/SPEC.md`·`docs/CHARTER.md`와 `contracts/`·`reader/schemas/`의 실물 계약 파일이
 서로 어긋나지 않는지를 기계로 확인한다. read-only 도구이며 어떤 파일도 쓰지 않는다.
 
-★ 자기매칭 격리 (설계 요건 — DESIGN §12.2)
+★ 자기매칭 격리 (설계 요건 — 정본: `docs/SPEC.md` §4.8 자기매칭 격리 요건 4항 +
+`docs/decisions/D-20260817-02-spec-revision-m05.md` §5 규율 3. SPEC §8.3 ⑧이 이 요건을
+검사 도구에도 동일 적용하라고 지시한다.)
 M0 감수에서 grep 서식 견본이 자기 자신에 매칭되어 오탐한 사건이 있었다. 그 구조적 방지를
-이 도구의 설계 요건으로 삼는다.
+이 도구의 설계 요건으로 삼는다. 아래 번호는 이 도구의 이행 목록이며, 정본 표의 4항을
+도구 문맥으로 옮긴 것이다.
 
   1. 스캔 대상은 allowlist(`DOC_TARGETS`·`CONTRACT_GLOBS`)로만 정한다. 암묵 전수 스캔을
      하지 않는다.
@@ -28,6 +31,7 @@ M0 감수에서 grep 서식 견본이 자기 자신에 매칭되어 오탐한 �
 from __future__ import annotations
 
 import argparse
+import glob as globlib
 import json
 import os
 import re
@@ -93,13 +97,14 @@ EPILOG = """\
 검사 항목:
   K1  절 참조 해소     docs/*.md 의 §N[.M] 참조가 실재 절 헤더로 해소되는가
   K2  계약 파일 현황   SPEC §6.7 표의 `현행` 경로 실재 / `예정` 경로 부재
+                       글로브 행은 매칭 파일 수로 본다 — `현행` 1개 이상 / `예정` 0개
   K3  스키마 이름 일치 문서의 <name>/vN 계약 라인 ↔ 실제 계약 파일 선언 (양방향)
   K4  조항 참조 범위   D<n> 참조가 D1~D15 범위인가
   K5  폐지 토큰 부재   tools/retired-tokens.yaml 에 등재된 폐지 토큰의 부재
   K6  계약 파일 파싱   contracts/**·reader/schemas/** 의 JSON·YAML 파싱
   K7  스키마 메타 검증 $schema 선언이 draft 2020-12 이고 check_schema() 통과
 
-★ 자기매칭 격리 (이 도구의 설계 요건):
+★ 자기매칭 격리 (이 도구의 설계 요건 — 정본: SPEC §4.8 · D-20260817-02 §5 규율 3):
   1. 스캔 대상은 allowlist로만 정한다 — 암묵 전수 스캔 없음.
      K1·K3·K4·K5 = docs/CHARTER.md, docs/SPEC.md 뿐.
      K6·K7 = contracts/**, reader/schemas/** 뿐.
@@ -188,7 +193,7 @@ def enforce_isolation(rel_paths: list[str], label: str, self_paths: set[str], re
         print("ISOLATION VIOLATION — 스캔 목록에 격리 대상 경로가 포함되어 실행을 거부한다.")
         for item in violations:
             print(f"  - {item}")
-        print("격리 위반은 결함 보고가 아니라 실행 거부다 (DESIGN §12.2 요건 3항).")
+        print("격리 위반은 결함 보고가 아니라 실행 거부다 (SPEC §4.8 자기매칭 격리 요건 4항).")
         sys.exit(2)
 
 
@@ -245,15 +250,24 @@ def load_doc(repo: str, rel: str) -> DocFile:
     return DocFile(rel=rel, abs=path, lines=text.splitlines())
 
 
+def glob_matches(repo: str, pattern: str) -> list[str]:
+    """리포 안에서 글로브 패턴에 매칭되는 **파일** 목록(리포 상대 경로, 결정론 정렬).
+
+    디렉터리는 세지 않는다 — `§6.7` 표의 글로브 행이 약속하는 것은 파일의 실재이지
+    디렉터리의 실재가 아니다(디렉터리 부재는 K2가 별도 finding으로 본다).
+    """
+    found: set[str] = set()
+    for path in globlib.glob(os.path.join(repo, pattern), recursive=True):
+        if os.path.isfile(path):
+            found.add(os.path.relpath(path, repo).replace(os.sep, "/"))
+    return sorted(found)
+
+
 def glob_contract_files(repo: str) -> list[str]:
     """CONTRACT_GLOBS 를 리포 상대 경로 목록으로 전개한다(결정론 정렬)."""
-    import glob as globlib
-
     found: set[str] = set()
     for pattern in CONTRACT_GLOBS:
-        for path in globlib.glob(os.path.join(repo, pattern), recursive=True):
-            if os.path.isfile(path):
-                found.add(os.path.relpath(path, repo).replace(os.sep, "/"))
+        found.update(glob_matches(repo, pattern))
     return sorted(found)
 
 
@@ -389,8 +403,10 @@ def check_k2(repo: str, spec: DocFile, rows: list[tuple[int, str, str, str]], ta
             continue
         target = os.path.join(repo, path)
         if "*" in path:
+            # 글로브 행은 두 단으로 본다: ① 부모 디렉터리 실재 ② 매칭 파일 수.
+            # ①이 무너지면 ②는 자동으로 0이므로 중복 보고하지 않고 여기서 끊는다.
             parent = os.path.dirname(path)
-            if not os.path.isdir(os.path.join(repo, parent)):
+            if parent and not os.path.isdir(os.path.join(repo, parent)):
                 result.findings.append(
                     Finding(
                         check="K2",
@@ -401,8 +417,35 @@ def check_k2(repo: str, spec: DocFile, rows: list[tuple[int, str, str, str]], ta
                         message="글로브 행의 부모 디렉터리가 없다",
                     )
                 )
+                continue
+            matches = glob_matches(repo, path)
+            sample = ", ".join(matches[:3]) + (" …" if len(matches) > 3 else "")
+            if status == "현행" and not matches:
+                result.findings.append(
+                    Finding(
+                        check="K2",
+                        path=spec.rel,
+                        line=lineno,
+                        found=f"{path} (매칭 0건)",
+                        expected="매칭 파일 1개 이상",
+                        message="`현행`으로 표기된 글로브 경로에 파일이 하나도 없다",
+                    )
+                )
+            elif status == "예정" and matches:
+                result.findings.append(
+                    Finding(
+                        check="K2",
+                        path=spec.rel,
+                        line=lineno,
+                        found=f"{path} (매칭 {len(matches)}건: {sample})",
+                        expected="매칭 0건 (소관 모듈에서 신설 예정)",
+                        message=f"`예정({owner})`으로 표기된 글로브 경로에 파일이 이미 있다 — 표를 갱신하라",
+                    )
+                )
             else:
-                result.resolved.append(f"{spec.rel}:{lineno}  {path} [{status}] 글로브 — 부모 디렉터리 존재")
+                result.resolved.append(
+                    f"{spec.rel}:{lineno}  {path} [{status}] 글로브 매칭 {len(matches)}건 소관={owner}"
+                )
             continue
         exists = os.path.exists(target)
         if status == "현행" and not exists:

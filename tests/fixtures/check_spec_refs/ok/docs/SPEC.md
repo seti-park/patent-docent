@@ -16,6 +16,7 @@
 mini/
   contracts/
     parameters.yaml
+    lexicon/
     stages/
   reader/
     schemas/material-spec.schema.json
@@ -27,8 +28,12 @@ mini/
 |---|---|---|
 | `reader/schemas/material-spec.schema.json` | 현행 | M0.5 |
 | `contracts/parameters.yaml` | 현행 | M0.5 |
+| `contracts/lexicon/*.yaml` | 현행 | M0.5 |
 | `contracts/stages/*.yaml` | 예정 | M2 |
 | `contracts/schemas/thread.schema.json` | 예정 | M3 |
+
+글로브 행의 판정 기준은 매칭 **파일 수**다 — `현행`은 1개 이상, `예정`은 0개.
+이 표본에서 `contracts/lexicon/`은 파일이 있고 `contracts/stages/`는 디렉터리만 있다.
 
 ## §8 계약 라인
 

@@ -29,6 +29,7 @@ FIXTURE_EXPECTATIONS = {
     "bad-contracts": 1,
     "bad-retired": 1,
     "bad-schema": 1,
+    "bad-glob": 1,
 }
 
 # 픽스처 → 결함이 나야 하는 검사 id
@@ -38,6 +39,7 @@ FIXTURE_FAILING_CHECKS = {
     "bad-contracts": {"K2"},
     "bad-retired": {"K5"},
     "bad-schema": {"K6"},
+    "bad-glob": {"K2"},
 }
 
 
@@ -93,6 +95,31 @@ def test_failing_checks_are_the_planted_ones(fixture: str, failing: set[str]) ->
     got = {check["id"] for check in payload["checks"] if check["status"] == "FAIL"}
     if got != failing:
         pytest.fail(f"FAILING CHECK MISMATCH ({fixture}): got={sorted(got)} want={sorted(failing)}")
+
+
+def test_glob_rows_are_checked_by_match_count() -> None:
+    """재감수 N-02 — 글로브 행은 부모 디렉터리가 아니라 **매칭 파일 수**로 판정한다.
+
+    `bad-glob` 표본은 두 방향을 동시에 어긋내 두었다(`현행` 매칭 0건 · `예정` 매칭 1건).
+    한 방향만 구현하면 이 테스트가 걸린다.
+    """
+    proc = run_tool(["--repo", str(FIXTURES / "bad-glob"), "--json"])
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        pytest.fail(f"--json 출력 파싱 실패: {exc}\nstdout:\n{proc.stdout}")
+    globs = [
+        finding
+        for finding in payload["findings"]
+        if finding["check"] == "K2" and "*" in finding["found"]
+    ]
+    got = sorted(finding["found"].split(" ", 1)[0] for finding in globs)
+    want = ["contracts/lexicon/*.yaml", "contracts/stages/*.yaml"]
+    if got != want:
+        pytest.fail(f"GLOB FINDING MISMATCH: got={got} want={want}\nfindings:\n{globs}")
+    planned = [finding for finding in globs if finding["found"].startswith("contracts/stages/")]
+    if "표를 갱신하라" not in planned[0]["message"]:
+        pytest.fail(f"`예정` 글로브 결함 메시지에 표 갱신 지시가 없다: {planned[0]['message']!r}")
 
 
 def test_all_seven_checks_are_reported() -> None:

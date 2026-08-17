@@ -1,0 +1,5 @@
+# 픽스처 표본 — §6.7 `현행` 글로브 행(`contracts/lexicon/*.yaml`)의 매칭 대상.
+# 계약 라인(`schema:` 키)을 선언하지 않는다 — K3 양방향 대조의 대상이 아니다.
+
+version: 1
+predicates: []
