@@ -404,7 +404,7 @@ value_grammar:
         "less than": less-than
     - rank: 4
       kind: set
-      pattern: '^(?P<members>DEC(?:(?:\s*,\s+|\s+or\s+)DEC)+)$'
+      pattern: '^(?P<members>DEC(?:(?:\s*,\s*(?:and|or)\s+|\s*,\s+|\s+(?:and|or)\s+)DEC)+)$'
       fields: [members]
       min_members: 2
       separator_note: >-
@@ -412,6 +412,13 @@ value_grammar:
         ① `/` 를 두면 분수 `1/2` 가 집합 {1, 2} 로 읽혀 `unsupported_forms` 의 "분수는 파싱
         실패" 규정이 **도달 불가능한 문언**이 된다. ② 쉼표 뒤 공백을 요구해야 천단위 구분자와
         갈린다(위 `preprocess`).
+      oxford_note: >-
+        ★ 마지막 원소 앞의 연결어를 받아들인다(M1 실특허 스모크 적발). 청구항의 실제 어형은
+        `2, 3, 4 and 5` 와 `2, 3, 4, or 5` 인데 구 패턴은 **둘 다 파싱 실패**였다. 그 결과
+        독해 레인이 "수치를 지어내지 마라"와 "수치 사실을 등재하라" 사이에서 후자를 포기했고,
+        **원문에 실재하는 값이 정답지에서 빠졌다**. 계약의 구멍이 결함이 아니라 **산출물의
+        조용한 축소**로 새는 자리이며, 어떤 검사도 빠진 사실을 결함으로 보지 않는다.
+        연결어 앞 쉼표(옥스퍼드 콤마)는 있어도 없어도 받는다.
     - rank: 5
       kind: scalar
       pattern: '^(?P<value>DEC)$'

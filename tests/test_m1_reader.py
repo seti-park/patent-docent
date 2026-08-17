@@ -1223,6 +1223,28 @@ def test_set_members_require_spaced_separator() -> None:
         parse_value("4,8", None, RULES)
 
 
+def test_set_accepts_the_conjunction_before_the_last_member() -> None:
+    """청구항의 실제 열거 어형을 담지 못하면, 원문에 실재하는 값이 정답지에서 조용히 빠진다.
+
+    ★ 2026-08-18 실특허 스모크 적발. 청구항 어형은 `2, 3, 4 and 5` 와 `2, 3, 4, or 5` 인데
+    구 패턴은 **둘 다 파싱 실패**였다. 독해 레인은 "수치를 지어내지 마라"와 "수치 사실을
+    등재하라" 사이에서 후자를 포기했고(3원소로 잘라 담으면 4원소 집합의 왜곡이므로 옳은
+    판단이었다), 그 결과 원문의 값이 숫자 전수 대조의 정답지에서 빠졌다.
+
+    계약의 구멍이 **실패가 아니라 산출물의 축소**로 새는 자리이며, 빠진 사실을 결함으로
+    보는 검사는 없다 — 그래서 문법 쪽에서 막아야 한다.
+    """
+    for raw in ("2, 3, 4 and 5", "2, 3, 4, or 5"):
+        parsed = parse_value(raw, None, RULES)
+        if parsed["kind"] != "set" or parsed["members"] != ["2", "3", "4", "5"]:
+            pytest.fail(f"{raw!r} 의 집합 파싱 결과가 다르다: {parsed}")
+        if render_value(parsed) != "2;3;4;5":
+            pytest.fail(f"{raw!r} 의 렌더가 다르다: {render_value(parsed)}")
+    # 연결어를 열었다고 천단위 구분자까지 열려서는 안 된다.
+    if parse_value("1,200", None, RULES)["kind"] != "scalar":
+        pytest.fail("천단위 구분자가 집합 원소 구분자로 새어 들어갔다")
+
+
 def test_fraction_is_a_parse_failure() -> None:
     """`1/2` 가 집합 {1, 2} 로 읽히면 "분수는 파싱 실패" 규정이 한 번도 발동할 수 없는 죽은 문언이 된다."""
     with pytest.raises(ValueGrammarError):
