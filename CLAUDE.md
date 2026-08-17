@@ -57,10 +57,15 @@
 | 스테이지 I/O 계약 | `contracts/stages/*.yaml` |
 | **재료 명세 스키마(프로젝트 간 계약)** | `reader/schemas/material-spec.schema.json` — 단일 진원 |
 | docent 전용 스키마 | `contracts/schemas/` |
-| 금지 어휘·결함 카탈로그 | `contracts/lexicon/` (등재는 재정으로만) |
+| L0 형식 규격·숫자 문법 | `contracts/l0-format.yaml` |
+| 조정 가능 파라미터(k·n·배치) | `contracts/parameters.yaml` (변경은 재정으로만) |
+| 화행 술어·결함 카탈로그 | `contracts/lexicon/` (등재는 재정으로만) |
 | 두 장부 | `ledgers/anchors/`(앵커) · `ledgers/regression/`(회귀) |
+| 계약 파일 현황(무엇이 실물인가) | `docs/SPEC.md` §6.7 — 검사기 `tools/check_spec_refs.py`가 대조 |
 
 ## 6. 구현 상태
 
-현재 = **M0(부트스트랩) 완료** — 헌장·스펙·골격 문서까지. 모듈 코드는 미구현이다.
-다음 = `docs/SPEC.md` §8 로드맵의 M1(재료 명세 스키마 + 검사기), M2(READ 스테이지). 크리티컬 패스는 재료 명세와 READ다.
+현재 = **M0.5(재정 반영 개정) 완료** — 헌장 v1.1 · 스펙 v0.2 · 계약 실파일 7종 · 정합 검사기까지. 파이프라인 모듈 코드는 여전히 미구현이다.
+다음 = `docs/SPEC.md` §8 로드맵의 M1(재료 명세 스키마 검증기 + 결정론 검사 6종), M2(READ 스테이지). 크리티컬 패스는 재료 명세와 READ다.
+
+**커밋 전 필수**: 문서·계약을 고쳤으면 `python3 tools/check_spec_refs.py`가 exit 0을 내는지 확인한다(M0 병렬 집필의 이음매 결함 재발 방지 — D-20260817-02 §5).
