@@ -1,0 +1,657 @@
+{
+ "lane_id": "read-a/ground-dependent/batch-0",
+ "model": "opus-5",
+ "effort": "low",
+ "payload": {
+  "items": [
+   {
+    "id": "M100",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M22",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "The exponent handling block **830** can also include a fourth multiplexer **2866**, which can be used to select the accumulation output Ex.sub.j from the full adder of the current stage, the first selection from the first multiplexer **2860** and the third selection from the third multiplexer **2864**to produce the carry-in bit CIN.sub.j for the next stage full adder and the exponent bit E.sub.j of the primitive product."
+     },
+     {
+      "locator": "[0064]",
+      "quote": "the column cell may include an additional multiplexer that can choose which signal represents the exponent bit of the primitive product: the output of the full adder, the sum output of the half adder, or a carry-in from an upstream stage."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28-29",
+      "numerals": [
+       "2866",
+       "830",
+       "2860",
+       "2864"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M101",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M23",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0161]",
+      "quote": "The column cell **220** includes memory cells for storing the bits of the weight value, one bit of the weight value corresponding to one memory cell."
+     },
+     {
+      "locator": "[0140]",
+      "quote": "The number of memory cells in the column cell **340** is determined by the number of bits used by the weight value. Each memory cell stores one bit of the weight value."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-3",
+      "numerals": [
+       "340"
+      ],
+      "caption_quote": "FIG. **3** illustrates an exemplary column cell in the CIM macro, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M102",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M24",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "In FIG. **28**, each bitcell stores a corresponding exponent bit of the weight value."
+     },
+     {
+      "locator": "[0188]",
+      "quote": "To compute the exponent of the primitive product, the exponent bit of the weight value and a corresponding exponent bit of the activation value can be provided to a corresponding half adder."
+     },
+     {
+      "locator": "[0065]",
+      "quote": "one of these memory cells may serve as a bitcell dedicated to holding the exponent bit of the weight value and feeding this bit directly to the half adder."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28-29",
+      "numerals": [
+       "830",
+       "220"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M103",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M25",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0217]",
+      "quote": "As shown in FIG. **43**, each memory cell **4303** includes two bitcells BC0 and BC1, which can be accessed via separate wordlines wwl0 and wwl1."
+     },
+     {
+      "locator": "[0066]",
+      "quote": "a memory cell can be realized as a pair of bitcells, where each bitcell may be addressed by its own wordline, enabling independent selection of two stored bits."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-43",
+      "numerals": [
+       "4303"
+      ],
+      "caption_quote": "FIG. **43** illustrates an exemplary double-bitcell design, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M104",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M26",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0217]",
+      "quote": "where bitcell BC0 can be addressed by wordline wwl0 and bitcell BC1 can be address by wordline wwl1."
+     },
+     {
+      "locator": "[0066]",
+      "quote": "where each bitcell may be addressed by its own wordline, enabling independent selection of two stored bits."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-43",
+      "numerals": [
+       "4303"
+      ],
+      "caption_quote": "FIG. **43** illustrates an exemplary double-bitcell design, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M105",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M27",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0217]",
+      "quote": "The two bitcells BC0 and BC1 in each memory cell **4303** can share one bitline BL for writing or scanning the bits of weight values."
+     },
+     {
+      "locator": "[0066]",
+      "quote": "paired bitcells may share a common bitline while still being controlled by different wordlines."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-43",
+      "numerals": [
+       "4303"
+      ],
+      "caption_quote": "FIG. **43** illustrates an exemplary double-bitcell design, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M106",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M28",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0218]",
+      "quote": "In some embodiments, bitcell BC0 can store a first bit of a first weight value and bitcell BC1 can store a second bit of a second weight value that is different from the first weight value."
+     },
+     {
+      "locator": "[0067]",
+      "quote": "a first bitcell may hold a first bit of one weight value, and a second bitcell may hold a second bit of a different weight value."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-43",
+      "numerals": [
+       "4303"
+      ],
+      "caption_quote": "FIG. **43** illustrates an exemplary double-bitcell design, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M107",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M29",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0067]",
+      "quote": "The first bitcell can provide its stored bit as the exponent bit of the weight to the half adder."
+     },
+     {
+      "locator": "[0188]",
+      "quote": "To compute the exponent of the primitive product, the exponent bit of the weight value and a corresponding exponent bit of the activation value can be provided to a corresponding half adder."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28-29",
+      "numerals": [
+       "830",
+       "220"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M108",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M30",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0067]",
+      "quote": "while the first bitcell is driving the exponent bit into the half adder, the second bitcell can be updated with a new bit of another weight value."
+     },
+     {
+      "locator": "[0089]",
+      "quote": "while the first bitcell drives its exponent bit into the exponent path, the further bitcell may update its stored bit concurrently"
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-43",
+      "numerals": [
+       "4303"
+      ],
+      "caption_quote": "FIG. **43** illustrates an exemplary double-bitcell design, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M109",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M31",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0068]",
+      "quote": "disclosed accelerator designs may support activation values with different counts of exponent bits, such as 2, 3, 4, or 5, by sizing and controlling the exponent logic accordingly."
+     },
+     {
+      "locator": "[0186]",
+      "quote": "the exponents of the activation values and weight values can have 5, 4, 3 or 2 bits"
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28-29",
+      "numerals": [
+       "220"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M110",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M32",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0068]",
+      "quote": "Similarly, the design may support weight values with multiple possible exponent widths, including 2, 3, 4, or 5 bits."
+     },
+     {
+      "locator": "[0186]",
+      "quote": "the exponents of the activation values and weight values can have 5, 4, 3 or 2 bits"
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28-29",
+      "numerals": [
+       "220"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M111",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M33",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "To perform respective selections, the first multiplexer **2860**, the second multiplexer **2862**, the third multiplexer **2864** and the fourth multiplexer **2866** can be controlled by one or more control signals from the mode decoding unit **110** (in FIG. **1**) according to a corresponding arithmetic mode and associated FP formats of the activation values and the weight values."
+     },
+     {
+      "locator": "[0069]",
+      "quote": "the selection behavior of the multiplexers may be driven by control signals tied to an arithmetic mode."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28-29",
+      "numerals": [
+       "2860",
+       "2862",
+       "2864"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M112",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M34",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0069]",
+      "quote": "In some implementations, an arithmetic mode may be determined from the floating-point formats used for the activation and the weight."
+     },
+     {
+      "locator": "[0146]",
+      "quote": "the compute engine **100** includes a mode decoding unit **110** (also referred to as a mode device) to provide a mode of operation to the CIM macro **101** for the tensor operation between the streaming operand and the stationary operand."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-1",
+      "numerals": [
+       "110",
+       "100"
+      ],
+      "caption_quote": "FIG. **1** illustrates a block diagram of an exemplary hardware accelerator, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M113",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M35",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0070]",
+      "quote": "Further, the method may describe using a fourth multiplexer to choose between different exponent results produced inside the column cell. For example, the hardware may choose between the full-adder output, the half-adder sum, or a carry-in from a previous stage"
+     },
+     {
+      "locator": "[0188]",
+      "quote": "which can be used to select the accumulation output Ex.sub.j from the full adder of the current stage, the first selection from the first multiplexer **2860** and the third selection from the third multiplexer **2864**"
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28-29",
+      "numerals": [
+       "2866"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M114",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M36",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0070]",
+      "quote": "For example, the hardware may choose between the full-adder output, the half-adder sum, or a carry-in from a previous stage, and present that as the exponent bit of the primitive product."
+     },
+     {
+      "locator": "[0188]",
+      "quote": "to produce the carry-in bit CIN.sub.j for the next stage full adder and the exponent bit E.sub.j of the primitive product."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28-29",
+      "numerals": [
+       "2866"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M115",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M37",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0071]",
+      "quote": "Methods disclosed herein may also include sourcing the exponent bit of the weight value directly from a dedicated bitcell inside the column, which can feed that bit to the half adder."
+     },
+     {
+      "locator": "[0188]",
+      "quote": "In FIG. **28**, each bitcell stores a corresponding exponent bit of the weight value."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28-29",
+      "numerals": [
+       "830",
+       "220"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M116",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M38",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0071]",
+      "quote": "At the same time that the first bitcell is supplying a weight exponent bit to the half adder, the method may allow writing a new exponent bit for a different weight into a second bitcell."
+     },
+     {
+      "locator": "[0218]",
+      "quote": "the first set of bitcells can perform a write operation and the second set of bitcells can perform a VMM operation."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-43",
+      "numerals": [
+       "4303"
+      ],
+      "caption_quote": "FIG. **43** illustrates an exemplary double-bitcell design, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M117",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M39",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0071]",
+      "quote": "For example, a second exponent bit may be written through a bitline shared with the first bitcell, simplifying the array wiring."
+     },
+     {
+      "locator": "[0217]",
+      "quote": "The two bitcells BC0 and BC1 in each memory cell **4303** can share one bitline BL for writing or scanning the bits of weight values."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-43",
+      "numerals": [
+       "4303"
+      ],
+      "caption_quote": "FIG. **43** illustrates an exemplary double-bitcell design, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M118",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M40",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0186]",
+      "quote": "the exponents of the activation values and weight values can have 5, 4, 3 or 2 bits"
+     },
+     {
+      "locator": "[0068]",
+      "quote": "disclosed accelerator designs may support activation values with different counts of exponent bits, such as 2, 3, 4, or 5, by sizing and controlling the exponent logic accordingly."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28-29",
+      "numerals": [
+       "220"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M119",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M41",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0186]",
+      "quote": "the exponents of the activation values and weight values can have 5, 4, 3 or 2 bits"
+     },
+     {
+      "locator": "[0068]",
+      "quote": "Similarly, the design may support weight values with multiple possible exponent widths, including 2, 3, 4, or 5 bits."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28-29",
+      "numerals": [
+       "220"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M120",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M42",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0192]",
+      "quote": "At step **3202**, a minimum number of exponent bits in each column cell is determined by finding the least common multiple among all the possible combination of exponent bits in the various FP formats supported by each column cell of the compute engine **100**."
+     },
+     {
+      "locator": "[0071]",
+      "quote": "The method may also size the number of bitcells in the column based on the least common multiple of supported exponent bit widths for activations and weights"
+     },
+     {
+      "locator": "[0189]",
+      "quote": "the common cell **220** includes 12 columns and 12 rows, where number 12 is the least common multiple of number 4, 3, and 2."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-32",
+      "numerals": [
+       "3200",
+       "3202"
+      ],
+      "caption_quote": "FIG. **32** illustrates an exemplary method **3200** for utilizing resources of the compute engine **100** for the VMM computation to support flexible FP data in various formats."
+     }
+    ]
+   }
+  ]
+ }
+}
