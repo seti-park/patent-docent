@@ -4,6 +4,7 @@
 
 - **헌장(정본)**: [`docs/CHARTER.md`](docs/CHARTER.md) — D1~D15, 모든 판정에 우선
 - **공학 스펙**: [`docs/SPEC.md`](docs/SPEC.md) — 스테이지 계약·스키마·모듈 로드맵
+- **재정 원장(상류)**: [`docs/decisions/RULINGS-LEDGER.md`](docs/decisions/RULINGS-LEDGER.md) — 재정 → 원장 → 문서 순서이며 원장이 헌장·스펙의 상류다
 - **작업 규약**: [`CLAUDE.md`](CLAUDE.md)
 
-상태: **M0 부트스트랩** — 문서·골격까지. 모듈 코드 미구현.
+상태: **M0.6** — 문서·계약·검사기까지. 파이프라인 모듈 코드는 미구현이다. 첫 런은 **예행 런**(비게시)이며, 게시 런은 전 방어층 가동·도면 사용권 재정·템플릿 동결이 충족될 때 열린다.
