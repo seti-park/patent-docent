@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://patent-docent.local/contracts/schemas/approval-envelope.schema.json",
   "title": "approval-envelope/v0",
-  "$comment": "체크포인트 승인 봉투. 근거 = 헌장 D6·D15 + Owner 재정 2026-08-17 R8. 봉투 실물은 md 파일(15-frozen/approval-v<N>.md, 70-ship/checkpoint2.md)이며 그 YAML 프런트매터가 이 스키마의 대상이다. ★ 규율: (1) target.digest 가 실제 파일 해시와 다르면 봉투는 자동 실효되고 스테이지는 halt 한다 — 승인 후 대상이 바뀌면 승인이 사라진다. (2) owner_quote 는 Owner 가 실제로 타이핑한 원문이어야 한다. 시스템 요약 인용은 무효다. (3) 결정 유형은 이진뿐이며 조건부 승인 제도는 없다. 수정 지시는 rejected + directives[] 이고, 수정본은 새 버전으로 diff 와 함께 재상정한다. (4) ★ 무인 실행 플래그(--yes 류)를 설치하지 않는다. 러너에 해당 플래그를 만들지 않으며, 체크포인트 무응답은 무기한 대기다 — 시간 초과 자동 진행은 없다. (5) ★ 위조 방어는 규약 기반이며 암호학적 보증이 없다. 대필 주체가 인용을 날조할 수 있다는 잔여 리스크를 명시 수용한다. (6) manual_verification_ack[] 는 figure-sourced 사실의 사람 검증 확인 목록이며(재정 R1), CP1 봉투도 이 목록을 그대로 전재할 수 있다.",
+  "$comment": "체크포인트 승인 봉투. 근거 = 헌장 D6·D15 + Owner 재정 2026-08-17 R8 + 2026-08-18 N9 + M0.5 재감수 M-03·B-07 집행. 봉투 실물은 md 파일(15-frozen/approval-v<N>.md, 70-ship/checkpoint2.md)이며 그 YAML 프런트매터가 이 스키마의 대상이다. ★ 규율: (1) target.digest 가 실제 파일 해시와 다르면 봉투는 자동 실효되고 스테이지는 halt 한다 — 승인 후 대상이 바뀌면 승인이 사라진다. (2) owner_quote 는 Owner 가 실제로 타이핑한 원문이어야 한다. 시스템 요약 인용은 무효다. (3) 결정 유형은 이진뿐이며 조건부 승인 제도는 없다. 수정 지시는 rejected + directives[] 이고, 수정본은 새 버전으로 diff 와 함께 재상정한다. (4) ★ 무인 실행 플래그(--yes 류)를 설치하지 않는다. 러너에 해당 플래그를 만들지 않으며, 체크포인트 무응답은 무기한 대기다 — 시간 초과 자동 진행은 없다. (5) ★ 위조 방어는 규약 기반이며 암호학적 보증이 없다. 대필 주체가 인용을 날조할 수 있다는 잔여 리스크를 명시 수용한다. (6) manual_verification_ack[] 는 figure-sourced 사실의 사람 검증 확인 목록이며(재정 R1), CP1 봉투도 이 목록을 그대로 전재할 수 있다. (7) ★ 이진 결정의 기계 집행(재감수 M-03a): approved 봉투에는 directives 필드가 존재할 수 없고(조건부 승인 제도 부재의 스키마 표현), rejected 봉투에는 directives 가 1건 이상 있어야 한다. (8) drop_decision 은 CP1 전용 선택 필드다. 재료의 drop_signal.verdict == \"drop-proposed\" 일 때 이 필드가 필수라는 조건은 재료 명세와 봉투를 함께 읽어야 판정되므로 스키마 밖이며 엔진 검사 freeze.approval-valid 의 몫이다. (9) derived_fact_ack[] 는 파생 수치(origin == \"derived\")의 항목 단위 승인 목록이다(재정 2026-08-18 N9 — CP1 표면에서 수치 3분류를 항목 단위로 승인). 해당 항목이 없으면 빈 배열로 적는다 — 필드 생략은 누락과 '없음'을 구별하지 못한다.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "checkpoint", "run_id", "target", "decision", "owner_quote", "quote_provenance", "decided_at", "recorded_by"],
@@ -56,22 +56,32 @@
       "items": { "type": "string", "minLength": 1 }
     },
     "numeric_whitelist_printed": {
-      "$comment": "run.yaml 의 numeric_whitelist[] 전량 인쇄. 화이트리스트는 게이트에 뚫는 구멍이므로 Owner 가 매 런 눈으로 본다.",
+      "$comment": "run.yaml 의 numeric_whitelist[] 전량 인쇄. 화이트리스트는 게이트에 뚫는 구멍이므로 Owner 가 매 런 눈으로 본다. ★ 항목 형태는 이 4키가 유일한 정본이다(재감수 B-07 — 구 {key,rationale,added_by} 와 {pattern,reason,approved_in} 두 형태를 폐기하고 통일). pattern 은 MATCH_KEY(\"값|단위\")에 fullmatch 로 대조되는 정규식 문자열이며, 리터럴 키로는 담을 수 없는 스레드 순번(n/N) 류를 표현하기 위해 정규식을 택했다.",
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["key", "rationale", "added_by"],
+        "required": ["pattern", "rationale", "added_by", "approved_in"],
         "properties": {
-          "key": { "type": "string", "minLength": 1 },
+          "pattern": { "type": "string", "minLength": 1 },
           "rationale": { "type": "string", "minLength": 1 },
-          "added_by": { "type": "string", "minLength": 1 }
+          "added_by": { "enum": ["run-discretion", "owner"] },
+          "approved_in": { "type": "string", "minLength": 1 }
         }
       }
     },
     "manual_verification_ack": {
       "type": "array",
       "items": { "type": "string", "pattern": "^M[0-9]+$" }
+    },
+    "derived_fact_ack": {
+      "$comment": "파생 수치(origin == \"derived\") 항목의 승인 목록. 재정 2026-08-18 N9.",
+      "type": "array",
+      "items": { "type": "string", "pattern": "^M[0-9]+$" }
+    },
+    "drop_decision": {
+      "$comment": "CP1 전용 선택 필드. drop 제안에 대한 Owner 처분(go = 계속, drop = 중단).",
+      "enum": ["go", "drop"]
     }
   },
   "allOf": [
@@ -98,7 +108,28 @@
         }
       },
       "then": {
-        "required": ["manual_verification_ack"]
+        "required": ["manual_verification_ack", "derived_fact_ack"]
+      }
+    },
+    {
+      "$comment": "M-03a 집행 ①: 승인 봉투에는 수정 지시가 붙을 수 없다. 조건부 승인 제도가 없다는 규율 (3)의 스키마 표현이며, directives 를 false 스키마로 막아 필드의 존재 자체를 거부한다.",
+      "if": {
+        "required": ["decision"],
+        "properties": { "decision": { "const": "approved" } }
+      },
+      "then": {
+        "properties": { "directives": false }
+      }
+    },
+    {
+      "$comment": "M-03a 집행 ②: 반려 봉투는 수정 지시를 1건 이상 담아야 한다. 지시 없는 반려는 다음 판을 만들 수 없다.",
+      "if": {
+        "required": ["decision"],
+        "properties": { "decision": { "const": "rejected" } }
+      },
+      "then": {
+        "required": ["directives"],
+        "properties": { "directives": { "minItems": 1 } }
       }
     }
   ],

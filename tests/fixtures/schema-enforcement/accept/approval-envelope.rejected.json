@@ -1,0 +1,20 @@
+{
+  "schema": "approval-envelope/v0",
+  "checkpoint": "material_approval",
+  "run_id": "example-xx0000000a1-stacked-module",
+  "target": {
+    "path": "15-frozen/material-spec.v1.json",
+    "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "decision": "rejected",
+  "owner_quote": "M3 라벨이 청구항 문언과 어긋납니다. 고쳐서 v2로 다시 올려주세요.",
+  "quote_provenance": {
+    "channel": "session-transcript",
+    "located_at": "2026-02-01 CP1 승인 메시지"
+  },
+  "decided_at": "2026-02-01T09:00:00Z",
+  "recorded_by": "orchestrator",
+  "directives": [
+    "M3의 label_en을 청구항 5 문언에 맞춰 다시 쓸 것"
+  ]
+}

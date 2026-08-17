@@ -1,0 +1,153 @@
+{
+  "$comment": "스키마 집행 실증 픽스처 목록. 무효 인스턴스는 REJECT 가, 유효 인스턴스는 ACCEPT 가 정답이며 기대와 실제가 어긋나면 tools/check_schema_enforcement.py 가 실패한다. 근거 = M0.5 재감수 B-02·B-07·M-01·M-02·M-03·M-05 + Owner 재정 2026-08-18 N9. ★ 각 reject 판은 대응 accept 판에서 한 곳만 바꾼 판이다(두 결함을 한 파일에 넣으면 무엇이 REJECT 를 유발했는지 증명되지 않는다). basis 가 그 한 곳을 적는다.",
+  "version": "1",
+  "cases": [
+    {
+      "file": "accept/material-spec.minimal.json",
+      "schema": "reader/schemas/material-spec.schema.json",
+      "expect": "accept",
+      "series": "C1/C2 유효 대응쌍",
+      "basis": "docs/SPEC.md §2.7 예시 인스턴스의 축약판(reader_version 만 0.3.0). 개정된 스키마가 정상 재료를 거부하지 않음을 보인다 — 과잉 제약의 반증 표본."
+    },
+    {
+      "file": "reject/material-spec.empty-additions.json",
+      "schema": "reader/schemas/material-spec.schema.json",
+      "expect": "reject",
+      "series": "C1 additions: []",
+      "basis": "accept/material-spec.minimal.json 에서 claims.dependents[0].additions 를 [] 로 비운 판. 재감수 B-02 — 전문이 있는 종속항을 접지 대상에서 통째로 빼내던 공허 통과."
+    },
+    {
+      "file": "reject/material-spec.hangul-label.json",
+      "schema": "reader/schemas/material-spec.schema.json",
+      "expect": "reject",
+      "series": "C2 label_en 한국어",
+      "basis": "accept/material-spec.minimal.json 에서 items[0](M1).label_en 만 한국어로 바꾼 판. 재감수 M-02 — EN 단일 값 정책(재정 R2) 미집행."
+    },
+    {
+      "file": "reject/material-spec.origin-mixed.json",
+      "schema": "reader/schemas/material-spec.schema.json",
+      "expect": "reject",
+      "series": "부수 M-01 origin 배타성",
+      "basis": "accept/material-spec.minimal.json 의 M5(origin: quoted)에 derivation 블록만 덧붙인 판. 재감수 M-01 — origin 조건이 타 origin 부속 필드를 금지하지 않던 결함."
+    },
+    {
+      "file": "accept/approval-envelope.material-approved.json",
+      "schema": "contracts/schemas/approval-envelope.schema.json",
+      "expect": "accept",
+      "series": "C3 유효 대응쌍",
+      "basis": "CP1 승인 봉투. manual_verification_ack 와 derived_fact_ack(재정 N9)를 모두 갖춘 정상 형태."
+    },
+    {
+      "file": "accept/approval-envelope.with-drop-decision.json",
+      "schema": "contracts/schemas/approval-envelope.schema.json",
+      "expect": "accept",
+      "series": "C4 회귀 표본",
+      "basis": "★ 구 결함의 회귀 표본. 개정 전 스키마는 SPEC 이 요구하는 drop_decision 필드를 additionalProperties: false 로 거부했다(재감수 M-03b). 이 인스턴스가 통과하지 않으면 계약 파손이 재발한 것이다."
+    },
+    {
+      "file": "accept/approval-envelope.rejected.json",
+      "schema": "contracts/schemas/approval-envelope.schema.json",
+      "expect": "accept",
+      "series": "M-03a 유효 대응쌍",
+      "basis": "반려 봉투 + 수정 지시 1건. 승인 전용 필드(ack 2종)는 빠져 있다."
+    },
+    {
+      "file": "accept/approval-envelope.ship-approved.json",
+      "schema": "contracts/schemas/approval-envelope.schema.json",
+      "expect": "accept",
+      "series": "B-07 유효 대응쌍",
+      "basis": "CP2 승인 봉투. numeric_whitelist_printed 항목이 정본 4키({pattern, rationale, added_by, approved_in})를 갖춘 형태이며 added_by 는 enum 값이다."
+    },
+    {
+      "file": "reject/approval-envelope.approved-with-directives.json",
+      "schema": "contracts/schemas/approval-envelope.schema.json",
+      "expect": "reject",
+      "series": "C3 approved + directives",
+      "basis": "accept/approval-envelope.material-approved.json 에 directives 를 덧붙인 판. 재감수 M-03a — 조건부 승인 제도가 없다는 규율(재정 R8)이 스키마에 표현되지 않던 결함."
+    },
+    {
+      "file": "reject/approval-envelope.bad-drop-decision.json",
+      "schema": "contracts/schemas/approval-envelope.schema.json",
+      "expect": "reject",
+      "series": "C4 enum 밖 값",
+      "basis": "accept/approval-envelope.with-drop-decision.json 에서 drop_decision 을 \"drop\" → \"maybe\" 로 바꾼 판. 필드를 여는 것과 값을 아무거나 허용하는 것은 다르다."
+    },
+    {
+      "file": "reject/approval-envelope.rejected-without-directives.json",
+      "schema": "contracts/schemas/approval-envelope.schema.json",
+      "expect": "reject",
+      "series": "부수 M-03a 역방향",
+      "basis": "accept/approval-envelope.rejected.json 에서 directives 를 [] 로 비운 판. 지시 없는 반려는 다음 판을 만들 수 없다."
+    },
+    {
+      "file": "reject/approval-envelope.whitelist-legacy-key.json",
+      "schema": "contracts/schemas/approval-envelope.schema.json",
+      "expect": "reject",
+      "series": "부수 B-07 구 키 이름",
+      "basis": "accept/approval-envelope.ship-approved.json 의 화이트리스트 첫 항목에서 pattern 키 이름만 구 형태 key 로 되돌린 판. 재감수 B-07 — 서로 비호환인 세 계약이 공존하던 상태의 재발 방지."
+    },
+    {
+      "file": "reject/approval-envelope.whitelist-freetext-added-by.json",
+      "schema": "contracts/schemas/approval-envelope.schema.json",
+      "expect": "reject",
+      "series": "부수 B-07 added_by enum",
+      "basis": "accept/approval-envelope.ship-approved.json 의 화이트리스트 첫 항목에서 added_by 만 자유문자열 \"run\" 으로 바꾼 판. 구 계약의 자유문자열 added_by 는 런 재량과 Owner 재정을 구별하지 못했다."
+    },
+    {
+      "file": "reject/approval-envelope.missing-derived-fact-ack.json",
+      "schema": "contracts/schemas/approval-envelope.schema.json",
+      "expect": "reject",
+      "series": "부수 N9",
+      "basis": "accept/approval-envelope.material-approved.json 에서 derived_fact_ack 필드만 삭제한 판. 재정 2026-08-18 N9 — 파생 수치는 항목 단위 승인이며 '없음'은 빈 배열로 적는다(생략 불가)."
+    },
+    {
+      "file": "accept/metrics-row.record.json",
+      "schema": "contracts/schemas/metrics-row.schema.json",
+      "expect": "accept",
+      "series": "M-05 유효 대응쌍",
+      "basis": "72h 창 안(offset_h: 3)에서 within_window: true, corrects: null, completion_proxy 는 landing/hook 비율과 일치하는 정상 행."
+    },
+    {
+      "file": "accept/metrics-row.correction.json",
+      "schema": "contracts/schemas/metrics-row.schema.json",
+      "expect": "accept",
+      "series": "M-05a 유효 대응쌍",
+      "basis": "accept/metrics-row.record.json 을 entry_kind: correction + corrects 지목으로 바꾼 정상 정정 행. record 분기 제약이 correction 행을 막지 않음을 보인다."
+    },
+    {
+      "file": "accept/metrics-row.window-168.json",
+      "schema": "contracts/schemas/metrics-row.schema.json",
+      "expect": "accept",
+      "series": "미재정 잔여의 증인",
+      "basis": "window_h: 168 · offset_h: 32 · within_window: true. 168h 창 폭은 재정된 바 없으므로 등가 검사를 걸지 않는다(결정 시트 §3.3 ⚠). 이 행이 통과한다는 사실 자체가 미해결 잔여의 표본이며, 창 폭이 재정되면 이 픽스처는 reject 로 이관된다."
+    },
+    {
+      "file": "reject/metrics-row.record-with-corrects.json",
+      "schema": "contracts/schemas/metrics-row.schema.json",
+      "expect": "reject",
+      "series": "부수 M-05a",
+      "basis": "accept/metrics-row.record.json 에서 corrects 를 null → \"mr-999999\" 로 바꾼 판. 최초 기록 행이 정정 관계를 위조하던 결함."
+    },
+    {
+      "file": "reject/metrics-row.window-mismatch.json",
+      "schema": "contracts/schemas/metrics-row.schema.json",
+      "expect": "reject",
+      "series": "부수 M-05b",
+      "basis": "accept/metrics-row.record.json 에서 snapshot.offset_h 를 3 → 999 로 바꾼 판(within_window 는 true 그대로). 72h 창 밖인데 창 안이라고 신고하는 행."
+    },
+    {
+      "file": "reject/metrics-row.window-false-negative.json",
+      "schema": "contracts/schemas/metrics-row.schema.json",
+      "expect": "reject",
+      "series": "부수 M-05b 역방향",
+      "basis": "accept/metrics-row.record.json 에서 snapshot.within_window 를 true → false 로 바꾼 판(offset_h 는 3 그대로). 등가는 양방향이다."
+    },
+    {
+      "file": "reject/metrics-row.completion-negative.json",
+      "schema": "contracts/schemas/metrics-row.schema.json",
+      "expect": "reject",
+      "series": "부수 M-05c",
+      "basis": "accept/metrics-row.record.json 에서 completion_proxy 를 0.3 → -1.5 로 바꾼 판. 산식 일치는 검사 feedback.row-consistency 몫이고 스키마는 부호를 막는다."
+    }
+  ]
+}

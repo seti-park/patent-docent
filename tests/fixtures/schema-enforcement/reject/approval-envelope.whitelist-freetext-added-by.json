@@ -1,0 +1,41 @@
+{
+  "schema": "approval-envelope/v0",
+  "checkpoint": "ship_approval",
+  "run_id": "example-xx0000000a1-stacked-module",
+  "target": {
+    "path": "70-ship/thread.v2.md",
+    "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "decision": "approved",
+  "owner_quote": "v2로 출하합니다.",
+  "quote_provenance": {
+    "channel": "session-transcript",
+    "located_at": "2026-02-03 CP2 승인 메시지"
+  },
+  "decided_at": "2026-02-03T11:30:00Z",
+  "recorded_by": "orchestrator",
+  "selected_variant": "v2",
+  "flags_adjudicated": [
+    {
+      "flag_id": "sa-0007",
+      "verdict": "accept"
+    }
+  ],
+  "numeric_whitelist_printed": [
+    {
+      "pattern": "^\\d+/\\d+\\|$",
+      "rationale": "thread ordinal such as 3/9 carries no technical claim",
+      "added_by": "run",
+      "approved_in": "70-ship/checkpoint2.md"
+    },
+    {
+      "pattern": "^2024-03-11\\|$",
+      "rationale": "priority date printed verbatim from the bibliographic block",
+      "added_by": "owner",
+      "approved_in": "D-20260818-01-m06-enforcement"
+    }
+  ],
+  "manual_verification_ack": [
+    "M15"
+  ]
+}

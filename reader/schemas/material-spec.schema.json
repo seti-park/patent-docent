@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://patent-docent.local/reader/schemas/material-spec.schema.json",
   "title": "material-spec/v0",
-  "$comment": "재료 명세 스키마 정본(D14 프로젝트 간 계약). 개정 근거 = Owner 재정 2026-08-17 R1·R2·R3. 계약 라인은 v0 유지(미동결 상태의 개정이므로 라인 승격 없음), reader_version = 0.2.0. 값 언어는 EN 단일(R2)이며, 예외로 drop_signal.reason 과 grounding.search_note 만 KR이다. ★ 스키마로 표현하지 않고 검증기 코드에 맡기는 제약: (1) derivation.formula 재계산 결과가 rounding 적용 후 value_normalized 와 문자열 일치 (2) origin=quoted 일 때 value_raw == source.quote[source.value_span.start:end] 바이트 동일 (3) dependents[].text_verbatim 에서 인용 청구항 번호를 결정론 파싱해 depends_on 배열·dependency_type 과 대조(read.dependency-parse) (4) 참조 무결성 전반(claim_ref·material_id·component·attaches_to·derived_from·figure·superseded_by·derivation.inputs[].ref 의 해소와 kind 제약) (5) 정규화 일관성(value_normalized == normalize(value_raw), 단위 일치) (6) 항목 ID 연속성(M1..Mn 빠짐 없음, append-only) (7) superseded_by 의 non-null 조건이 status == \"superseded\" 와 일치. ★ dependency_type 불변식의 역방향(len(depends_on)==1 ⟹ \"single\")은 alternative-form 이 단일 종속일 수 있어 스키마에 넣지 않았다 — 검증기·재정 확인 대상.",
+  "$comment": "재료 명세 스키마 정본(D14 프로젝트 간 계약). 개정 근거 = Owner 재정 2026-08-17 R1·R2·R3 + 2026-08-18 N9(파생 수치 깊이 1) + M0.5 재감수 B-02·M-01·M-02 집행. 계약 라인은 v0 유지(미동결 상태의 개정이므로 라인 승격 없음), reader_version = 0.3.0. 값 언어는 EN 단일(R2)이며, 예외로 drop_signal.reason 과 grounding.search_note 만 KR이다. EN 집행은 $defs/en_text 가 담당하며(한글 자모·음절 거부), 원문 인용 필드(text_verbatim·quote·caption_quote·evidence_quotes[]·positioning.quotes[])와 KR 규정 필드(drop_signal.reason·grounding.search_note)에는 적용하지 않는다. ★ 스키마로 표현하지 않고 검증기 코드에 맡기는 제약: (1) derivation.formula 재계산 결과가 rounding 적용 후 value_normalized 와 문자열 일치 (2) origin=quoted 일 때 value_raw == source.quote[source.value_span.start:end] 바이트 동일 (3) dependents[].text_verbatim 에서 인용 청구항 번호를 결정론 파싱해 depends_on 배열·dependency_type 과 대조(read.dependency-parse) (4) 참조 무결성 전반(claim_ref·material_id·component·attaches_to·derived_from·figure·superseded_by·derivation.inputs[].ref 의 해소와 kind 제약) (5) 정규화 일관성(value_normalized == normalize(value_raw), 단위 일치) (6) 항목 ID 연속성(M1..Mn 빠짐 없음, append-only) (7) superseded_by 의 non-null 조건이 status == \"superseded\" 와 일치 (8) derivation.inputs[].ref 가 자기 id 를 가리키지 않으며 참조 그래프가 비순환이다 (9) ★ 파생의 파생 금지 — derivation.inputs[].ref 가 가리키는 fact 의 origin 은 \"derived\" 가 아니어야 한다. 파생 수치의 원천은 원문 스팬만이며 허용 깊이는 1 이다(depth == 1, 재정 2026-08-18 N9). 스키마는 참조를 해소하지 못하므로 depth 검사는 전량 검증기 몫이다 (10) element·addition 의 material_id 는 component 항목과 1:1 이며(두 element 가 같은 component 항목을 공유할 수 없다), component.claim_ref 는 자기를 가리킨 element·addition 의 id 와 역방향으로 일치한다 (11) 하류 산출물은 참조 spec_version·spec_digest 를 기록하고 게이트가 정합을 검사한다 — 불일치 = 자동 무효(재정 2026-08-18 N11). ★ dependency_type 불변식의 역방향(len(depends_on)==1 ⟹ \"single\")은 alternative-form 이 단일 종속일 수 있어 스키마에 넣지 않았다 — 검증기·재정 확인 대상.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "reader_version", "spec_version", "status", "run_id", "patent", "claims", "figures", "items", "drop_signal", "provenance"],
@@ -20,6 +20,12 @@
     "provenance": { "$ref": "#/$defs/provenance" }
   },
   "$defs": {
+    "en_text": {
+      "$comment": "EN 단일 값 정책(재정 R2)의 집행 단위. 한글 음절(AC00-D7A3)·호환 자모(3130-318F)·조합 자모(1100-11FF)가 한 글자라도 있으면 거부한다. 적용 대상 = 해설·라벨·서술 필드. 적용 금지 = 원문 인용 필드와 KR 규정 필드(파일 최상위 $comment 참조).",
+      "type": "string",
+      "minLength": 1,
+      "not": { "pattern": "[\\uAC00-\\uD7A3\\u1100-\\u11FF\\u3130-\\u318F]" }
+    },
     "item_id": { "type": "string", "pattern": "^M[0-9]+$" },
     "claim_id": { "type": "string", "pattern": "^CL-[0-9]+$" },
     "element_id": { "type": "string", "pattern": "^CL-[0-9]+/e[0-9]+(/e[0-9]+)*$" },
@@ -188,7 +194,9 @@
         "dependency_type": { "enum": ["single", "multiple-and", "multiple-or", "alternative-form"] },
         "text_verbatim": { "type": "string", "minLength": 1 },
         "additions": {
+          "$comment": "B-02 집행: 종속항은 반드시 1개 이상의 부가 한정으로 분해된다. 빈 배열은 전문이 있는 종속항을 접지 대상에서 통째로 빼내는 경로였다(재감수 B-02).",
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "object",
             "additionalProperties": false,
@@ -242,7 +250,7 @@
             "required": ["claim", "signal", "material_id"],
             "properties": {
               "claim": { "$ref": "#/$defs/claim_id" },
-              "signal": { "type": "string", "minLength": 1 },
+              "signal": { "$ref": "#/$defs/en_text" },
               "material_id": { "$ref": "#/$defs/item_id" }
             }
           }
@@ -279,7 +287,7 @@
         "id": {}, "status": {}, "superseded_by": {},
         "kind": { "const": "component" },
         "claim_ref": { "type": "string", "pattern": "^CL-[0-9]+/(e[0-9]+(/e[0-9]+)*|a[0-9]+)$" },
-        "label_en": { "type": "string", "minLength": 1 },
+        "label_en": { "$ref": "#/$defs/en_text" },
         "text_verbatim": { "type": "string", "minLength": 1 }
       }
     },
@@ -332,7 +340,7 @@
       "properties": {
         "id": {}, "status": {}, "superseded_by": {},
         "kind": { "const": "fact" },
-        "label_en": { "type": "string", "minLength": 1 },
+        "label_en": { "$ref": "#/$defs/en_text" },
         "origin": { "enum": ["quoted", "derived", "figure-sourced", "bibliographic"] },
         "value_raw": { "type": "string", "minLength": 1 },
         "value_normalized": { "type": "string", "minLength": 1 },
@@ -345,20 +353,53 @@
       },
       "allOf": [
         {
+          "$comment": "M-01 집행: origin 4분기는 배타적이다. 자기 부속 필드를 요구하는 데 그치지 않고 타 origin 의 부속 필드를 false 스키마로 금지한다(필드가 존재하기만 해도 거부).",
           "if": { "required": ["origin"], "properties": { "origin": { "const": "quoted" } } },
-          "then": { "required": ["source"], "properties": { "machine_verifiable": { "const": true } } }
+          "then": {
+            "required": ["source"],
+            "properties": {
+              "machine_verifiable": { "const": true },
+              "derivation": false,
+              "figure_source": false,
+              "bib_source": false
+            }
+          }
         },
         {
           "if": { "required": ["origin"], "properties": { "origin": { "const": "derived" } } },
-          "then": { "required": ["derivation"], "properties": { "machine_verifiable": { "const": true } } }
+          "then": {
+            "required": ["derivation"],
+            "properties": {
+              "machine_verifiable": { "const": true },
+              "source": false,
+              "figure_source": false,
+              "bib_source": false
+            }
+          }
         },
         {
           "if": { "required": ["origin"], "properties": { "origin": { "const": "figure-sourced" } } },
-          "then": { "required": ["figure_source"], "properties": { "machine_verifiable": { "const": false } } }
+          "then": {
+            "required": ["figure_source"],
+            "properties": {
+              "machine_verifiable": { "const": false },
+              "source": false,
+              "derivation": false,
+              "bib_source": false
+            }
+          }
         },
         {
           "if": { "required": ["origin"], "properties": { "origin": { "const": "bibliographic" } } },
-          "then": { "required": ["bib_source"], "properties": { "machine_verifiable": { "const": true } } }
+          "then": {
+            "required": ["bib_source"],
+            "properties": {
+              "machine_verifiable": { "const": true },
+              "source": false,
+              "derivation": false,
+              "figure_source": false
+            }
+          }
         }
       ]
     },
@@ -369,7 +410,7 @@
       "properties": {
         "id": {}, "status": {}, "superseded_by": {},
         "kind": { "const": "implication" },
-        "statement_en": { "type": "string", "minLength": 1 },
+        "statement_en": { "$ref": "#/$defs/en_text" },
         "basis": { "enum": ["claim", "spec", "background", "effects"] },
         "derived_from": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/item_id" } },
         "evidence_quotes": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
@@ -383,9 +424,9 @@
       "properties": {
         "id": {}, "status": {}, "superseded_by": {},
         "kind": { "const": "positioning" },
-        "background_problem": { "type": "string", "minLength": 1 },
-        "asserted_effect": { "type": "string", "minLength": 1 },
-        "delta": { "type": "string", "minLength": 1 },
+        "background_problem": { "$ref": "#/$defs/en_text" },
+        "asserted_effect": { "$ref": "#/$defs/en_text" },
+        "delta": { "$ref": "#/$defs/en_text" },
         "quotes": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
       }
     },
@@ -397,7 +438,7 @@
         "id": {}, "status": {}, "superseded_by": {},
         "kind": { "const": "figure_note" },
         "figure": { "$ref": "#/$defs/figure_id" },
-        "what_it_shows_en": { "type": "string", "minLength": 1 },
+        "what_it_shows_en": { "$ref": "#/$defs/en_text" },
         "numerals": { "type": "array", "items": { "type": "string" } }
       }
     },

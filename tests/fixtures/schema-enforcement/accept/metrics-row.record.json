@@ -1,0 +1,40 @@
+{
+  "schema": "metrics-row/v0",
+  "row_id": "mr-000001",
+  "entry_kind": "record",
+  "corrects": null,
+  "run_id": "example-xx0000000a1-stacked-module",
+  "variant": "v2",
+  "thread_url": "https://x.example/thread/000001",
+  "posted_at": "2026-02-04T12:00:00Z",
+  "snapshot": {
+    "window_h": 72,
+    "taken_at": "2026-02-07T15:00:00Z",
+    "within_window": true,
+    "offset_h": 3
+  },
+  "hook": {
+    "impressions": 12000,
+    "likes": 210,
+    "reposts": 34,
+    "quotes": 5,
+    "bookmarks": 88,
+    "replies": 12
+  },
+  "landing": {
+    "impressions": 3600
+  },
+  "completion_proxy": 0.3,
+  "context": {
+    "posted_at_local": "2026-02-04 21:00 KST",
+    "follower_count": 1240,
+    "topic_tags": [
+      "thermal",
+      "packaging"
+    ],
+    "series": false,
+    "series_id": null
+  },
+  "entered_by": "owner",
+  "entered_at": "2026-02-07T15:20:00Z"
+}
