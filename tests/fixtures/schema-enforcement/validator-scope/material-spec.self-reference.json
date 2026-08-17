@@ -146,6 +146,11 @@
       "origin": "quoted",
       "value_raw": "0.08 mm",
       "value_normalized": "0.08",
+      "value_type": {
+        "kind": "scalar",
+        "approximate": false,
+        "value": "0.08"
+      },
       "unit": "mm",
       "machine_verifiable": true,
       "source": {
@@ -182,6 +187,11 @@
       "origin": "derived",
       "value_raw": "150",
       "value_normalized": "150",
+      "value_type": {
+        "kind": "scalar",
+        "approximate": false,
+        "value": "150"
+      },
       "unit": null,
       "machine_verifiable": true,
       "derivation": {

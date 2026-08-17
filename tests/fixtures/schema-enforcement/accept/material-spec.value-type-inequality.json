@@ -1,0 +1,196 @@
+{
+  "schema": "material-spec/v0",
+  "reader_version": "0.3.0",
+  "spec_version": 1,
+  "status": "frozen",
+  "run_id": "example-xx0000000a1-stacked-module",
+  "patent": {
+    "number": "XX0000000A1",
+    "title": "Stacked module with an integrated fluid channel (fictional example)",
+    "assignee": "Example Devices, Inc.",
+    "dates": {
+      "priority": "2024-03-11",
+      "filing": "2025-03-10",
+      "publication": "2026-01-15"
+    },
+    "source_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "source_path": "00-source/patent.md"
+  },
+  "claims": {
+    "independent": [
+      {
+        "id": "CL-1",
+        "type": "independent",
+        "text_verbatim": "A stacked module comprising: a substrate having a first surface; and a heat spreader thermally coupled to the first surface, the heat spreader defining a fluid channel.",
+        "elements": [
+          {
+            "id": "CL-1/e1",
+            "text_verbatim": "a substrate having a first surface;",
+            "material_id": "M1",
+            "children": []
+          },
+          {
+            "id": "CL-1/e2",
+            "text_verbatim": "a heat spreader thermally coupled to the first surface, the heat spreader defining a fluid channel.",
+            "material_id": "M2",
+            "children": []
+          }
+        ]
+      }
+    ],
+    "dependents": [
+      {
+        "id": "CL-5",
+        "depends_on": [
+          "CL-1"
+        ],
+        "dependency_type": "single",
+        "text_verbatim": "The stacked module of claim 1, wherein the fluid channel has a hydraulic diameter of at least 0.08 mm.",
+        "additions": [
+          {
+            "id": "CL-5/a1",
+            "attaches_to": "CL-1/e2",
+            "text_verbatim": "wherein the fluid channel has a hydraulic diameter of at least 0.08 mm",
+            "material_id": "M3"
+          }
+        ]
+      }
+    ],
+    "applicant_interest": [
+      {
+        "claim": "CL-1",
+        "signal": "The interest is staked on placing the coolant path inside the spreader body rather than in a separate part; the channel dimensions sit in the dependent claims, not in claim 1.",
+        "material_id": "M6"
+      }
+    ]
+  },
+  "figures": [
+    {
+      "id": "FIG-2",
+      "numerals": [
+        "110",
+        "112",
+        "210",
+        "214"
+      ],
+      "caption_quote": "FIG. 2 is a section view of the heat spreader.",
+      "raw_path": "00-source/figures-raw/fig-02.png",
+      "asset_path": null
+    }
+  ],
+  "items": [
+    {
+      "id": "M1",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-1/e1",
+      "label_en": "substrate having a first surface",
+      "text_verbatim": "a substrate having a first surface;"
+    },
+    {
+      "id": "M2",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-1/e2",
+      "label_en": "heat spreader that defines the fluid channel in its own body",
+      "text_verbatim": "a heat spreader thermally coupled to the first surface, the heat spreader defining a fluid channel."
+    },
+    {
+      "id": "M3",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-5/a1",
+      "label_en": "hydraulic diameter limitation on the fluid channel",
+      "text_verbatim": "wherein the fluid channel has a hydraulic diameter of at least 0.08 mm"
+    },
+    {
+      "id": "M4",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M2",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "found"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0042]",
+          "quote": "The heat spreader 210 is bonded to the first surface 112 of the substrate 110.",
+          "span": {
+            "start": 503,
+            "end": 581
+          }
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-2",
+          "numerals": [
+            "210",
+            "112"
+          ],
+          "caption_quote": "FIG. 2 is a section view of the heat spreader."
+        }
+      ]
+    },
+    {
+      "id": "M5",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "hydraulic diameter of the fluid channel",
+      "origin": "quoted",
+      "value_raw": "at least 0.08 mm",
+      "value_normalized": ">=0.08",
+      "value_type": {
+        "kind": "inequality",
+        "approximate": false,
+        "bound": "0.08",
+        "direction": "at-least"
+      },
+      "unit": "mm",
+      "machine_verifiable": true,
+      "source": {
+        "locator": "claim 5",
+        "quote": "a hydraulic diameter of at least 0.08 mm",
+        "value_span": {
+          "start": 24,
+          "end": 40
+        }
+      }
+    },
+    {
+      "id": "M6",
+      "kind": "implication",
+      "status": "active",
+      "superseded_by": null,
+      "statement_en": "Forming the channel inside the spreader body points at removing a cold plate rather than adding one: the design attacks heat by deleting an interface, not by stacking another part.",
+      "basis": "spec",
+      "derived_from": [
+        "M2",
+        "M4"
+      ],
+      "evidence_quotes": [
+        "the channel is formed within the spreader so that a separate cold plate is not required"
+      ],
+      "confidence": "inferred"
+    }
+  ],
+  "drop_signal": {
+    "stage": "final",
+    "verdict": "go",
+    "reason": "권리 관심이 한 구성에 뚜렷하고, 효과 주장이 명세서 문언으로 존재해 '안도감 착지'가 물증으로 가능함."
+  },
+  "provenance": {
+    "read_runs": [
+      "read-a-0f1c2d3",
+      "read-b-9a8b7c6"
+    ],
+    "produced_at": "2026-02-01T00:00:00Z",
+    "engine_commit": "0000000"
+  }
+}

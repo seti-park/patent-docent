@@ -14,10 +14,20 @@
     JSON Schema의 표현력 밖이며 지정된 **검증기 검사**(`enforced_by`)가 맡는다. 그러므로 여기서는
     통과가 정답이고, 거부하면 그것도 실패다 — 설계 서술과 실물이 다르다는 뜻이기 때문이다.
 
-`validator-scope` 계수는 자랑이 아니라 **부채 목록**이다. 요약 줄의 `VALIDATOR_SCOPE n/n`은
-"스키마를 통과하지만 아직 아무 코드도 막지 않는 무효 인스턴스가 n건"이라는 뜻이며, 각 항목의
-`enforced_by`가 그 구멍을 닫을 검사의 id다(구현은 M1 이후). 이 계열을 REJECT_OK·ACCEPT_OK에
-섞지 않는 이유가 여기 있다 — 섞으면 미구현이 집행 실적으로 계상된다.
+`validator-scope` 계수는 자랑이 아니라 **스키마 밖으로 미뤄 둔 불변식의 목록**이다. 요약 줄의
+`VALIDATOR_SCOPE n/n`은 "스키마를 통과하는 무효 인스턴스가 n건"이라는 뜻이며, 각 항목의
+`enforced_by`가 그 구멍을 닫을 검사의 id다. 이 계열을 REJECT_OK·ACCEPT_OK에 섞지 않는 이유가
+여기 있다 — 섞으면 스키마 밖의 집행이 스키마 집행 실적으로 계상된다.
+
+그 n건이 전부 부채인 것은 아니다. `enforced_status`가 그 둘을 가른다.
+
+  - `"planned"`      집행할 검사가 아직 코드로 없다. 이것이 부채다.
+  - `"implemented"`  검증기가 이미 막는다. 이때는 `enforcement_evidence`(그 거부를 실증하는
+    테스트의 노드 id)를 함께 적어야 하며, 근거 없이 "구현되었다"고 적는 경로는 로드 시 막힌다.
+
+이 구별을 두는 이유는 요약 줄이 **집행 범위를 실제와 다르게 말하는 것**을 막기 위해서다.
+검증기가 검사를 구현한 뒤에도 목록이 `(미구현)`이라 말하면 좁게 신고하는 것이고, 증거 없이
+`(구현됨)`이라 말하면 넓게 신고하는 것이다. 양방향 모두 M0.6 재감수가 판정한 결함의 뿌리다.
 
 M0.5 재감수의 교훈이 이 도구의 존재 이유다 — 이름·경로·메타스키마 층위의 정합 검사(K1~K7)가
 전부 통과해도 스키마가 아무것도 강제하지 않을 수 있다. 정합은 집행의 증거가 아니다.
@@ -72,6 +82,12 @@ MANIFEST_REL = f"{FIXTURE_ROOT}/manifest.json"
 CASE_KEYS: tuple[str, ...] = ("file", "schema", "expect", "series", "basis")
 # `validator-scope` 항목에만 추가로 요구하는 키 — 이 불변식을 집행할 검사의 id.
 SCOPE_KEY = "enforced_by"
+# 같은 항목의 필수 키 — 그 검사가 코드로 존재하는가("planned" | "implemented").
+STATUS_KEY = "enforced_status"
+# `enforced_status == "implemented"` 일 때만 쓰는 필수 키 — 그 거부를 실증하는 테스트 노드 id.
+EVIDENCE_KEY = "enforcement_evidence"
+SCOPE_ONLY_KEYS: tuple[str, ...] = (SCOPE_KEY, STATUS_KEY, EVIDENCE_KEY)
+STATUS_VALUES: tuple[str, ...] = ("planned", "implemented")
 EXPECT_VALUES: tuple[str, ...] = ("reject", "accept", "validator-scope")
 # 픽스처 디렉터리(= 기대 클래스 이름과 같다).
 FIXTURE_BUCKETS: tuple[str, ...] = EXPECT_VALUES
@@ -87,8 +103,10 @@ EPILOG = """\
                           검증기 검사 몫이다 (거부 = 설계 서술과 실물 불일치이므로 이것도 실패)
 
 ★ 이 도구가 증명하는 것은 "스키마가 강제하는 것"뿐이다:
-  전건 통과는 의미 집행 완료가 아니다. VALIDATOR_SCOPE 계수는 실적이 아니라 **부채**이며,
-  아직 코드가 없는 불변식이 몇 건인지를 센다(각 항목의 enforced_by 가 그 검사 id).
+  전건 통과는 의미 집행 완료가 아니다. VALIDATOR_SCOPE 계수는 스키마 집행 실적이 아니라
+  스키마 밖으로 미뤄 둔 불변식의 수이며, 각 항목의 enforced_by 가 그 검사 id 다.
+  enforced_status 가 planned(코드 없음 = 부채) 와 implemented(검증기가 이미 막음) 를 가르고,
+  implemented 는 enforcement_evidence(그 거부를 실증하는 테스트 노드 id)를 반드시 동반한다.
 
 ★ 자기매칭 격리:
   이 도구는 탐지 패턴을 갖지 않는다 — 스키마를 인스턴스에 적용할 뿐이다. 따라서
@@ -113,7 +131,16 @@ class Case:
     expect: str
     series: str
     basis: str
-    enforced_by: str = ""   # expect == "validator-scope" 일 때만 채워진다
+    enforced_by: str = ""            # expect == "validator-scope" 일 때만 채워진다
+    enforced_status: str = ""        # 같은 조건에서 "planned" | "implemented"
+    enforcement_evidence: str = ""   # enforced_status == "implemented" 일 때만 채워진다
+
+    @property
+    def enforcement_note(self) -> str:
+        """집행 상태 한 줄. 구현되었다고 말할 때는 반드시 증거를 함께 말한다."""
+        if self.enforced_status == "implemented":
+            return f"구현됨 — {self.enforcement_evidence}"
+        return "미구현"
 
     @property
     def schema_verdict(self) -> str:
@@ -177,8 +204,34 @@ def load_manifest(repo: str) -> list[Case]:
                     f"{where} 는 expect=validator-scope 이므로 {SCOPE_KEY}(집행할 검사 id)가 필요하다"
                 )
             fields[SCOPE_KEY] = enforced_by
-        elif SCOPE_KEY in raw:
-            fail_env(f"{where}.{SCOPE_KEY} 는 expect=validator-scope 항목에만 쓸 수 있다")
+            # 그 검사가 코드로 있는지를 적지 않으면 요약 줄이 집행 범위를 실제와 다르게 말한다.
+            status = raw.get(STATUS_KEY)
+            if status not in STATUS_VALUES:
+                fail_env(
+                    f"{where}.{STATUS_KEY} 가 {STATUS_VALUES} 밖의 값이거나 없다: {status!r} "
+                    f"— validator-scope 항목은 집행 검사의 구현 여부를 반드시 신고한다"
+                )
+            fields[STATUS_KEY] = status
+            evidence = raw.get(EVIDENCE_KEY)
+            if status == "implemented":
+                # 증거 없는 "구현됨"은 집행 범위를 실제보다 넓게 말하는 경로다.
+                if not isinstance(evidence, str) or not evidence:
+                    fail_env(
+                        f"{where} 는 {STATUS_KEY}=implemented 이므로 "
+                        f"{EVIDENCE_KEY}(그 거부를 실증하는 테스트 노드 id)가 필요하다"
+                    )
+                fields[EVIDENCE_KEY] = evidence
+            elif EVIDENCE_KEY in raw:
+                fail_env(
+                    f"{where}.{EVIDENCE_KEY} 는 {STATUS_KEY}=implemented 항목에만 쓸 수 있다"
+                    f"(현재 {STATUS_KEY}={status!r})"
+                )
+        else:
+            stray = [key for key in SCOPE_ONLY_KEYS if key in raw]
+            if stray:
+                fail_env(
+                    f"{where} 의 {', '.join(stray)} 는 expect=validator-scope 항목에만 쓸 수 있다"
+                )
         cases.append(Case(**fields))
 
     if not cases:
@@ -310,7 +363,10 @@ def report(outcomes: list[Outcome], verbose: bool) -> None:
         print(line)
         print(f"        계열 : {case.series}")
         if case.expect == "validator-scope":
-            print(f"        집행 : {case.enforced_by} (검증기 몫 — 스키마는 설계상 통과시킨다)")
+            print(
+                f"        집행 : {case.enforced_by} ({case.enforcement_note}) "
+                "— 검증기 몫이며 스키마는 설계상 통과시킨다"
+            )
         if outcome.first_error:
             print(f"        거부 : {case.schema} @ {outcome.error_path} — {outcome.first_error}")
         if not outcome.ok:
@@ -369,14 +425,17 @@ def main(argv: list[str] | None = None) -> int:
         f"VALIDATOR_SCOPE {len(scope_ok)}/{len(expected_scope)} "
         f"schemas={len(validators)}"
     )
-    # 이 도구가 증명한 것은 스키마 층뿐이다. VALIDATOR_SCOPE 는 실적이 아니라 부채이므로
-    # 무엇이 아직 코드 없이 열려 있는지를 요약 다음 줄에 이름으로 남긴다.
+    # 이 도구가 증명한 것은 스키마 층뿐이다. VALIDATOR_SCOPE 는 스키마 집행 실적이 아니므로
+    # 무엇이 스키마 밖에 있고 그중 무엇이 아직 코드 없이 열려 있는지를 요약 다음 줄에 남긴다.
+    implemented = [o for o in expected_scope if o.case.enforced_status == "implemented"]
+    planned = [o for o in expected_scope if o.case.enforced_status != "implemented"]
     print(
         "        스키마가 강제하는 것만 위에서 증명되었다. "
-        f"validator-scope {len(expected_scope)}건 = 스키마를 통과하지만 아직 코드가 막지 않는 무효 인스턴스:"
+        f"validator-scope {len(expected_scope)}건 = 스키마를 통과하는 무효 인스턴스 "
+        f"(구현됨 {len(implemented)} / 미구현 {len(planned)}):"
     )
     for outcome in expected_scope:
-        print(f"          - {outcome.case.file} → {outcome.case.enforced_by} (미구현)")
+        print(f"          - {outcome.case.file} → {outcome.case.enforced_by} ({outcome.case.enforcement_note})")
     return 0
 
 

@@ -63,11 +63,19 @@ DOC_TARGETS: tuple[str, ...] = ("docs/CHARTER.md", "docs/SPEC.md")
 CONTRACT_TABLE_DOC = "docs/SPEC.md"
 
 # K6(파싱)·K7(JSON Schema 메타)·K3(파일측 계약 라인) 대상 글로브.
+#
+# ★ `reader/*.yaml` 는 M1 에서 추가되었다. 재정 2026-08-18 N8 ①의 경계 규칙("이식 단위에
+#   속하는 계약 = reader/")에 따라 독해층 규칙 계약(`reader/reader-rules.yaml`)이 `reader/`
+#   루트에 산다. 이 글로브가 없으면 그 파일이 선언한 계약 라인을 K3 가 보지 못해, 문서에만
+#   있는 계약으로 오판하거나(반대로) 파일의 선언이 영영 대조되지 않는다. `reader/schemas/`
+#   에도 향후 YAML 계약이 올 수 있으므로 함께 연다.
 CONTRACT_GLOBS: tuple[str, ...] = (
     "contracts/**/*.json",
     "contracts/**/*.yaml",
     "contracts/**/*.yml",
+    "reader/*.yaml",
     "reader/schemas/*.json",
+    "reader/schemas/*.yaml",
 )
 
 # 어떤 검사의 스캔 대상도 될 수 없는 경로 접두 (격리 요건 3항).
@@ -101,13 +109,13 @@ EPILOG = """\
   K3  스키마 이름 일치 문서의 <name>/vN 계약 라인 ↔ 실제 계약 파일 선언 (양방향)
   K4  조항 참조 범위   D<n> 참조가 D1~D15 범위인가
   K5  폐지 토큰 부재   tools/retired-tokens.yaml 에 등재된 폐지 토큰의 부재
-  K6  계약 파일 파싱   contracts/**·reader/schemas/** 의 JSON·YAML 파싱
+  K6  계약 파일 파싱   contracts/**·reader/*.yaml·reader/schemas/** 의 JSON·YAML 파싱
   K7  스키마 메타 검증 $schema 선언이 draft 2020-12 이고 check_schema() 통과
 
 ★ 자기매칭 격리 (이 도구의 설계 요건 — 정본: SPEC §4.8 · D-20260817-02 §5 규율 3):
   1. 스캔 대상은 allowlist로만 정한다 — 암묵 전수 스캔 없음.
      K1·K3·K4·K5 = docs/CHARTER.md, docs/SPEC.md 뿐.
-     K6·K7 = contracts/**, reader/schemas/** 뿐.
+     K6·K7 = contracts/**, reader/*.yaml, reader/schemas/** 뿐.
   2. 탐지 패턴·표본은 코드 밖 데이터 파일에 둔다(tools/retired-tokens.yaml, tests/fixtures/).
   3. tools/ · tests/ · ledgers/regression/ 이 스캔 목록에 들어오면 finding이 아니라
      ISOLATION VIOLATION 으로 즉시 exit 2 한다 — 격리 위반은 결함 보고가 아니라 실행 거부다.
