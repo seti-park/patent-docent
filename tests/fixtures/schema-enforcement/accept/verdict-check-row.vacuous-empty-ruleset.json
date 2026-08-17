@@ -1,0 +1,10 @@
+{
+  "check_id": "defect-catalog",
+  "ruleset": "defect-catalog",
+  "ruleset_version": "0",
+  "ruleset_size": 0,
+  "checked": 9,
+  "violations": 0,
+  "status": "pass",
+  "vacuous": "empty-ruleset"
+}

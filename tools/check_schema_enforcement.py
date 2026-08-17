@@ -1,17 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""스키마 집행 실증 도구 (무효 REJECT / 유효 ACCEPT).
+"""스키마 집행 실증 도구 — **스키마가 강제하는 것**의 경계 측정.
 
-계약 스키마가 **의미 불변식을 실제로 강제하는가**를 매번 기계로 확인한다.
+이 도구가 증명하는 것은 하나다: 계약 **스키마**가 어떤 인스턴스를 거부하고 어떤 인스턴스를
+통과시키는가. 그 이상은 증명하지 않는다 — 검증기 코드가 맡은 의미 불변식은 여기서 돌지 않으며,
+전건 통과가 "M0.6 의미 집행 완료"를 뜻하지 않는다(M0.6 재감수 B-02).
 `tests/fixtures/schema-enforcement/manifest.json`이 인스턴스마다 정답(`expect`)을 적어 두고,
 이 도구는 각 인스턴스를 `Draft202012Validator`에 넣어 실제 판정이 정답과 같은지 대조한다.
 
-  - `expect: "reject"`  무효 인스턴스. 스키마가 **거부해야** 한다. 통과하면 집행이 비어 있는 것이다.
-  - `expect: "accept"`  유효 인스턴스. 스키마가 **통과시켜야** 한다. 거부하면 과잉 제약이다.
+  - `expect: "reject"`           무효 인스턴스. 스키마가 **거부해야** 한다. 통과하면 집행이 비어 있는 것이다.
+  - `expect: "accept"`           유효 인스턴스. 스키마가 **통과시켜야** 한다. 거부하면 과잉 제약이다.
+  - `expect: "validator-scope"`  **스키마가 설계상 통과시키는** 무효 인스턴스. 이 불변식의 집행은
+    JSON Schema의 표현력 밖이며 지정된 **검증기 검사**(`enforced_by`)가 맡는다. 그러므로 여기서는
+    통과가 정답이고, 거부하면 그것도 실패다 — 설계 서술과 실물이 다르다는 뜻이기 때문이다.
+
+`validator-scope` 계수는 자랑이 아니라 **부채 목록**이다. 요약 줄의 `VALIDATOR_SCOPE n/n`은
+"스키마를 통과하지만 아직 아무 코드도 막지 않는 무효 인스턴스가 n건"이라는 뜻이며, 각 항목의
+`enforced_by`가 그 구멍을 닫을 검사의 id다(구현은 M1 이후). 이 계열을 REJECT_OK·ACCEPT_OK에
+섞지 않는 이유가 여기 있다 — 섞으면 미구현이 집행 실적으로 계상된다.
 
 M0.5 재감수의 교훈이 이 도구의 존재 이유다 — 이름·경로·메타스키마 층위의 정합 검사(K1~K7)가
 전부 통과해도 스키마가 아무것도 강제하지 않을 수 있다. 정합은 집행의 증거가 아니다.
-근거 = M0.5 재감수 B-02·B-07·M-01·M-02·M-03·M-05 + Owner 재정 2026-08-18 N9.
+근거 = M0.5 재감수 B-02·B-07·M-01·M-02·M-03·M-05 + Owner 재정 2026-08-18 N9
+      + M0.6 재감수 B-02(정확한 재현식 2건이 ACCEPT되는데 manifest가 그 자리에 다른 변형을 넣어
+        13/13이 해당 불변식을 시험하지 않았다).
 
 ★ 자기매칭 격리 (정본: `docs/SPEC.md` §4.8 자기매칭 격리 요건 + `docs/decisions/D-20260817-02` §5 규율 3)
 `tools/check_spec_refs.py`는 `tests/`를 스캔 목록에서 배제하고 들어오면 exit 2로 거부한다.
@@ -24,8 +36,8 @@ M0.5 재감수의 교훈이 이 도구의 존재 이유다 — 이름·경로·�
   2. 판정의 근거는 전적으로 **계약 스키마 실파일**(`reader/schemas/`·`contracts/schemas/`)이며
      이 소스도, 픽스처도 판정 기준을 제공하지 않는다. 픽스처는 피검체이지 법이 아니다.
   3. 이 소스에는 결함 표본 문자열이 리터럴로 없다(격리 요건 2항). 심은 결함은 전부
-     `tests/fixtures/schema-enforcement/reject/`의 데이터 파일에만 있고, 그것이 무엇이었는지는
-     manifest의 `basis`가 데이터로 적는다.
+     `tests/fixtures/schema-enforcement/`의 `reject/`·`validator-scope/` 데이터 파일에만 있고,
+     그것이 무엇이었는지는 manifest의 `basis`가 데이터로 적는다.
 
 즉 이 도구가 픽스처를 읽는 것은 스캔이 아니라 **검증 대상 투입**이다. 두 도구의 규율이
 서로 어긋나 보이는 자리이므로 감수 오해를 막기 위해 여기 명문화한다.
@@ -58,15 +70,25 @@ MANIFEST_REL = f"{FIXTURE_ROOT}/manifest.json"
 
 # manifest 항목의 필수 키.
 CASE_KEYS: tuple[str, ...] = ("file", "schema", "expect", "series", "basis")
-EXPECT_VALUES: tuple[str, ...] = ("reject", "accept")
+# `validator-scope` 항목에만 추가로 요구하는 키 — 이 불변식을 집행할 검사의 id.
+SCOPE_KEY = "enforced_by"
+EXPECT_VALUES: tuple[str, ...] = ("reject", "accept", "validator-scope")
+# 픽스처 디렉터리(= 기대 클래스 이름과 같다).
+FIXTURE_BUCKETS: tuple[str, ...] = EXPECT_VALUES
 
 EPILOG = """\
 하는 일:
   manifest 의 각 인스턴스를 지정된 계약 스키마로 검증하고, 실제 판정이 expect 와
   같은지 대조한다. 어긋나면 기대와 실제를 명시 비교로 출력하고 exit 1 한다.
 
-  expect: reject  스키마가 거부해야 하는 무효 인스턴스 (통과 = 집행 공백)
-  expect: accept  스키마가 통과시켜야 하는 유효 인스턴스 (거부 = 과잉 제약)
+  expect: reject          스키마가 거부해야 하는 무효 인스턴스 (통과 = 집행 공백)
+  expect: accept          스키마가 통과시켜야 하는 유효 인스턴스 (거부 = 과잉 제약)
+  expect: validator-scope 스키마가 설계상 통과시키는 무효 인스턴스 — 집행은 enforced_by 의
+                          검증기 검사 몫이다 (거부 = 설계 서술과 실물 불일치이므로 이것도 실패)
+
+★ 이 도구가 증명하는 것은 "스키마가 강제하는 것"뿐이다:
+  전건 통과는 의미 집행 완료가 아니다. VALIDATOR_SCOPE 계수는 실적이 아니라 **부채**이며,
+  아직 코드가 없는 불변식이 몇 건인지를 센다(각 항목의 enforced_by 가 그 검사 id).
 
 ★ 자기매칭 격리:
   이 도구는 탐지 패턴을 갖지 않는다 — 스키마를 인스턴스에 적용할 뿐이다. 따라서
@@ -91,6 +113,17 @@ class Case:
     expect: str
     series: str
     basis: str
+    enforced_by: str = ""   # expect == "validator-scope" 일 때만 채워진다
+
+    @property
+    def schema_verdict(self) -> str:
+        """스키마 검증에서 나와야 하는 판정("reject" | "accept").
+
+        `validator-scope` 는 **스키마가 설계상 통과시키는** 계열이므로 기대 판정이 accept 다.
+        기대 클래스와 기대 판정을 구별하는 자리이며, 이 구별이 없으면 미구현 불변식이
+        REJECT 실적으로 계상된다.
+        """
+        return "accept" if self.expect == "validator-scope" else self.expect
 
 
 @dataclass
@@ -102,7 +135,7 @@ class Outcome:
 
     @property
     def ok(self) -> bool:
-        return self.actual == self.case.expect
+        return self.actual == self.case.schema_verdict
 
 
 def load_json(path: str, label: str) -> Any:
@@ -135,7 +168,18 @@ def load_manifest(repo: str) -> list[Case]:
         if raw["file"] in seen:
             fail_env(f"{where}.file 이 중복 등재되었다: {raw['file']}")
         seen.add(raw["file"])
-        cases.append(Case(**{key: raw[key] for key in CASE_KEYS}))
+        fields = {key: raw[key] for key in CASE_KEYS}
+        if raw["expect"] == "validator-scope":
+            # 집행 주체를 적지 않은 validator-scope 항목은 "아무도 막지 않는다"를 숨긴다.
+            enforced_by = raw.get(SCOPE_KEY)
+            if not isinstance(enforced_by, str) or not enforced_by:
+                fail_env(
+                    f"{where} 는 expect=validator-scope 이므로 {SCOPE_KEY}(집행할 검사 id)가 필요하다"
+                )
+            fields[SCOPE_KEY] = enforced_by
+        elif SCOPE_KEY in raw:
+            fail_env(f"{where}.{SCOPE_KEY} 는 expect=validator-scope 항목에만 쓸 수 있다")
+        cases.append(Case(**fields))
 
     if not cases:
         fail_env(f"manifest 에 케이스가 하나도 없다 — {MANIFEST_REL}")
@@ -149,7 +193,7 @@ def check_manifest_covers_disk(repo: str, cases: list[Case]) -> None:
     """
     listed = {case.file for case in cases}
     found: list[str] = []
-    for bucket in ("reject", "accept"):
+    for bucket in FIXTURE_BUCKETS:
         directory = os.path.join(repo, FIXTURE_ROOT, bucket)
         if not os.path.isdir(directory):
             fail_env(f"픽스처 디렉터리가 없다: {FIXTURE_ROOT}/{bucket}")
@@ -242,25 +286,37 @@ def run_case(repo: str, case: Case, validator: Draft202012Validator) -> Outcome:
     )
 
 
+def verdict_line(case: Case, actual: str) -> str:
+    """기대와 어긋난 케이스의 판정 문장. 기대 클래스마다 뜻이 다르다."""
+    if case.expect == "validator-scope":
+        # 기대 판정은 accept 이므로 어긋남 = reject 뿐이다.
+        return (
+            "스키마가 validator-scope 인스턴스를 거부했다 — 설계 서술과 실물이 다르다"
+            f"(이 불변식은 {case.enforced_by} 의 몫이라고 적혀 있다)"
+        )
+    if actual == "accept":
+        return "스키마가 무효 인스턴스를 통과시켰다 — 집행이 비어 있다"
+    return "스키마가 유효 인스턴스를 거부했다 — 과잉 제약이다"
+
+
 def report(outcomes: list[Outcome], verbose: bool) -> None:
     for outcome in outcomes:
         case = outcome.case
         mark = "ok " if outcome.ok else "FAIL"
-        line = f"[{mark}] expect={case.expect:<6} actual={outcome.actual:<6} {case.file}"
+        line = f"[{mark}] expect={case.expect:<15} actual={case.schema_verdict if outcome.ok else outcome.actual:<6} {case.file}"
         if outcome.ok and not verbose:
             print(line)
             continue
         print(line)
         print(f"        계열 : {case.series}")
+        if case.expect == "validator-scope":
+            print(f"        집행 : {case.enforced_by} (검증기 몫 — 스키마는 설계상 통과시킨다)")
         if outcome.first_error:
             print(f"        거부 : {case.schema} @ {outcome.error_path} — {outcome.first_error}")
         if not outcome.ok:
-            print(f"        기대 : {case.expect}")
+            print(f"        기대 : {case.expect} (스키마 판정 {case.schema_verdict})")
             print(f"        실제 : {outcome.actual}")
-            if outcome.actual == "accept":
-                print("        판정 : 스키마가 무효 인스턴스를 통과시켰다 — 집행이 비어 있다")
-            else:
-                print("        판정 : 스키마가 유효 인스턴스를 거부했다 — 과잉 제약이다")
+            print(f"        판정 : {verdict_line(case, outcome.actual)}")
             print(f"        근거 : {case.basis}")
 
 
@@ -291,14 +347,17 @@ def main(argv: list[str] | None = None) -> int:
 
     expected_reject = [o for o in outcomes if o.case.expect == "reject"]
     expected_accept = [o for o in outcomes if o.case.expect == "accept"]
+    expected_scope = [o for o in outcomes if o.case.expect == "validator-scope"]
     reject_ok = [o for o in expected_reject if o.ok]
     accept_ok = [o for o in expected_accept if o.ok]
+    scope_ok = [o for o in expected_scope if o.ok]
     mismatches = [o for o in outcomes if not o.ok]
 
     if mismatches:
         print(
             f"\nFAILED: {len(mismatches)}/{len(outcomes)} 케이스가 기대와 어긋난다 "
-            f"(reject {len(reject_ok)}/{len(expected_reject)} · accept {len(accept_ok)}/{len(expected_accept)})",
+            f"(reject {len(reject_ok)}/{len(expected_reject)} · accept {len(accept_ok)}/{len(expected_accept)} "
+            f"· validator-scope {len(scope_ok)}/{len(expected_scope)})",
             file=sys.stderr,
         )
         return 1
@@ -307,8 +366,17 @@ def main(argv: list[str] | None = None) -> int:
         f"SUMMARY: cases={len(outcomes)} "
         f"REJECT_OK {len(reject_ok)}/{len(expected_reject)} "
         f"ACCEPT_OK {len(accept_ok)}/{len(expected_accept)} "
+        f"VALIDATOR_SCOPE {len(scope_ok)}/{len(expected_scope)} "
         f"schemas={len(validators)}"
     )
+    # 이 도구가 증명한 것은 스키마 층뿐이다. VALIDATOR_SCOPE 는 실적이 아니라 부채이므로
+    # 무엇이 아직 코드 없이 열려 있는지를 요약 다음 줄에 이름으로 남긴다.
+    print(
+        "        스키마가 강제하는 것만 위에서 증명되었다. "
+        f"validator-scope {len(expected_scope)}건 = 스키마를 통과하지만 아직 코드가 막지 않는 무효 인스턴스:"
+    )
+    for outcome in expected_scope:
+        print(f"          - {outcome.case.file} → {outcome.case.enforced_by} (미구현)")
     return 0
 
 

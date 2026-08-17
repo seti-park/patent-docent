@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://patent-docent.local/contracts/schemas/verdict-check-row.schema.json",
   "title": "verdict-check-row/v0",
-  "$comment": "게이트 판정 행 1건의 서식. 근거 = Owner 재정 2026-08-18 N5(구 SPEC §9.21 해소). ★ 규율: (1) 모든 게이트 검사 행이 이 서식으로 보고된다 — L0 규칙(contracts/l0-format.yaml rules[])·목록형 검사(defect-catalog·speech-acts·score-lint)·숫자 전수 대조·런 시작 관문(run.publish-preconditions)이 예외 없이 포함된다. (2) 특수 날인 제도를 정량 보고로 일반화한 것이다 — 검사 ID·적용 규칙 목록의 버전·법의 항목 수·검사 대상 수·위반 수·상태를 매 행이 들고 다니면 공허 2종이 자동으로 드러난다. 법이 빈 경우('규칙 0항' = ruleset_size 0)와 대상이 빈 경우('대상 0건' = checked 0)다. (3) vacuous 는 신고값이 아니라 파생값이다: ruleset_size == 0 이면 \"empty-ruleset\", 그렇지 않고 checked == 0 이면 \"empty-target\", 그 밖에는 \"none\". 이 파생 규칙은 아래 allOf 로 스키마가 직접 강제한다. (4) 재정 2026-08-17 R7 이 결함 카탈로그에 요구한 '공허 통과' 날인은 이 서식의 자동 귀결로 흡수된다 — 카탈로그가 entries: [] 인 동안 그 검사 행은 ruleset_size: 0 이 되어 vacuous: \"empty-ruleset\" 이 파생되므로, 별도 날인 규정 없이 같은 사실이 보고된다. 재정 위반이 아니라 일반화 이행이다(재정 N5 명시). (5) verdict.json 의 checks[] 가 이 행들의 배열이며, vacuous_pass[] 는 vacuous != \"none\" 인 행의 check_id 목록으로 파생된다 — 손으로 채우는 필드가 아니다. (6) ruleset 계열 3키는 목록형 검사가 아닐 때 null 이다(예: format.tweet-count 는 목록을 소비하지 않는다). null 인 행은 ruleset_size 파생 분기를 타지 않으므로 checked == 0 여부만으로 공허가 판정된다.",
+  "$comment": "게이트 판정 행 1건의 서식. 근거 = Owner 재정 2026-08-18 N5(구 SPEC §9.21 해소). ★ 규율: (1) 모든 게이트 검사 행이 이 서식으로 보고된다 — L0 규칙(contracts/l0-format.yaml rules[])·목록형 검사(defect-catalog·speech-acts·score-lint)·숫자 전수 대조·런 시작 관문(run.publish-preconditions)이 예외 없이 포함된다. (2) 특수 날인 제도를 정량 보고로 일반화한 것이다 — 검사 ID·적용 규칙 목록의 버전·법의 항목 수·검사 대상 수·위반 수·상태를 매 행이 들고 다니면 공허 2종이 자동으로 드러난다. 법이 빈 경우('규칙 0항' = ruleset_size 0)와 대상이 빈 경우('대상 0건' = checked 0)다. (3) vacuous 는 신고값이 아니라 파생값이다: ruleset_size == 0 이면 \"empty-ruleset\", 그렇지 않고 checked == 0 이면 \"empty-target\", 그 밖에는 \"none\". 이 파생 규칙은 아래 allOf 로 스키마가 직접 강제한다. (4) 재정 2026-08-17 R7 이 결함 카탈로그에 요구한 '공허 통과' 날인은 이 서식의 자동 귀결로 흡수된다 — 카탈로그가 entries: [] 인 동안 그 검사 행은 ruleset_size: 0 이 되어 vacuous: \"empty-ruleset\" 이 파생되므로, 별도 날인 규정 없이 같은 사실이 보고된다. 재정 위반이 아니라 일반화 이행이다(재정 N5 명시). (5) verdict.json 의 checks[] 가 이 행들의 배열이며, vacuous_pass[] 는 vacuous != \"none\" 인 행의 check_id 목록으로 파생된다 — 손으로 채우는 필드가 아니다. (6) ruleset 계열 3키는 목록형 검사가 아닐 때 null 이다(예: format.tweet-count 는 목록을 소비하지 않는다). null 인 행은 ruleset_size 파생 분기를 타지 않으므로 checked == 0 여부만으로 공허가 판정된다. (7) ★ 행 내부 정합 2종을 스키마가 강제한다(M0.6 재감수 B-03 보수). ① 상태 ↔ 위반 수 = status \"pass\" ⟺ violations == 0 이며 status \"fail\" ⟺ violations >= 1 이다. ② ruleset 3-튜플 동조 = ruleset 이 null 이면 ruleset_version·ruleset_size 도 null 이고, non-null 이면 셋 다 non-null 이다. 이 둘은 새 정책이 아니라 pass/fail 과 '목록형 검사' 의 정의다 — 위반이 있는데 통과라고 적은 행, 목록 이름 없이 목록 버전만 적은 행은 보고 자체가 자기모순이다. ★ 출처 표기: 재정 N5 는 5개 보고 항목(검사 ID · 규칙 목록 버전 · 대상 수 · 위반 수 · 상태)만 명령했고 이 정합 규칙을 명시하지 않았다. 두 조건은 총괄이 그 항목들의 정의에서 도출한 것이며 재정 문언의 확대가 아니다 — Owner 가 다른 정의를 재정하면 이 allOf 가 먼저 바뀐다. 근거 = 재감수 B-03(실측: status pass + violations 1, status fail + violations 0, ruleset null + ruleset_version \"1.0\" 이 모두 ACCEPT 되어 '게이트 판정문 전체가 거짓말할 수 있다').",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -87,6 +87,52 @@
       },
       "then": {
         "properties": { "vacuous": { "const": "none" } }
+      }
+    },
+    {
+      "$comment": "정합 규칙 ① 순방향 — status: \"pass\" 이면 violations 는 0 이어야 한다. 위반을 세어 놓고 통과라고 적는 행은 판정문을 거짓으로 만든다(재감수 B-03).",
+      "if": {
+        "required": ["status"],
+        "properties": { "status": { "const": "pass" } }
+      },
+      "then": {
+        "properties": { "violations": { "const": 0 } }
+      }
+    },
+    {
+      "$comment": "정합 규칙 ① 역방향 — status: \"fail\" 이면 violations 는 1 이상이어야 한다. 위반 0건인 실패는 무엇이 실패했는지 말하지 않는다. 등가는 양방향으로 강제한다.",
+      "if": {
+        "required": ["status"],
+        "properties": { "status": { "const": "fail" } }
+      },
+      "then": {
+        "properties": { "violations": { "minimum": 1 } }
+      }
+    },
+    {
+      "$comment": "정합 규칙 ② 순방향 — ruleset 이 null 이면 목록형 검사가 아니므로 ruleset_version·ruleset_size 도 null 이어야 한다. 이름 없는 목록의 버전·항목 수는 무엇을 날인한 것인지 알 수 없다.",
+      "if": {
+        "required": ["ruleset"],
+        "properties": { "ruleset": { "type": "null" } }
+      },
+      "then": {
+        "properties": {
+          "ruleset_version": { "type": "null" },
+          "ruleset_size": { "type": "null" }
+        }
+      }
+    },
+    {
+      "$comment": "정합 규칙 ② 역방향 — ruleset 이 non-null 이면 목록형 검사이므로 버전과 항목 수가 반드시 있다. 셋은 한 묶음으로 있거나 한 묶음으로 없다.",
+      "if": {
+        "required": ["ruleset"],
+        "properties": { "ruleset": { "type": "string" } }
+      },
+      "then": {
+        "properties": {
+          "ruleset_version": { "type": "string" },
+          "ruleset_size": { "type": "integer" }
+        }
       }
     }
   ]

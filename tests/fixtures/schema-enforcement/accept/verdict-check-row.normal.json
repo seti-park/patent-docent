@@ -1,0 +1,10 @@
+{
+  "check_id": "numeric.exhaustive",
+  "ruleset": null,
+  "ruleset_version": null,
+  "ruleset_size": null,
+  "checked": 14,
+  "violations": 0,
+  "status": "pass",
+  "vacuous": "none"
+}

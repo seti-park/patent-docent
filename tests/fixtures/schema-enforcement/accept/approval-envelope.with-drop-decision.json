@@ -20,5 +20,6 @@
   "derived_fact_ack": [
     "M13"
   ],
+  "numeric_whitelist_printed": [],
   "drop_decision": "drop"
 }

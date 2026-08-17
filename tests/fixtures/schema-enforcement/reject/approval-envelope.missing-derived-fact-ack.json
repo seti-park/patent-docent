@@ -16,5 +16,6 @@
   "recorded_by": "orchestrator",
   "manual_verification_ack": [
     "M15"
-  ]
+  ],
+  "numeric_whitelist_printed": []
 }

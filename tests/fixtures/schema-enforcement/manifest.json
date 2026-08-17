@@ -1,5 +1,5 @@
 {
-  "$comment": "스키마 집행 실증 픽스처 목록. 무효 인스턴스는 REJECT 가, 유효 인스턴스는 ACCEPT 가 정답이며 기대와 실제가 어긋나면 tools/check_schema_enforcement.py 가 실패한다. 근거 = M0.5 재감수 B-02·B-07·M-01·M-02·M-03·M-05 + Owner 재정 2026-08-18 N9. ★ 각 reject 판은 대응 accept 판에서 한 곳만 바꾼 판이다(두 결함을 한 파일에 넣으면 무엇이 REJECT 를 유발했는지 증명되지 않는다). basis 가 그 한 곳을 적는다.",
+  "$comment": "스키마 집행 실증 픽스처 목록. 무효 인스턴스는 REJECT 가, 유효 인스턴스는 ACCEPT 가 정답이며 기대와 실제가 어긋나면 tools/check_schema_enforcement.py 가 실패한다. 근거 = M0.5 재감수 B-02·B-07·M-01·M-02·M-03·M-05 + Owner 재정 2026-08-18 N9 + M0.6 재감수 B-02. ★ 각 reject 판은 대응 accept 판에서 한 곳만 바꾼 판이다(두 결함을 한 파일에 넣으면 무엇이 REJECT 를 유발했는지 증명되지 않는다). basis 가 그 한 곳을 적는다. ★ 기대 클래스는 셋이다: reject(스키마가 거부해야 함) · accept(스키마가 통과시켜야 함) · validator-scope(무효 인스턴스지만 스키마가 **설계상 통과시키며** 집행은 enforced_by 의 검증기 검사 몫 — 여기서 거부되면 설계 서술과 실물이 다르다는 뜻이므로 그것도 실패다). validator-scope 계수는 집행 실적이 아니라 **아직 코드가 없는 불변식의 목록**이며, M0.6 재감수 B-02 가 지적한 '정확한 재현식을 manifest 에서 빼고 13/13 을 전체 증명처럼 제시' 하는 경로를 이 클래스가 닫는다.",
   "version": "1",
   "cases": [
     {
@@ -35,7 +35,7 @@
       "schema": "contracts/schemas/approval-envelope.schema.json",
       "expect": "accept",
       "series": "C3 유효 대응쌍",
-      "basis": "CP1 승인 봉투. manual_verification_ack 와 derived_fact_ack(재정 N9)를 모두 갖춘 정상 형태."
+      "basis": "CP1 승인 봉투. manual_verification_ack · derived_fact_ack(재정 N9) · numeric_whitelist_printed(재감수 M-05)를 모두 갖춘 정상 형태. 화이트리스트 항목이 없는 런이므로 빈 배열로 적었다 — 누락과 '없음'을 구별한다."
     },
     {
       "file": "accept/approval-envelope.with-drop-decision.json",
@@ -101,6 +101,13 @@
       "basis": "accept/approval-envelope.material-approved.json 에서 derived_fact_ack 필드만 삭제한 판. 재정 2026-08-18 N9 — 파생 수치는 항목 단위 승인이며 '없음'은 빈 배열로 적는다(생략 불가)."
     },
     {
+      "file": "reject/approval-envelope.missing-whitelist-cp1.json",
+      "schema": "contracts/schemas/approval-envelope.schema.json",
+      "expect": "reject",
+      "series": "M-05 CP1 화이트리스트 승인",
+      "basis": "accept/approval-envelope.material-approved.json 에서 numeric_whitelist_printed 필드만 삭제한 판. M0.6 재감수 M-05 — SPEC은 화이트리스트 전량을 CP1 봉투에 첨부해 승인하도록 하는데 구 스키마는 CP2 승인에만 요구해 필드 없는 CP1 승인 봉투가 ACCEPT 됐다(M0 B10 승인 시점 모순의 잔존분). 항목이 없으면 빈 배열로 적는다 — 생략은 누락과 '없음'을 구별하지 못한다."
+    },
+    {
       "file": "accept/metrics-row.record.json",
       "schema": "contracts/schemas/metrics-row.schema.json",
       "expect": "accept",
@@ -148,6 +155,57 @@
       "expect": "reject",
       "series": "부수 M-05c",
       "basis": "accept/metrics-row.record.json 에서 completion_proxy 를 0.3 → -1.5 로 바꾼 판. 산식 일치는 검사 feedback.row-consistency 몫이고 스키마는 부호를 막는다."
+    },
+    {
+      "file": "validator-scope/material-spec.self-reference.json",
+      "schema": "reader/schemas/material-spec.schema.json",
+      "expect": "validator-scope",
+      "enforced_by": "read.pointer-resolve",
+      "series": "M0.5 A군 정확 재현식 — derivation.inputs[0].ref 자기참조",
+      "basis": "accept/material-spec.minimal.json 에 파생 fact M7 하나를 더하되 derivation.inputs[0].ref 가 자기 id(M7)를 가리키게 한 판. M0.6 재감수 B-02 의 실측 — 이 인스턴스는 ACCEPT 되며 manifest 는 그 자리에 origin 혼합(reject/material-spec.origin-mixed.json)을 대신 넣어 두어 자기참조 불변식을 시험하지 않았다. 스키마는 참조를 해소하지 못하므로 설계상 통과가 정답이고, 자기참조 금지·비순환은 검증기 read.pointer-resolve 의 몫이다(material-spec.schema.json $comment (8) · SPEC §2.6 검사 2). 그 검사는 M1 예정이며 현재 미구현이다 — 즉 지금 이 인스턴스를 막는 코드는 리포에 없다."
+    },
+    {
+      "file": "validator-scope/metrics-row.completion-proxy-999.json",
+      "schema": "contracts/schemas/metrics-row.schema.json",
+      "expect": "validator-scope",
+      "enforced_by": "feedback.row-consistency",
+      "series": "M0.5 A군 정확 재현식 — completion_proxy: 999",
+      "basis": "accept/metrics-row.record.json 에서 completion_proxy 만 0.3 → 999 로 바꾼 판(landing 3600 / hook 12000 = 0.3 과 무관한 값). M0.6 재감수 B-02 의 실측 — 이 인스턴스는 ACCEPT 되며 manifest 는 그 자리에 음수(reject/metrics-row.completion-negative.json)를 대신 넣어 두어 산식 일치 불변식을 시험하지 않았다. 스키마는 타입과 부호까지만 보고, 비율 산식 대조는 검증기 feedback.row-consistency 의 몫이다(metrics-row.schema.json $comment (a) · SPEC §1.15). 그 검사는 미구현이다."
+    },
+    {
+      "file": "accept/verdict-check-row.normal.json",
+      "schema": "contracts/schemas/verdict-check-row.schema.json",
+      "expect": "accept",
+      "series": "N5 판정 행 유효 대응쌍",
+      "basis": "비목록형 검사(ruleset 3키 전부 null)의 정상 행. status pass ⟺ violations 0 정합을 만족한다."
+    },
+    {
+      "file": "accept/verdict-check-row.vacuous-empty-ruleset.json",
+      "schema": "contracts/schemas/verdict-check-row.schema.json",
+      "expect": "accept",
+      "series": "N5 공허 날인 유효 대응쌍",
+      "basis": "목록형 검사에서 ruleset_size 0 → vacuous: empty-ruleset. 재정 R7의 카탈로그 공허 날인이 N5 서식으로 흡수된 자리다."
+    },
+    {
+      "file": "reject/verdict-check-row.pass-with-violations.json",
+      "schema": "contracts/schemas/verdict-check-row.schema.json",
+      "expect": "reject",
+      "series": "재감수 B-03 status↔violations",
+      "basis": "accept/verdict-check-row.normal.json 에서 violations 만 0 → 1. 위반이 있는데 pass 로 보고하는 행은 판정문 전체를 거짓말로 만든다."
+    },
+    {
+      "file": "reject/verdict-check-row.fail-without-violations.json",
+      "schema": "contracts/schemas/verdict-check-row.schema.json",
+      "expect": "reject",
+      "series": "재감수 B-03 status↔violations 역방향",
+      "basis": "accept/verdict-check-row.normal.json 에서 status 만 pass → fail. 위반이 없는데 fail 로 보고하는 행도 같은 이유로 무효다."
+    },
+    {
+      "file": "reject/verdict-check-row.ruleset-triple-broken.json",
+      "schema": "contracts/schemas/verdict-check-row.schema.json",
+      "expect": "reject",
+      "series": "재감수 B-03 ruleset 3-튜플 동조",
+      "basis": "ruleset 이 null 인데 ruleset_version·ruleset_size 가 non-null. 어느 목록의 몇 항목을 적용했는지가 서로 어긋나면 판정 근거를 재구성할 수 없다."
     }
   ]
 }

@@ -99,7 +99,7 @@
       }
     },
     {
-      "$comment": "material_approval 승인 시 figure-sourced(기계 검증 불가) 항목의 사람 검증 확인을 요구한다. 재정 2026-08-17 R1은 이 분류를 CP1에 명시하도록 하므로, 확인 서명이 붙는 자리도 CP1이다. 해당 항목이 없으면 빈 배열로 적는다 — 필드 자체를 생략할 수는 없다(누락과 '없음'을 구별한다).",
+      "$comment": "material_approval 승인 시 figure-sourced(기계 검증 불가) 항목의 사람 검증 확인을 요구한다. 재정 2026-08-17 R1은 이 분류를 CP1에 명시하도록 하므로, 확인 서명이 붙는 자리도 CP1이다. 해당 항목이 없으면 빈 배열로 적는다 — 필드 자체를 생략할 수는 없다(누락과 '없음'을 구별한다). ★ numeric_whitelist_printed 도 같은 이유로 CP1 승인의 필수 필드다(M0.6 재감수 M-05 보수): SPEC은 화이트리스트 전량을 CP1 봉투에 첨부해 승인하도록 하는데 구 스키마는 이 필드를 CP2 승인에만 요구해, 필드 없는 CP1 승인 봉투가 통과했다(M0 B10의 '승인 시점 모순' 잔존분). 화이트리스트는 게이트에 뚫는 구멍이므로 승인 흔적이 두 체크포인트 모두에 남아야 하며, 항목이 없는 런은 빈 배열로 그 사실을 적는다.",
       "if": {
         "required": ["checkpoint", "decision"],
         "properties": {
@@ -108,7 +108,7 @@
         }
       },
       "then": {
-        "required": ["manual_verification_ack", "derived_fact_ack"]
+        "required": ["manual_verification_ack", "derived_fact_ack", "numeric_whitelist_printed"]
       }
     },
     {

@@ -1,0 +1,10 @@
+{
+  "check_id": "gate.no-score",
+  "ruleset": null,
+  "ruleset_version": "1.0",
+  "ruleset_size": 4,
+  "checked": 3,
+  "violations": 0,
+  "status": "pass",
+  "vacuous": "none"
+}

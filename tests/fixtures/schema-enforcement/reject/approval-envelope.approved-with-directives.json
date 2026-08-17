@@ -20,6 +20,7 @@
   "derived_fact_ack": [
     "M13"
   ],
+  "numeric_whitelist_printed": [],
   "directives": [
     "도면 캡션을 한 줄 줄여서 다시 올릴 것"
   ]

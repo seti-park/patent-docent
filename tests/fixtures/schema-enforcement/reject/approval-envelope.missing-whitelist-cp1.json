@@ -1,0 +1,23 @@
+{
+  "schema": "approval-envelope/v0",
+  "checkpoint": "material_approval",
+  "run_id": "example-xx0000000a1-stacked-module",
+  "target": {
+    "path": "15-frozen/material-spec.v1.json",
+    "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "decision": "approved",
+  "owner_quote": "재료 명세 v1 승인합니다. 파생 수치 M13도 함께 승인.",
+  "quote_provenance": {
+    "channel": "session-transcript",
+    "located_at": "2026-02-01 CP1 승인 메시지"
+  },
+  "decided_at": "2026-02-01T09:00:00Z",
+  "recorded_by": "orchestrator",
+  "manual_verification_ack": [
+    "M15"
+  ],
+  "derived_fact_ack": [
+    "M13"
+  ]
+}
