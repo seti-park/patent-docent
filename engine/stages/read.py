@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import os
 import re
@@ -115,10 +116,164 @@ def _dispatch(adapter, requests: list[LaneRequest], journal: LaneJournal) -> lis
 # ---------------------------------------------------------------------------
 
 
-def _item_sort_key(item: dict) -> tuple:
-    identifier = str(item.get("id", ""))
-    match = re.fullmatch(r"M(\d+)", identifier)
-    return (0, int(match.group(1))) if match else (1, identifier)
+# ★ 항목 ID 재번호 (2026-08-18 sol 재감수 B-01 의 처분).
+#
+# 레인에게 나눠 준 1000 폭 대역(`engine/lanes/plan.py`)은 **작업용 임시 번호**다. 그것을
+# 그대로 이어 붙이면 조립본에 결번 1958 개가 남고, `lifecycle.id-contiguous` 가 요구하는
+# `M1..Mn` 연속을 만족하지 못해 **정상 산출을 동결할 수 없다**. 대역(예방)과 연속성(계약)이
+# 정면으로 충돌했고, 고칠 쪽은 대역이다 — 연속성을 버리면 "항목 하나가 사라졌다"의 신호가
+# 함께 사라진다(SPEC §2.4 · §2.8 제약 6).
+#
+# 그러므로 최종 `M<n>` 은 **엔진이 소유한다**. 레인은 자기 응답 안에서만 쓰는 번호를 쓰고,
+# 조립기가 투입 순서대로 `M1` 부터 다시 매긴 뒤 참조 전량을 같은 표로 고쳐 쓴다.
+ID_MAP_BASENAME = "id-map.json"
+DECOMPOSE_LANE = "decompose"
+SYNTHESIS_LANE = "synthesize"
+
+
+def lane_payloads(decompose: dict, groundings: list[dict], synthesis: dict) -> list[tuple[str, dict]]:
+    """레인 투입 순서 그대로의 `(lane_key, payload)`. 이 순서가 최종 ID 순서다.
+
+    접지 레인을 위치로 키잉하는 이유: 조립기는 `groundings` 를 **배열로만** 받고, 한 작업이
+    팬아웃 상한에 걸려 배치로 쪼개지면 접지 payload 는 둘보다 많아진다. 배열 위치는
+    `plan_grounding` 의 계획 순서(독립 → 종속)와 언제나 같다.
+    """
+    lanes: list[tuple[str, dict]] = [(DECOMPOSE_LANE, decompose)]
+    for position, payload in enumerate(groundings or []):
+        lanes.append((f"grounding[{position}]", payload))
+    lanes.append((SYNTHESIS_LANE, synthesis))
+    return lanes
+
+
+def renumber_items(lane_payloads: list[tuple[str, dict]]) -> tuple[list[dict], dict[str, dict[str, str]]]:
+    """레인별 원본 ID → 최종 `M<n>` 재번호.
+
+    반환 = (재번호된 items, `{lane_key: {원본 id: 최종 id}}`).
+
+    순서는 레인 투입 순서이고 레인 안에서는 **원본 배열 순서 그대로**다 — 정렬하지 않는다.
+    정렬은 레인이 의도한 순서(구성요소 나열 순 · 접지 대상 순)를 지운다.
+
+    매핑이 레인별로 갈라지는 이유: 두 레인이 같은 원본 ID 를 써도 둘은 **다른 항목**이며
+    라벨만 겹쳤을 뿐이다. 각자 다른 최종 ID 를 받는 것이 옳다.
+    """
+    items: list[dict] = []
+    id_map: dict[str, dict[str, str]] = {}
+    for lane_key, payload in lane_payloads:
+        lane_map = id_map.setdefault(lane_key, {})
+        for item in (payload or {}).get("items") or []:
+            entry = copy.deepcopy(item)
+            final_id = f"M{len(items) + 1}"
+            original = entry.get("id")
+            entry["id"] = final_id
+            if isinstance(original, str):
+                lane_map[original] = final_id
+            items.append(entry)
+    return items, id_map
+
+
+class _Renumbering:
+    """재번호 표 + 참조 재작성. 재번호의 계약은 **참조가 가리키던 대상의 보존**이다.
+
+    참조를 어느 레인의 매핑으로 고쳐 쓸지는 대상의 `kind` 가 정한다 — 레인마다 만드는 kind 가
+    갈리기 때문이다(component=분해 · grounding=접지 · fact/implication/positioning/figure_note=통합).
+    레인 매핑을 잘못 고르면 **조용히 다른 항목을 가리키게 되므로** 여기가 이 보수에서 가장
+    위험한 자리다. 특히 두 곳이 직관을 배신한다.
+
+    - `claims.applicant_interest[].material_id` 는 `implication` 을 가리킨다 —
+      `claims` 안에 있지만 분해 레인이 아니라 **통합 레인**이 만든 항목이다.
+    - `implication.derived_from[]` 은 kind 제약이 없어 **레인을 가로지른다**(실특허 산출에서
+      분해 항목과 통합 항목을 함께 가리켰다). 자기 레인 매핑만 보면 대부분이 어긋난다.
+
+    대역이 지켜지면 원본 ID 는 런 안에서 유일하므로 후보가 갈릴 일이 없다. 갈리는 경우
+    (레인이 대역을 넘은 판)의 선택은 결정론이며 순서는 아래 `resolve` 에 적었다.
+    """
+
+    def __init__(self, payloads: list[tuple[str, dict]]) -> None:
+        self.items, self.id_map = renumber_items(payloads)
+        # 원본 ID → [(lane_key, 최종 id, kind)]. 레인 순서를 유지한다(동점 처리의 결정론).
+        self._candidates: dict[str, list[tuple[str, str, str | None]]] = {}
+        self._lane_of: dict[str, str] = {}
+        cursor = 0
+        for lane_key, payload in payloads:
+            for item in (payload or {}).get("items") or []:
+                final = self.items[cursor]
+                cursor += 1
+                self._lane_of[final["id"]] = lane_key
+                original = item.get("id")
+                if isinstance(original, str):
+                    self._candidates.setdefault(original, []).append(
+                        (lane_key, final["id"], final.get("kind"))
+                    )
+
+    def resolve(self, ref, *, owner_lane: str | None, kind: str | None):
+        """원본 참조 1건 → 최종 ID.
+
+        후보가 여럿이면 ① 같은 레인 + kind 일치 ② kind 일치 ③ 같은 레인 ④ 레인 순서 첫째.
+        해소할 항목이 아예 없으면 **원본을 그대로 남긴다** — 유령 참조를 지어내지 않고
+        `read.pointer-resolve` 가 결함으로 잡게 둔다. 재번호는 결함도 결함 그대로 옮긴다.
+        """
+        if not isinstance(ref, str):
+            return ref
+        candidates = self._candidates.get(ref)
+        if not candidates:
+            return ref
+        rankings = (
+            lambda entry: entry[0] == owner_lane and (kind is None or entry[2] == kind),
+            lambda entry: kind is not None and entry[2] == kind,
+            lambda entry: entry[0] == owner_lane,
+            lambda entry: True,
+        )
+        for accepts in rankings:
+            for entry in candidates:
+                if accepts(entry):
+                    return entry[1]
+        return ref
+
+    def rewrite_items(self) -> None:
+        """항목이 들고 있는 참조 전량을 최종 ID 로 고쳐 쓴다."""
+        for item in self.items:
+            owner = self._lane_of.get(item.get("id"), None)
+            kind = item.get("kind")
+            if item.get("superseded_by") is not None:
+                item["superseded_by"] = self.resolve(
+                    item["superseded_by"], owner_lane=owner, kind=kind
+                )
+            if kind == "grounding":
+                item["component"] = self.resolve(
+                    item.get("component"), owner_lane=DECOMPOSE_LANE, kind="component"
+                )
+            elif kind == "implication":
+                if isinstance(item.get("derived_from"), list):
+                    item["derived_from"] = [
+                        self.resolve(ref, owner_lane=owner, kind=None)
+                        for ref in item["derived_from"]
+                    ]
+            elif kind == "fact":
+                for entry in (item.get("derivation") or {}).get("inputs") or []:
+                    if isinstance(entry, dict) and "ref" in entry:
+                        entry["ref"] = self.resolve(entry["ref"], owner_lane=owner, kind="fact")
+
+    def rewrite_claims(self, claims: dict) -> None:
+        """청구항 트리의 `material_id` 전량. 대상 kind 가 어느 레인을 볼지 정한다."""
+
+        def walk(elements) -> None:
+            for element in elements or []:
+                element["material_id"] = self.resolve(
+                    element.get("material_id"), owner_lane=DECOMPOSE_LANE, kind="component"
+                )
+                walk(element.get("children") or [])
+
+        for claim in claims.get("independent") or []:
+            walk(claim.get("elements") or [])
+        for claim in claims.get("dependents") or []:
+            for addition in claim.get("additions") or []:
+                addition["material_id"] = self.resolve(
+                    addition.get("material_id"), owner_lane=DECOMPOSE_LANE, kind="component"
+                )
+        for interest in claims.get("applicant_interest") or []:
+            interest["material_id"] = self.resolve(
+                interest.get("material_id"), owner_lane=SYNTHESIS_LANE, kind="implication"
+            )
 
 
 def assemble_spec(
@@ -131,18 +286,21 @@ def assemble_spec(
     repo: str | None,
     source_digest: str,
 ) -> dict:
-    """레인 산출 → 재료 명세 초안. 조립은 결정론이며 값을 만들지 않는다."""
+    """레인 산출 → 재료 명세 초안. 조립은 결정론이며 값을 만들지 않는다.
+
+    항목 ID 는 여기서 `M1..Mn` 으로 다시 매겨진다(위 `_Renumbering` 의 주석 참조). 투입
+    payload 는 건드리지 않는다 — 레인 응답 파일이 정본 왕복 기록이므로 그 사본을 변조하면
+    "레인이 무엇을 답했는가"를 사후에 되짚을 수 없다.
+    """
     patent = dict((run_meta.get("patent") or {}))
     patent.pop("source_sha256", None)
     patent["source_digest"] = source_digest
     patent.setdefault("source_path", "00-source/patent.md")
 
-    items: list[dict] = []
-    items.extend(decompose.get("items") or [])
-    for payload in groundings:
-        items.extend(payload.get("items") or [])
-    items.extend(synthesis.get("items") or [])
-    items.sort(key=_item_sort_key)
+    renumbering = _Renumbering(lane_payloads(decompose, groundings or [], synthesis))
+    renumbering.rewrite_items()
+    claims = copy.deepcopy(decompose.get("claims") or {})
+    renumbering.rewrite_claims(claims)
 
     engine_block = run_meta.get("engine") or {}
     return {
@@ -152,10 +310,10 @@ def assemble_spec(
         "status": "draft",
         "run_id": run_meta.get("run_id", ""),
         "patent": patent,
-        "claims": decompose.get("claims") or {},
-        "figures": synthesis.get("figures") or [],
-        "items": items,
-        "drop_signal": synthesis.get("drop_signal") or {},
+        "claims": claims,
+        "figures": copy.deepcopy(synthesis.get("figures") or []),
+        "items": renumbering.items,
+        "drop_signal": copy.deepcopy(synthesis.get("drop_signal") or {}),
         "provenance": {
             # 정본은 첫 실행이고 둘째는 수렴 비교 전용이다 — 그 역할을 문자열에 적어 둔다.
             "read_runs": [
@@ -457,12 +615,14 @@ def run(
     defects: list[dict] | None = None
     rows: list[CheckRow] = []
     specs: dict[str, dict] = {}
+    id_maps: dict[str, dict[str, str]] = {}
     early_signals: dict[str, dict] = {}
     final_signal: dict | None = None
 
     try:
         while True:
             specs = {}
+            id_maps = {}
             for read_run in read_runs:
                 outcome = _execute_read_run(
                     read_run=read_run,
@@ -495,6 +655,15 @@ def run(
                     repo=repo,
                     source_digest=actual_digest,
                 )
+                # 재번호 표는 레인 응답과 최종 명세를 잇는 **유일한 좌표**다. 남기지 않으면
+                # "레인이 답한 M2065 가 명세의 어느 항목인가"를 사후에 되짚을 길이 끊긴다.
+                _, lane_id_map = renumber_items(
+                    lane_payloads(
+                        outcome["decompose"], outcome["groundings"], outcome["synthesis"]
+                    )
+                )
+                for lane_key, mapping in lane_id_map.items():
+                    id_maps[f"{read_run}/{lane_key}"] = mapping
                 final_signal = outcome["synthesis"].get("drop_signal") or final_signal
 
             canonical = specs[read_runs[0]]
@@ -516,6 +685,8 @@ def run(
             attempt += 1
     finally:
         _finish_lane_log(paths, journal)
+
+    write_json(os.path.join(paths.lanes_dir, ID_MAP_BASENAME), id_maps)
 
     mismatched = journal.mismatched()
     if mismatched:

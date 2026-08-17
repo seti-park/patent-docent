@@ -550,11 +550,17 @@ def approval_envelope(
     derived_ack=None,
     manual_ack=None,
     drop_decision=None,
+    checkpoint: str = "material_approval",
+    run_id: str = RUN_ID,
     target_path: str = "10-read/material-spec.json",
     digest: str | None = None,
     owner_quote: str = "이 재료로 CP1 승인한다. 파생 300 cm3 은 계산값으로 이해했다.",
 ) -> str:
-    """승인 봉투 md 를 쓴다. 봉투는 **오케스트레이터가** 쓴다는 규율의 시험용 대역이다."""
+    """승인 봉투 md 를 쓴다. 봉투는 **오케스트레이터가** 쓴다는 규율의 시험용 대역이다.
+
+    `checkpoint` · `run_id` · `target_path` 를 열어 둔 것은 봉투 **신원** 검사(재감수 B-02)의
+    시험을 위해서다 — 이 세 값을 바꿔 쓸 수 없으면 신원 위조를 재현할 수 없다.
+    """
     paths = RunPaths(run_root)
     absolute = os.path.join(run_root, *target_path.split("/"))
     if digest is None:
@@ -562,8 +568,8 @@ def approval_envelope(
             digest = "sha256:" + hashlib.sha256(handle.read()).hexdigest()
     frontmatter = {
         "schema": "approval-envelope/v0",
-        "checkpoint": "material_approval",
-        "run_id": RUN_ID,
+        "checkpoint": checkpoint,
+        "run_id": run_id,
         "target": {"path": target_path, "digest": digest},
         "decision": decision,
         "owner_quote": owner_quote,
@@ -595,6 +601,10 @@ def fail_rows(rows) -> list[str]:
         for row in rows
         for finding in row.findings
     ]
+
+
+def finding_rules(rows) -> list[str]:
+    return [finding.rule for row in rows for finding in row.findings]
 
 
 # ===========================================================================
@@ -955,6 +965,257 @@ def test_lane_requests_carry_disjoint_item_id_bands() -> None:
     for (low_a, high_a), (low_b, _) in zip(ordered, ordered[1:]):
         assert high_a < low_b, f"대역이 겹친다: M{low_a}~M{high_a} 와 M{low_b}~"
     assert len(bands) == len(requests), "요청 수와 대역 수가 다르다"
+
+
+# --- 조립 시 항목 ID 재번호(재감수 B-01) ------------------------------------
+# 위 대역 시험은 **요청 지시문**만 본다. 대역이 아무리 잘 나뉘어도 조립본이 그것을 이어
+# 붙이기만 하면 `M1..Mn` 연속이 깨지고 동결이 불가능해진다 — 아래 4건이 그 자리를 본다.
+
+BAND_OFFSETS = {
+    # 분해 레인도 0 이 아닌 자리에서 센다. 0 으로 두면 분해 항목의 원본 ID 와 최종 ID 가
+    # 우연히 같아져, `grounding.component` 재작성을 통째로 빼도 시험이 통과한다(변조 시험 M3).
+    "decompose": 100,
+    "ground-independent": 1000,
+    "ground-dependent": 2000,
+    "synthesize": 3000,
+}
+
+
+def _remap_ids(payloads: dict, table: dict) -> dict:
+    """레인 payload 전량의 항목 ID·참조를 `table` 로 바꿔 쓴다(시험용 대역 살포).
+
+    엔진의 재작성과 **반대 방향**이며 전역 표 하나만 쓴다 — 같은 코드를 두 번 쓰면 시험이
+    구현의 거울이 되어 아무것도 반증하지 못한다.
+    """
+    out = copy.deepcopy(payloads)
+
+    def ref(value):
+        return table.get(value, value) if isinstance(value, str) else value
+
+    def walk(elements) -> None:
+        for element in elements or []:
+            element["material_id"] = ref(element.get("material_id"))
+            walk(element.get("children") or [])
+
+    for payload in out.values():
+        for item in payload.get("items") or []:
+            item["id"] = ref(item.get("id"))
+            if item.get("superseded_by") is not None:
+                item["superseded_by"] = ref(item["superseded_by"])
+            if item.get("kind") == "grounding":
+                item["component"] = ref(item.get("component"))
+            elif item.get("kind") == "implication":
+                item["derived_from"] = [ref(entry) for entry in item.get("derived_from") or []]
+            elif item.get("kind") == "fact":
+                for entry in (item.get("derivation") or {}).get("inputs") or []:
+                    if "ref" in entry:
+                        entry["ref"] = ref(entry["ref"])
+        claims = payload.get("claims") or {}
+        for claim in claims.get("independent") or []:
+            walk(claim.get("elements") or [])
+        for claim in claims.get("dependents") or []:
+            for addition in claim.get("additions") or []:
+                addition["material_id"] = ref(addition.get("material_id"))
+        for interest in claims.get("applicant_interest") or []:
+            interest["material_id"] = ref(interest.get("material_id"))
+    return out
+
+
+def banded_payload_set() -> dict:
+    """레인이 1000 폭 대역을 받아 쓴 판. 기본 픽스처는 `M1..M13` 연속이라 재번호를 시험하지 못한다."""
+    payloads = payload_set()
+    table = {
+        item["id"]: f"M{int(item['id'][1:]) + offset}"
+        for task, offset in BAND_OFFSETS.items()
+        for item in payloads[task]["items"]
+    }
+    return _remap_ids(payloads, table)
+
+
+def assemble_from(payloads: dict) -> dict:
+    """레인 payload 4종 → 조립본. 러너를 통과하지 않고 조립기만 부른다."""
+    return read_stage.assemble_spec(
+        run_meta={
+            "run_id": RUN_ID,
+            "patent": copy.deepcopy(PATENT_META),
+            "engine": {"commit": "test"},
+        },
+        decompose=payloads["decompose"],
+        groundings=[payloads["ground-independent"], payloads["ground-dependent"]],
+        synthesis=payloads["synthesize"],
+        read_runs=("read-a", "read-b"),
+        repo=REPO,
+        source_digest="sha256:" + hashlib.sha256(SOURCE.encode("utf-8")).hexdigest(),
+    )
+
+
+def item_fingerprint(item):
+    """항목의 신원. **ID 파생값을 쓰지 않는다** — ID 는 재번호가 바꾸는 바로 그 값이다."""
+    if item is None:
+        return None
+    return (
+        item.get("kind"),
+        item.get("label_en")
+        or item.get("statement_en")
+        or item.get("what_it_shows_en")
+        or item.get("background_problem")
+        or "",
+        item.get("text_verbatim", ""),
+        item.get("value_raw", ""),
+        " / ".join(str(entry.get("quote", "")) for entry in item.get("spec_refs") or []),
+    )
+
+
+def reference_sites(claims: dict, items: list) -> list[tuple[str, str]]:
+    """참조 자리 → `(자리 이름, 참조값)`. 자리 이름은 ID 가 아니라 **위치**로 짓는다."""
+    sites: list[tuple[str, str]] = []
+
+    def walk(elements, prefix) -> None:
+        for position, element in enumerate(elements or []):
+            sites.append((f"{prefix}/e{position}.material_id", element.get("material_id")))
+            walk(element.get("children") or [], f"{prefix}/e{position}")
+
+    for position, claim in enumerate(claims.get("independent") or []):
+        walk(claim.get("elements") or [], f"independent[{position}]")
+    for position, claim in enumerate(claims.get("dependents") or []):
+        for index, addition in enumerate(claim.get("additions") or []):
+            sites.append(
+                (f"dependents[{position}].additions[{index}].material_id",
+                 addition.get("material_id"))
+            )
+    for position, interest in enumerate(claims.get("applicant_interest") or []):
+        sites.append(
+            (f"applicant_interest[{position}].material_id", interest.get("material_id"))
+        )
+    for position, item in enumerate(items):
+        if item.get("superseded_by") is not None:
+            sites.append((f"items[{position}].superseded_by", item["superseded_by"]))
+        kind = item.get("kind")
+        if kind == "grounding":
+            sites.append((f"items[{position}].component", item.get("component")))
+        elif kind == "implication":
+            for index, entry in enumerate(item.get("derived_from") or []):
+                sites.append((f"items[{position}].derived_from[{index}]", entry))
+        elif kind == "fact":
+            for index, entry in enumerate((item.get("derivation") or {}).get("inputs") or []):
+                if "ref" in entry:
+                    sites.append(
+                        (f"items[{position}].derivation.inputs[{index}].ref", entry["ref"])
+                    )
+    return sites
+
+
+def test_assembled_spec_has_contiguous_item_ids() -> None:
+    """대역을 이어 붙이기만 하면 결번이 남고 `lifecycle.id-contiguous` 가 **정상 산출을** 막는다."""
+    payloads = banded_payload_set()
+    raw = [
+        item["id"]
+        for task in ("decompose", "ground-independent", "ground-dependent", "synthesize")
+        for item in payloads[task]["items"]
+    ]
+    numbers = sorted(int(entry[1:]) for entry in raw)
+    if numbers == list(range(1, len(numbers) + 1)):
+        pytest.fail("대역 살포가 결번을 만들지 않았다 — 이 시험이 공허해진다")
+
+    spec = assemble_from(payloads)
+    expected = [f"M{index}" for index in range(1, len(spec["items"]) + 1)]
+    actual = [item["id"] for item in spec["items"]]
+    if actual != expected:
+        missing = sorted(set(expected) - set(actual))
+        pytest.fail(f"조립본 ID 가 M1..M{len(expected)} 연속이 아니다 — 결번 {missing[:8]}")
+
+
+def test_assembly_survives_freeze_id_monotonic(tmp_path) -> None:
+    """조립본을 동결에 **실제로 넣지 않으면** 대역·연속성 충돌이 시험을 통과한 채 남는다.
+
+    ★ 재감수 B-01 의 자리다. 기존 대역 시험은 요청 지시문만 보았고, 조립과 동결을 한 번도
+    거치지 않아 "정상 READ 산출을 동결할 수 없다"는 결함을 놓쳤다.
+    """
+    payloads = banded_payload_set()
+    root, outcome, _ = run_read(
+        tmp_path, payloads_by_run={"read-a": payloads, "read-b": copy.deepcopy(payloads)}
+    )
+    if outcome["status"] != "ok":
+        pytest.fail(f"read status 기대 ok, 실제 {outcome['status']} — {fail_rows(outcome['rows'])}")
+
+    approval_envelope(root)
+    frozen = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
+    monotonic = [row for row in frozen["rows"] if row.check_id == "freeze.id-monotonic"]
+    if not monotonic:
+        pytest.fail(f"freeze.id-monotonic 이 돌지 않았다: {[row.check_id for row in frozen['rows']]}")
+    if monotonic[0].status != "pass":
+        pytest.fail(f"동결 ID 검사가 실패했다: {fail_rows(frozen['rows'])}")
+    if frozen["status"] != "ok":
+        pytest.fail(f"freeze status 기대 ok, 실제 {frozen['status']} — {fail_rows(frozen['rows'])}")
+
+
+def test_renumbering_preserves_reference_targets() -> None:
+    """참조 재작성을 빠뜨리면 번호만 남고 **가리키는 대상이 조용히 바뀐다** — 유령 참조다."""
+    payloads = banded_payload_set()
+    before_items = [
+        item
+        for task in ("decompose", "ground-independent", "ground-dependent", "synthesize")
+        for item in payloads[task]["items"]
+    ]
+    before_index = {item["id"]: item for item in before_items}
+    before = reference_sites(payloads["decompose"]["claims"], before_items)
+
+    spec = assemble_from(payloads)
+    after_index = {item["id"]: item for item in spec["items"]}
+    after = reference_sites(spec["claims"], spec["items"])
+
+    if not before:
+        pytest.fail("픽스처에 참조 자리가 하나도 없다 — 이 시험이 공허해진다")
+    if len(before) != len(after):
+        pytest.fail(f"참조 자리 수가 달라졌다: 전 {len(before)} / 후 {len(after)}")
+
+    drifted: list[str] = []
+    for (old_locus, old_ref), (new_locus, new_ref) in zip(before, after):
+        if old_locus != new_locus:
+            drifted.append(f"자리 이름 불일치: {old_locus} vs {new_locus}")
+            continue
+        old_target = item_fingerprint(before_index.get(old_ref))
+        new_target = item_fingerprint(after_index.get(new_ref))
+        if old_target != new_target:
+            drifted.append(f"{old_locus}: {old_ref} → {new_ref} 가 다른 대상을 가리킨다")
+    if drifted:
+        pytest.fail(f"재번호가 참조 대상을 옮겼다: {drifted}")
+
+
+def test_two_lanes_reusing_one_id_do_not_merge() -> None:
+    """같은 라벨을 쓴 두 레인의 항목이 하나로 합쳐지면 항목 하나가 **소리 없이 사라진다**."""
+    payloads = banded_payload_set()
+    collided = payloads["ground-independent"]["items"][0]["id"]
+    dependent = payloads["ground-dependent"]["items"][0]
+    dependent["id"] = collided  # 두 접지 레인이 같은 번호를 발번한 판
+
+    spec = assemble_from(payloads)
+    expected_count = sum(len(payloads[task]["items"]) for task in BAND_OFFSETS)
+    if len(spec["items"]) != expected_count:
+        pytest.fail(f"항목 수 기대 {expected_count}, 실제 {len(spec['items'])} — 하나가 합쳐졌다")
+
+    ids = [item["id"] for item in spec["items"]]
+    if len(set(ids)) != len(ids):
+        pytest.fail(f"조립본에 중복 ID 가 있다: {sorted(ids)}")
+
+    fingerprints = [item_fingerprint(item) for item in spec["items"]]
+    for payload_key in ("ground-independent", "ground-dependent"):
+        wanted = item_fingerprint(payloads[payload_key]["items"][0])
+        if wanted not in fingerprints:
+            pytest.fail(f"{payload_key} 의 접지 항목이 조립본에서 사라졌다: {wanted}")
+
+    _, id_map = read_stage.renumber_items(
+        read_stage.lane_payloads(
+            payloads["decompose"],
+            [payloads["ground-independent"], payloads["ground-dependent"]],
+            payloads["synthesize"],
+        )
+    )
+    finals = {
+        lane: mapping[collided] for lane, mapping in id_map.items() if collided in mapping
+    }
+    if len(finals) != 2 or len(set(finals.values())) != 2:
+        pytest.fail(f"두 레인의 같은 원본 ID 가 서로 다른 최종 ID 를 받지 않았다: {finals}")
 
 
 def test_lane_fanout_batch_under_cap() -> None:
@@ -1376,6 +1637,98 @@ def test_freeze_rejects_stale_target_digest(tmp_path) -> None:
     ]
     if not rules_hit:
         pytest.fail("대상 해시 불일치가 결함으로 나오지 않았다")
+
+
+# --- 봉투 신원(재감수 B-02) -------------------------------------------------
+# 아래 5건은 한 덩어리다. 앞 4건은 "봉투가 어느 관문의 · 어느 런의 · 무엇에 대한 승인인가"를
+# 위조한 경우이고, 마지막 1건은 그 4건이 과잉 제약이 아님을 잡아 두는 반증이다.
+
+
+def test_freeze_rejects_ship_approval_envelope(tmp_path) -> None:
+    """이것이 없으면 CP2 봉투로 CP1 을 통과할 수 있다 — 관문 무력화지 오보가 아니다."""
+    root, _, _ = run_read(tmp_path)
+    approval_envelope(root, checkpoint="ship_approval")
+    outcome = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
+    if "approval.checkpoint" not in finding_rules(outcome["rows"]):
+        pytest.fail(f"ship_approval 봉투가 체크포인트 대조를 통과했다: {fail_rows(outcome['rows'])}")
+    if outcome["status"] != "halt":
+        pytest.fail(f"status 기대 halt, 실제 {outcome['status']}")
+    if os.path.exists(RunPaths(root).frozen_spec(1)):
+        pytest.fail("다른 체크포인트의 봉투로 동결본이 쓰였다")
+
+
+def test_freeze_rejects_envelope_from_another_run(tmp_path) -> None:
+    """이것이 없으면 다른 런에서 받은 승인이 이 런의 승인으로 재사용된다."""
+    root, _, _ = run_read(tmp_path)
+    approval_envelope(root, run_id="example-xx9999999z9-other-machine")
+    outcome = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
+    if "approval.run-id" not in finding_rules(outcome["rows"]):
+        pytest.fail(f"다른 런의 봉투가 통과했다: {fail_rows(outcome['rows'])}")
+    if outcome["status"] != "halt":
+        pytest.fail(f"status 기대 halt, 실제 {outcome['status']}")
+
+
+def test_freeze_rejects_envelope_targeting_another_file(tmp_path) -> None:
+    """이것이 없으면 해시만 맞는 아무 파일에 대한 승인이 재료 승인 행세를 한다."""
+    root, _, _ = run_read(tmp_path)
+    # 대상 = run.yaml. 해시는 **그 파일의 올바른 값**이므로 해시 대조로는 걸리지 않는다.
+    approval_envelope(root, target_path="run.yaml")
+    outcome = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
+    rules_hit = finding_rules(outcome["rows"])
+    if "approval.target-is-material-spec" not in rules_hit:
+        pytest.fail(f"엉뚱한 대상을 가리키는 봉투가 통과했다: {fail_rows(outcome['rows'])}")
+    if "approval.target-digest" in rules_hit:
+        pytest.fail("해시는 맞았어야 한다 — 이 봉투가 걸린 이유는 대상의 정체여야 한다")
+    if outcome["status"] != "halt":
+        pytest.fail(f"status 기대 halt, 실제 {outcome['status']}")
+
+
+def test_freeze_rejects_target_path_escaping_run_root(tmp_path) -> None:
+    """이것이 없으면 봉투가 런 밖 파일을 대상으로 지목하고, 러너가 그것을 읽는다."""
+    root, _, _ = run_read(tmp_path)
+    outside = os.path.join(os.path.dirname(root), "outside-secret.json")
+    with open(outside, "w", encoding="utf-8") as handle:
+        handle.write('{"not": "this run"}\n')
+
+    hashed: list[str] = []
+    original = freeze_stage.sha256_file
+
+    def spy(path: str) -> str:
+        hashed.append(os.path.realpath(path))
+        return original(path)
+
+    approval_envelope(root, target_path="../outside-secret.json")
+    freeze_stage.sha256_file = spy
+    try:
+        outcome = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
+    finally:
+        freeze_stage.sha256_file = original
+
+    if "approval.target-inside-run" not in finding_rules(outcome["rows"]):
+        pytest.fail(f"런 밖 대상이 통과했다: {fail_rows(outcome['rows'])}")
+    if outcome["status"] != "halt":
+        pytest.fail(f"status 기대 halt, 실제 {outcome['status']}")
+    # ★ 거부만으로는 부족하다 — 읽고 나서 거부하면 이미 읽은 것이다.
+    if os.path.realpath(outside) in hashed:
+        pytest.fail(f"런 밖 파일을 읽고 나서 거부했다: {hashed}")
+
+
+def test_freeze_accepts_a_correct_material_approval_envelope(tmp_path) -> None:
+    """이것이 없으면 '전부 거부'하는 검사도 위 4건에서 만점을 받는다."""
+    root, _, _ = run_read(tmp_path)
+    approval_envelope(root)
+    outcome = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
+    if outcome["status"] != "ok":
+        pytest.fail(f"정상 봉투가 거부됐다: {fail_rows(outcome['rows'])}")
+    identity = {
+        "approval.checkpoint",
+        "approval.run-id",
+        "approval.target-is-material-spec",
+        "approval.target-inside-run",
+    }
+    hit = identity.intersection(finding_rules(outcome["rows"]))
+    if hit:
+        pytest.fail(f"정상 봉투에 신원 결함이 붙었다: {sorted(hit)}")
 
 
 def test_derived_fact_ack_must_match_derived_set(tmp_path) -> None:
