@@ -814,6 +814,79 @@ def test_lane_effort_ladder_comes_from_contract() -> None:
             )
 
 
+def test_every_slice_is_a_verbatim_substring_of_the_source() -> None:
+    """슬라이스가 원천의 복사본이 아니면, 지시를 **충실히 따른** 레인이 통과할 수 없다.
+
+    요청서는 레인에게 "요청서에 실린 원천 조각에서 복사하라"고 지시하고 `read.verbatim` 은
+    `patent.md` 로 대조한다. 둘이 어긋나면 성실한 레인이 벌을 받고, 그 벌은 레인이 고칠 수
+    없다 — 구 구현이 문단을 뽑아 `"\\n\\n".join(...)` 으로 다시 이었고, 원천이 개행을 하나만
+    둔 자리에서 바이트가 갈렸다(2026-08-18 실특허 스모크에서 접지 레인이 실제로 만나 회피·보고).
+
+    연속 구간을 그대로 자르면 슬라이스의 어떤 부분문자열도 원천의 부분문자열이므로 이
+    함정이 **원리적으로** 사라진다. 이 테스트가 보는 것이 그 성질이다.
+    """
+    # ★ 합성 픽스처로는 이 성질을 시험할 수 없다. 픽스처는 문단을 빈 줄로 나누므로
+    #   구 구현의 `"\n\n".join(...)` 이 원천을 **우연히 그대로 재현**한다(변조 시험에서
+    #   공허 통과로 실측됨). 실물 공개공보는 문단 사이에 개행을 하나만 두고 수식 문단
+    #   안에서도 그렇다 — 그 배치를 재현해야 비로소 재구성과 복사가 갈린다.
+    dense = (
+        "## Description\n"
+        "[0156] The value can be expressed as:  \n"
+        "[00001](-1)Act<7>x2Act<6:3>.  \n"
+        "In the above expression, the terms are defined.  \n"
+        "[0157] The weight can be expressed as:  \n"
+        "[00002](-1)Wdata<5>x2Wdata<4:2>.  \n"
+        "In the above expression, the terms are defined.  \n"
+        "[0158] A third paragraph closes the block.\n"
+    )
+    for source_text in (SOURCE, dense):
+        view = ReadView(source_text, RULES)
+        for task in ("decompose", "ground-independent", "ground-dependent", "synthesize"):
+            for name, text in view.slices_for(task).items():
+                if not text:
+                    continue
+                assert text in source_text, (
+                    f"{task} 의 슬라이스 `{name}` 이 원천의 연속 부분문자열이 아니다 — "
+                    "레인이 여기서 복사한 인용은 read.verbatim 을 통과할 수 없다"
+                )
+
+    # 수식 라벨(`[00001]`)을 문단 시작으로 오인하면 문단이 한가운데서 쪼개진다.
+    locators = [paragraph.locator for paragraph in ReadView(dense, RULES).paragraphs()]
+    assert locators == ["[0156]", "[0157]", "[0158]"], (
+        f"수식 라벨이 문단 로케이터로 오인되었다: {locators}"
+    )
+
+
+def test_figure_caption_ids_satisfy_the_schema_pattern() -> None:
+    """캡션을 인식하는 규칙과 그 캡션에 id 를 주는 규칙이 다른 문자 집합을 전제하면, 레인이 쓸 수 없는 도면이 생긴다.
+
+    ★ 2026-08-18 실측. `caption_line` 은 `FIGS. 7 and 8` 을 캡션으로 받는데 그 번호를 그대로
+    id 로 쓰면 `FIG-7 and 8` 이 되어 스키마의 `figure_id` 패턴을 통과하지 못한다. 접지 레인이
+    그런 도면 2건을 **쓸 수 없어 회피**했다 — 계약의 불일치가 산출물의 축소로 새는 자리다.
+    """
+    schema = json.load(
+        open(
+            os.path.join(REPO, "reader", "schemas", "material-spec.schema.json"),
+            encoding="utf-8",
+        )
+    )
+    pattern = re.compile(schema["$defs"]["figure_id"]["pattern"])
+    sample = (
+        "## Brief description of the drawings\n\n"
+        "FIG. **1** illustrates a thing.\n"
+        "FIGS. **7** and **8** illustrate other things.\n"
+        "FIGS. **10**-**11** illustrate more things.\n"
+    )
+    captions = ReadView(sample, RULES).figure_captions()
+    assert captions, "표본에서 캡션을 하나도 찾지 못했다 — 이 테스트가 공허해진다"
+    for caption in captions:
+        assert pattern.fullmatch(caption.figure_id), (
+            f"캡션 id `{caption.figure_id}` 가 스키마의 figure_id 패턴을 통과하지 못한다"
+        )
+    ids = {caption.figure_id for caption in captions}
+    assert "FIG-7-8" in ids, f"`and` 연결어가 하이픈으로 정규화되지 않았다: {sorted(ids)}"
+
+
 def test_synthesis_request_names_every_figure_the_grounding_referenced() -> None:
     """등재 지시가 없으면 `figure_refs` 가 해소될 도면이 존재하지 않는다 — 유령 참조가 구조적으로 발생한다.
 

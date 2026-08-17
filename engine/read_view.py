@@ -22,7 +22,14 @@ from reader.lib.inventory import claim_body_map, find_claim_section
 from reader.lib.rules import Rules
 
 # 문단 번호 `[0041]`. USPTO 전문을 마크다운으로 옮긴 원천의 관습이다.
-PARAGRAPH_MARKER = re.compile(r"^\[(?P<number>[0-9]{3,6})\]", re.MULTILINE)
+#
+# ★ 뒤에 공백을 요구하는 이유(2026-08-18 실특허 스모크 실측). 같은 원천이 **수식 번호**를
+#   같은 대괄호 표기로 쓴다 — `[00002](-1)Wdata<5>×2…`. 공백 없이 수식이 바로 붙는다.
+#   구 패턴은 그것도 문단 시작으로 읽어 수식을 품은 문단을 **한가운데서 쪼갰고**, 그 조각을
+#   다시 이어 붙인 슬라이스가 원천과 바이트가 달라졌다. 실측: 느슨한 패턴 282건 중 5건이
+#   수식 라벨(`[00001]`~`[00006]`)이었고, 공백 요구로 정확히 그 5건만 걸러지며 진짜
+#   4자리 로케이터는 하나도 잃지 않는다.
+PARAGRAPH_MARKER = re.compile(r"^\[(?P<number>[0-9]{3,6})\][ \t]", re.MULTILINE)
 # 도면 캡션 행. `FIG. 2` · `FIGURE 3A` 를 받아 `FIG-2` · `FIG-3A` 로 정규화한다.
 FIGURE_CAPTION = re.compile(
     r"^(?:\*\*)?FIG(?:URE)?[.]?\s*(?P<number>[0-9]+[A-Za-z]?)(?:\*\*)?\b",
@@ -125,8 +132,24 @@ class ReadView:
         return out
 
     def paragraph_block(self) -> str:
-        """문단 전량을 한 덩어리로(레인 슬라이스용)."""
-        return "\n\n".join(paragraph.text for paragraph in self.paragraphs())
+        """명세서 문단 구간을 **원천의 연속 구간 그대로** 잘라 낸다(레인 슬라이스용).
+
+        ★ 이어 붙이지 않는 이유(2026-08-18 실특허 스모크 실측). 구 구현은 문단을 뽑아
+        `"\\n\\n".join(...)` 으로 다시 이었다. 그 순간 슬라이스는 **원천의 복사본이 아니라
+        재구성물**이 되고, 원천이 문단 사이에 개행을 하나만 둔 자리에서 바이트가 갈린다.
+
+        귀결이 고약하다 — 요청서는 레인에게 "요청서에 실린 원천 조각에서 복사하라"고
+        지시하는데, `read.verbatim` 은 `patent.md` 로 대조한다. 지시를 **충실히 따른**
+        레인이 통과할 수 없는 구간이 생긴다. 접지 레인이 이 함정을 실제로 만나 회피하고
+        보고했다(수식을 품은 5개 문단).
+
+        연속 구간을 그대로 자르면 슬라이스의 어떤 부분문자열도 원천의 부분문자열이므로,
+        이 함정이 **원리적으로** 사라진다. 자르는 범위는 첫 문단 시작부터 마지막 문단 끝까지다.
+        """
+        paragraphs = self.paragraphs()
+        if not paragraphs:
+            return ""
+        return self.source_text[paragraphs[0].start:paragraphs[-1].end]
 
     # -- 도면 캡션 ----------------------------------------------------------
 
@@ -159,6 +182,13 @@ class ReadView:
                 numbers = strip.sub("", numbers)
             # 범위·열거는 전개하지 않는다(`figure_captions.range_expansion: false`).
             # 캡션 행을 있는 그대로 넘기고 도면 id 배정은 하류가 한다 — 세지 않고 보여 준다.
+            # 다만 연결어·구분자는 하이픈으로 정규화한다: 그러지 않으면 `FIGS. 7 and 8` 이
+            # `FIG-7 and 8` 이 되어 스키마의 figure_id 패턴을 통과하지 못한다(실측 적발).
+            separator = self.rules.figure_id_separator
+            if separator is not None:
+                numbers = separator.sub(
+                    self.rules.figure_id_separator_replacement, numbers.strip()
+                )
             figure_id = f"FIG-{numbers.strip()}"
             if figure_id in seen:
                 continue

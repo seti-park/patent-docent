@@ -119,6 +119,11 @@ class Rules:
         self.figure_caption_line = re.compile(line, re.MULTILINE)
         strip = block.get("number_strip")
         self.figure_number_strip = re.compile(strip) if strip else None
+        separator = block.get("id_separator")
+        self.figure_id_separator = re.compile(separator) if separator else None
+        self.figure_id_separator_replacement = str(
+            block.get("id_separator_replacement", "-")
+        )
 
     def _compile_inventory(self) -> None:
         block = self.claim_inventory
