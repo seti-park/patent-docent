@@ -2102,6 +2102,9 @@ FIG. 2 is a section view of the heat spreader.
 | 9 | **파생의 파생 금지** — `derivation.inputs[].ref`가 가리키는 `fact`의 `origin`이 `quoted`임(**깊이 1** = 원문 스팬만이 원천, 재정 N9 · 재감수 M-01) | `read.value-derivation` |
 | 10 | element·addition의 `material_id`가 component 항목과 **1:1**이고, `component.claim_ref`가 **역방향으로 일치**(재감수 B-02) | `read.coverage` |
 | 11 | 하류 산출물의 참조 `spec_version`·`spec_digest` 정합 — 불일치 = 자동 무효(재정 N11) | `design.spec-digest`·`compose.spec-digest`·게이트 버전 정합 검사 |
+| 12 | `value_type`이 `value_raw`의 결정론 파싱 결과와 같고, `value_normalized`가 `value_type`의 렌더와 같다. `origin`·`bib_source.field`와 `kind`의 결속도 여기서 본다 | `read.value-derivation` |
+| 13 | 원천 청구항 인벤토리 대조 — 파싱 목록과 `claims` 등재분의 양방향 일치, 각 청구항 `text_verbatim`이 **자기 구간 안의** 부분문자열 | `read.claim-inventory` |
+| 14 | 동결 항목 payload의 불변성 — 정본 payload 해시 동일 · 단방향 상태 전이 · 비순환 승계 사슬(종단 `active`) | `freeze.payload-immutable` |
 
 스키마 파일이 위 방침에서 벗어나거나 이 목록과 어긋나면 **파일이 정본이고 이 표가 결함**이다 — 정합은 `tools/check_spec_refs.py`가 대조한다.
 

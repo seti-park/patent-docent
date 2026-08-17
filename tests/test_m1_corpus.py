@@ -138,6 +138,37 @@ def test_requirements_table_cites_only_evidence_that_exists():
     assert not absent, f"요구사항표가 지목한 변조본이 코퍼스에 없다: {absent}"
 
 
+def test_spec_verifier_duty_table_matches_the_schema_comment():
+    """§2.8 표와 스키마 `$comment` 목록이 어긋나면, "검증기 몫이 무엇인가"의 정본이 둘로 갈린다.
+
+    SPEC §2.8은 스스로 **"번호와 내용은 정본 스키마 파일의 `$comment` 목록과 일치해야 한다"**고
+    적고, 어긋나면 "파일이 정본이고 이 표가 결함"이라는 처분까지 규정한다. 그런데 그 일치를
+    **집행하는 것이 없었다** — M1이 스키마에 제약 (12)(13)(14)를 더하면서 표는 11행에
+    머물렀고, 요구사항표의 유령 테스트명을 고친 직후 같은 종류를 찾다가 드러났다.
+
+    증거의 좌표가 틀린 자리는 대개 혼자 있지 않다.
+    """
+    spec = open(os.path.join(REPO, "docs", "SPEC.md"), encoding="utf-8").read()
+    start = spec.find("스키마로 표현하지 않고 검증기 코드에 맡기는 제약")
+    assert start != -1, "SPEC 에서 §2.8 검증기 몫 표를 찾지 못했다"
+    rows = [int(n) for n in re.findall(r"^\| (\d+) \|", spec[start:start + 8000], re.MULTILINE)]
+
+    import json
+
+    schema = json.load(
+        open(
+            os.path.join(REPO, "reader", "schemas", "material-spec.schema.json"),
+            encoding="utf-8",
+        )
+    )
+    declared = sorted({int(n) for n in re.findall(r"\((\d+)\)", schema["$comment"])})
+
+    assert rows == declared, (
+        f"§2.8 표 번호 {rows} 와 스키마 $comment 번호 {declared} 가 다르다 — "
+        "스키마가 정본이므로 표를 맞춰라(§2.8 자신의 처분 규정)"
+    )
+
+
 def test_glossary_registers_every_check_id():
     """식별자 사전이 검사를 빠뜨리면, 그 검사는 계약이 아니라 관습이 된다.
 
