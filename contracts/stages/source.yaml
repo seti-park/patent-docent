@@ -1,0 +1,109 @@
+# 스테이지 I/O 계약 — `source`
+#
+# 정본 서술 = docs/SPEC.md §1.3. 이 파일은 그 서술의 기계 판독본이며, 어긋나면 SPEC 이 이긴다.
+# 서식 = SPEC §1.2 고정 서식 + `schema` 키(K3 양방향 대조 대상이 되기 위한 계약 라인 선언).
+
+schema: stage-contract/v0
+id: source
+
+lane:
+  kind: tool          # 비-LLM. 다이제스트 계산·구조 검사만 한다.
+  model: null
+  effort: null
+
+inputs:
+  - "Owner 투입물(특허 식별자 또는 원문 파일)"
+
+may_read:
+  - "Owner 투입물"
+  - docs/CHARTER.md
+
+# 제약이 없는 유일한 스테이지다. 대신 쓰기 대상이 아래로 한정되며,
+# 이후 어떤 스테이지도 00-source/ 아래를 수정하지 못한다(읽기 전용 고정).
+must_not_read: []
+
+outputs:
+  - 00-source/patent.md
+  - 00-source/patent.sha256
+  - 00-source/figures-raw/
+  - 00-source/source-report.json
+  - run.yaml
+
+optional_outputs: []
+
+checks_before_exit:
+  - id: source.digest-recorded
+    criterion: "patent.sha256 의 값이 patent.md 의 실제 SHA-256 과 일치"
+  - id: source.claims-section
+    criterion: >-
+      patent.md 에 청구항 구간이 식별 가능한 경계로 존재한다. 경계 규칙의 정본은
+      reader/reader-rules.yaml#claim_inventory.section 이며, 이 검사는 그 규칙으로 구간을
+      찾고 `claim_start` 로 최소 1개 청구항을 얻는 데 성공하는지만 본다.
+      ★ READ 의 read.claim-inventory 가 같은 파서를 쓰므로, 여기서 통과한 원천은
+      하류에서 파서 문제로 다시 넘어지지 않는다.
+  - id: source.figures-manifest
+    criterion: "figures-raw/ 파일 수 ≥ 1 이고 파일명이 도면 번호로 정렬 가능"
+  - id: source.run-id
+    criterion: "run.yaml 의 run_id 가 `^[a-z0-9]+-[a-z0-9]+-[a-z0-9-]+$` 이고 디렉터리명과 일치(SPEC §7.1)"
+  - id: source.exhibit-candidates
+    criterion: >-
+      source-report.json 의 도면 수 ≥ 1 **그리고** 전시물 후보 수 ≥ 트윗 하한.
+      트윗 하한의 정본 = contracts/format-parameters.yaml#tweet_count.min (재정 N12).
+
+# ---------------------------------------------------------------------------
+# 전시물 후보 산정식 — ★ 잠정. 재정 밖이다.
+# ---------------------------------------------------------------------------
+# 재정 N12 가 정한 것은 **조기 보고와 부족 시 escalate** 이며 후보 수를 어떻게 세는지는
+# 정하지 않았다(M0.6 재감수 M-04 가 SPEC 의 무단 확정을 지적해 잠정 처리로 되돌렸다).
+# 아래는 총괄이 잠정 정의한 규칙이며 태그가 그 사실을 드러낸다.
+exhibit_candidates:
+  tag: "[가설]"
+  unit: source-figure-file
+  formula: "figures-raw/ 안의 도면 파일 수"
+  rationale: >-
+    이 시점에 존재하는 것은 원천 도면뿐이다 — 자작 자산(개념 다이어그램·수치 카드)은
+    figures.prepare 이후에야 생긴다. 셀 수 있는 것만 센다.
+  # 미결 3논점(SPEC §1.3 `[OPEN]`). 재정 전까지 아래 잠정 처리로 읽는다.
+  provisional_resolutions:
+    - question: "서브도면(FIG. 3A·3B)을 1로 세는가 각각으로 세는가"
+      provisional: "파일 단위로 센다 — 한 파일에 3A·3B 가 함께 있으면 1, 파일이 나뉘어 있으면 2."
+      rationale: "가리킬 수 있는 것만 후보다. 파일이 곧 전시 가능한 자산의 최소 단위다."
+    - question: "같은 구조의 다른 각도(단면도·사시도)가 전시 스톱 둘을 지지하는가"
+      provisional: "각각 센다."
+      rationale: "같은 구조인지 아닌지는 도면을 읽어야 알 수 있고, 이 시점은 읽기 전이다."
+    - question: "흐름도·타이밍도를 후보에서 빼는가"
+      provisional: "빼지 않는다."
+      rationale: "종류 판별은 판단이며, 판단을 조기 보고에 넣으면 조기 보고가 아니게 된다."
+  recompute_requirement: >-
+    ★ source-report.json 은 **도면별 행**(파일명·바이트·이 규칙 적용 결과)을 함께 적는다.
+    재정이 내려오면 원천을 다시 읽지 않고 소급 재계산할 수 있어야 하기 때문이다.
+  open: >-
+    첫 런 개시 전 Owner 재정 대상. 세 물음 전부 source.exhibit-candidates 의 통과 여부를
+    바꾸고, 그 검사는 런을 중단시키는 관문이므로 재량으로 확정할 자리가 아니다.
+
+failure:
+  - condition: "원천 텍스트 취득 실패·문자 깨짐"
+    action: halt
+    note: "하류 전부가 무의미해진다"
+  - condition: "청구항 구간 경계 식별 실패"
+    action: escalate
+    note: "원천 형식 문제이므로 자동 복구 대상 아님"
+  - condition: "도면 부재 또는 전시물 후보 < 트윗 하한"
+    action: escalate
+    reason_label: "형식 전제 미충족"
+    note: >-
+      재정 N12. D4 의 drop 제안(reason_label = "안도감 부적합")과 **사유를 구별해 적는다** —
+      둘은 같은 escalate 이지만 판단의 종류가 다르다. 하나는 형식 전제이고 다른 하나는 서사다.
+  - condition: "run_id 형식 위반"
+    action: halt
+    note: "디렉토리 재생성 필요"
+
+# 규칙 완화·대체 모드를 선제 설계하지 않는다(재정 N12).
+# "도면이 적은 특허를 위한 축약 스레드" 같은 대체 경로를 미리 만들어 두지 않으며,
+# 실투입 결정이 필요해진 시점에 Owner 재정 1회로 정한다.
+no_preemptive_relaxation: true
+
+# 원천 취득 경로는 엔진 범위 밖이다(SPEC §9.0 E8). patent.md 는 외부 도구(WIPS 명세서 추출 등)의
+# 산출을 수동 투입받으며, 엔진의 계약은 "원천을 받는다"에서 시작한다. source 는 다이제스트·구조
+# 검사만 책임지고, patent.sha256 이 그 원천을 핀한다.
+acquisition_out_of_scope: true

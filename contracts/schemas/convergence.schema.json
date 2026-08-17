@@ -1,0 +1,264 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patent-docent.local/contracts/schemas/convergence.schema.json",
+  "title": "convergence/v0",
+  "$comment": "READ 스테이지의 결정론 검사 보고서 `10-read/convergence.json` 의 계약. 근거 = docs/SPEC.md §1.4·§2.6 + Owner 재정 2026-08-17 R1·R3 · 2026-08-18 N5·N9 · N14. ★ 이 파일이 사는 곳이 contracts/ 인 이유(재정 N8 ① 경계 규칙): 보고서 서식은 **파이프라인 산출물의 형식**이지 재료 명세 계약이 아니다 — historian 은 재료 명세를 받지 이 보고서를 받지 않는다. 검사 자체(reader/lib)는 이식 단위에 있고 그 결과를 담는 봉투만 여기 있다. ★ 서식 승격(M1): 구 SPEC §2.6 예시는 checks 를 검사 이름 키의 객체로 그렸으나, 재정 N5 가 '모든 검사 행은 검사 ID·규칙 목록 버전·대상 수·위반 수·상태를 보고한다'는 정량 서식을 명령했다. 따라서 checks 는 `verdict-check-row/v0` 행의 **배열**이며 각 행이 자기 check_id 를 들고 다닌다. 공허 2종(empty-ruleset·empty-target)은 그 서식의 파생값으로 자동 날인되므로, '검사가 아무것도 세지 않고 통과하는' 구멍이 이 보고서에서 눈에 보인다 — M0.5 재감수 B-02 가 지적한 종류의 결함이다. ★ vacuous_pass[] 는 손으로 채우는 필드가 아니라 checks[] 중 vacuous != \"none\" 인 행의 check_id 목록으로 **파생**된다(verdict-check-row $comment (5) 와 같은 규율). ★ 이 보고서의 세 목록(fact_classification · manual_verification_required · grounding_exceptions)은 검사 결과의 요약이 아니라 **CP1 표면의 입력**이다(SPEC §1.5) — Owner 가 '기계가 무엇을 보증했고 무엇을 보증하지 못했는가'를 항목 단위로 구별해 보게 하는 것이 목적이며, 비어 있어도 필드를 생략하지 않는다(누락과 '없음'의 구별).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "run_id",
+    "reader_version",
+    "spec_version",
+    "source_digest",
+    "checks",
+    "vacuous_pass",
+    "findings",
+    "convergence_detail",
+    "fact_classification",
+    "manual_verification_required",
+    "grounding_exceptions"
+  ],
+  "properties": {
+    "schema": { "const": "convergence/v0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "reader_version": { "type": "string", "pattern": "^[0-9]+[.][0-9]+[.][0-9]+$" },
+    "spec_version": { "type": "integer", "minimum": 1 },
+    "source_digest": {
+      "$comment": "검사가 기준점으로 삼은 원천의 다이제스트. 재료 명세의 patent.source_digest 와 같아야 하며, 다르면 이 보고서의 verbatim 계열 결과는 전부 무효다(불변식 I1).",
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "checks": {
+      "$comment": "verdict-check-row/v0 행의 배열. 정본 서식은 contracts/schemas/verdict-check-row.schema.json 이며 여기서는 그 형태를 재선언한다(파일 간 $ref 를 쓰지 않는 이유는 오프라인 검증 가능성이다 — 러너가 네트워크·레지스트리 없이 단일 파일로 검증할 수 있어야 한다). 두 파일이 어긋나면 verdict-check-row/v0 가 정본이고 이 블록이 결함이다.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/check_row" }
+    },
+    "vacuous_pass": {
+      "$comment": "vacuous != \"none\" 인 행의 check_id 목록. 파생값이다 — 손으로 채우지 않는다.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "convergence_detail": { "$ref": "#/$defs/convergence_detail" },
+    "fact_classification": { "$ref": "#/$defs/fact_classification" },
+    "manual_verification_required": {
+      "$comment": "origin: \"figure-sourced\" 사실 전건(재정 R1). 도면에서 읽은 값은 기계 검증 불가이며, 검사가 통과시켰다는 사실이 값이 옳다는 뜻이 아님을 이 목록이 자백한다. CP1 이 사람 눈으로 본다.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["material_id", "reason", "figure", "numerals"],
+        "properties": {
+          "material_id": { "type": "string", "pattern": "^M[0-9]+$" },
+          "reason": { "const": "figure-sourced" },
+          "figure": { "type": "string", "pattern": "^FIG-[A-Za-z0-9-]+$" },
+          "numerals": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "grounding_exceptions": {
+      "$comment": "anchor_state 예외 2종(no-anchor-found·not-depicted) 전건(재정 R3). 접지 전량이 원칙이므로 예외는 날조하거나 숨기지 않고 드러낸다 — 예외가 많으면 그것이 소재 신호다. search_note(KR)가 함께 오는 이유는 SPEC §1.5 가 '구성요소 ID와 search_note 동반'을 CP1 표면 요건으로 정했기 때문이다.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["material_id", "component", "spec", "figure", "search_note"],
+        "properties": {
+          "material_id": { "type": "string", "pattern": "^M[0-9]+$" },
+          "component": { "type": "string", "pattern": "^M[0-9]+$" },
+          "spec": { "enum": ["found", "no-anchor-found"] },
+          "figure": { "enum": ["found", "not-depicted"] },
+          "search_note": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "check_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check_id", "ruleset", "ruleset_version", "ruleset_size", "checked", "violations", "status", "vacuous"],
+      "properties": {
+        "check_id": { "type": "string", "minLength": 1 },
+        "ruleset": { "type": ["string", "null"], "minLength": 1 },
+        "ruleset_version": { "type": ["string", "null"], "minLength": 1 },
+        "ruleset_size": { "type": ["integer", "null"], "minimum": 0 },
+        "checked": { "type": "integer", "minimum": 0 },
+        "violations": { "type": "integer", "minimum": 0 },
+        "status": { "enum": ["pass", "fail"] },
+        "vacuous": { "enum": ["none", "empty-ruleset", "empty-target"] }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["ruleset_size"], "properties": { "ruleset_size": { "const": 0 } } },
+          "then": { "properties": { "vacuous": { "const": "empty-ruleset" } } }
+        },
+        {
+          "if": {
+            "required": ["ruleset_size", "checked"],
+            "properties": { "ruleset_size": { "not": { "const": 0 } }, "checked": { "const": 0 } }
+          },
+          "then": { "properties": { "vacuous": { "const": "empty-target" } } }
+        },
+        {
+          "if": {
+            "required": ["ruleset_size", "checked"],
+            "properties": { "ruleset_size": { "not": { "const": 0 } }, "checked": { "not": { "const": 0 } } }
+          },
+          "then": { "properties": { "vacuous": { "const": "none" } } }
+        },
+        {
+          "if": { "required": ["status"], "properties": { "status": { "const": "pass" } } },
+          "then": { "properties": { "violations": { "const": 0 } } }
+        },
+        {
+          "if": { "required": ["status"], "properties": { "status": { "const": "fail" } } },
+          "then": { "properties": { "violations": { "minimum": 1 } } }
+        },
+        {
+          "if": { "required": ["ruleset"], "properties": { "ruleset": { "type": "null" } } },
+          "then": { "properties": { "ruleset_version": { "type": "null" }, "ruleset_size": { "type": "null" } } }
+        },
+        {
+          "if": { "required": ["ruleset"], "properties": { "ruleset": { "type": "string" } } },
+          "then": { "properties": { "ruleset_version": { "type": "string" }, "ruleset_size": { "type": "integer" } } }
+        }
+      ]
+    },
+    "finding": {
+      "$comment": "결함 1건의 좌표와 내용. found·expected 를 나란히 싣는 이유는 '실패했다'가 아니라 '무엇이 무엇과 달랐다'를 보고하기 위함이다 — 국소 수정 지시(D8)의 전제다.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check", "rule", "locus", "found", "expected", "message"],
+      "properties": {
+        "check": { "type": "string", "minLength": 1 },
+        "rule": { "type": "string" },
+        "locus": { "type": "string" },
+        "found": { "type": "string" },
+        "expected": { "type": "string" },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    },
+    "convergence_detail": {
+      "$comment": "read.convergence 의 축별 실측치. 판정 행은 pass/fail 만 말하므로 '얼마나 가까웠는가'는 여기 남는다. 재정 대기 항목이기도 하다 — reader-rules.yaml#convergence.open_question 이 신설 4축의 임계 0.95 에 실측 근거가 없음을 밝히고 있고, 첫 런의 이 블록이 그 재정의 근거 자료가 된다. peer 가 없어 검사를 돌리지 못한 경우 executed: false 이며 axes 는 빈 배열이다(그 사실이 checks[] 에서 vacuous: \"empty-target\" 으로도 드러난다).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executed", "attempt", "independent_count", "dependent_count", "axes"],
+      "properties": {
+        "executed": { "type": "boolean" },
+        "attempt": { "type": "integer", "minimum": 0 },
+        "independent_count": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 0,
+          "maxItems": 2
+        },
+        "dependent_count": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 0,
+          "maxItems": 2
+        },
+        "axes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "status"],
+            "properties": {
+              "id": {
+                "enum": [
+                  "independent-count",
+                  "element-set",
+                  "tree-edges",
+                  "dependent-count",
+                  "dependent-set",
+                  "addition-attachment"
+                ]
+              },
+              "jaccard": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+              "threshold": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+              "status": { "enum": ["pass", "fail"] }
+            }
+          }
+        }
+      }
+    },
+    "fact_classification": {
+      "$comment": "재정 N9 의 수치 3분류. ★ 서지 복사(bibliographic)는 patent 블록에서 결정론 복사된 값이므로 원문 스팬 수치와 같은 갈래로 계수한다(SPEC §1.4 — 재정이 3분류만 정하고 서지의 자리를 정하지 않아 총괄이 확정한 재량). 다만 어느 항목이 서지인지는 bibliographic_ids 로 드러내 둔다 — 계수는 합치되 정체는 숨기지 않는다. derived 항목이 formula·inputs·depth 를 들고 다니는 이유는 CP1 이 '산식과 인용을 나란히' 보아야 하기 때문이다(SPEC §1.5): 파생 수치는 원문 어디에도 문자열로 없으므로, 산식을 보여주지 않으면 Owner 는 그 값이 계산의 결과라는 사실 자체를 알 수 없고 승인이 형식이 된다.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["quoted_span", "bibliographic_ids", "derived", "figure_sourced"],
+      "properties": {
+        "quoted_span": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "material_ids"],
+          "properties": {
+            "count": { "type": "integer", "minimum": 0 },
+            "material_ids": {
+              "type": "array",
+              "items": { "type": "string", "pattern": "^M[0-9]+$" },
+              "uniqueItems": true
+            }
+          }
+        },
+        "bibliographic_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^M[0-9]+$" },
+          "uniqueItems": true
+        },
+        "derived": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["material_id", "formula", "inputs", "depth"],
+            "properties": {
+              "material_id": { "type": "string", "pattern": "^M[0-9]+$" },
+              "formula": { "type": "string", "minLength": 1 },
+              "inputs": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["name", "origin"],
+                  "properties": {
+                    "name": { "type": "string", "minLength": 1 },
+                    "ref": { "type": "string", "pattern": "^M[0-9]+$" },
+                    "locator": { "type": "string" },
+                    "origin": {
+                      "$comment": "입력이 가리키는 fact 의 origin, 또는 원천 스팬 직접 지정이면 inline-span. ★ 규정상 허용되는 값은 quoted 와 inline-span 뿐이지만(깊이 1 — 재정 N9), enum 은 4 origin 전부를 받는다. 이유는 정직한 실패 보고다: 깊이 1 을 위반한 인스턴스의 보고서가 위반 사실(origin: \"derived\" 등)을 **적을 자리가 없으면**, 실패한 런은 자기 실패를 서식에 담지 못한다. 서식은 통과한 런만 담는 것이 아니다.",
+                      "enum": ["quoted", "derived", "figure-sourced", "bibliographic", "inline-span"]
+                    }
+                  }
+                }
+              },
+              "depth": { "const": 1 }
+            }
+          }
+        },
+        "figure_sourced": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["material_id", "figure", "machine_verifiable"],
+            "properties": {
+              "material_id": { "type": "string", "pattern": "^M[0-9]+$" },
+              "figure": { "type": "string", "pattern": "^FIG-[A-Za-z0-9-]+$" },
+              "machine_verifiable": { "const": false }
+            }
+          }
+        }
+      }
+    }
+  }
+}

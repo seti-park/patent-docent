@@ -1,0 +1,115 @@
+# 스테이지 I/O 계약 — `freeze`
+#
+# 정본 서술 = docs/SPEC.md §1.6. 이 파일은 그 서술의 기계 판독본이며, 어긋나면 SPEC 이 이긴다.
+# 서식 = SPEC §1.2 고정 서식 + `schema` 키.
+
+schema: stage-contract/v0
+id: freeze
+
+lane:
+  kind: tool          # 결정론. 비-LLM.
+  model: null
+  effort: null
+
+inputs:
+  - 10-read/material-spec.json
+  - 10-read/material-spec.md
+  - "15-frozen/approval-v<N>.md"
+
+may_read:
+  - "10-read/**"
+  - "15-frozen/**"
+  - 00-source/patent.sha256
+
+must_not_read: []
+
+outputs:
+  - "15-frozen/material-spec.v<N>.json"
+
+optional_outputs: []
+
+# 동결이 하는 세 가지 (SPEC §1.6).
+actions:
+  - action: version-stamp
+    detail: "spec_version: N, status: \"frozen\" 기입"
+    purpose: "인용의 시점 고정"
+  - action: digest
+    detail: "동결본의 SHA-256 을 산출해 run.yaml 에 기록. 하류 산출물은 이 값을 spec_digest 로 복사"
+    purpose: "조용한 교체 탐지"
+  - action: readonly
+    detail: "파일 권한 0444 + 러너의 쓰기 경로 목록에서 15-frozen/ 제외"
+    purpose: "물리적 불변"
+
+# 동결 이후 재료가 바뀌는 유일한 경로 = 반려 → 개정(spec_version +1) 한 갈래뿐이다(D6 규율 ②).
+# 개정 시 material-spec.v<N+1>.json 이 **새 파일로** 생기고 v<N> 은 지우지 않는다.
+revision_path:
+  only: "reject → revise → re-approve"
+  new_file: true
+  keep_prior: true
+
+checks_before_exit:
+  - id: freeze.approval-valid
+    criterion: >-
+      approval-v<N>.md 프런트매터가 approval-envelope/v0 를 통과하고, decision: "approved" ·
+      owner_quote 비어 있지 않음 · target.digest 가 실제 파일 SHA-256 과 일치(재정 R8).
+      ★ 더해 봉투와 재료를 함께 읽어야 판정되는 3항을 여기서 본다(스키마 밖):
+      ① drop_signal.verdict == "drop-proposed" 이면 drop_decision 필수
+      ② derived_fact_ack[] 가 재료의 origin == "derived" 항목 집합과 **정확히 일치**
+      ③ manual_verification_ack[] 가 origin == "figure-sourced" 항목 집합과 **정확히 일치**
+    note: >-
+      ②③은 M0.6 재감수 M-01 의 잔여 처분이다 — "derived_fact_ack[] 도 실제 파생 fact 집합과
+      대조하지 않아 빈 목록이나 유령 ID 가 승인 봉투를 통과한다". 항목 단위 승인(재정 N9)은
+      목록이 대조될 때만 승인이다.
+  - id: freeze.digest-match
+    criterion: "동결본의 patent.source_digest 가 00-source/patent.sha256 과 일치"
+  - id: freeze.readonly
+    criterion: "15-frozen/material-spec.v<N>.json 의 권한이 쓰기 불가(0444)"
+  - id: freeze.render-parity
+    criterion: "material-spec.md 에 모든 items[].id 가 1회 이상 등장(KR 렌더 누락 탐지)"
+  - id: freeze.id-monotonic
+    criterion: "개정 시: v<N-1> 의 모든 항목 ID 가 v<N> 에 존재하고, 삭제된 ID 가 없음"
+    implemented_by: reader/lib/freeze_integrity.py
+  - id: freeze.payload-immutable
+    criterion: >-
+      개정 시: 두 판에 공통인 ID 의 **정본 payload 해시**가 동일 + 상태 전이가 단방향 +
+      superseded_by 사슬이 비순환이고 종단이 active.
+    implemented_by: reader/lib/freeze_integrity.py
+    ruleset: reader/reader-rules.yaml#item_lifecycle
+    introduced_by: "재정 N14 ① (M0 M13 · M0.6 재감수 M-08 처분)"
+    note: >-
+      freeze.id-monotonic 은 **ID 의 존재**만 본다. 항목 ID 의 시간 안정성(SPEC §2.4)은 ID 가
+      아니라 **의미**가 고정되어야 성립하는데, 그전까지 고정되는 것은 ID 뿐이었다.
+
+report_format: contracts/schemas/verdict-check-row.schema.json
+
+failure:
+  - condition: "승인 봉투 부재 · decision != \"approved\" · owner_quote 부재"
+    action: halt
+  - condition: "target.digest 불일치(승인 후 재료 변경)"
+    action: halt
+    note: "봉투 자동 실효, 재승인 필요(재정 R8)"
+  - condition: "freeze.approval-valid 의 ack 집합 불일치"
+    action: halt
+    note: "항목 단위 승인이 성립하지 않은 봉투다. 재상정 대상."
+  - condition: "freeze.digest-match 실패(원천 다이제스트 불일치)"
+    action: halt
+  - condition: "freeze.render-parity 실패"
+    action: reject-upstream
+    to: read
+    note: "렌더 재생성"
+  - condition: "freeze.id-monotonic 실패(항목 삭제·재번호)"
+    action: reject-upstream
+    to: read
+  - condition: "freeze.payload-immutable 실패"
+    action: reject-upstream
+    to: read
+    note: >-
+      개정본이 옛 항목의 **내용**을 바꿔 적었다는 뜻이다. 내용을 고치려면 새 ID 를 추가하고
+      옛 항목을 superseded 로 표시해야 한다 — 그것이 append-only 규율의 전부다.
+
+# 재료 개정 시 하류 산출물은 전량 무효·재생성이다(재정 N11). 집행은 선언이 아니라 대조로 한다 —
+# 모든 하류 산출물이 참조 spec_version·spec_digest 를 기록하고 게이트가 정합을 검사한다.
+downstream_invalidation:
+  on: "spec_version 증가"
+  effect: "하류 산출물 전량 무효 · 재생성"
+  enforced_by: "게이트 버전 정합 검사(design.spec-digest · compose.spec-digest)"

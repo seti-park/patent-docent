@@ -1,0 +1,187 @@
+# 스테이지 I/O 계약 — `read`
+#
+# 정본 서술 = docs/SPEC.md §1.4 (+ §1.5 CP1). 이 파일은 그 서술의 기계 판독본이며,
+# 어긋나면 SPEC 이 이긴다. 서식 = SPEC §1.2 고정 서식 + `schema` 키.
+
+schema: stage-contract/v0
+id: read
+
+# 독립 2회 실행이 필요한 이유는 품질이 아니라 **안정성**이다(SPEC §1.4).
+# 두 독립 실행이 다른 청구항 트리를 낳는다면 그 소재에 대한 독해는 재현되지 않는 것이고,
+# 이후 모든 결정론 검사의 기준점이 흔들린다.
+lane:
+  kind: llm
+  model: opus-5
+  effort: max
+  instances: 2
+  independence: >-
+    두 실행은 서로의 산출을 보지 않는다. 같은 세션의 재생성은 독립 실행이 아니다
+    (SPEC §2.6 검사 4 보조 규정). provenance.read_runs[] 에 두 실행 식별자를 남긴다.
+  # 하위 작업 레인. 재정 R3: 비용은 관할을 낮춰서가 아니라 **레인을 낮춰서** 푼다.
+  sub_lanes:
+    - id: decompose
+      model: opus-5
+      effort: max
+      scope: "D5 ① 청구항 구성요소 전 분해 + ② 관계 트리"
+    - id: ground-independent
+      model: opus-5
+      effort: high
+      scope: "D5 ③ 독립항 element 3중 접지"
+    - id: ground-dependent
+      model: opus-5
+      effort: low
+      scope: >-
+        D5 ③ 종속항 additions 3중 접지. 저비용 레인 허용(재정 R3) — 정확성은 레인의 격이
+        아니라 read.pointer-resolve·read.coverage 의 결정론 포인터 해소 검증이 보증한다.
+    - id: synthesize
+      model: opus-5
+      effort: max
+      scope: "D5 ④ 유기적 통합 + ⑤ 포지셔닝 + 기술적 함의(implication)"
+  # 레인 규약(SPEC §7.3 펜 배정 규율 2·3을 독해 레인에도 적용한다).
+  lane_discipline:
+    - "모델·effort 는 API 레벨 하드 지정한다. 프롬프트 문구로 소프트 지정하지 않는다."
+    - "한 배치의 팬아웃은 30 미만이며, 초과분은 배치를 쪼개고 배치마다 체크포인트를 남긴다."
+    - "첫 배치 완료 직후 실호출 model·effort 를 transcript 로 확인한 뒤 계속한다."
+
+inputs:
+  - 00-source/patent.md
+  - 00-source/patent.sha256
+  - 00-source/figures-raw/
+  - 00-source/source-report.json
+  - run.yaml
+
+may_read:
+  - "00-source/**"
+  - "reader/procedure/**"
+  - reader/schemas/material-spec.schema.json
+  - reader/reader-rules.yaml
+  - docs/CHARTER.md
+  - "40-compose/<variant>/material-defect.md"   # 반려 시에만
+
+# 독해는 서사·훅을 모르는 상태에서 수행되어야 한다. 블루프린트나 초안을 본 독해 레인은
+# "쓰기 좋은 재료"를 향해 편향되며, 이는 재료 명세가 historian 과의 계약(D14)이라는 사실과
+# 정면으로 충돌한다 — 재료는 이 스레드가 아니라 이 특허의 함수여야 한다.
+must_not_read:
+  - "20-design/**"
+  - "40-compose/**"      # material-defect.md 제외
+  - "50-gate/**"
+  - "65-critique/**"
+  - "ledgers/anchors/**"
+
+outputs:
+  - 10-read/material-spec.json      # status: draft
+  - 10-read/material-spec.md        # KR 인간 판독본 (CP1 주 표면)
+  - 10-read/claim-trees/
+  - 10-read/grounding.md
+  - 10-read/positioning.md
+  - 10-read/drop-signal.md
+  - 10-read/convergence.json        # 계약 = contracts/schemas/convergence.schema.json
+
+optional_outputs: []
+
+# D5 5단계 ↔ 산출물 대응 (SPEC §1.4).
+stage_artifacts:
+  - step: "① 청구항 구성요소 전 분해"
+    artifact: ["10-read/claim-trees/", "material-spec.json claims.independent[]·claims.dependents[]"]
+  - step: "② 관계 트리 도식화"
+    artifact: ["10-read/claim-trees/"]
+  - step: "③ 3중 접지"
+    artifact: ["10-read/grounding.md", "items[] kind: grounding"]
+  - step: "④ 유기적 통합"
+    artifact: ["10-read/material-spec.md 의 통합 그림 절"]
+  - step: "⑤ 포지셔닝"
+    artifact: ["10-read/positioning.md", "items[] kind: positioning"]
+
+# drop 신호 2단(D4). 조기 신호가 drop-proposed 면 그 시점에 즉시 escalate 하며, 나머지 단계를
+# 다 돌린 뒤 보고하지 않는다 — 비용 절약이 아니라 하류 산출물이 Owner 의 판단을 오염시키는
+# 것을 막기 위함이다.
+drop_signal:
+  stages: [early, final]
+  early_at: "청구항 분해 직후"
+  final_at: "포지셔닝 확정 후"
+  on_drop_proposed: escalate
+
+checks_before_exit:
+  - id: read.schema
+    criterion: "reader/schemas/material-spec.schema.json 검증 통과"
+    implemented_by: reader/lib/schema_check.py
+  - id: read.verbatim
+    criterion: "모든 text_verbatim·quote·caption_quote·evidence_quotes[]·quotes[] 가 원천의 바이트 정확 부분문자열"
+    implemented_by: reader/lib/verbatim.py
+  - id: read.pointer-resolve
+    criterion: "전 구조 참조가 실재 대상으로 해소 + kind 제약 + 자기참조 없음 + 참조 그래프 비순환"
+    implemented_by: reader/lib/pointers.py
+  - id: read.coverage
+    criterion: "독립항 element 전량 + 종속항 additions 전량 접지 · material_id 1:1 · claim_ref 역조건"
+    implemented_by: reader/lib/coverage.py
+  - id: read.dependency-parse
+    criterion: "종속항 text_verbatim 파싱 집합 == depends_on, 어형 ↔ dependency_type 정합"
+    implemented_by: reader/lib/dependency_parse.py
+    ruleset: reader/reader-rules.yaml#dependency_citation
+  - id: read.value-derivation
+    criterion: "origin별 대조 + value_type ↔ value_raw 파싱 일치 + value_normalized == render(value_type) + 깊이 1 + _en 한글 부재"
+    implemented_by: reader/lib/derivation.py
+    ruleset: reader/reader-rules.yaml#value_grammar
+  - id: read.claim-inventory
+    criterion: "원천 청구항 인벤토리 ↔ 등재분 양방향 일치 + 청구항별 구간 내 verbatim"
+    implemented_by: reader/lib/inventory.py
+    ruleset: reader/reader-rules.yaml#claim_inventory
+    introduced_by: "재정 N14 ① (M0 M12 · M0.6 재감수 M-07 처분)"
+  - id: read.convergence
+    criterion: "독립 2회 실행 비교 6축 전부 통과"
+    implemented_by: reader/lib/convergence.py
+    ruleset: reader/reader-rules.yaml#convergence
+
+# 모든 검사 행은 verdict-check-row/v0 서식으로 보고된다(재정 N5).
+# 공허 2종(empty-ruleset·empty-target)은 그 서식의 파생값으로 자동 날인된다.
+report_format: contracts/schemas/verdict-check-row.schema.json
+report_file: 10-read/convergence.json
+
+failure:
+  - condition: "read.verbatim / pointer-resolve / coverage / dependency-parse / value-derivation / claim-inventory 실패"
+    action: retry(1)
+    then: escalate
+  - condition: "read.convergence 미달"
+    action: retry(1)
+    then: escalate
+    note: "Owner 재정 대상 — 소재 변경 또는 절차 수정. 품질 결함이 아니라 절차 신호다."
+  - condition: "read.schema 실패"
+    action: retry(1)
+    then: halt
+  - condition: "drop-signal = drop-proposed (early 또는 final)"
+    action: escalate
+    reason_label: "안도감 부적합"
+    note: "형식 전제 미충족(source 의 escalate)과 사유를 구별해 적는다 — 재정 N12."
+  - condition: "원천 다이제스트가 run.yaml 기록과 불일치"
+    action: halt
+    note: "원천이 도중에 바뀐 런은 폐기 대상"
+  - condition: "반려 수신(material-defect.md)"
+    action: reject-upstream
+    note: "재요리 — spec_version +1 로 개정, 항목은 append-only(SPEC §1.6)"
+
+owner_checkpoint:
+  id: material_approval
+  surfaces:
+    - 10-read/material-spec.md
+    - 10-read/drop-signal.md
+    - 10-read/positioning.md
+    - 10-read/convergence.json
+  confirm_file: "15-frozen/approval-v<N>.md"
+  envelope_schema: contracts/schemas/approval-envelope.schema.json
+  question: >-
+    이 재료만 읽고 이 특허가 무엇을 하는 물건인지, 그리고 투자자-팬의 어떤 질문에
+    답할 수 있는지 말할 수 있는가? 말할 수 없다면 어느 항목이 비었는지 지적하라.
+  # CP1 이 반드시 보는 목록(재정 R1·R3·N9). convergence.json 이 싣고 material-spec.md 가
+  # 별도 절로 강조 렌더한다. 전부 "기계가 무엇을 보증했고 무엇을 보증하지 못했는가"의 목록이다.
+  mandatory_surfaces:
+    - list: manual_verification_required
+      why: "도면 유래 수치는 기계 검증 불가다. 검사가 통과시켰다는 사실이 값이 옳다는 뜻이 아님을 봉투가 자백한다(재정 R1)."
+    - list: grounding_exceptions
+      why: "접지 전량이 원칙이므로 예외는 날조하거나 숨기지 않고 드러낸다(재정 R3). 예외가 많으면 그것이 소재 신호다."
+    - list: fact_classification
+      why: >-
+        파생 수치는 원문 어디에도 문자열로 없다. 산식과 입력 항목을 나란히 보여주지 않으면
+        Owner 는 그 값이 계산의 결과라는 사실 자체를 알 수 없고 승인은 형식이 된다(재정 N9).
+  # 무인 실행 금지 — --yes 류 플래그를 설치하지 않는다. 체크포인트 무응답 = 무기한 대기이며
+  # 시간 초과 자동 진행은 없다(재정 R8).
+  unattended_flag: forbidden

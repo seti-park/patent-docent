@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://patent-docent.local/reader/schemas/material-spec.schema.json",
   "title": "material-spec/v0",
-  "$comment": "재료 명세 스키마 정본(D14 프로젝트 간 계약). 개정 근거 = Owner 재정 2026-08-17 R1·R2·R3 + 2026-08-18 N9(파생 수치 깊이 1) + M0.5 재감수 B-02·M-01·M-02 집행. 계약 라인은 v0 유지(미동결 상태의 개정이므로 라인 승격 없음), reader_version = 0.3.0. 값 언어는 EN 단일(R2)이며, 예외로 drop_signal.reason 과 grounding.search_note 만 KR이다. EN 집행은 $defs/en_text 가 담당하며(한글 자모·음절 거부), 원문 인용 필드(text_verbatim·quote·caption_quote·evidence_quotes[]·positioning.quotes[])와 KR 규정 필드(drop_signal.reason·grounding.search_note)에는 적용하지 않는다. ★ 스키마로 표현하지 않고 검증기 코드에 맡기는 제약: (1) derivation.formula 재계산 결과가 rounding 적용 후 value_normalized 와 문자열 일치 (2) origin=quoted 일 때 value_raw == source.quote[source.value_span.start:end] 바이트 동일 (3) dependents[].text_verbatim 에서 인용 청구항 번호를 결정론 파싱해 depends_on 배열·dependency_type 과 대조(read.dependency-parse) (4) 참조 무결성 전반(claim_ref·material_id·component·attaches_to·derived_from·figure·superseded_by·derivation.inputs[].ref 의 해소와 kind 제약) (5) 정규화 일관성(value_normalized == normalize(value_raw), 단위 일치) (6) 항목 ID 연속성(M1..Mn 빠짐 없음, append-only) (7) superseded_by 의 non-null 조건이 status == \"superseded\" 와 일치 (8) derivation.inputs[].ref 가 자기 id 를 가리키지 않으며 참조 그래프가 비순환이다 (9) ★ 파생의 파생 금지 — derivation.inputs[].ref 가 가리키는 fact 의 origin 은 \"quoted\" 여야 한다. 재정 2026-08-18 N9 의 문언은 \"파생 수치의 원천은 원문 스팬만(깊이 1)\" 이며, origin 4갈래 중 원문 스팬을 들고 있는 것은 quoted 하나다(figure-sourced 는 도면 판독, bibliographic 은 서지 필드 복사이므로 원문 스팬이 아니다). 구 문언 \"origin 이 derived 가 아니면 됨\" 은 그 둘까지 입력으로 허용해 재정보다 넓었다(M0.6 재감수 M-01 보수). 스팬을 직접 지정하는 입력 형태({name, locator, quote, value_span})는 그 자체가 원문 스팬이므로 그대로 허용된다. 스키마는 참조를 해소하지 못하므로 이 검사는 전량 검증기 몫이다 (10) element·addition 의 material_id 는 component 항목과 1:1 이며(두 element 가 같은 component 항목을 공유할 수 없다), component.claim_ref 는 자기를 가리킨 element·addition 의 id 와 역방향으로 일치한다 (11) 하류 산출물은 참조 spec_version·spec_digest 를 기록하고 게이트가 정합을 검사한다 — 불일치 = 자동 무효(재정 2026-08-18 N11). ★ dependency_type 불변식의 역방향(len(depends_on)==1 ⟹ \"single\")은 alternative-form 이 단일 종속일 수 있어 스키마에 넣지 않았다 — 검증기·재정 확인 대상.",
+  "$comment": "재료 명세 스키마 정본(D14 프로젝트 간 계약). 개정 근거 = Owner 재정 2026-08-17 R1·R2·R3 + 2026-08-18 N9(파생 수치 깊이 1) + M0.5 재감수 B-02·M-01·M-02 집행. 계약 라인은 v0 유지(미동결 상태의 개정이므로 라인 승격 없음), reader_version = 0.4.0. ★ 라인 미승격의 근거는 이제 총괄 재량이 아니라 재정이다 — Owner 재정 2026-08-18 N15: \"0.x = 미동결 — 강화·파괴 변경 자유(변경 기록만 필수), 계약 보증 없음. v1.0.0 동결 사건 = historian 첫 이식 직전\". M0.6 재감수 M-14(미재정 예외 창설)는 이 재정으로 해소되었다. 값 언어는 EN 단일(R2)이며, 예외로 drop_signal.reason 과 grounding.search_note 만 KR이다. EN 집행은 $defs/en_text 가 담당하며(한글 자모·음절 거부), 원문 인용 필드(text_verbatim·quote·caption_quote·evidence_quotes[]·positioning.quotes[])와 KR 규정 필드(drop_signal.reason·grounding.search_note)에는 적용하지 않는다. ★ 스키마로 표현하지 않고 검증기 코드에 맡기는 제약: (1) derivation.formula 재계산 결과가 rounding 적용 후 value_normalized 와 문자열 일치 (2) origin=quoted 일 때 value_raw == source.quote[source.value_span.start:end] 바이트 동일 (3) dependents[].text_verbatim 에서 인용 청구항 번호를 결정론 파싱해 depends_on 배열·dependency_type 과 대조(read.dependency-parse) (4) 참조 무결성 전반(claim_ref·material_id·component·attaches_to·derived_from·figure·superseded_by·derivation.inputs[].ref 의 해소와 kind 제약) (5) 정규화 일관성(value_normalized == normalize(value_raw), 단위 일치) (6) 항목 ID 연속성(M1..Mn 빠짐 없음, append-only) (7) superseded_by 의 non-null 조건이 status == \"superseded\" 와 일치 (8) 항목 간 참조 그래프에 **자기참조가 없고 순환이 없다**. 간선은 derivation.inputs[].ref · **implication.derived_from[]** · superseded_by · grounding.component 의 합집합이다 — 구 문언은 derivation.inputs 만 적어 implication 이 서로를 근거로 삼는 2항 순환(M_a.derived_from=[M_b], M_b.derived_from=[M_a])을 금지하는 문언이 어디에도 없었다(M1 코퍼스 레인 적발). 근거가 원을 그리면 그 서술은 원천에 닿지 않으며, 그것은 derivation 사슬이 원을 그리는 것과 정확히 같은 결함이다 (9) ★ 파생의 파생 금지 — derivation.inputs[].ref 가 가리키는 fact 의 origin 은 \"quoted\" 여야 한다. 재정 2026-08-18 N9 의 문언은 \"파생 수치의 원천은 원문 스팬만(깊이 1)\" 이며, origin 4갈래 중 원문 스팬을 들고 있는 것은 quoted 하나다(figure-sourced 는 도면 판독, bibliographic 은 서지 필드 복사이므로 원문 스팬이 아니다). 구 문언 \"origin 이 derived 가 아니면 됨\" 은 그 둘까지 입력으로 허용해 재정보다 넓었다(M0.6 재감수 M-01 보수). 스팬을 직접 지정하는 입력 형태({name, locator, quote, value_span})는 그 자체가 원문 스팬이므로 그대로 허용된다. 스키마는 참조를 해소하지 못하므로 이 검사는 전량 검증기 몫이다 (10) element·addition 의 material_id 는 component 항목과 1:1 이며(두 element 가 같은 component 항목을 공유할 수 없다), component.claim_ref 는 자기를 가리킨 element·addition 의 id 와 역방향으로 일치한다 (11) 하류 산출물은 참조 spec_version·spec_digest 를 기록하고 게이트가 정합을 검사한다 — 불일치 = 자동 무효(재정 2026-08-18 N11) (12) ★ value_type 이 value_raw 의 결정론 파싱 결과와 같고 value_normalized 가 value_type 의 렌더와 같다 — 규칙 정본 = reader/reader-rules.yaml#value_grammar, 검사 = read.value-derivation (M0 M14 · 재감수 M-09 처분, 재정 N14 ① 편입) (13) ★ 원천 청구항 인벤토리 대조 — patent.md 의 청구항 구간을 파싱한 목록과 claims 등재분이 양방향으로 일치하고, 각 청구항의 text_verbatim 이 **자기 구간 안의** 부분문자열이다. 규칙 정본 = reader/reader-rules.yaml#claim_inventory, 검사 = read.claim-inventory (M0 M12 · 재감수 M-07 처분) (14) ★ 동결 항목 payload 의 불변성 — 개정본에서 기존 ID 의 정본 payload(status·superseded_by 를 제외한 전 필드) 해시가 바뀌면 거부하고, 상태 전이는 단방향이며(active → retracted|superseded, 종단에서 복귀 없음), superseded_by 사슬은 비순환이고 종단이 active 다. 규칙 정본 = reader/reader-rules.yaml#item_lifecycle, 검사 = freeze.payload-immutable (M0 M13 · 재감수 M-08 처분). ★ 이 (14)가 구 규칙 \"superseded_by 는 status: active 항목을 가리킨다\"를 **폐기**한다 — 2차 승계(A→B→C)에서 B 가 superseded 가 되는 순간 A 의 링크를 고쳐야 했고 그것은 동결본을 고치는 일이었다(SPEC §9.27). ★ dependency_type 불변식의 역방향(len(depends_on)==1 ⟹ \"single\")은 alternative-form 이 단일 종속일 수 있어 스키마에 넣지 않았다 — 검증기·재정 확인 대상이며, 현행 파싱 규칙 5종은 alternative-form 에 도달하지 못한다(reader-rules.yaml#dependency_citation.unreachable_values 가 그 사실을 데이터로 드러낸다).",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "reader_version", "spec_version", "status", "run_id", "patent", "claims", "figures", "items", "drop_signal", "provenance"],
@@ -25,6 +25,100 @@
       "type": "string",
       "minLength": 1,
       "not": { "pattern": "[\\uAC00-\\uD7A3\\u1100-\\u11FF\\u3130-\\u318F]" }
+    },
+    "decimal": {
+      "$comment": "★ 정규화된 십진 문자열(재정 N14 ① — 재료 측 수치 문법). 표기의 자유도를 스키마가 직접 닫는다: 선행 `+` 금지 · 선행 0 패딩 금지 · 후행 0 금지 · 과학표기 금지(전개 후 저장) · **음의 0(`-0`) 금지**. 같은 수가 두 표기를 갖는 순간 MATCH_KEY 가 두 벌이 되고 숫자 전수 대조(l0-format §9)가 성립하지 않는다. ★ 음의 0 금지가 별도 분기로 표현된 이유(M1 자체 감사에서 실측 적발): 초판 패턴 `^-?(?:0|[1-9][0-9]*)…$` 는 `-0` 을 통과시켰고, 그것은 이 $comment 가 선언한 목적의 정확한 반례였다 — `set` 분기에서 [\"0\",\"-0\"] 이 uniqueItems(문자열 비교)를 통과해 수치적으로 같은 원소 둘을 담을 수 있었다. 그러므로 0 은 부호 없는 형태 하나만 허용하고, 부호는 0 이 아닌 수에만 붙인다. 정규화 구현 정본 = reader/lib/normalize.py, 규칙 문언 = reader/reader-rules.yaml#value_grammar.render.number_normalization.",
+      "type": "string",
+      "pattern": "^(?:0|-?(?:0[.][0-9]*[1-9]|[1-9][0-9]*(?:[.][0-9]*[1-9])?))$"
+    },
+    "value_type": {
+      "$comment": "★ 재료 측 수치 문법(M0 M14 · M0.6 재감수 M-09 · SPEC §9.28 처분, 재정 N14 ① 편입 · 재정 N15 가 계약 확장을 허용). 구 스키마의 fact 는 value_normalized 문자열 하나뿐이라 범위·부등호·공차·과학표기·집합을 구별해 담을 자리가 없었고, 그 결과 게이트의 numeric.exhaustive 가 그런 값에서 문자열 일치 여부밖에 판정할 수 없었다. 이 판별 유니온이 그 자리를 만든다. `approximate` 는 kind 와 직교한다 — \"약 0.08\" 과 \"0.08\" 은 다른 주장이며, 렌더에서 `~` 접두로 구별되어 MATCH_KEY 가 섞이지 않는다. ★ 분기는 7종이다 — 수치 5종(scalar·range·inequality·tolerance·set) + 비수치 2종(date·identifier). 비수치 2종은 M1 자체 감사에서 적발된 공백의 처분이며, 그 사유는 각 분기의 $comment 에 있다. ★ 스키마가 못 하는 것: value_raw 를 파싱한 결과가 이 객체와 같은지, value_normalized 가 이 객체의 렌더와 같은지, origin·bib_source.field 와 kind 의 결속이 맞는지는 전부 검증기 read.value-derivation 의 몫이다(제약 12).",
+      "type": "object",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "approximate", "value"],
+          "properties": {
+            "kind": { "const": "scalar" },
+            "approximate": { "type": "boolean" },
+            "value": { "$ref": "#/$defs/decimal" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "approximate", "low", "high", "low_inclusive", "high_inclusive"],
+          "properties": {
+            "kind": { "const": "range" },
+            "approximate": { "type": "boolean" },
+            "low": { "$ref": "#/$defs/decimal" },
+            "high": { "$ref": "#/$defs/decimal" },
+            "low_inclusive": { "type": "boolean" },
+            "high_inclusive": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "approximate", "bound", "direction"],
+          "properties": {
+            "kind": { "const": "inequality" },
+            "approximate": { "type": "boolean" },
+            "bound": { "$ref": "#/$defs/decimal" },
+            "direction": { "enum": ["at-least", "at-most", "greater-than", "less-than"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "approximate", "center", "tolerance", "tolerance_unit"],
+          "properties": {
+            "kind": { "const": "tolerance" },
+            "approximate": { "type": "boolean" },
+            "center": { "$ref": "#/$defs/decimal" },
+            "tolerance": { "$ref": "#/$defs/decimal" },
+            "tolerance_unit": { "enum": ["absolute", "percent"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "approximate", "members"],
+          "properties": {
+            "kind": { "const": "set" },
+            "approximate": { "type": "boolean" },
+            "members": {
+              "type": "array",
+              "minItems": 2,
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/decimal" }
+            }
+          }
+        },
+        {
+          "$comment": "★ 비수치 사실 ①: 날짜. M1 자체 감사에서 적발된 공백의 처분 — 초판 유니온은 수치 5종뿐이어서 서지 복사 사실(patent.dates.*)과 명세서에서 인용한 날짜를 담을 자리가 없었고, 그 결과 SPEC §2.7 예시의 M14(우선일)가 read.value-derivation 을 통과할 수 없었다. M-09 가 지적한 결함은 '수치의 표현 유형이 없다'였지 '날짜를 수치로 취급하라'가 아니다. 값은 ISO 8601 날짜 문자열이며 정규화가 곧 그 형태다.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "approximate", "value"],
+          "properties": {
+            "kind": { "const": "date" },
+            "approximate": { "type": "boolean" },
+            "value": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+          }
+        },
+        {
+          "$comment": "★ 비수치 사실 ②: 식별자(공개번호·부품번호 등). 공백을 허용하지 않는 토큰만 담는다 — 'US 2026/0147854 A1' 처럼 공백이 낀 표기는 구분자를 제거한 정본 형태(US20260147854A1)로 저장한다(§7.1 pubnum 규칙과 같은 방향). 공백 있는 값은 **조용히 통과시키지 않고 거부**한다: 같은 번호의 두 표기가 정답지에 들어가는 순간 숫자 전수 대조가 갈라진다. 이 kind 가 임의 산문의 통로가 되지 않도록, origin 과의 결속(bib_source.field == patent.number ⟹ identifier)은 검증기 read.value-derivation 이 본다.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "approximate", "value"],
+          "properties": {
+            "kind": { "const": "identifier" },
+            "approximate": { "type": "boolean" },
+            "value": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9/.-]*$" }
+          }
+        }
+      ]
     },
     "item_id": { "type": "string", "pattern": "^M[0-9]+$" },
     "claim_id": { "type": "string", "pattern": "^CL-[0-9]+$" },
@@ -336,7 +430,7 @@
       "$comment": "S7~S12(재정 R1). 공통 필드 + origin enum 까지 properties 로 표현하고, origin 별 부속 필드(source·derivation·figure_source·bib_source)는 전부 properties 에 선언한 뒤 allOf + if/then 으로 required 만 강제한다. 산식 재계산·스팬 일치 대조는 검증기 몫(파일 최상위 $comment 참조).",
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "kind", "status", "superseded_by", "label_en", "origin", "value_raw", "value_normalized", "unit", "machine_verifiable"],
+      "required": ["id", "kind", "status", "superseded_by", "label_en", "origin", "value_raw", "value_normalized", "value_type", "unit", "machine_verifiable"],
       "properties": {
         "id": {}, "status": {}, "superseded_by": {},
         "kind": { "const": "fact" },
@@ -344,6 +438,7 @@
         "origin": { "enum": ["quoted", "derived", "figure-sourced", "bibliographic"] },
         "value_raw": { "type": "string", "minLength": 1 },
         "value_normalized": { "type": "string", "minLength": 1 },
+        "value_type": { "$ref": "#/$defs/value_type" },
         "unit": { "type": ["string", "null"] },
         "machine_verifiable": { "type": "boolean" },
         "source": { "$ref": "#/$defs/fact_source" },

@@ -1,0 +1,526 @@
+# 독해층 규칙 계약 (reader-rules/v0)
+#
+# 지위 — 이 파일은 **이식 단위(`reader/`)에 속하는 계약**이다(재정 2026-08-18 N8 ①).
+#   historian 이 재료 명세를 해석하려면 이 규칙이 함께 있어야 한다: 청구항을 어디서 끊는가,
+#   종속 인용을 어떻게 읽는가, 항목의 생애가 어떻게 흐르는가, 수치 문자열을 어떤 타입으로
+#   읽는가. 넷 다 "특허를 읽는 일"이며 출력 채널(X 스레드)을 모른다.
+#
+# 왜 코드가 아니라 데이터인가 — 두 근거가 겹친다.
+#   ① D7: 판정 규칙의 입법은 재정 사항이다. 규칙이 코드에 박히면 재정 없이 조용히 바뀌고,
+#      그 순간 검사가 자기 입법이 된다. 파일로 두면 diff 가 곧 개정 이력이다.
+#   ② SPEC §4.8 자기매칭 격리 요건 2항: 탐지 패턴은 코드에서 분리한다.
+#
+# 출처 태그 — `contracts/format-parameters.yaml` 과 같은 3종 체계를 쓴다(재정 N-D11).
+#   `[물리]`  대상 자체가 강제하는 값. 우리 판단의 여지가 없다.
+#   `[전승]`  이미 재정·스펙 문언으로 내려온 규칙. 여기서는 전사일 뿐이다.
+#   `[가설]`  총괄이 잠정 정의한 규칙. **재정 대기이며 환류 검증 1순위다.**
+#
+# ★ `[가설]` 항목의 성격(재정 N14 조건 ①의 이행 방식) — 재정 N14 는 청구항 인벤토리·payload
+#   불변성·재료 수치 문법을 M1 요구사항으로 편입하라고 명했으나, 그 **세부 규칙까지 정하지는
+#   않았다**. SPEC §9.26 은 "파싱 규칙 없이 검사만 만들면 그 검사가 곧 자기 입법이 된다"고
+#   경고한다. 그 경고를 지키는 방법은 검사를 만들지 않는 것이 아니라(N14 가 만들라고 했다)
+#   **규칙을 재정 가능한 형태로 밖에 내놓는 것**이다. 아래 `[가설]` 블록이 그 형태이며,
+#   각각 `open_question` 을 달아 무엇이 미결인지 밝힌다.
+
+schema: reader-rules/v0
+version: "0"
+reader_version_introduced: "0.4.0"
+
+meta:
+  basis: >-
+    헌장 D5(독해론 5단계)·D6 규율 ③(결정론의 위치)·D7(입법은 재정) +
+    Owner 재정 2026-08-17 R1 · 2026-08-18 N9 · N14 · N15 +
+    M0.6 재감수 M-07(인벤토리·구조 수렴)·M-08(payload 불변)·M-09(수치 문법) 처분.
+  consumed_by:
+    - reader/lib/inventory.py
+    - reader/lib/dependency_parse.py
+    - reader/lib/freeze_integrity.py
+    - reader/lib/value_grammar.py
+    - reader/lib/convergence.py
+  not_consumed_by: >-
+    engine/** 은 이 파일을 직접 읽지 않는다. 독해층 검사는 전부 reader/lib 을 거친다 —
+    구현 이중화가 생기면 두 벌 중 하나는 반드시 낡는다(SPEC §8.4 M1).
+
+# ===========================================================================
+# 1. 청구항 인벤토리 — 원천에서 청구항 목록을 뽑는 규칙
+#    처분 대상: M0 M12 / M0.6 재감수 M-07 / SPEC §9.26 (인벤토리 축)
+#    편입 근거: 재정 N14 ①
+# ===========================================================================
+claim_inventory:
+  tag: "[가설]"
+  purpose: >-
+    "전 청구항 분해"(D5 ①)가 실제로 전량인지 확인하려면 원천 쪽 정답 목록이 있어야 한다.
+    현행 커버리지 검사는 **등재된 것들 사이의** 접지만 보므로, 청구항 하나가 통째로 빠져도
+    남은 것들이 서로 잘 접지되어 있으면 통과한다(SPEC §9.26).
+  enforced_by: read.claim-inventory
+
+  # 청구항 구간의 경계. 원천 정본 생성 규약(SPEC §1.3)이 이 형태를 보장한다.
+  section:
+    # 시작 = 아래 정규식 중 하나에 매칭되는 마크다운 헤더 행.
+    headings:
+      - '^#{1,6}\s+Claims?\s*$'
+      - '^#{1,6}\s+What is claimed is\s*:?\s*$'
+      - '^#{1,6}\s+CLAIMS?\s*$'
+    # 끝 = 같거나 더 높은 수준의 다음 헤더, 또는 파일 끝.
+    ends_at: next-heading-of-same-or-higher-level
+    # 구간을 찾지 못하면 통과가 아니라 **입력 오류**다(exit 2 계열).
+    on_missing: environment-error
+
+  # 한 청구항의 시작을 알리는 행. 번호를 감싼 마크다운 강조(`**1**.`)를 허용한다 —
+  # USPTO 전문을 마크다운으로 변환한 원천에서 실제로 쓰이는 형태다(2026-08-18 실측).
+  claim_start: '^[ \t]*(?:\*\*|__)?(?P<number>[0-9]+)(?:\*\*|__)?[ \t]*[.)][ \t]+(?P<head>\S)'
+  # 청구항 본문 = 시작 행부터 다음 시작 행 직전까지(구간 끝 포함).
+  body_extent: until-next-claim-start-or-section-end
+  # 본문 끝의 공백·마크다운 하드브레이크(줄 끝 두 칸·NBSP)는 구간 경계 계산에서만 무시한다.
+  # `text_verbatim` 대조는 잘라내기 **전** 원문 바이트로 한다 — 검사 1 의 바이트 정확성이
+  # 여기서 느슨해지면 그 아래 전부가 느슨해진다.
+  trailing_trim_scope: boundary-only
+
+  # ★ 실측 함정 (2026-08-18, US20260147854A1 원문에서 확인).
+  observed_hazards:
+    - hazard: "청구항 구간 **직전**에 청구항처럼 생긴 `Clause N:` 블록이 60여 개 있다."
+      why_we_survive: >-
+        구간을 헤더(`### Claims`)로 먼저 자르고 그 **안에서만** `claim_start` 를 찾기 때문이다.
+        "파일에서 첫 번호 목록을 찾는다"는 구현이었다면 통째로 오인했을 자리다.
+    - hazard: "원천 마지막 줄에 개행이 없다(마지막 청구항이 미종단)."
+      why_we_survive: "`body_extent` 의 끝은 개행이 아니라 구간 끝이다."
+    - hazard: "NBSP(U+00A0)가 공백처럼 보이는 자리에 1,700회 넘게 섞여 있다."
+      why_we_survive: >-
+        검사 1 은 정규화 없이 바이트 비교한다(SPEC §2.6 검사 1 보조 규정). 인용을 눈으로 옮겨
+        적으면 반드시 실패하며, **그 실패가 정상 동작이다** — 관대한 정규화를 넣는 순간
+        검사가 반증할 수 있는 대상이 줄어든다.
+
+  # 취소·삭제 청구항. 인벤토리에는 오르되 등재 의무에서 면제된다.
+  canceled_body: '^\s*[\(\[]?\s*(?:[Cc]anceled|[Cc]ancelled|[Dd]eleted)(?:\s*[-–—]\s*.*)?\s*[\)\]]?\s*[.]?\s*$'
+
+  # 판정 규칙 (전부 필수 실패 조건).
+  rules:
+    - id: inventory.non-empty
+      rule: "파싱된 청구항 수가 0이면 실패한다."
+      why: >-
+        대상이 0건이면 아래 대조가 전부 공허하게 통과한다. 공허 통과는 통과가 아니다
+        (재정 N5 — 공허 2종 자동 가시화). 청구항 없는 특허는 원천 결함이므로 escalate 다.
+    - id: inventory.unique-numbers
+      rule: "같은 번호가 두 번 시작하면 실패한다."
+    - id: inventory.ascending
+      rule: "청구항 번호는 등장 순서대로 **증가**해야 한다(건너뜀은 허용, 되돌아감은 실패)."
+      why: "번호가 되돌아가면 구간 분할이 틀렸다는 뜻이지 특허가 그런 것이 아니다."
+    - id: inventory.registered-superset
+      rule: "취소 청구항을 제외한 모든 원천 청구항 번호가 `claims` 에 `CL-<n>` 으로 등재되어야 한다."
+    - id: inventory.no-phantom
+      rule: "`claims` 에 등재된 모든 `CL-<n>` 이 원천 인벤토리에 존재해야 한다."
+    - id: inventory.type-agrees
+      rule: >-
+        원천 청구항 본문을 `dependency_citation` 규칙으로 읽어 인용 청구항이 검출되면
+        그 번호는 `dependents[]` 에, 검출되지 않으면 `independent[]` 에 등재되어야 한다.
+      why: "독립/종속 분류가 원천과 어긋나면 트리의 뿌리 자체가 틀린다."
+    - id: inventory.text-in-own-claim
+      rule: >-
+        각 청구항의 `text_verbatim` 은 **그 청구항 본문 구간 안의** 바이트 정확 부분문자열이어야
+        한다(파일 전체가 아니라 자기 구간).
+      why: >-
+        일반 verbatim 검사(검사 1)는 파일 전체에서 찾으므로, CL-5 의 전문 자리에 CL-7 의 문장을
+        적어도 통과한다. 구간 한정이 그 교차 오염을 막는다.
+
+  open_question: >-
+    ★ 재정 대기. 위 규칙은 총괄이 잠정 정의한 것이며 재정 N14 는 "인벤토리 검증을 구현하라"까지만
+    정했다. 미결 3건 — ① 마크다운 헤더가 아닌 원천 형식(평문 `CLAIMS`, `What is claimed is:` 뒤
+    개행 없음)을 어디까지 받아들이는가 ② 한 줄에 두 청구항이 이어 붙은 원천의 처리 ③ 다항
+    번호 표기(`1a.`·`1-1.`)의 정규화. 셋 다 `read.claim-inventory` 의 통과 여부를 바꾸고 그 검사는
+    런을 중단시키므로, 첫 런 전에 실물 원천과 함께 상신한다. 그 전까지는 위 규칙으로 읽되
+    **파싱 불능은 침묵 통과가 아니라 환경 오류**로 낸다.
+
+# ===========================================================================
+# 2. 종속 인용 파싱 — SPEC §2.3 의 5종 어형 (전사)
+#    편입 근거: 재정 2026-08-17 R1. 여기서는 코드 밖으로 옮긴 것뿐이다.
+# ===========================================================================
+dependency_citation:
+  tag: "[전승]"
+  source_of_law: "docs/SPEC.md §2.3 — 자기 검증 = read.dependency-parse"
+  enforced_by: read.dependency-parse
+  case_insensitive: true
+
+  # 우선순위 순으로 시도한다. 먼저 매칭된 구간은 소비하고 다음 규칙은 남은 구간만 본다
+  # (`claims 1 to 3` 이 `claim 1` 로 부서지지 않게 하는 유일한 장치다 — 긴 어형 우선).
+  forms:
+    - rank: 1
+      id: range
+      spec_rule: 4
+      pattern: '\bany\s+(?:one\s+)?of\s+claims?\s+(?P<lo>\d+)\s*(?:-|–|—|to|through)\s*(?P<hi>\d+)'
+      expands: "lo..hi 전 정수"
+      implies_type: multiple-or
+    - rank: 2
+      id: bare-range
+      spec_rule: 4
+      pattern: '\bclaims\s+(?P<lo>\d+)\s*(?:-|–|—|to|through)\s*(?P<hi>\d+)'
+      expands: "lo..hi 전 정수"
+      implies_type: multiple-or
+    - rank: 3
+      id: or-list
+      spec_rule: 3
+      pattern: '\bclaims?\s+(?P<nums>\d+(?:\s*(?:,|,?\s*or)\s*(?:claim\s+)?\d+)+)'
+      requires_literal: "or"
+      expands: "nums 안의 전 정수"
+      implies_type: multiple-or
+    - rank: 4
+      id: and-list
+      spec_rule: 2
+      pattern: '\bclaims?\s+(?P<nums>\d+(?:\s*(?:,|,?\s*and)\s*(?:claim\s+)?\d+)+)'
+      requires_literal: "and"
+      expands: "nums 안의 전 정수"
+      implies_type: multiple-and
+    - rank: 5
+      id: single
+      spec_rule: 1
+      pattern: '\bclaims?\s+(?P<n>\d+)'
+      expands: "n"
+      implies_type: single
+
+  rules:
+    - id: parse.set-equals
+      rule: "파싱 집합 == `depends_on` 집합(순서 무시). 불일치 = 실패."
+    - id: parse.type-agrees
+      rule: "어형이 함의하는 `dependency_type` 과 선언값이 다르면 실패."
+    - id: parse.no-silent-pass
+      rule: "5규칙 어디에도 매칭되지 않으면(파싱 불능) **실패**하고 결함 메시지에 원문을 첨부한다."
+
+  # ★ 미해소 잔여를 데이터로 드러낸다 (M0 B4 잔여 / M0.6 재감수 M-06).
+  unreachable_values:
+    - value: alternative-form
+      why: >-
+        위 5종 어형은 전부 `single`·`multiple-and`·`multiple-or` 로 귀결하므로 이 enum 값에
+        도달할 경로가 없다. 카테고리 전환 종속(수단항·방법항)·Markush·조건부 관계를 읽는
+        typed operator 의 신설은 **입법**이며 재정 사항이다(`D-20260818-01` §6 항목 9·21).
+      status: 재정 대기
+      effect_if_used: >-
+        `dependency_type: "alternative-form"` 을 선언한 종속항은 `parse.type-agrees` 에서
+        반드시 실패한다. 조용히 통과시키지 않는 것이 현재의 정직한 처리다.
+
+# ===========================================================================
+# 3. 항목 생애주기 — 동결 항목 payload 의 불변성
+#    처분 대상: M0 M13 / M0.6 재감수 M-08 / SPEC §9.27
+#    편입 근거: 재정 N14 ①
+# ===========================================================================
+item_lifecycle:
+  tag: "[가설]"
+  purpose: >-
+    `freeze.id-monotonic` 은 **ID 의 존재**만 본다. 따라서 개정본에서 기존 `active` 항목의
+    내용이 조용히 바뀌어도 통과한다. 항목 ID 의 시간 안정성(SPEC §2.4)은 ID 가 아니라
+    **의미**가 고정되어야 성립하는데, 지금 고정되는 것은 ID 뿐이었다.
+  enforced_by: freeze.payload-immutable
+
+  # (a) 정본 payload — 무엇이 "내용"인가.
+  payload_canonicalization:
+    tag: "[가설]"
+    excluded_fields: [status, superseded_by]
+    excluded_why: >-
+      이 둘은 **생애 상태**이며 아래 전이표가 그 변경을 허용한다. payload 에 넣으면
+      정상적인 철회·교체가 전부 불변성 위반으로 잡혀 검사가 사용 불가가 된다.
+    serialization:
+      form: json
+      sort_keys: true
+      separators: [",", ":"]
+      ensure_ascii: false
+      encoding: utf-8
+      newline: none
+    digest: "sha256(직렬화 바이트)"
+    open_question: >-
+      정본 직렬화 형태는 재정 밖이다. JSON 키 정렬은 결정론을 주지만 유일한 선택은 아니며
+      (JCS RFC 8785 채택 여부가 대안), historian 이 같은 해시를 재현해야 하는 시점에
+      상호 확인이 필요하다. 지금은 `reader/lib` 한 곳에만 구현이 있으므로 표류하지 않는다.
+
+  # (b) 상태 전이 — 단방향.
+  transitions:
+    active: [retracted, superseded]
+    retracted: []
+    superseded: []
+  terminal_states: [retracted, superseded]
+  rules:
+    - id: lifecycle.one-way
+      rule: "위 표에 없는 전이는 실패한다(종단 상태에서 되돌아오는 경로 없음)."
+    - id: lifecycle.superseded-by-iff
+      rule: "`superseded_by` 가 non-null ⟺ `status == \"superseded\"`."
+      note: "스키마 $comment (7) 의 검증기 몫."
+    - id: lifecycle.no-id-loss
+      rule: "`v<N-1>` 의 모든 항목 ID 가 `v<N>` 에 존재한다(append-only, SPEC §1.6 freeze.id-monotonic)."
+    - id: lifecycle.payload-frozen
+      rule: >-
+        두 판에 공통으로 존재하는 ID 의 정본 payload 해시가 다르면 실패한다.
+        내용을 고치려면 **새 ID 를 추가하고 옛 항목을 `superseded` 로 표시**해야 한다.
+
+  # (c) 승계 사슬 — 2차 승계에서 무너지던 규칙의 교체.
+  supersession_chain:
+    tag: "[가설]"
+    old_rule_retired: >-
+      구 규칙 "`superseded_by` 는 `status: active` 인 동일 kind 항목을 가리킨다"는 **폐기**한다.
+      2차 승계(A→B→C)에서 B 가 `superseded` 가 되는 순간 A 의 링크를 C 로 다시 써야 하고,
+      그것은 동결본을 고치는 일이기 때문이다(SPEC §9.27).
+    # ★ 사슬의 정의를 먼저 못 박는다(M1 코퍼스 레인이 지적한 경계 불명확).
+    chain_definition: >-
+      사슬은 **`superseded_by` 가 non-null 인 항목에서 출발**해 그 링크를 따라간 경로다.
+      `superseded_by: null` 인 항목은 사슬의 **시작점이 아니다** — 따라서 대체물 없이 폐기된
+      단독 `retracted` 항목은 종단 규칙의 대상이 아니며 정상이다. 구 문언("종단의 status 는
+      active")은 이 구별을 적지 않아 단독 철회 항목까지 위반으로 읽힐 여지가 있었다.
+      두 상태의 뜻이 애초에 다르다 — `retracted` = 근거가 잘못이었음(대체물 없음),
+      `superseded` = 같은 대상에 대한 더 나은 항목이 생김(대체물 있음, SPEC §2.4).
+    new_rule:
+      - "`superseded_by` 는 **같은 kind** 의 항목을 가리킨다(불변)."
+      - "사슬은 **비순환**이어야 한다(자기참조 포함)."
+      - "사슬을 끝까지 따라간 **종단 항목의 status 는 `active`** 여야 한다."
+      - "단독 `retracted`(`superseded_by: null`) 항목은 사슬이 아니므로 위 규칙의 대상이 아니다."
+    why: >-
+      링크는 그대로 두고 해소를 사슬 추적으로 바꾼다. A→B→C 에서 A 는 B 를 계속 가리키고,
+      `[M_A]` 를 인용한 문장의 수정 지시는 종단 C 를 지목한다. 동결본을 고치는 경로가 없다.
+
+# ===========================================================================
+# 4. 재료 측 수치 문법 — 범위·부등호·공차·과학표기를 담을 자리
+#    처분 대상: M0 M14 / M0.6 재감수 M-09 / SPEC §9.28
+#    편입 근거: 재정 N14 ① + 재정 N15(0.x 미동결이므로 계약 확장 자유)
+# ===========================================================================
+value_grammar:
+  tag: "[가설]"
+  purpose: >-
+    `fact` 가 `value_normalized` **문자열 하나**만 갖던 탓에 범위(`0.05–0.10 mm`)·부등호·
+    "약(about)"·공차(`±5%`)·과학표기·음수를 구별해 담을 자리가 없었다. 그 결과 게이트의
+    `numeric.exhaustive` 는 그런 값에서 문자열 일치 여부밖에 판정할 수 없었다(SPEC §9.28).
+  enforced_by: read.value-derivation
+  schema_home: "reader/schemas/material-spec.schema.json — fact_item.value_type"
+
+  # 십진 토큰. 과학표기·음수·선행 부호를 포함한다. 분수는 지원하지 않는다(아래 참조).
+  decimal: '[+-]?(?:[0-9]+(?:[.][0-9]+)?|[.][0-9]+)(?:[eE][+-]?[0-9]+)?'
+
+  # "약/about" 표지 — kind 와 직교하는 별도 불리언(`approximate`).
+  approximate_markers:
+    - '\babout\b'
+    - '\bapproximately\b'
+    - '\bapprox[.]?\b'
+    - '\baround\b'
+    - '~'
+    - '≈'
+
+  # ★ 전처리 — 형태 매칭 **전에** 1회 적용한다. 순서가 중요하다.
+  preprocess:
+    - id: strip-unit
+      rule: "`unit_strip` 규칙 적용(아래)."
+    - id: thousands-separator
+      rule: "`(?<=[0-9]),(?=[0-9]{3}(?![0-9]))` 에 걸리는 쉼표만 제거한다."
+      why: >-
+        ★ M1 자체 감사 적발. 구 규칙은 "천단위 구분자 `,` 제거"를 무조건으로 적었는데, `set`
+        형태가 `,` 를 원소 구분자로 쓰므로 같은 블록의 두 조항이 서로를 무효화했다
+        (`1,200` 이 집합 {1, 200} 으로 읽혔다). 위치 조건이 둘을 가른다 — 쉼표 뒤에 **정확히
+        세 자리 숫자**가 붙으면 천단위이고, 공백이 오면 원소 구분자다. 그래서 `set` 형태는
+        구분자에 **공백을 필수로** 요구한다(아래).
+      examples:
+        - { input: "1,200", after: "1200", parses_as: scalar }
+        - { input: "4, 8, 16", after: "4, 8, 16", parses_as: set }
+        - { input: "1,2345", after: "1,2345", parses_as: "파싱 실패(시끄럽게)" }
+
+  # 파싱 우선순위. 앞선 것이 매칭되면 뒤는 시도하지 않는다.
+  # ★ 호출자가 `expect_kind` 를 지정하면 그 형태만 시도한다 — 서지 복사 사실처럼 **origin 이
+  #   이미 종류를 결정하는** 경우에 쓴다(순전히 숫자로 된 공개번호가 scalar 로 읽히는 것을
+  #   문법의 추측이 아니라 호출자의 지식으로 막는다).
+  forms:
+    - rank: 0
+      kind: date
+      pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+      fields: [value]
+      note: >-
+        범위 형태보다 먼저 시도한다. ISO 날짜의 하이픈이 범위 구분자로 오독될 여지를 없앤다
+        (현행 십진 토큰으로는 실제로 매칭되지 않으나, 순서로 못 박아 두는 편이 싸다).
+    - rank: 1
+      kind: tolerance
+      pattern: '^(?P<center>DEC)\s*(?:±|\+/-|\+-)\s*(?P<tol>DEC)\s*(?P<pct>%)?$'
+      fields: [center, tolerance, tolerance_unit]
+    - rank: 2
+      kind: range
+      pattern: '^(?P<low>DEC)\s*(?:-|–|—|~|to)\s*(?P<high>DEC)$'
+      fields: [low, high, low_inclusive, high_inclusive]
+      inclusivity_default: [true, true]
+      inclusivity_default_why: >-
+        특허 문언의 범위 표기는 관용상 양끝 포함이다. 배타 경계는 부등호 어형으로 적히므로
+        `range` 로 오지 않는다.
+    - rank: 3
+      kind: inequality
+      pattern: '^(?P<op>≥|≤|>=|<=|>|<|at least|at most|no less than|no more than|greater than|less than|not exceeding)\s*(?P<bound>DEC)$'
+      fields: [bound, direction]
+      direction_map:
+        "≥": at-least
+        ">=": at-least
+        "at least": at-least
+        "no less than": at-least
+        "≤": at-most
+        "<=": at-most
+        "at most": at-most
+        "no more than": at-most
+        "not exceeding": at-most
+        ">": greater-than
+        "greater than": greater-than
+        "<": less-than
+        "less than": less-than
+    - rank: 4
+      kind: set
+      pattern: '^(?P<members>DEC(?:(?:\s*,\s+|\s+or\s+)DEC)+)$'
+      fields: [members]
+      min_members: 2
+      separator_note: >-
+        ★ 구분자에서 `/` 를 뺐고 쉼표 뒤 **공백을 필수**로 했다(M1 자체 감사 적발).
+        ① `/` 를 두면 분수 `1/2` 가 집합 {1, 2} 로 읽혀 `unsupported_forms` 의 "분수는 파싱
+        실패" 규정이 **도달 불가능한 문언**이 된다. ② 쉼표 뒤 공백을 요구해야 천단위 구분자와
+        갈린다(위 `preprocess`).
+    - rank: 5
+      kind: scalar
+      pattern: '^(?P<value>DEC)$'
+      fields: [value]
+    - rank: 6
+      kind: identifier
+      pattern: '^(?=[A-Za-z0-9/.-]*[A-Za-z])[A-Za-z0-9][A-Za-z0-9/.-]*$'
+      fields: [value]
+      note: >-
+        마지막 순위이며 **문자를 최소 1개 요구**한다 — 그러지 않으면 모든 수치를 삼킨다.
+        순전히 숫자로만 된 공개번호(예: `20260147854`)는 이 패턴에 걸리지 않으므로,
+        그런 값은 호출자가 `expect_kind: identifier` 로 지정해 파싱한다. 문법이 추측하지
+        않고 origin 이 결정한다.
+
+  # `DEC` 는 위 `decimal` 로 치환해 컴파일한다(패턴 중복 기입 금지).
+  placeholder: DEC
+
+  # 값 문자열에서 단위를 떼어내는 규칙. 단위는 `fact.unit` 이 이미 들고 있으므로,
+  # 파싱 전에 꼬리 단위를 잘라낸다.
+  unit_strip:
+    rule: "`value_raw` 끝에서 `fact.unit` 문자열이 일치하면 그만큼 잘라내고 공백을 정리한다."
+    on_mismatch: >-
+      `unit` 이 non-null 인데 `value_raw` 꼬리와 다르면 **실패**한다 — 단위가 값과 어긋나면
+      정답지 자체가 틀린다. `unit: null` 이면 자르지 않는다.
+
+  # 정규화 렌더 — value_type 에서 value_normalized 를 결정론으로 만든다.
+  render:
+    rule: "`value_normalized == render(value_type)`. 불일치 = 실패."
+    forms:
+      scalar: "{value}"
+      range: "{low}-{high}"
+      inequality:
+        at-least: ">={bound}"
+        at-most: "<={bound}"
+        greater-than: ">{bound}"
+        less-than: "<{bound}"
+      tolerance:
+        absolute: "{center}+-{tolerance}"
+        percent: "{center}+-{tolerance}%"
+      set: "{m1};{m2};…"
+      date: "{value}"
+      identifier: "{value}"
+    set_separator_note: >-
+      ★ 렌더 구분자가 `|` 가 아니라 `;` 인 이유(M1 자체 감사 적발): l0-format §9 의
+      `match_key` 가 `"{value_normalized}|{unit or ''}"` 이므로, 집합값을 `|` 로 이으면
+      `1|2|mm` 이 되어 값과 단위의 경계가 파싱 애매해진다. 대조 키를 만드는 문자는
+      값 안에 나타나면 안 된다.
+    approximate_prefix: "~"
+    approximate_prefix_why: >-
+      `approximate` 가 true 면 렌더 앞에 `~` 를 붙인다. "약 0.08" 과 "0.08" 은 다른 주장이며,
+      MATCH_KEY 가 같아지면 게이트가 그 차이를 영원히 보지 못한다.
+    number_normalization:
+      - "천단위 구분자 `,` 제거"
+      - "후행 0 제거(0.80 → 0.8), 정수부 단독 0 보존"
+      - "선행 `.` 보정(.8 → 0.8)"
+      - "선행 `+` 제거, 선행 `-` 보존"
+      - "과학표기는 지수를 전개해 십진으로 편다(1.2e3 → 1200). 전개 자릿수가 30 을 넘으면 실패"
+      - "유니코드 숫자는 ASCII 로 정규화"
+    normalization_note: >-
+      이 표는 `contracts/l0-format.yaml` §9 `numeric.normalization`(본문 쪽 정본)과 **같은 답을
+      내야 한다** — 두 쪽이 같은 MATCH_KEY 를 만들지 못하면 숫자 전수 대조가 성립하지 않는다.
+      구현은 `reader/lib/normalize.py` **한 벌뿐**이고(SPEC §8.4 M1: 게이트·계기가 이를 import),
+      두 문언의 동치는 `tests/test_m1_reader.py::test_normalization_table_matches_l0_contract` 가
+      매 실행 대조한다. 사본이 아니라 **대조**로 묶는 이유는 reader/ 가 `contracts/` 를 읽으면
+      이식 단위가 깨지기 때문이다(SPEC §6.2 판별식 1).
+
+  # ★ origin ↔ kind 결속. 스키마는 유니온의 **구조**만 닫고, 어느 origin 이 어느 kind 를
+  #   써야 하는지는 참조를 해소해야 알 수 있으므로 검증기 몫이다.
+  origin_kind_binding:
+    - when: 'origin == "bibliographic" and bib_source.field == "patent.number"'
+      require_kind: identifier
+      expect_kind_for_parse: identifier
+    - when: 'origin == "bibliographic" and bib_source.field in {patent.dates.priority, patent.dates.filing, patent.dates.publication}'
+      require_kind: date
+      expect_kind_for_parse: date
+    - when: "그 밖의 전 origin"
+      require_kind: null
+      expect_kind_for_parse: null
+      note: "rank 순으로 파싱한다."
+  binding_why: >-
+    서지 복사 사실은 **origin 이 이미 값의 종류를 결정**한다. 그것을 문법의 추측에 맡기면
+    순전히 숫자로 된 공개번호가 scalar 로 읽히고, 그 순간 정답지에 '수치'가 하나 늘어난다.
+
+  unsupported_forms:
+    - form: 분수(`1/2`)
+      handling: >-
+        파싱 실패로 처리한다. 유한소수로 떨어지지 않는 분수의 정규화는 반올림 재정을
+        요구한다. **조용히 근사하지 않고 시끄럽게 실패한다.**
+      reachability: >-
+        ★ 이 규정은 이제 실제로 도달한다. 초판은 `set` 구분자에 `/` 가 있어 `1/2` 가
+        집합 {1, 2} 로 파싱되었고, 그래서 "파싱 실패" 문언이 **한 번도 발동할 수 없는
+        죽은 규정**이었다(M1 자체 감사 적발). `/` 를 구분자에서 뺀 것이 이 규정을 살렸다.
+    - form: 혼합 단위 범위(`1 mm to 2 cm`)
+      handling: "파싱 실패. 단위 환산은 정규화가 아니라 값의 변경이다(l0-format 의 같은 규율)."
+    - form: 공백이 낀 식별자(`US 2026/0147854 A1`)
+      handling: >-
+        파싱 실패. 구분자를 제거한 정본 형태(`US20260147854A1`)로 저장한다(§7.1 pubnum 규칙과
+        같은 방향). 같은 번호의 두 표기가 정답지에 들어가면 숫자 전수 대조가 갈라진다.
+  open_question: >-
+    ★ 재정 대기. SPEC §9.28 은 이 확장을 "historian 부트스트랩 시점의 minor 확장(§9.19)과 함께
+    재정하는 편이 싸다"고 적었고, 재정 N15 가 `0.x` 미동결을 선언해 지금 넣을 수 있게 했다.
+    남은 미결은 **비교 의미론**이다 — 본문이 "약 0.08 mm"이고 재료가 `0.05–0.10 mm` 일 때
+    게이트가 정합으로 볼 것인가. 현행은 `match_policy: exact-only`(l0-format §9)이므로
+    **불일치로 읽는다**. 포함 관계 대조로 바꾸는 것은 게이트 관할의 확장이므로 재정 사항이다.
+
+# ===========================================================================
+# 5. 재독해 수렴 — 구조까지 비교한다
+#    처분 대상: M0 M12 / M0.6 재감수 M-07 (수렴 축) / SPEC §9.26
+#    편입 근거: 재정 N14 ①
+# ===========================================================================
+convergence:
+  enforced_by: read.convergence
+  purpose: >-
+    구 검사는 **독립항 수와 element `text_verbatim` 집합**만 봤다. 집합 비교이므로 같은 문자열
+    집합이 서로 다른 계층으로 조립되어도, 종속항이 통째로 흔들려도 수렴한 것으로 판정됐다.
+  axes:
+    - id: independent-count
+      tag: "[전승]"
+      rule: "독립항 수가 다르면 Jaccard 와 무관하게 즉시 실패."
+      basis: "SPEC §2.6 검사 4"
+    - id: element-set
+      tag: "[전승]"
+      rule: "element `text_verbatim` 집합의 Jaccard ≥ 0.95."
+      basis: "SPEC §2.6 검사 4 (재정 R1 이전부터의 문언)"
+      threshold: 0.95
+    - id: tree-edges
+      tag: "[가설]"
+      rule: >-
+        트리 간선 집합의 Jaccard ≥ 0.95. 간선 = `(부모 text_verbatim, 자식 text_verbatim)`
+        이며 최상위 element 의 부모는 소속 독립항의 `text_verbatim` 이다.
+      threshold: 0.95
+      why: "부모-자식 관계가 흔들리면 '골격 밑 층위 누적'(D5 ①)이 재현되지 않은 것이다."
+    - id: dependent-count
+      tag: "[가설]"
+      rule: "종속항 수가 다르면 즉시 실패."
+    - id: dependent-set
+      tag: "[가설]"
+      rule: >-
+        종속항 서명 집합의 Jaccard ≥ 0.95. 서명 = `(text_verbatim, sorted(depends_on),
+        dependency_type)`.
+      threshold: 0.95
+      why: "다중 종속의 논리 형태가 두 독해에서 갈리면 그 특허의 종속 구조는 재현되지 않는다."
+    - id: addition-attachment
+      tag: "[가설]"
+      rule: >-
+        부가 한정 부착 집합의 Jaccard ≥ 0.95. 원소 = `(addition text_verbatim,
+        attaches_to 가 가리키는 element 의 text_verbatim)`.
+      why: "부착 지점이 흔들리면 누적 트리가 달라진다 — id 가 아니라 문언으로 비교한다."
+  id_free_comparison_why: >-
+    전 축이 **id 가 아니라 원문 문언**으로 비교한다. 두 독립 실행은 같은 id 를 쓸 이유가 없고
+    (`CL-1/e2` 가 양쪽에서 같은 대상이라는 보장이 없다), id 로 비교하면 번호 매기기 관습이
+    같다는 사실만 확인하게 된다.
+  open_question: >-
+    ★ 재정 대기. 신설 4축의 임계 0.95 는 기존 element 축의 값을 그대로 옮긴 것이며 실측 근거가
+    없다. 축이 늘면 전체 통과율이 곱으로 떨어지므로(6축 전부 0.95 를 요구한다) 첫 런의 실측
+    수렴률을 보고 1회 재정한다. 그때까지는 미달을 **품질 결함이 아니라 절차 신호**로 올린다
+    (SPEC §1.4 — 수렴 미달은 Owner 에스컬레이션이다).
