@@ -47,6 +47,7 @@ from reader.lib import (  # noqa: E402
     to_convergence_payload,
 )
 from reader.lib.normalize import NormalizeError  # noqa: E402
+from reader.lib.rules import DEFAULT_RULES_PATH  # noqa: E402
 from reader.lib.source_digest import digest_of  # noqa: E402
 
 RULES = Rules.load()
@@ -1243,6 +1244,43 @@ def test_set_accepts_the_conjunction_before_the_last_member() -> None:
     # 연결어를 열었다고 천단위 구분자까지 열려서는 안 된다.
     if parse_value("1,200", None, RULES)["kind"] != "scalar":
         pytest.fail("천단위 구분자가 집합 원소 구분자로 새어 들어갔다")
+
+
+def test_convergence_refuses_to_invent_a_missing_threshold() -> None:
+    """임계가 없을 때 코드가 기본값을 지어내면, 계약 어디에도 없는 수로 판정하게 된다.
+
+    ★ M1 재감수 B-04 적발. 구 구현은 `threshold` 가 없는 축에 **조용히 0.95** 를 적용하면서
+    판정 상세에는 `threshold: null` 로 보고했다 — 지어낸 법으로 판정하고 그 사실을 보고서가
+    감췄다. D7 이 금지하는 자기 입법이며, 임계는 규칙 파일이 정하는 것이지 코드가 고르는
+    것이 아니다. 없으면 판정하지 말고 결함으로 낸다.
+    """
+    import tempfile
+
+    import yaml
+
+    raw = yaml.safe_load(open(DEFAULT_RULES_PATH, encoding="utf-8"))
+    for axis in raw["convergence"]["axes"]:
+        axis.pop("threshold", None)
+    with tempfile.NamedTemporaryFile(
+        "w", suffix=".yaml", delete=False, encoding="utf-8"
+    ) as handle:
+        yaml.safe_dump(raw, handle, allow_unicode=True)
+        stripped = handle.name
+    try:
+        context_without_thresholds = CheckContext(
+            spec=golden_spec(),
+            source_text=SOURCE,
+            rules=Rules.load(stripped),
+            schema=SCHEMA,
+            peer_spec=golden_spec(),
+        )
+        row = CHECK_REGISTRY["read.convergence"](context_without_thresholds)
+        if row.status != "fail":
+            pytest.fail("임계가 없는데도 판정이 통과했다 — 코드가 기본값을 지어냈다")
+        if "convergence.threshold-missing" not in rules_of(row):
+            pytest.fail(f"임계 부재를 다른 결함으로 보고했다: {rules_of(row)}")
+    finally:
+        os.unlink(stripped)
 
 
 def test_fraction_is_a_parse_failure() -> None:

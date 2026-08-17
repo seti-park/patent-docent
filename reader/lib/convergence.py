@@ -166,7 +166,21 @@ def _compare_sets(
     label: str,
 ) -> float:
     score = jaccard(left, right)
-    limit = float(threshold) if threshold is not None else 0.95
+    if threshold is None:
+        # ★ 조용한 기본값을 두지 않는다(M1 재감수 B-04). 구 구현은 임계가 없으면 0.95 를
+        #   적용하면서 판정 상세에는 `threshold: null` 로 보고했다 — **계약 어디에도 없는
+        #   수로 판정하고 그 사실을 보고서가 감췄다.** 코드가 법을 지어내는 것은 D7 이
+        #   금지하는 자기 입법이며, 임계는 규칙 파일이 정하는 것이지 코드가 고르는 것이
+        #   아니다. 없으면 판정하지 말고 결함으로 낸다.
+        row.add(
+            "convergence.threshold-missing",
+            f"convergence.{axis_id}",
+            "reader-rules.yaml#convergence.axes 에 threshold 없음",
+            "축마다 명시된 임계",
+            f"{label} 축의 임계가 계약에 없다 — 코드가 기본값을 지어내지 않는다",
+        )
+        return score
+    limit = float(threshold)
     if score < limit:
         row.add(
             axis_id,

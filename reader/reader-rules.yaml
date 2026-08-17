@@ -563,6 +563,12 @@ convergence:
       why: "다중 종속의 논리 형태가 두 독해에서 갈리면 그 특허의 종속 구조는 재현되지 않는다."
     - id: addition-attachment
       tag: "[가설]"
+      threshold: 0.95
+      threshold_note: >-
+        ★ M1 재감수(B-04) 적발 — 이 축에만 `threshold` 키가 없었고, 검증기가 그 자리에
+        **조용히 0.95 를 적용**하면서 판정 상세에는 `threshold: null` 로 보고했다. 즉
+        계약 어디에도 없는 수로 판정하고 그 사실을 보고서가 감췄다. 코드가 법을 지어내는
+        것은 D7 이 금지하는 자기 입법이며, 이제 검증기는 임계가 없으면 **실패**한다.
       rule: >-
         부가 한정 부착 집합의 Jaccard ≥ 0.95. 원소 = `(addition text_verbatim,
         attaches_to 가 가리키는 element 의 text_verbatim)`.
