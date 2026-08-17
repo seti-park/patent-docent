@@ -1,0 +1,3 @@
+{"case_id":"rc-0001","base":"golden/rc-0001-numberless/thread.annotated.md","mutation":null,"expect":{"detector":"*","must_detect":false}}
+{"case_id":"rc-0002","base":"golden/rc-0002-score-lint-counterexamples/memo.md","mutation":null,"expect":{"detector":"critique.no-score","must_detect":false}}
+{"case_id":"rc-0003","base":"golden/rc-0002-score-lint-counterexamples/memo.md","mutation":{"type":"score-in-advisory","locus":{"file":"mutated/rc-0003-star-rating/memo.md","line":12}},"expect":{"detector":"critique.no-score","must_detect":true}}

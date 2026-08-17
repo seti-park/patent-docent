@@ -1,0 +1,221 @@
+{
+  "schema": "material-spec/v0",
+  "reader_version": "0.3.0",
+  "spec_version": 1,
+  "status": "frozen",
+  "run_id": "example-xx0000000a1-cable-guide",
+  "patent": {
+    "number": "XX0000000A1",
+    "title": "Cable feedthrough assembly with a wiper collar (fictional example)",
+    "assignee": "Example Devices, Inc.",
+    "dates": { "priority": "2024-05-02", "filing": "2025-04-28", "publication": "2026-02-11" },
+    "source_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+    "source_path": "00-source/patent.md"
+  },
+  "claims": {
+    "independent": [
+      {
+        "id": "CL-1",
+        "type": "independent",
+        "text_verbatim": "A cable feedthrough assembly comprising: a housing defining a guide channel extending through a wall of an enclosure; and a wiper collar seated at a mouth of the guide channel and encircling a cable received in the guide channel, the wiper collar standing proud of the mouth.",
+        "elements": [
+          {
+            "id": "CL-1/e1",
+            "text_verbatim": "a housing defining a guide channel extending through a wall of an enclosure;",
+            "material_id": "M1",
+            "children": []
+          },
+          {
+            "id": "CL-1/e2",
+            "text_verbatim": "a wiper collar seated at a mouth of the guide channel and encircling a cable received in the guide channel, the wiper collar standing proud of the mouth.",
+            "material_id": "M2",
+            "children": []
+          }
+        ]
+      }
+    ],
+    "dependents": [
+      {
+        "id": "CL-5",
+        "depends_on": ["CL-1"],
+        "dependency_type": "single",
+        "text_verbatim": "The cable feedthrough assembly of claim 1, wherein the wiper collar comprises an elastomeric sleeve retained in a groove at the mouth.",
+        "additions": [
+          {
+            "id": "CL-5/a1",
+            "attaches_to": "CL-1/e2",
+            "text_verbatim": "wherein the wiper collar comprises an elastomeric sleeve retained in a groove at the mouth",
+            "material_id": "M3"
+          }
+        ]
+      }
+    ],
+    "applicant_interest": [
+      {
+        "claim": "CL-1",
+        "signal": "The interest is staked on where the collar sits rather than on how tightly it grips: claim 1 asks only that the collar stand proud of the mouth, and the material of the collar is pushed down into the dependent claim.",
+        "material_id": "M7"
+      }
+    ]
+  },
+  "figures": [
+    {
+      "id": "FIG-1",
+      "numerals": ["100", "102", "120"],
+      "caption_quote": "FIG. 1 is a perspective view of the cable feedthrough assembly.",
+      "raw_path": "00-source/figures-raw/fig-01.png",
+      "asset_path": "30-figures/assets/fig-01.png"
+    },
+    {
+      "id": "FIG-2",
+      "numerals": ["120", "122", "140"],
+      "caption_quote": "FIG. 2 is a section view through the mouth of the guide channel.",
+      "raw_path": "00-source/figures-raw/fig-02.png",
+      "asset_path": "30-figures/assets/fig-02.png"
+    },
+    {
+      "id": "FIG-3",
+      "numerals": ["124", "140", "142"],
+      "caption_quote": "FIG. 3 is an exploded view of the wiper collar.",
+      "raw_path": "00-source/figures-raw/fig-03.png",
+      "asset_path": "30-figures/assets/fig-03.png"
+    }
+  ],
+  "items": [
+    {
+      "id": "M1",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-1/e1",
+      "label_en": "housing that defines the guide channel through the enclosure wall",
+      "text_verbatim": "a housing defining a guide channel extending through a wall of an enclosure;"
+    },
+    {
+      "id": "M2",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-1/e2",
+      "label_en": "wiper collar seated at the mouth of the channel and standing proud of it",
+      "text_verbatim": "a wiper collar seated at a mouth of the guide channel and encircling a cable received in the guide channel, the wiper collar standing proud of the mouth."
+    },
+    {
+      "id": "M3",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-5/a1",
+      "label_en": "elastomeric sleeve limitation on the wiper collar",
+      "text_verbatim": "wherein the wiper collar comprises an elastomeric sleeve retained in a groove at the mouth"
+    },
+    {
+      "id": "M4",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M1",
+      "anchor_state": { "spec": "found", "figure": "found" },
+      "spec_refs": [
+        {
+          "locator": "[0032]",
+          "quote": "The housing 100 defines a guide channel 120 that extends through the wall 102 of the enclosure."
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-1",
+          "numerals": ["100", "102", "120"],
+          "caption_quote": "FIG. 1 is a perspective view of the cable feedthrough assembly."
+        }
+      ]
+    },
+    {
+      "id": "M5",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M2",
+      "anchor_state": { "spec": "found", "figure": "found" },
+      "spec_refs": [
+        {
+          "locator": "[0033]",
+          "quote": "A wiper collar 140 is seated at the mouth 122 of the guide channel and stands proud of the mouth, so that material carried on the cable is displaced outside the wall rather than within the enclosure."
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-2",
+          "numerals": ["120", "122", "140"],
+          "caption_quote": "FIG. 2 is a section view through the mouth of the guide channel."
+        }
+      ]
+    },
+    {
+      "id": "M6",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M3",
+      "anchor_state": { "spec": "found", "figure": "found" },
+      "spec_refs": [
+        {
+          "locator": "[0034]",
+          "quote": "the wiper collar is an elastomeric sleeve 142 retained in a groove 124 at the mouth, and the sleeve is intended to be replaced in service"
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-3",
+          "numerals": ["124", "140", "142"],
+          "caption_quote": "FIG. 3 is an exploded view of the wiper collar."
+        }
+      ]
+    },
+    {
+      "id": "M7",
+      "kind": "implication",
+      "status": "active",
+      "superseded_by": null,
+      "statement_en": "Standing the collar proud of the mouth points at scraping the cable clean outside the wall rather than sealing the opening tighter: the design attacks contamination by moving the wiping surface, not by gripping harder.",
+      "basis": "spec",
+      "derived_from": ["M2", "M5"],
+      "evidence_quotes": [
+        "material carried on the cable is displaced outside the wall rather than within the enclosure"
+      ],
+      "confidence": "inferred"
+    },
+    {
+      "id": "M8",
+      "kind": "positioning",
+      "status": "active",
+      "superseded_by": null,
+      "background_problem": "Conventional feedthroughs rely on a compression seal that grips the cable, so grit clinging to the cable is dragged past the seal and into the enclosure whenever the cable is drawn through.",
+      "asserted_effect": "The specification states in words that the sleeve is meant to be replaced in service, which puts the wear on a part that can be swapped instead of on the enclosure.",
+      "delta": "The asserted delta is a change of failure site (a replaceable sleeve takes the wear), not a claimed performance figure.",
+      "quotes": [
+        "Conventional feedthroughs rely on a compression seal that grips the cable, so grit clinging to the cable is dragged past the seal and into the enclosure whenever the cable is drawn through.",
+        "the sleeve is intended to be replaced in service"
+      ]
+    },
+    {
+      "id": "M9",
+      "kind": "figure_note",
+      "status": "active",
+      "superseded_by": null,
+      "figure": "FIG-3",
+      "what_it_shows_en": "The exploded view separates the sleeve from the groove at the mouth, so the reader can see that the wearing part comes out toward the operator rather than into the enclosure.",
+      "numerals": ["124", "140", "142"]
+    }
+  ],
+  "drop_signal": {
+    "stage": "final",
+    "verdict": "go",
+    "reason": "권리 관심이 '칼라의 위치'라는 한 구성에 뚜렷하고, 효과 주장이 명세서 문언으로 존재해 안도감 착지가 물증으로 가능함."
+  },
+  "provenance": {
+    "read_runs": ["read-a-0000001", "read-b-0000002"],
+    "produced_at": "2026-02-20T00:00:00Z",
+    "engine_commit": "0000000"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "mutated_id": "rc-0003-star-rating",
+  "case_id": "rc-0003",
+  "base_golden_id": "rc-0002-score-lint-counterexamples",
+  "run_id": "example-xx0000000b2-lattice-frame",
+  "variant": "v2",
+  "spec_version": 1,
+  "spec_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "note": "rc-0002 의 정상 소견 메모에 별점 표기를 한 줄 심은 변조본(12행 신설, 그 외 전 행 동일). 이 표본이 반증하는 것 = contracts/lexicon/score-lint.yaml 의 sl-002(별 계열 기호 2개 이상 연속)가 살아 있는가. 검출 기대 = 패턴 sl-002 가 12행에서 매칭되고 규칙 critique.no-score 가 실패 판정을 낸다(SPEC §1.12 — 소견 메모의 점수·서열 표기 부재 검사). 심은 문자열은 이 폴더의 memo.md 에만 존재한다 — cases.jsonl·meta.json·문서·테스트 소스에 리터럴로 두지 않는다(SPEC §4.8 자기매칭 격리 1항·3항). ★ 서식 잔여 2건(총괄 상신 대상): (1) mutation.type 의 값 'score-in-advisory' 는 SPEC §4.8 의 mutation type enum 5종(hallucinated-claim · solicitation-sentence · ungrounded-number · smuggled-claim-in-narrative · retracted-citation) 밖이다. 이 변조는 본문 스레드가 아니라 자문 산출물에 점수 표기를 심는 유형이며, 재정 2026-08-18 N4 로 신설된 린트의 검출을 증명하기 위해 필요하다. enum 은 임의로 늘리지 않았고 확장 필요성을 재정 대상으로 올린다. (2) mutation.locus 도 §4.8 의 {tweet, sentence} 좌표로 표현할 수 없다 — 소견 메모에는 트윗이 없다. 거짓 좌표를 적는 대신 {file, line} 으로 적었으며, 자문 산출물 변조의 좌표계 역시 같은 재정 안건이다."
+}

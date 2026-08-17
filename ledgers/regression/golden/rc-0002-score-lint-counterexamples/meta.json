@@ -1,0 +1,9 @@
+{
+  "golden_id": "rc-0002-score-lint-counterexamples",
+  "case_id": "rc-0002",
+  "run_id": "example-xx0000000b2-lattice-frame",
+  "variant": "v2",
+  "spec_version": 1,
+  "spec_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "note": "점수 금지 린트의 반례 golden(재정 2026-08-18 N4 — '반례 golden 동반' 요건). 이 표본이 반증하는 것 = 린트의 오탐이다. 정상 소견 메모에 들어 있는 'A-1 구조'(도면부호·청구항 라벨) · 'automotive-grade'(품질 표기 관용어) · 'the specification asserts a 4x improvement'(출원인 주장의 배수 표기) 세 표기가 contracts/lexicon/score-lint.yaml 의 sl-001~sl-004 어느 패턴에도 걸리면 안 된다. 한 건이라도 걸리면 린트가 어휘 검사로 퇴화한 것이며 회귀 실패다. 세 문장은 score-lint.yaml 의 counter_examples[].text 와 같은 문장이고(등재 4요소 필수 항목), 양쪽 모두 린트의 스캔 대상이 아니다 — 스캔 대상은 score-lint.yaml 의 targets[] allowlist 뿐이고 ledgers/regression/ 은 격리 대상이다(SPEC §4.8 자기매칭 격리 4항). 스냅샷 구성: 이 케이스의 검사 대상은 자문 산출물 텍스트 하나뿐이라 material-spec·blueprint 를 동반하지 않는다(린트는 재료를 참조하지 않는다). run_id·spec_digest 는 가공 런의 더미값이며(SPEC §2.7·§3.3 의 가공 예시 표기 방식), 실재 특허·실재 기업이 아니다. 대응 변조본 = rc-0003."
+}

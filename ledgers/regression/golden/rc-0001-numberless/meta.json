@@ -1,0 +1,9 @@
+{
+  "golden_id": "rc-0001-numberless",
+  "case_id": "rc-0001",
+  "run_id": "example-xx0000000a1-cable-guide",
+  "variant": "v2",
+  "spec_version": 1,
+  "spec_digest": "sha256:722c204eed4bd0f2cc2dfe4623abb833d36f524e95b39b4f9a49632877d41592",
+  "note": "수치가 한 개도 없는 스레드(재정 2026-08-18 N5 — 공허 표기 정확성 시험). 이 표본이 반증하는 것 = numeric.exhaustive 가 대상 0건을 '통과'로 뭉개지 않고 verdict-check-row/v0 서식으로 checked: 0 · vacuous: \"empty-target\" 을 정확히 보고하는가. 기대 판정 행 = { check_id: \"numeric.exhaustive\", ruleset: null, ruleset_version: null, ruleset_size: null, checked: 0, violations: 0, status: \"pass\", vacuous: \"empty-target\" }. 본문 12행 어디에도 아라비아 숫자가 없어 contracts/l0-format.yaml 의 numeric.tokenizers 11종이 한 건도 매칭되지 않는다(트윗 헤더의 T<n>·fig-NN 은 본문이 아니라 구조 표기이므로 대조 대상이 아니다). 정답지 쪽도 비어 있다 — items[] 에 kind: fact 항목이 없고 run_whitelist(blueprint.numeric_whitelist)도 비어 있다. 자족 스냅샷(SPEC §6.5): 이 폴더의 thread.annotated.md · material-spec.frozen.json · blueprint.json 만으로 재현하며 런 폴더를 참조하지 않는다. spec_digest 는 같은 폴더 material-spec.frozen.json 의 sha256 실측값이므로 스냅샷 안에서 재계산으로 대조된다. 표본 텍스트는 전부 가공 예시다(SPEC §2.7 의 Example Devices, Inc. 방식) — 실재 특허·실재 기업이 아니다."
+}
