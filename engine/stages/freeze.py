@@ -11,6 +11,21 @@
 
 대조 없는 목록은 승인이 아니라 **서명**이다 — 빈 목록도 유령 ID 도 통과하던 자리가 여기였다.
 빠진 id 와 유령 id 는 각각 별도 결함으로 낸다(수정 지시가 무엇을 지목해야 하는지 다르다).
+
+★★ 더해 봉투의 **신원** 4항을 본다(sol 재감수 BLOCKER B-02 의 처분). 그전까지 검증되던 것은
+`decision` · `owner_quote` · `target.digest` 뿐이어서, 다음이 전부 동결을 통과했다 —
+CP2 봉투(`checkpoint: "ship_approval"`)로 재료를 동결 · **다른 런**의 봉투 · `run.yaml` 을
+가리키는 봉투(그 파일의 올바른 해시를 들면 해시 대조도 통과한다) · `../` 로 런 밖을 가리키는 봉투.
+해시가 맞는다는 것은 "대상이 바뀌지 않았다"만 증명하며 "그것이 승인 대상이다"는 증명하지 않는다.
+이는 CP1 의 오보가 아니라 **우회**였다(헌장 D6 · 재정 R8).
+
+④ `checkpoint == "material_approval"` — 체크포인트 종류
+⑤ `run_id == run.yaml#run_id` — 런 신원
+⑥ `target.path` 가 **정확히** 재료 명세(계약 선언에서 유도한 런 상대 경로)
+⑦ `target.path` 의 realpath 가 런 루트 안 — **파일을 열기 전에** 판정한다
+
+⑦의 순서가 규율이다. 런 밖 파일을 읽고 나서 거부하는 것은 이미 읽은 것이며, 거부 사유를
+"해시 불일치"로 적는 순간 무엇이 잘못됐는지도 흐려진다.
 """
 
 from __future__ import annotations
@@ -54,6 +69,32 @@ def parse_envelope(text: str) -> dict:
     if not isinstance(data, dict):
         raise StageError("승인 봉투 프런트매터 최상위가 매핑이 아니다")
     return data
+
+
+def _cp1_checkpoint_id(paths: RunPaths) -> str:
+    """CP1 체크포인트 id 의 정본 = `contracts/stages/read.yaml#owner_checkpoint.id`.
+
+    러너가 `"material_approval"` 을 따로 들고 있으면 계약이 바뀔 때 한쪽이 낡는다.
+    """
+    checkpoint = paths.contracts["read"].get("owner_checkpoint") or {}
+    declared = checkpoint.get("id")
+    if not isinstance(declared, str) or not declared:
+        raise StageError(
+            "read 계약이 owner_checkpoint.id 를 선언하지 않았다 — 봉투 신원을 대조할 기준이 없다"
+        )
+    return declared
+
+
+def _inside_run(run_root: str, candidate: str) -> bool:
+    """대상 경로가 런 작업장 안인가. **파일을 열기 전에** 묻는 질문이다.
+
+    `os.path.join` 은 `..` 를 막지 않는다 — 이어 붙일 뿐이다. 심링크까지 풀어(`realpath`)
+    실제로 닿는 자리를 보고, 런 루트와 같거나 그 아래일 때만 참이다. 런 밖을 읽고 나서
+    "해시가 다르다"고 거부하는 것은 이미 읽은 것이다.
+    """
+    root = os.path.realpath(run_root)
+    target = os.path.realpath(candidate)
+    return target == root or target.startswith(root + os.sep)
 
 
 def _facts_by_origin(spec: dict, origin: str) -> list[str]:
@@ -185,14 +226,56 @@ def run(
             "육성 인용이 없는 봉투는 승인이 아니다(시스템 요약 인용은 무효)",
         )
 
-    # ② 대상 해시 결속 — 승인 후 재료가 조용히 바뀌는 경로의 봉쇄.
+    # ② 봉투 신원 — 이 체크포인트의, 이 런의 봉투인가(재감수 B-02).
+    checkpoint_id = _cp1_checkpoint_id(paths)
+    if envelope.get("checkpoint") != checkpoint_id:
+        approval_row.add(
+            "approval.checkpoint",
+            "checkpoint",
+            str(envelope.get("checkpoint")),
+            checkpoint_id,
+            "다른 체크포인트의 봉투로는 재료를 동결하지 않는다 — CP2 승인이 CP1 을 대신하지 않는다(D6)",
+        )
+    declared_run_id = str((load_yaml(paths.run_yaml) or {}).get("run_id", ""))
+    if str(envelope.get("run_id", "")) != declared_run_id:
+        approval_row.add(
+            "approval.run-id",
+            "run_id",
+            str(envelope.get("run_id")),
+            declared_run_id or "(run.yaml 에 run_id 없음)",
+            "다른 런의 승인 봉투다 — 승인은 런 밖으로 옮겨 붙지 않는다",
+        )
+
+    # ③ 대상 결속 — "무엇을 승인했는가"(경로)와 "그것이 바뀌지 않았는가"(해시)는 다른 질문이다.
+    #    해시 일치는 대상의 불변만 증명하고 대상의 정체는 증명하지 않는다(B-02).
     target = envelope.get("target") or {}
-    target_path = os.path.join(paths.run_root, *str(target.get("path", "")).split("/"))
-    if not os.path.exists(target_path):
+    declared_target = str(target.get("path", ""))
+    expected_target = os.path.relpath(paths.material_spec_json, paths.run_root).replace(
+        os.sep, "/"
+    )
+    target_path = os.path.join(paths.run_root, *declared_target.split("/"))
+    if declared_target != expected_target:
+        approval_row.add(
+            "approval.target-is-material-spec",
+            "target.path",
+            declared_target or "(비어 있음)",
+            expected_target,
+            "봉투가 재료 명세 아닌 파일을 가리킨다 — 해시가 맞아도 그것은 승인 대상이 아니다",
+        )
+    if not _inside_run(paths.run_root, target_path):
+        # 열기 전에 끊는다. 아래 존재·해시 검사로 내려보내면 런 밖 파일을 읽게 된다.
+        approval_row.add(
+            "approval.target-inside-run",
+            "target.path",
+            declared_target or "(비어 있음)",
+            "런 작업장 안의 경로",
+            "봉투 대상이 런 밖을 가리킨다 — 읽지 않고 거부한다(런 밖 파일은 이 런의 승인 대상이 아니다)",
+        )
+    elif not os.path.isfile(target_path):
         approval_row.add(
             "approval.target-missing",
             "target.path",
-            str(target.get("path")),
+            declared_target or "(비어 있음)",
             "런 안의 실재 파일",
             "봉투가 가리키는 대상 파일이 없다",
         )
@@ -207,7 +290,7 @@ def run(
                 "승인 시점 대상과 현재 파일이 다르다 — 봉투는 자동 실효한다(재정 R8)",
             )
 
-    # ③ 스키마 밖 3항
+    # ④ 스키마 밖 3항
     drop_signal = spec.get("drop_signal") or {}
     if drop_signal.get("verdict") == "drop-proposed" and not envelope.get("drop_decision"):
         approval_row.add(
@@ -235,7 +318,7 @@ def run(
     if approval_row.status == "fail":
         statuses.append(str(failure_entry(contract, "승인 봉투 부재").get("action")))
 
-    # ④ 원천 다이제스트 대조
+    # ⑤ 원천 다이제스트 대조
     digest_row = CheckRow(check_id="freeze.digest-match", checked=1)
     recorded_digest = read_text(paths.patent_sha256).strip()
     spec_digest = str((spec.get("patent") or {}).get("source_digest", ""))
@@ -250,14 +333,14 @@ def run(
         statuses.append(str(failure_entry(contract, "freeze.digest-match 실패").get("action")))
     rows.append(digest_row)
 
-    # ⑤ 렌더 패리티
+    # ⑥ 렌더 패리티
     parity_row = CheckRow(check_id="freeze.render-parity", checked=len(spec.get("items") or []))
     _render_parity(parity_row, spec, read_text(paths.material_spec_md))
     if parity_row.status == "fail":
         statuses.append(str(failure_entry(contract, "freeze.render-parity 실패").get("action")))
     rows.append(parity_row)
 
-    # ⑥ 개정 검사 2종(reader/lib) — 직전 판이 있으면 그것과 대조한다.
+    # ⑦ 개정 검사 2종(reader/lib) — 직전 판이 있으면 그것과 대조한다.
     prior_path = paths.frozen_spec(spec_version - 1) if spec_version > 1 else None
     prior_spec = load_json(prior_path) if prior_path and os.path.exists(prior_path) else None
     integrity_rows = run_freeze_checks(
@@ -281,7 +364,7 @@ def run(
             "digest": None,
         }
 
-    # ⑦ 동결 — 덮어쓰기 금지(§7.6). 개정은 새 파일이며 옛 판을 지우지 않는다.
+    # ⑧ 동결 — 덮어쓰기 금지(§7.6). 개정은 새 파일이며 옛 판을 지우지 않는다.
     if os.path.exists(frozen_path):
         raise StageError(
             f"동결본이 이미 있다: {frozen_path} — 개정은 v{spec_version + 1} 로 새로 쓴다"
@@ -295,7 +378,7 @@ def run(
     os.chmod(frozen_path, READONLY_MODE)
     digest = sha256_file(frozen_path)
 
-    # ⑧ 읽기 전용 확인 — "동결"이 이름뿐이 되지 않게 실제 모드를 본다.
+    # ⑨ 읽기 전용 확인 — "동결"이 이름뿐이 되지 않게 실제 모드를 본다.
     readonly_row = CheckRow(check_id="freeze.readonly", checked=1)
     mode = stat.S_IMODE(os.stat(frozen_path).st_mode)
     if mode & (stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH):

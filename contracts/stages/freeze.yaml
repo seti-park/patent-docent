@@ -56,10 +56,22 @@ checks_before_exit:
       ① drop_signal.verdict == "drop-proposed" 이면 drop_decision 필수
       ② derived_fact_ack[] 가 재료의 origin == "derived" 항목 집합과 **정확히 일치**
       ③ manual_verification_ack[] 가 origin == "figure-sourced" 항목 집합과 **정확히 일치**
+      ★★ 더해 봉투의 **신원** 4항을 본다(sol 재감수 B-02 처분):
+      ④ checkpoint == read 계약의 owner_checkpoint.id(= material_approval).
+         CP2 봉투(ship_approval)로 재료를 동결할 수 없다.
+      ⑤ run_id == run.yaml#run_id. 다른 런의 봉투는 이 런의 승인이 아니다.
+      ⑥ target.path 가 **정확히** 재료 명세(10-read/material-spec.json).
+         해시 일치는 대상의 불변만 증명하고 대상의 정체는 증명하지 않는다.
+      ⑦ target.path 의 realpath 가 런 루트 안 — **파일을 열기 전에** 판정한다.
+         절대 경로·`..` 탈출 전부 거부하며, 런 밖 파일은 읽지 않는다.
     note: >-
       ②③은 M0.6 재감수 M-01 의 잔여 처분이다 — "derived_fact_ack[] 도 실제 파생 fact 집합과
       대조하지 않아 빈 목록이나 유령 ID 가 승인 봉투를 통과한다". 항목 단위 승인(재정 N9)은
       목록이 대조될 때만 승인이다.
+      ④~⑦은 sol 재감수 BLOCKER B-02 의 처분이다 — 검증 경로에 checkpoint·run_id 가 한 번도
+      등장하지 않아 "This bypasses the Owner checkpoint rather than merely misreporting it".
+      봉투가 **어느 관문의 · 어느 런의 · 무엇에 대한** 승인인지를 보지 않는 검증은 CP1 의
+      오보가 아니라 우회다(헌장 D6 · 재정 R8).
   - id: freeze.digest-match
     criterion: "동결본의 patent.source_digest 가 00-source/patent.sha256 과 일치"
   - id: freeze.readonly
