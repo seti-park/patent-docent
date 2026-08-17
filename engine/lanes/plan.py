@@ -26,6 +26,19 @@ from ..paths import load_stage_contract
 # 한 배치의 최대 요청 수. "30 미만"이므로 29 다.
 MAX_FANOUT = 29
 
+# ★ 항목 ID 대역 (2026-08-18 실특허 스모크에서 적발한 조용한 소실 경로의 **예방**).
+#
+# 한 독립 실행 안에서 여러 레인이 동시에 `M<n>` 을 발번한다. 대역을 나눠 주지 않으면
+# 두 레인이 나란히 `M1` 부터 세고, 조립은 그대로 이어 붙이며, dict 인덱싱이 **뒤엣것으로
+# 덮어써** 항목 하나가 소리 없이 사라진다. 결번이 아니므로 ID 연속성 검사도 보지 못했다.
+#
+# 이제 `read.pointer-resolve` 의 `pointer.item-id-unique` 가 충돌을 **잡지만**, 잡히면
+# 런이 실패한다. 탐지와 예방은 다른 일이며 둘 다 필요하다 — 여기가 예방이다.
+#
+# 폭을 넉넉히 두는 이유: 대역이 좁으면 레인이 대역을 넘고 그 순간 예방이 탐지로 되돌아간다.
+# `M<n>` 은 런 내부 순번일 뿐 의미를 갖지 않으므로(SPEC §2.4) 번호가 띄엄띄엄해도 무해하다.
+ID_BAND_WIDTH = 1000
+
 TASKS: tuple[str, ...] = (
     "decompose",
     "ground-independent",
@@ -260,6 +273,39 @@ def _defect_block(defects: list[dict] | None) -> str:
 # ---------------------------------------------------------------------------
 
 
+def highest_item_number(claims: dict) -> int:
+    """이미 발번된 `M<n>` 의 최대값. 분해 산출의 `material_id` 전량을 훑는다."""
+    highest = 0
+
+    def note(value) -> None:
+        nonlocal highest
+        if isinstance(value, str) and value.startswith("M") and value[1:].isdigit():
+            highest = max(highest, int(value[1:]))
+
+    def walk(elements) -> None:
+        for element in elements or ():
+            note(element.get("material_id"))
+            walk(element.get("children"))
+
+    for claim in claims.get("independent") or ():
+        walk(claim.get("elements"))
+    for claim in claims.get("dependents") or ():
+        for addition in claim.get("additions") or ():
+            note(addition.get("material_id"))
+    for entry in claims.get("applicant_interest") or ():
+        note(entry.get("material_id"))
+    return highest
+
+
+def _band_block(start: int, width: int = ID_BAND_WIDTH) -> str:
+    """레인에게 발번 대역을 알리는 지시 문단."""
+    return (
+        f"\n\n**항목 ID 대역 — `M{start}` ~ `M{start + width - 1}` 안에서만 발번한다.**\n"
+        "다른 레인이 같은 번호를 쓰면 조립에서 항목 하나가 조용히 사라진다.\n"
+        "`read.pointer-resolve` 의 `pointer.item-id-unique` 가 그것을 결함으로 잡는다."
+    )
+
+
 def _request(
     *,
     read_run: str,
@@ -327,6 +373,9 @@ def plan_grounding(
         ("ground-independent", independent_targets(claims), "독립항 element"),
         ("ground-dependent", dependent_targets(claims), "종속항 부가 한정"),
     )
+    # 분해가 쓴 최대 번호 다음부터 레인마다 겹치지 않는 대역을 나눠 준다.
+    band_start = highest_item_number(claims) + 1
+    slot = 0
     for task, targets, label in plan:
         for batch, chunk in enumerate(batched(targets)):
             instructions = (
@@ -335,8 +384,10 @@ def plan_grounding(
                 "`component` 가 그 ID 를 가리켜야 한다. 접지가 불가능하면 누락하지 말고\n"
                 "`anchor_state` 예외(`no-anchor-found`·`not-depicted`)로 신고하고 `search_note`(KR)를 단다.\n\n"
                 f"{_target_lines(chunk)}"
+                + _band_block(band_start + slot * ID_BAND_WIDTH)
                 + _defect_block(defects)
             )
+            slot += 1
             requests.append(
                 _request(
                     read_run=read_run,
@@ -367,6 +418,17 @@ def plan_synthesis(
         f"독립항: {', '.join(str(entry) for entry in claim_ids)}\n"
         "수치 사실은 origin 을 반드시 구별한다 — 원문 스팬(`quoted`)·산식(`derived`, 깊이 1)·\n"
         "도면 판독(`figure-sourced`, 기계 검증 불가)·서지 복사(`bibliographic`)."
+        # 접지 레인이 쓴 대역 **다음**을 준다. 슬롯 수는 `plan_grounding` 과 같은 함수로
+        # 다시 세므로(레인 산출을 참조하지 않는다) 두 계획이 어긋날 수 없다.
+        + _band_block(
+            highest_item_number(claims)
+            + 1
+            + (
+                len(batched(independent_targets(claims)))
+                + len(batched(dependent_targets(claims)))
+            )
+            * ID_BAND_WIDTH
+        )
         + _defect_block(defects)
     )
     return [

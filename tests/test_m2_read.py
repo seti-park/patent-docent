@@ -21,6 +21,7 @@ import glob
 import hashlib
 import json
 import os
+import re
 import shutil
 import stat
 import sys
@@ -39,6 +40,7 @@ from engine.lanes.file_adapter import FileLaneAdapter  # noqa: E402
 from engine.lanes.plan import (  # noqa: E402
     MAX_FANOUT,
     batched,
+    highest_item_number,
     lane_id_for,
     lane_profiles,
     plan_decompose,
@@ -809,6 +811,39 @@ def test_lane_effort_ladder_comes_from_contract() -> None:
                 f"{task}: 로더 {profile['model']}/{profile['effort']} != "
                 f"계약 {declared[task][0]}/{declared[task][1]}"
             )
+
+
+def test_lane_requests_carry_disjoint_item_id_bands() -> None:
+    """대역이 없거나 겹치면 두 레인이 같은 `M<n>` 을 발번하고 조립에서 항목이 조용히 사라진다.
+
+    ★ 2026-08-18 실특허 스모크에서 레인이 지적하고 총괄이 재현한 경로다. dict 인덱싱이
+    뒤엣것으로 덮어쓰며, 결번이 아니므로 ID 연속성 검사도 보지 못한다.
+    `pointer.item-id-unique` 가 충돌을 **잡지만** 잡히면 런이 실패한다 — 이 테스트가 보는
+    것은 **예방** 쪽이며, 탐지와 예방은 다른 일이다.
+    """
+    view = ReadView(SOURCE, RULES)
+    profiles = lane_profiles()
+    claims = decompose_payload()["claims"]
+    requests = plan_grounding("read-a", claims, view, profiles) + plan_synthesis(
+        "read-a", claims, view, profiles
+    )
+    highest = highest_item_number(claims)
+    assert highest >= 1, "분해 산출에서 발번된 M<n> 을 하나도 찾지 못했다 — 픽스처가 대역 시험을 못 한다"
+
+    bands: list[tuple[int, int]] = []
+    for request in requests:
+        found = re.search(r"`M(\d+)` ~ `M(\d+)` 안에서만 발번", request.instructions)
+        assert found, f"{request.lane_id} 요청에 항목 ID 대역이 없다"
+        low, high = int(found.group(1)), int(found.group(2))
+        assert low > highest, (
+            f"{request.lane_id} 대역이 이미 발번된 M{highest} 를 침범한다 (M{low} 부터 시작)"
+        )
+        bands.append((low, high))
+
+    ordered = sorted(bands)
+    for (low_a, high_a), (low_b, _) in zip(ordered, ordered[1:]):
+        assert high_a < low_b, f"대역이 겹친다: M{low_a}~M{high_a} 와 M{low_b}~"
+    assert len(bands) == len(requests), "요청 수와 대역 수가 다르다"
 
 
 def test_lane_fanout_batch_under_cap() -> None:
