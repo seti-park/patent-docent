@@ -1,0 +1,57 @@
+# D5 ③ — 3중 접지
+
+**너의 작업(`ground-independent` / `ground-dependent`).** 배정받은 구성요소 각각에 **구성요소 ↔ 명세서 문단 ↔ 도면부호**의 세 자리를 붙인다. 접지는 독립·종속 불문 **전 구성요소**에 필수다.
+
+받는 조각은 둘이다 — `description-paragraphs`(명세서 문단 전량)와 `figure-captions`(도면 캡션). 청구항 원문은 요청의 지시 목록에 이미 들어 있다.
+
+> 종속항 접지는 저비용 레인에 배정될 수 있다(재정 R3). **관할을 낮춘 것이 아니라 레인을 낮춘 것이다** — 정확성은 레인의 격이 아니라 `read.pointer-resolve`·`read.coverage`의 결정론 포인터 해소 검증이 보증한다. 요구 수준은 독립항과 같다.
+
+---
+
+## 1. 산출 항목
+
+```json
+{ "id": "M4", "kind": "grounding", "status": "active", "superseded_by": null,
+  "component": "M2",
+  "anchor_state": { "spec": "found", "figure": "found" },
+  "spec_refs": [ { "locator": "[0042]", "quote": "…원문 그대로…" } ],
+  "figure_refs": [ { "figure": "FIG-2", "numerals": ["210", "112"], "caption_quote": "…원문 그대로…" } ] }
+```
+
+- `component`는 element id가 **아니라** component **항목의 `M<n>`**이다. 사슬은 `element → material_id → component 항목 → grounding`이다. 이 자리를 element id로 채우는 것이 가장 흔한 실패다.
+- `locator`는 문단 번호(`[0042]`)를 그대로 쓴다.
+- `figure`는 `FIG-2` 형태로 정규화한다(원천 표기 `FIG. 2`).
+- `numerals`는 그 도면에서 이 구성요소를 가리키는 도면부호 문자열이다.
+
+## 2. 인용은 복사한다
+
+`quote`·`caption_quote`는 원천의 **바이트 정확 부분문자열**이어야 한다(`read.verbatim`). 원천에는 NBSP를 비롯한 보이지 않는 문자가 섞여 있고 검사는 정규화 없이 비교한다. 문장을 다듬거나, 줄바꿈을 접거나, 따옴표를 바꾸면 실패한다.
+
+인용 길이는 **조응이 보이는 최소 단위**로 잡는다. 문단 전체를 통째로 붙이면 어느 문장이 근거인지 사라지고, 반 토막을 잡으면 조응이 사라진다.
+
+## 3. 접지가 안 될 때 — 예외를 신고한다
+
+찾지 못했으면 **누락하지 말고 예외로 신고한다.** 감춰진 예외는 예외가 아니라 은폐이며, CP1이 이 목록을 전량 본다.
+
+| 상태 | 언제 | 그때 배열 |
+|---|---|---|
+| `anchor_state.spec: "no-anchor-found"` | 탐색했으나 명세서에 조응부가 없다 | `spec_refs: []` |
+| `anchor_state.figure: "not-depicted"` | 이 구성요소가 도면에 표현되지 않았다 | `figure_refs: []` |
+
+예외가 하나라도 있으면 **`search_note`(KR)가 필수**다. "무엇을 어디까지 찾았는가"를 적는다 — 그 문장이 다음 사람에게 남는 유일한 탐색 기록이다.
+
+```json
+"search_note": "FIG-2 전 도면부호(110·112·210·214)와 캡션을 확인했으나 수력직경 치수는 도면에 표기되지 않음."
+```
+
+★ 예외를 **날조하지 마라.** 찾지 않고 `no-anchor-found`를 적는 것과 찾아서 없는 것은 다른 일이며, 이 신고는 그 차이를 Owner에게 맡기는 장치다. 예외가 많으면 그것이 소재 신호다.
+
+## 4. 이 단계에서 하지 않는 일
+
+- 수치 사실(`kind: "fact"`)을 만들지 않는다. 그것은 ④⑤단계(`synthesize`)의 일이다.
+- 함의·포지셔닝을 쓰지 않는다.
+- 구성요소를 새로 만들지 않는다. 배정 목록 밖의 component를 접지하면 그 접지는 갈 곳이 없다.
+
+## 5. 산출 형태
+
+`40-output-contract.md`의 `grounding` 절을 그대로 따른다. 필수 최상위 키는 `items` 하나이며, 배열의 모든 원소는 `kind: "grounding"`이다.
