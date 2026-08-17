@@ -839,16 +839,29 @@ def test_every_slice_is_a_verbatim_substring_of_the_source() -> None:
         "In the above expression, the terms are defined.  \n"
         "[0158] A third paragraph closes the block.\n"
     )
+    # 불변식은 두 층이다.
+    #   ① 모든 슬라이스: **줄 단위**로 원천의 부분문자열이다. 흩어진 조각을 모은 슬라이스
+    #      (도면 캡션)는 연속 구간일 수 없으므로 여기까지가 보장의 한계다.
+    #   ② 본문 문단 슬라이스: **연속 구간 전체**가 원천의 부분문자열이다. 레인이 문단을
+    #      걸쳐 인용하는 것이 정상 사용이므로 이 슬라이스만은 복사본이어야 한다.
+    contiguous_required = {"description-paragraphs", "claims-section"}
     for source_text in (SOURCE, dense):
         view = ReadView(source_text, RULES)
         for task in ("decompose", "ground-independent", "ground-dependent", "synthesize"):
             for name, text in view.slices_for(task).items():
                 if not text:
                     continue
-                assert text in source_text, (
-                    f"{task} 의 슬라이스 `{name}` 이 원천의 연속 부분문자열이 아니다 — "
-                    "레인이 여기서 복사한 인용은 read.verbatim 을 통과할 수 없다"
-                )
+                for line in text.split("\n"):
+                    if not line.strip():
+                        continue
+                    assert line in source_text, (
+                        f"{task} 의 슬라이스 `{name}` 에 원천에 없는 줄이 있다: {line[:80]!r}"
+                    )
+                if name in contiguous_required:
+                    assert text in source_text, (
+                        f"{task} 의 슬라이스 `{name}` 이 원천의 **연속** 부분문자열이 아니다 — "
+                        "레인이 문단을 걸쳐 복사한 인용은 read.verbatim 을 통과할 수 없다"
+                    )
 
     # 수식 라벨(`[00001]`)을 문단 시작으로 오인하면 문단이 한가운데서 쪼개진다.
     locators = [paragraph.locator for paragraph in ReadView(dense, RULES).paragraphs()]
