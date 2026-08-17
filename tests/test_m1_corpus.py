@@ -13,7 +13,9 @@
 
 from __future__ import annotations
 
+import glob
 import os
+import re
 import subprocess
 import sys
 
@@ -95,6 +97,45 @@ def test_no_baseline_check_is_vacuous():
     payload = json.loads(proc.stdout)
     vacuous = payload["baseline"]["vacuous"]
     assert not vacuous, f"공허 날인된 기준선 검사: {vacuous}"
+
+
+def test_requirements_table_cites_only_evidence_that_exists():
+    """요구사항표가 없는 테스트를 반증 근거로 적으면, N14 ②의 "구현으로 해소" 실증이 이름뿐이 된다.
+
+    ★ 실제로 일어났다. 총괄이 `docs/SPEC.md` §8.4 M1 요구사항표를 쓰면서 반증 테스트 3건을
+    **실재하지 않는 이름**으로 적었고(기능은 다른 이름으로 덮여 있었다), sol 재감수 발주 직후
+    자기 점검에서야 드러났다. 재정 N14 ②가 종결 요건으로 지목한 바로 그 표에서 일어난
+    일이므로, 표를 실물에 묶는 것이 이 테스트의 임무다.
+
+    M0.6 재감수가 벌한 "강제의 범위를 실제보다 넓게 말한 것"과 같은 층의 결함이다 —
+    이번에는 강제가 아니라 **증거**의 범위였다.
+    """
+    spec = open(os.path.join(REPO, "docs", "SPEC.md"), encoding="utf-8").read()
+    start = spec.find("##### M1 요구사항표")
+    end = spec.find("**M1 관할이 아닌 생존 지적**", start)
+    assert start != -1 and end > start, "SPEC 에서 M1 요구사항표 구간을 찾지 못했다"
+    block = spec[start:end]
+
+    import json
+
+    cited_tests = sorted(set(re.findall(r"`(test_[a-z0-9_]+)`", block)))
+    assert cited_tests, "요구사항표가 반증 테스트를 하나도 지목하지 않는다"
+    # `pytest --collect-only` 를 서브프로세스로 부르면 스위트 전체를 두 번 수집하게 되어
+    # 실행 시간이 배로 늘고 스위트가 커질수록 나빠진다. 테스트 소스에서 정의를 직접 찾는다.
+    defined: set[str] = set()
+    for path in sorted(glob.glob(os.path.join(REPO, "tests", "test_*.py"))):
+        source = open(path, encoding="utf-8").read()
+        defined |= set(re.findall(r"^def (test_[a-z0-9_]+)\(", source, re.MULTILINE))
+    missing = [name for name in cited_tests if name not in defined]
+    assert not missing, f"요구사항표가 지목한 테스트가 실재하지 않는다: {missing}"
+
+    cited_cases = sorted(set(re.findall(r"`(invalid/[a-z0-9.\-]+\.json)`", block)))
+    manifest = json.load(
+        open(os.path.join(CORPUS, "manifest.json"), encoding="utf-8")
+    )
+    known = {case["file"] for case in manifest["cases"]}
+    absent = [name for name in cited_cases if name not in known]
+    assert not absent, f"요구사항표가 지목한 변조본이 코퍼스에 없다: {absent}"
 
 
 def test_glossary_registers_every_check_id():

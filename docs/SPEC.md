@@ -3918,7 +3918,7 @@ if got != want:
 | N14-2 | **B-02** 잔여 | `derivation.inputs[].ref` 자기참조가 ACCEPT(validator-scope 부채) | `read.pointer-resolve`에 자기참조·비순환 | `reader/lib/pointers.py` | `test_self_referencing_derivation_input_is_rejected` · `test_reference_graph_cycle_is_rejected` |
 | N14-3 | **M-01** 잔여 ① | 파생 깊이 1 미집행(스키마는 참조를 해소하지 못한다) | `derivation.inputs[].ref` 대상의 `origin == "quoted"` | `reader/lib/derivation.py` | `test_derived_fact_of_derived_fact_is_rejected` |
 | N14-4 | **M-01** 잔여 ② | `derived_fact_ack[]`가 실제 파생 집합과 대조되지 않아 빈 목록·유령 ID가 통과 | `freeze.approval-valid`의 ack 집합 대조 | `engine/stages/freeze.py` | `test_derived_fact_ack_must_match_derived_set` |
-| N14-5 | A군 **B-02** 잔여 | element·addition ↔ `material_id` 1:1과 `claim_ref` 역조건이 검증기 몫으로 남음 | `read.coverage` 확장 | `reader/lib/coverage.py` | `test_shared_component_between_elements_is_rejected` · `test_claim_ref_backreference_mismatch_is_rejected` |
+| N14-5 | A군 **B-02** 잔여 | element·addition ↔ `material_id` 1:1과 `claim_ref` 역조건이 검증기 몫으로 남음 | `read.coverage` 확장 | `reader/lib/coverage.py` | `test_coverage_rejects_shared_component_and_reverse_mismatch`(두 조건을 한 테스트가 함께 본다) + 코퍼스 `invalid/coverage-material-id-shared.json` · `invalid/coverage-claim-ref-reverse-mismatch.json` |
 | N14-6 | **M-02** 잔여 | `_en` 한글 금지의 스크립트 재확인이 없음(스키마 1차 방어만) | `read.value-derivation`에 언어 재검 | `reader/lib/derivation.py` | `test_hangul_in_en_field_is_rejected` |
 | N14-7 | **M-07** (= M0 M12) 인벤토리 축 | 원천 청구항이 통째로 빠져도 남은 것들이 서로 접지되면 통과 | **`read.claim-inventory` 신설** + 파싱 규칙 계약화 | `reader/lib/inventory.py` · `reader/reader-rules.yaml#claim_inventory` | `test_claim_inventory_detects_missing_source_claim` · `test_claim_inventory_rejects_zero_parsed_claims` |
 | N14-8 | **M-07** 수렴 축 | 수렴이 집합만 보므로 종속항·트리 구조의 흔들림을 통과 | `read.convergence` **6축**으로 확장 | `reader/lib/convergence.py` · `reader-rules.yaml#convergence` | `test_convergence_detects_same_elements_different_tree` |
@@ -3926,7 +3926,7 @@ if got != want:
 | N14-10 | **M-09** (= M0 M14) | `fact`가 정규화 문자열 하나뿐이라 범위·부등호·공차·과학표기를 담을 자리가 없음 | **`value_type` 판별 유니온** + `value_raw` 파싱 대조 | 스키마 `$defs/value_type` · `reader/lib/value_grammar.py` | `test_value_type_mismatch_with_value_raw_is_rejected` |
 | N14-11 | **M-14** | 총괄 재량 G9가 major 규율의 예외를 재정 없이 창설 | **재정 N15로 해소** — 문서 반영 | `CLAUDE.md` §2 · §2.1 · §6.3 | `test_reader_version_matches_schema_major` |
 | N14-12 | **M-04** | 재정 N12가 정하지 않은 전시물 후보 산정식을 SPEC이 확정 | 잠정 규칙을 `[가설]` 태그 + 미결 3논점과 함께 **계약 파일로** 등재, 소급 재계산 가능하게 근거 기록 | `contracts/stages/source.yaml` | `test_source_report_records_recompute_basis` |
-| N14-13 | **M-06** | Markush·조건부·수단항 operator 부재 + `alternative-form` 도달 불능 | **부분** — 파싱 규칙 확장은 입법(재정 대기)이므로, M1은 도달 불능을 **데이터로 드러내고** 그 값을 선언한 종속항을 **실패시킨다**(침묵 통과 금지) | `reader/reader-rules.yaml#dependency_citation.unreachable_values` | `test_alternative_form_declaration_is_rejected` |
+| N14-13 | **M-06** | Markush·조건부·수단항 operator 부재 + `alternative-form` 도달 불능 | **부분** — 파싱 규칙 확장은 입법(재정 대기)이므로, M1은 도달 불능을 **데이터로 드러내고** 그 값을 선언한 종속항을 **실패시킨다**(침묵 통과 금지) | `reader/reader-rules.yaml#dependency_citation.unreachable_values` | 코퍼스 `invalid/dependency-type-alternative-form.json`(pytest 함수가 아니라 **변조본**이 반증한다 — `check_validator_enforcement.py`가 매 실행 대조) |
 | N14-14 | **m-02** | 재정 N8이 요구한 `pytest --version` 실출력이 산출물에 없음 | 환경 실측을 처분 기록에 첨부 | `docs/decisions/D-20260818-02-m1-read.md` | — (기록 요건) |
 
 **M1 관할이 아닌 생존 지적**(같은 감수에서 나왔으나 다른 모듈·다른 재정의 몫이다. 여기 적는 이유는 **잔여 목록의 누락이 "닫혔다"는 인상을 만들기 때문**이다 — 그것이 M0에서 지적 2건을 잃게 만든 기제다, 재감수 M-17).
