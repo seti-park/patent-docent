@@ -115,6 +115,16 @@ checks_before_exit:
   - id: read.schema
     criterion: "reader/schemas/material-spec.schema.json 검증 통과"
     implemented_by: reader/lib/schema_check.py
+  - id: read.source-digest
+    criterion: >-
+      `sha256(원천) == patent.source_digest`. 불변식 I1(SPEC §2.2)의 집행자이며 **전제 검사**다 —
+      이것이 깨지면 아래 verbatim 계열이 전부 무의미하다. 원천을 주지 않고 돌리면 checked=0 ·
+      vacuous: "empty-target" 으로 날인되어 "원천 없는 통과"가 통과로 보이지 않는다.
+    implemented_by: reader/lib/source_digest.py
+    note: >-
+      ★ M1 재감수 M-01 보수 — 스테이지가 실제로 실행하는데 이 계약이 선언하지 않고 있었다.
+      계약이 모르는 검사는 사후 감사에서 근거 없는 검사가 되고, 반대로 계약에만 있고
+      실행되지 않는 검사는 공허한 약속이 된다. 양방향 다 결함이다.
   - id: read.verbatim
     criterion: "모든 text_verbatim·quote·caption_quote·evidence_quotes[]·quotes[] 가 원천의 바이트 정확 부분문자열"
     implemented_by: reader/lib/verbatim.py

@@ -138,6 +138,34 @@ def test_requirements_table_cites_only_evidence_that_exists():
     assert not absent, f"요구사항표가 지목한 변조본이 코퍼스에 없다: {absent}"
 
 
+def test_stage_contracts_declare_every_check_the_stage_runs():
+    """계약이 모르는 검사는 사후 감사에서 근거 없는 검사가 되고, 계약에만 있는 검사는 공허한 약속이 된다.
+
+    ★ M1 재감수 M-01 적발. `contracts/stages/read.yaml`이 `read.source-digest`를
+    `checks_before_exit`에 넣지 않았는데 스테이지는 그것을 실행하고 있었다. 양방향 다
+    결함이다 — 선언 없이 도는 검사는 근거가 없고, 돌지 않는 선언은 약속만 있다.
+
+    `read`만 본다. `source`·`freeze`는 검사 id가 `reader/lib` 레지스트리 밖(엔진 소관)이라
+    같은 방식으로 대조할 대상이 없다 — 그 사실 자체가 남은 공백이며 `D-20260818-03`에 적혀 있다.
+    """
+    import yaml
+
+    sys.path.insert(0, REPO)
+    from reader.lib import run_checks  # noqa: PLC0415
+
+    contract = yaml.safe_load(
+        open(os.path.join(REPO, "contracts", "stages", "read.yaml"), encoding="utf-8")
+    )
+    declared = [entry["id"] for entry in contract["checks_before_exit"]]
+    executed = list(run_checks.READ_CHECK_IDS)
+
+    undeclared = [check for check in executed if check not in declared]
+    assert not undeclared, f"스테이지가 실행하는데 계약이 선언하지 않은 검사: {undeclared}"
+
+    unexecuted = [check for check in declared if check not in executed]
+    assert not unexecuted, f"계약이 선언했는데 스테이지가 실행하지 않는 검사: {unexecuted}"
+
+
 def test_spec_json_examples_validate_against_their_contracts():
     """스펙의 예시가 계약을 통과하지 못하면, 그 예시를 보고 구현한 코드가 계약을 깬다.
 
