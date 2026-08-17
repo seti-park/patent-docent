@@ -48,9 +48,10 @@
 | 검사 id | 구현 | 무엇을 반증하는가 |
 |---|---|---|
 | `read.schema` | `reader/lib/schema_check.py` | 인스턴스가 계약 스키마 밖 |
+| `read.source-digest` | `reader/lib/source_digest.py` | **전제 검사** — `sha256(원천) != patent.source_digest`. 불변식 I1이 깨지면 아래 verbatim 계열이 전부 무효다(SPEC §2.2) |
 | `read.verbatim` | `reader/lib/verbatim.py` | 원문을 다듬어 인용하거나 없는 문장을 지어냄 |
-| `read.pointer-resolve` | `reader/lib/pointers.py` | 유령 참조·오타 ID·자기참조·순환 |
-| `read.coverage` | `reader/lib/coverage.py` | 청구항 일부를 읽지 않고 넘어감 · 접지 1건이 여럿을 덮음 |
+| `read.pointer-resolve` | `reader/lib/pointers.py` | 유령 참조·오타 ID·자기참조·순환 · **항목 ID 중복**(규칙 `pointer.item-id-unique` — 불변식 I5. 스키마가 표현하지 못하는 자리다) |
+| `read.coverage` | `reader/lib/coverage.py` | 청구항 일부를 읽지 않고 넘어감 · 접지 1건이 여럿을 덮음 · **고아 `component`**(규칙 `coverage.no-orphan-component`) |
 | `read.dependency-parse` | `reader/lib/dependency_parse.py` | 다중 종속의 논리 형태를 잃거나 잘못 적음 |
 | `read.value-derivation` | `reader/lib/derivation.py` | 인용문 옆에 날조한 수치 · 정규화값 오기 · 파생 사슬로 원천 흐림 · 범위를 스칼라로 뭉갬 |
 | `read.claim-inventory` | `reader/lib/inventory.py` | 원천 청구항이 통째로 누락됨 |

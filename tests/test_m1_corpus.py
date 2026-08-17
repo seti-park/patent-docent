@@ -97,6 +97,26 @@ def test_no_baseline_check_is_vacuous():
     assert not vacuous, f"공허 날인된 기준선 검사: {vacuous}"
 
 
+def test_glossary_registers_every_check_id():
+    """식별자 사전이 검사를 빠뜨리면, 그 검사는 계약이 아니라 관습이 된다.
+
+    `contracts/glossary.md`는 "기계가 문자열로 주고받는 이름들"의 정본이고, 그 파일 스스로
+    "등재하지 않은 이름을 코드가 쓰기 시작하면 그 이름은 계약이 아니라 관습이 된다"고 적는다.
+    그런데 그 규율을 **집행하는 것이 아무것도 없어서**, M1에서 `read.source-digest`를
+    신설하고도 사전에 올리지 않은 채 지나갔다(총괄이 사후에 적발). 기억에 의존하는 규율은
+    기억이 실패하는 만큼 실패한다.
+    """
+    sys.path.insert(0, REPO)
+    from reader.lib import run_checks  # noqa: PLC0415
+
+    doc = open(
+        os.path.join(REPO, "contracts", "glossary.md"), encoding="utf-8"
+    ).read()
+    registered = set(run_checks.READ_CHECK_IDS) | set(run_checks.FREEZE_CHECK_IDS)
+    missing = sorted(check_id for check_id in registered if check_id not in doc)
+    assert not missing, f"contracts/glossary.md 에 등재되지 않은 검사 id: {missing}"
+
+
 def test_every_declared_check_has_a_mutant_except_schema():
     """변조본이 배정되지 않은 검사는 '있다고 적혀 있으나 시험되지 않은 검사'다.
 
