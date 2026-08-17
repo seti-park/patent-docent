@@ -138,6 +138,47 @@ def test_requirements_table_cites_only_evidence_that_exists():
     assert not absent, f"요구사항표가 지목한 변조본이 코퍼스에 없다: {absent}"
 
 
+def test_spec_json_examples_validate_against_their_contracts():
+    """스펙의 예시가 계약을 통과하지 못하면, 그 예시를 보고 구현한 코드가 계약을 깬다.
+
+    ★ 실제로 일어났다. §2.6의 `convergence/v0` 예시는 재정 N5가 판정 행 서식을 명한 뒤에도
+    **구 형태(검사 이름 키의 객체)로 남아** 계약(배열)과 갈린 채 M1 재감수까지 갔다.
+    문서 머리말이 "사본은 반드시 낡는다"고 적어 두었는데 **그 문서 자신이 사본이었다.**
+
+    예시는 계약의 사본이므로, 대조가 없으면 낡는다 — 이 테스트가 그 대조다.
+    """
+    import json
+
+    from jsonschema import Draft202012Validator
+
+    spec = open(os.path.join(REPO, "docs", "SPEC.md"), encoding="utf-8").read()
+    contracts = {
+        "convergence/v0": "contracts/schemas/convergence.schema.json",
+        "material-spec/v0": "reader/schemas/material-spec.schema.json",
+    }
+    checked = 0
+    for line, rel in contracts.items():
+        needle = f'"schema": "{line}"'
+        at = spec.find(needle)
+        if at == -1:
+            continue
+        opening = spec.rfind("{", 0, at)
+        fence = spec.find("```", at)
+        assert opening != -1 and fence > opening, f"{line} 예시의 경계를 찾지 못했다"
+        instance = json.loads(spec[opening:fence].strip())
+        schema = json.load(open(os.path.join(REPO, rel), encoding="utf-8"))
+        errors = sorted(
+            Draft202012Validator(schema).iter_errors(instance),
+            key=lambda err: list(err.path),
+        )
+        assert not errors, (
+            f"§ 예시({line})가 {rel} 을 통과하지 못한다: "
+            + "; ".join(f"{list(e.path)} {e.message[:80]}" for e in errors[:3])
+        )
+        checked += 1
+    assert checked == len(contracts), f"검증한 예시가 {checked}건뿐이다 — 예시를 찾지 못했다"
+
+
 def test_spec_verifier_duty_table_matches_the_schema_comment():
     """§2.8 표와 스키마 `$comment` 목록이 어긋나면, "검증기 몫이 무엇인가"의 정본이 둘로 갈린다.
 

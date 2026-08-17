@@ -8,7 +8,7 @@
 - v0.3 (2026-08-18, M0.6) — Owner 재정 13건(N1~N13) 반영 + M0.5 재감수 A군 13건 집행. 재정 원문 = `docs/decisions/ruling-20260818-01-N1-N13.md`, 처분 기록 = `docs/decisions/D-20260818-01-m06-enforcement.md`.
 - v0.2 (2026-08-17, M0.5) — Owner 재정 12건(R1~R12) 반영 + M0 독립 감수 지적 처분. 처분 기록 = `docs/decisions/D-20260817-02-spec-revision-m05.md`.
 
-**범위.** M0(부트스트랩) → M0.5·M0.6 개정 → **M1(READ 모듈 구현)**. v0.3까지 이 문서는 "계약·스키마·로드맵까지이며 모듈 코드는 포함되지 않는다"고 적었고 그것이 사실이었다. **v0.4에서 그 문장은 더 이상 사실이 아니다** — M1이 결정론 검사 10종·READ 실행 경로·CP1 표면을 실물로 만들었다. 무엇이 실물이고 무엇이 예정인지는 서술로 관리하지 않는다: **정본은 §6.7 계약 파일 현황표이고 `tools/check_spec_refs.py`(K2)가 매 커밋 전에 대조한다.** 스펙 안의 JSON·YAML·의사코드는 여전히 구현이 아니라 계약의 예시다.
+**범위.** M0(부트스트랩) → M0.5·M0.6 개정 → **M1(READ 모듈 구현)**. v0.3까지 이 문서는 "계약·스키마·로드맵까지이며 모듈 코드는 포함되지 않는다"고 적었고 그것이 사실이었다. **v0.4에서 그 문장은 더 이상 사실이 아니다** — M1이 결정론 검사 11종·READ 실행 경로·CP1 표면을 실물로 만들었다. 무엇이 실물이고 무엇이 예정인지는 서술로 관리하지 않는다: **정본은 §6.7 계약 파일 현황표이고 `tools/check_spec_refs.py`(K2)가 매 커밋 전에 대조한다.** 스펙 안의 JSON·YAML·의사코드는 여전히 구현이 아니라 계약의 예시다.
 
 **계약 실파일 14종이 존재한다** — M0.5에서 7종, M0.6에서 4종, **M1에서 3종**이 추가되었다.
 
@@ -1542,6 +1542,7 @@ claims
       "origin": "quoted",
       "value_raw": "0.8 mm",
       "value_normalized": "0.8",
+      "value_type": { "kind": "scalar", "approximate": false, "value": "0.8" },
       "unit": "mm",
       "machine_verifiable": true,
       "source": {
@@ -1559,6 +1560,7 @@ claims
       "origin": "quoted",
       "value_raw": "0.08 mm",
       "value_normalized": "0.08",
+      "value_type": { "kind": "scalar", "approximate": false, "value": "0.08" },
       "unit": "mm",
       "machine_verifiable": true,
       "source": {
@@ -1640,16 +1642,26 @@ D6 규율 ③의 구현이다. 규율 원문이 이 절의 헌법이다: **"독�
 {
   "schema": "convergence/v0",
   "run_id": "example-xx0000000a1-stacked-module",
-  "checks": {
-    "verbatim": { "pass": true, "checked": 16, "failures": [] },
-    "pointer": { "pass": true, "checked": 24, "failures": [] },
-    "coverage": { "pass": true, "required": 3, "grounded": 3, "missing": [] },
-    "convergence": { "pass": true, "independent_count": [1, 1], "jaccard": 1.0, "attempt": 1 },
-    "dependency_parse": { "pass": true, "checked": 1, "failures": [] },
-    "value_derivation": { "pass": true, "checked": 4, "failures": [] }
+  "reader_version": "0.4.0",
+  "spec_version": 1,
+  "source_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "checks": [
+    { "check_id": "read.schema", "ruleset": null, "ruleset_version": null, "ruleset_size": null,
+      "checked": 1, "violations": 0, "status": "pass", "vacuous": "none" },
+    { "check_id": "read.verbatim", "ruleset": null, "ruleset_version": null, "ruleset_size": null,
+      "checked": 16, "violations": 0, "status": "pass", "vacuous": "none" },
+    { "check_id": "read.convergence", "ruleset": "reader-rules", "ruleset_version": "0",
+      "ruleset_size": 6, "checked": 6, "violations": 0, "status": "pass", "vacuous": "none" }
+  ],
+  "vacuous_pass": [],
+  "findings": [],
+  "convergence_detail": {
+    "executed": true, "attempt": 1, "independent_count": [1, 1], "dependent_count": [2, 2],
+    "axes": [{ "id": "element-set", "jaccard": 1.0, "threshold": 0.95, "status": "pass" }]
   },
   "fact_classification": {
     "quoted_span": { "count": 2, "material_ids": ["M5", "M12"] },
+    "bibliographic_ids": [],
     "derived": [
       {
         "material_id": "M13",
@@ -1669,12 +1681,17 @@ D6 규율 ③의 구현이다. 규율 원문이 이 절의 헌법이다: **"독�
     { "material_id": "M11", "reason": "figure-sourced", "figure": "FIG-2", "numerals": ["214"] }
   ],
   "grounding_exceptions": [
-    { "material_id": "M4", "component": "M2", "spec": "found", "figure": "not-depicted" }
+    { "material_id": "M4", "component": "M2", "spec": "found", "figure": "not-depicted",
+      "search_note": "FIG-2 전 도면부호와 캡션을 확인했으나 해당 치수는 도면에 표기되지 않음." }
   ]
 }
 ```
 
 `coverage` 블록에 **`advisory` 키는 존재하지 않는다**(재정 R3으로 폐지). 커버리지는 통과/미접지 목록 둘뿐이다.
+
+**위 예시는 발췌다** — `checks[]`는 실제로 검사 9종의 행을 전부 싣고, `findings[]`는 결함 전건을 싣는다. 정본 서식은 `contracts/schemas/convergence.schema.json`이며 예시가 어긋나면 **파일이 정본이고 예시가 결함**이다.
+
+**★ 초판의 이 예시는 `checks`를 검사 이름 키의 객체로 그렸다.** 재정 N5가 "모든 검사 행은 검사 ID·규칙 목록 버전·대상 수·위반 수·상태를 보고한다"는 정량 서식을 명하면서 그 형태로는 5항을 담을 자리가 없어졌고, M1이 계약을 판정 행 **배열**로 승격했다. 그런데 **예시는 구 형태로 남아 있었다** — 계약과 예시가 갈린 채 M1 재감수(M-02)까지 갔다. 사본은 반드시 낡는다는 이 문서 머리말의 원칙이 문서 자신에게 적용된 사례다.
 
 **구 "4종의 사각지대"는 계약 수준에서 닫혔다 — 집행은 M1이다(감수 B5·M12, 재감수 B-04).** 초판은 `fact.value_normalized`가 어떤 검사의 대상도 아니어서 정규화값을 잘못 적으면 4종 전부를 통과한다고 기록했고, 그 값은 숫자 게이트의 정답지이므로(§4.4) 오류가 하류로 전파됐다. 검사 6(`read.value-derivation`)이 이 구멍을 **닫도록 규정되었다** — 전 origin 공통으로 `value_normalized == normalize(value_raw)`를 대조하고, `quoted`는 값 자체가 인용 스팬에서 나온 것임까지 확인한다. **그 검사의 구현은 M1 범위이며 현재 리포에 없다**(§8 로드맵). 지금 이 순간 스키마만 통과시켜 보면 정규화값 오기도 날조 값도 통과한다. 남은 설계상 사각지대는 **`figure-sourced` 하나**이며, 그것은 감춰지지 않고 CP1의 사람 검증 목록으로 올라간다.
 
@@ -1715,7 +1732,7 @@ FIG. 2 is a section view of the heat spreader.
 ```json
 {
   "schema": "material-spec/v0",
-  "reader_version": "0.3.0",
+  "reader_version": "0.4.0",
   "spec_version": 1,
   "status": "frozen",
   "run_id": "example-xx0000000a1-stacked-module",
@@ -1855,6 +1872,7 @@ FIG. 2 is a section view of the heat spreader.
       "origin": "quoted",
       "value_raw": "0.08 mm",
       "value_normalized": "0.08",
+      "value_type": { "kind": "scalar", "approximate": false, "value": "0.08" },
       "unit": "mm",
       "machine_verifiable": true,
       "source": {
@@ -1966,6 +1984,7 @@ FIG. 2 is a section view of the heat spreader.
       "origin": "quoted",
       "value_raw": "12 mm",
       "value_normalized": "12",
+      "value_type": { "kind": "scalar", "approximate": false, "value": "12" },
       "unit": "mm",
       "machine_verifiable": true,
       "source": {
@@ -1983,6 +2002,7 @@ FIG. 2 is a section view of the heat spreader.
       "origin": "derived",
       "value_raw": "150",
       "value_normalized": "150",
+      "value_type": { "kind": "scalar", "approximate": false, "value": "150" },
       "unit": null,
       "machine_verifiable": true,
       "derivation": {
@@ -2003,6 +2023,7 @@ FIG. 2 is a section view of the heat spreader.
       "origin": "bibliographic",
       "value_raw": "2024-03-11",
       "value_normalized": "2024-03-11",
+      "value_type": { "kind": "date", "approximate": false, "value": "2024-03-11" },
       "unit": null,
       "machine_verifiable": true,
       "bib_source": { "field": "patent.dates.priority" }
@@ -2016,6 +2037,7 @@ FIG. 2 is a section view of the heat spreader.
       "origin": "figure-sourced",
       "value_raw": "4",
       "value_normalized": "4",
+      "value_type": { "kind": "scalar", "approximate": false, "value": "4" },
       "unit": null,
       "machine_verifiable": false,
       "figure_source": {
@@ -2087,7 +2109,7 @@ FIG. 2 is a section view of the heat spreader.
 | 4 | enum 폐쇄 | `kind`·`status`·`origin`·`dependency_type`·`basis`·`confidence`·`anchor_state.*` 전부 열거값만 허용 |
 | 5 | origin별 조건부 필수는 `allOf` + `if/then` | `fact`의 네 갈래를 `oneOf`로 쪼개면 스키마가 읽히지 않는다. 공통 필드 + `origin` enum까지만 `properties`로 표현하고, 부속 필드의 `required`만 조건부로 강제한다 |
 
-**스키마로 표현하지 않고 검증기 코드에 맡기는 제약(M1 범위).** 아래 11종은 JSON Schema의 표현력 밖이거나, 억지로 넣으면 계약 문서로서의 가독성을 잃는다. **번호와 내용은 정본 스키마 파일의 `$comment` 목록과 일치해야 한다.**
+**스키마로 표현하지 않고 검증기 코드에 맡기는 제약(M1 범위).** 아래 14종은 JSON Schema의 표현력 밖이거나, 억지로 넣으면 계약 문서로서의 가독성을 잃는다. **번호와 내용은 정본 스키마 파일의 `$comment` 목록과 일치해야 한다.**
 
 | # | 제약 | 대응 검사 |
 |---|---|---|
@@ -2106,7 +2128,7 @@ FIG. 2 is a section view of the heat spreader.
 | 13 | 원천 청구항 인벤토리 대조 — 파싱 목록과 `claims` 등재분의 양방향 일치, 각 청구항 `text_verbatim`이 **자기 구간 안의** 부분문자열 | `read.claim-inventory` |
 | 14 | 동결 항목 payload의 불변성 — 정본 payload 해시 동일 · 단방향 상태 전이 · 비순환 승계 사슬(종단 `active`) | `freeze.payload-immutable` |
 
-스키마 파일이 위 방침에서 벗어나거나 이 목록과 어긋나면 **파일이 정본이고 이 표가 결함**이다 — 정합은 `tools/check_spec_refs.py`가 대조한다.
+스키마 파일이 위 방침에서 벗어나거나 이 목록과 어긋나면 **파일이 정본이고 이 표가 결함**이다 — 정합은 `tests/test_m1_corpus.py::test_spec_verifier_duty_table_matches_the_schema_comment`가 대조한다 — **`check_spec_refs.py`는 이 대조를 하지 않는다**(그 도구의 K1~K7에 해당 검사가 없다). 초판이 그 도구를 지목한 것은 사실이 아니었고, M1 재감수(M-02)가 지적했다.
 
 ---
 
@@ -3173,7 +3195,7 @@ patent-docent/
     schemas/
       material-spec.schema.json   # ★ 두 프로젝트 간 계약 (단일 진원)
     procedure/               # D5 5단계 독해 절차 문서·프롬프트
-    lib/                     # ★현행 (M1). 결정론 검사 유틸 — 검사 10종의 구현
+    lib/                     # ★현행 (M1). 결정론 검사 유틸 — 검사 11종의 구현
   engine/                    # docent 전용 러너·게이트·strip·프로브
     stages/                  # ★현행 (M1): source.py · read.py · freeze.py
     render/                  # ★현행 (M1): material_spec_md.py (CP1 KR 표면 렌더)
@@ -3288,7 +3310,7 @@ source_repo: patent-docent
 source_url: <git remote url>
 source_commit: <40-hex full sha>     # 핀. 축약 sha 금지
 source_path: reader/
-reader_version: 0.3.0
+reader_version: 0.4.0
 schema_digest: sha256:...            # material-spec.schema.json 의 해시
 ported_at: 2026-08-17
 ported_by: <세션/작업자 식별>
@@ -3614,7 +3636,7 @@ patent:
 engine:
   commit: <40-hex>                 # 런 개시 시점 엔진 커밋 핀
   gate_version: "1.2"
-reader_version: 0.3.0              # 런 개시 시점 reader/READER-VERSION 사본
+reader_version: 0.4.0              # 런 개시 시점 reader/READER-VERSION 사본
 
 pens:                              # D10 펜 토너먼트 배정 — 1호 런 = effort 사다리 (재정 R10)
   - { variant: v1, vendor: anthropic, model: opus-5, effort: high  }
