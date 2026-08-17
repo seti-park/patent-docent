@@ -1,0 +1,104 @@
+# 화행 술어 — 기계 판독 정본
+#
+# 근거: 헌장 D3(집행 의미론)·D8(게이트 구조) + Owner 재정 2026-08-17 R7.
+# 구 forbidden.yaml(금지 어휘 regex 사전) 구상은 폐기되었고 이 파일이 대체한다.
+# 산문 주석·정의는 KR, 분류 질문과 예문은 EN 원문(대상 텍스트가 EN 스레드이므로).
+
+schema: speech-acts/v1
+version: "1.0"
+
+# ---------------------------------------------------------------------------
+# 스코프 조항 (재정 R7 원문 — 축약·의역 금지)
+# ---------------------------------------------------------------------------
+scope: >-
+  레지스터·어휘 사용 자체는 플래그 사유가 아니다. 금융 용어·티커($XXX)·주가·시장 사실의
+  서술은 허용된다(훅의 직무). 플래그는 문장이 아래 3종 화행을 수행할 때만 발행한다.
+
+# ---------------------------------------------------------------------------
+# 검출·권한 (재정 R7)
+# ---------------------------------------------------------------------------
+detection:
+  method: llm-classification      # 유일한 검출 방법. regex 사전은 두지 않는다.
+  unit: sentence                  # 문장 단위 분류
+  lane: L1                        # L1 레인이 동반 수행
+  k: parameters.yaml:gate.l1.k    # 동일 k(기본 3). 표수는 flag.votes 기록에만 쓴다.
+
+authority:
+  veto: false                     # 거부권 없음
+  output: flag                    # origin: "speech-act"
+  attach_to: checkpoint2          # CP2 봉투에 첨부
+  adjudicator: owner              # 판정 적격자는 Owner
+  promotion_to_defect: false      # 다수결이어도 defect 로 승격되지 않는다
+
+# ---------------------------------------------------------------------------
+# 술어 3종 (D3 금지 화행)
+# ---------------------------------------------------------------------------
+predicates:
+  - id: sa-01
+    name: solicitation-to-trade
+    definition_kr: "독자에게 매수·매도·보유·진입·청산 등 거래 행동을 권유하거나 지시하는 문장."
+    classification_question: >-
+      Does this sentence urge, advise, or instruct the reader to take a trading action
+      (buy, sell, hold, add, enter, exit, or size a position)? Answer yes only if the
+      sentence performs that urging; mentioning a ticker, a price, or a market fact is not enough.
+    positive_examples:
+      - "You should load up before earnings."
+      - "Add to your position while it is still cheap."
+      - "Anyone holding this should take profits here."
+    negative_examples:
+      - "$OPEN trades on the same narrative, but this patent says nothing about it."
+      - "The stock rallied 12% the week this application was published."
+      - "Investors keep asking whether the moat is real; the claims answer that question."
+      - "The applicant filed three sibling applications on the same day."
+
+  - id: sa-02
+    name: price-or-valuation-forecast
+    definition_kr: "주가·시가총액·밸류에이션의 미래 방향이나 수준을 예측·제시하는 문장."
+    classification_question: >-
+      Does this sentence predict or assert a future direction, level, or fair value for a
+      price, market capitalization, or valuation multiple? Answer yes only if a forward-looking
+      price or valuation claim is made; reporting a past or current market fact is not enough.
+    positive_examples:
+      - "This technology alone is worth another 30% on the multiple."
+      - "The stock should re-rate once these chips ship."
+      - "Fair value here is closer to $400."
+    negative_examples:
+      - "The market capitalization stood at $1.2T on the publication date."
+      - "The patent claims a 4x throughput improvement over the baseline described in the background."
+      - "Analysts disagree about the moat; the drawings show what is actually being built."
+
+  - id: sa-03
+    name: return-promise
+    definition_kr: "수익·이익·성과를 약속·보증·확언하는 문장."
+    classification_question: >-
+      Does this sentence promise, guarantee, or assure the reader of a return, profit, or
+      financial outcome? Answer yes only if an outcome is promised or guaranteed; describing a
+      technical effect asserted by the patent is not enough.
+    positive_examples:
+      - "You will make money on this one."
+      - "This is a guaranteed winner over the next two years."
+      - "Buying here locks in the upside."
+    negative_examples:
+      - "The specification asserts a 2.3x reduction in energy per multiply."
+      - "If the effect holds at scale, the cost per token falls; whether that reaches the P&L is not in this document."
+
+# ---------------------------------------------------------------------------
+# 회귀 변조본 (재정 R7 — 구 mutation type "ticker" 폐기)
+# ---------------------------------------------------------------------------
+regression:
+  mutation_type: solicitation-sentence
+  planted: "권유 문장(예: \"you should load up before earnings\")"
+  expected_detector: speech-act.sa-01
+  counter_example_policy: >-
+    golden 표본에는 티커·금융 용어·시장 사실을 포함한 정상 문장을 반례로 상비해 오탐을 잡는다.
+
+# ---------------------------------------------------------------------------
+# 등재·개정 (D7·D15)
+# ---------------------------------------------------------------------------
+amendment:
+  gate: "배치 리뷰 상신 → Owner 재정 → docs/decisions/ 등재 → 이 파일 수정"
+  in_run_addition: forbidden      # 런 중 즉석 추가 금지
+  automatic_addition: forbidden   # 자동 추가 금지
+  verdict_record: >-
+    판정문(verdict.json)의 legislated 블록에 speech_act_predicate_version 과
+    speech_act_predicates(항목 수)를 명기한다.

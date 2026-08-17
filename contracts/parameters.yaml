@@ -1,0 +1,55 @@
+# 조정 가능 파라미터 — 기계 판독 정본
+#
+# 근거: Owner 재정 2026-08-17 R9.
+# 아래 네 수치는 배치 리뷰에서 Owner 재정으로 조정 가능하다. 헌장 개정은 불요하며,
+# 재정 없이 코드·프롬프트에서 다른 값을 쓰는 것은 규율 위반이다(이 파일이 단일 진원).
+# 산문 주석은 KR, 파라미터 키는 EN 원문.
+
+schema: parameters/v0
+version: "0"
+
+adjustable:
+  gate.l1.k: 3
+  probe.n: 5
+  review.batch_runs: 5
+  instrument.correlation_min_samples: 10
+
+# 각 파라미터의 의미와 근거 조항
+meanings:
+  gate.l1.k:
+    description: "L1 국소 대조의 독립 실행 반복 수(홀수 유지). 과반 일치 항목만 defect 로 채택하고, 미달은 flag(origin: minority-vote)로 강등한다."
+    basis: "D8 + 재정 2026-08-17 R9"
+  probe.n:
+    description: "계기(프로브) 시독 대수. 행동 프로브를 독립 n대에 돌린다."
+    basis: "D9 + 재정 2026-08-17 R9"
+  review.batch_runs:
+    description: "배치 리뷰 주기(런 수). 카탈로그 등재·앵커 가중·파라미터 변경의 재정 자리."
+    basis: "D13 + 재정 2026-08-17 R9"
+  instrument.correlation_min_samples:
+    description: "계기 점수 ↔ 실반응 상관 점검을 개시하는 누적 건수. 미만이면 점검하지 않는다."
+    basis: "D13 + 재정 2026-08-17 R9·R12"
+
+change_procedure: "배치 리뷰 상신 → Owner 재정 → docs/decisions/ 등재 → 이 파일 수정"
+
+# ---------------------------------------------------------------------------
+# k 불일치 로그 (재정 R9)
+# k=3 에서 2:1 이 나오면 다수결을 채택하되 불일치를 반드시 기록한다.
+# 특정 검사 항목의 반복 불일치 = 술어 모호 신호이며 배치 리뷰의 개선 사료다.
+# ---------------------------------------------------------------------------
+disagreement_log:
+  required: true
+  location: "50-gate/<variant>/l1.json 의 disagreement_log[]"
+  row_fields: [rule, locus, for, against]
+  purpose: "술어 모호 신호의 수집. 삭제·요약 금지 — 배치 리뷰에서 원자료로 읽는다."
+
+# ---------------------------------------------------------------------------
+# 계기 집계 규율 (재정 R9)
+# 임계 필터 없이 걸림 지점을 횟수와 함께 전량 보고한다. 엔진이 필터·요약하지 않으며,
+# 해석은 소견(Fable) 몫이다. 예: {"locus": {"tweet": 6}, "issue": "term", "count": 3, "n": 5}
+# ---------------------------------------------------------------------------
+instrument_reporting:
+  threshold_filter: none
+  report_all_loci: true
+  row_fields: [locus, issue, count, n]
+  location: "60-probe/score.json"
+  interpretation_owner: critique   # 해석은 소견 몫. 엔진은 집계만 한다.

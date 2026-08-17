@@ -1,0 +1,441 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patent-docent.local/reader/schemas/material-spec.schema.json",
+  "title": "material-spec/v0",
+  "$comment": "재료 명세 스키마 정본(D14 프로젝트 간 계약). 개정 근거 = Owner 재정 2026-08-17 R1·R2·R3. 계약 라인은 v0 유지(미동결 상태의 개정이므로 라인 승격 없음), reader_version = 0.2.0. 값 언어는 EN 단일(R2)이며, 예외로 drop_signal.reason 과 grounding.search_note 만 KR이다. ★ 스키마로 표현하지 않고 검증기 코드에 맡기는 제약: (1) derivation.formula 재계산 결과가 rounding 적용 후 value_normalized 와 문자열 일치 (2) origin=quoted 일 때 value_raw == source.quote[source.value_span.start:end] 바이트 동일 (3) dependents[].text_verbatim 에서 인용 청구항 번호를 결정론 파싱해 depends_on 배열·dependency_type 과 대조(read.dependency-parse) (4) 참조 무결성 전반(claim_ref·material_id·component·attaches_to·derived_from·figure·superseded_by·derivation.inputs[].ref 의 해소와 kind 제약) (5) 정규화 일관성(value_normalized == normalize(value_raw), 단위 일치) (6) 항목 ID 연속성(M1..Mn 빠짐 없음, append-only) (7) superseded_by 의 non-null 조건이 status == \"superseded\" 와 일치. ★ dependency_type 불변식의 역방향(len(depends_on)==1 ⟹ \"single\")은 alternative-form 이 단일 종속일 수 있어 스키마에 넣지 않았다 — 검증기·재정 확인 대상.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "reader_version", "spec_version", "status", "run_id", "patent", "claims", "figures", "items", "drop_signal", "provenance"],
+  "properties": {
+    "schema": { "const": "material-spec/v0" },
+    "reader_version": { "type": "string", "pattern": "^[0-9]+[.][0-9]+[.][0-9]+$" },
+    "spec_version": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["draft", "frozen", "revised"] },
+    "run_id": { "type": "string", "minLength": 1 },
+    "patent": { "$ref": "#/$defs/patent" },
+    "claims": { "$ref": "#/$defs/claims" },
+    "figures": { "type": "array", "items": { "$ref": "#/$defs/figure" } },
+    "items": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/item" } },
+    "drop_signal": { "$ref": "#/$defs/drop_signal" },
+    "provenance": { "$ref": "#/$defs/provenance" }
+  },
+  "$defs": {
+    "item_id": { "type": "string", "pattern": "^M[0-9]+$" },
+    "claim_id": { "type": "string", "pattern": "^CL-[0-9]+$" },
+    "element_id": { "type": "string", "pattern": "^CL-[0-9]+/e[0-9]+(/e[0-9]+)*$" },
+    "addition_id": { "type": "string", "pattern": "^CL-[0-9]+/a[0-9]+$" },
+    "figure_id": { "type": "string", "pattern": "^FIG-[A-Za-z0-9-]+$" },
+    "span": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "integer", "minimum": 0 },
+        "end": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "quote_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "quote"],
+      "properties": {
+        "locator": { "type": "string" },
+        "quote": { "type": "string", "minLength": 1 },
+        "span": { "$ref": "#/$defs/span" }
+      }
+    },
+    "figure_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["figure", "numerals", "caption_quote"],
+      "properties": {
+        "figure": { "$ref": "#/$defs/figure_id" },
+        "numerals": { "type": "array", "items": { "type": "string" } },
+        "caption_quote": { "type": "string" }
+      }
+    },
+    "fact_source": {
+      "$comment": "origin == \"quoted\" 전용. value_span 은 quote 문자열 내부의 문자 오프셋(0-based, end exclusive)이며 원천 파일 오프셋이 아니다.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "quote", "value_span"],
+      "properties": {
+        "locator": { "type": "string" },
+        "quote": { "type": "string", "minLength": 1 },
+        "value_span": { "$ref": "#/$defs/span" }
+      }
+    },
+    "derivation_input": {
+      "$comment": "산식 입력 1개. 다른 fact 항목 참조(ref) 또는 원천 인용 스팬 직접 지정 중 하나.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "ref"],
+          "properties": {
+            "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+            "ref": { "$ref": "#/$defs/item_id" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "locator", "quote", "value_span"],
+          "properties": {
+            "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+            "locator": { "type": "string" },
+            "quote": { "type": "string", "minLength": 1 },
+            "value_span": { "$ref": "#/$defs/span" }
+          }
+        }
+      ]
+    },
+    "derivation": {
+      "$comment": "formula 는 안전 산술식만 허용한다: 입력 name, 십진 리터럴, + - * / ( ) 와 공백. 함수·거듭제곱·비교 없음. 재계산 대조는 검증기 몫(read.value-derivation).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formula", "inputs", "rounding"],
+      "properties": {
+        "formula": { "type": "string", "pattern": "^[a-z0-9_ .+*/()-]+$", "minLength": 1 },
+        "inputs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/derivation_input" } },
+        "rounding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "digits"],
+          "properties": {
+            "mode": { "enum": ["none", "decimal-places", "significant-digits"] },
+            "digits": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "figure_source": {
+      "$comment": "origin == \"figure-sourced\" 전용. 기계 검증 불가 항목이며 convergence.json 의 manual_verification_required[] 로 수집되어 CP1 표면에 노출된다(R1).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["figure", "numerals", "locator"],
+      "properties": {
+        "figure": { "$ref": "#/$defs/figure_id" },
+        "numerals": { "type": "array", "items": { "type": "string" } },
+        "locator": { "type": "string" }
+      }
+    },
+    "bib_source": {
+      "$comment": "origin == \"bibliographic\" 전용. patent 블록의 해당 필드에서 결정론 복사한다(스팬 불요).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field"],
+      "properties": {
+        "field": { "enum": ["patent.number", "patent.dates.priority", "patent.dates.filing", "patent.dates.publication"] }
+      }
+    },
+    "anchor_state": {
+      "$comment": "3중 접지 전량 원칙(D5 ③·재정 R3)의 예외 상태 표기. no-anchor-found = 탐색했으나 명세서 조응부 없음(날조·은폐 금지). not-depicted = 도면 미표현 구성요소.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spec", "figure"],
+      "properties": {
+        "spec": { "enum": ["found", "no-anchor-found"] },
+        "figure": { "enum": ["found", "not-depicted"] }
+      }
+    },
+    "patent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["number", "title", "assignee", "dates", "source_digest", "source_path"],
+      "properties": {
+        "number": { "type": "string" },
+        "title": { "type": "string" },
+        "assignee": { "type": "string" },
+        "dates": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["priority", "filing", "publication"],
+          "properties": {
+            "priority": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+            "filing": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+            "publication": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+          }
+        },
+        "source_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "source_path": { "type": "string" }
+      }
+    },
+    "element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text_verbatim", "material_id", "children"],
+      "properties": {
+        "id": { "$ref": "#/$defs/element_id" },
+        "text_verbatim": { "type": "string", "minLength": 1 },
+        "material_id": { "$ref": "#/$defs/item_id" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/element" } }
+      }
+    },
+    "dependent": {
+      "$comment": "S1·S2·S3(재정 R1): depends_on 배열 승격 + 원문 전문 저장 + 논리 형태 표기. dependency_type == \"single\" ⟹ len(depends_on) == 1, 다중 종속 ⟹ len ≥ 2 만 스키마가 집행한다.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "depends_on", "dependency_type", "text_verbatim", "additions"],
+      "properties": {
+        "id": { "$ref": "#/$defs/claim_id" },
+        "depends_on": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/claim_id" }
+        },
+        "dependency_type": { "enum": ["single", "multiple-and", "multiple-or", "alternative-form"] },
+        "text_verbatim": { "type": "string", "minLength": 1 },
+        "additions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "attaches_to", "text_verbatim", "material_id"],
+            "properties": {
+              "id": { "$ref": "#/$defs/addition_id" },
+              "attaches_to": { "$ref": "#/$defs/element_id" },
+              "text_verbatim": { "type": "string", "minLength": 1 },
+              "material_id": { "$ref": "#/$defs/item_id" }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["dependency_type"], "properties": { "dependency_type": { "const": "single" } } },
+          "then": { "properties": { "depends_on": { "maxItems": 1 } } }
+        },
+        {
+          "if": { "required": ["dependency_type"], "properties": { "dependency_type": { "enum": ["multiple-and", "multiple-or"] } } },
+          "then": { "properties": { "depends_on": { "minItems": 2 } } }
+        }
+      ]
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["independent", "dependents", "applicant_interest"],
+      "properties": {
+        "independent": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "type", "text_verbatim", "elements"],
+            "properties": {
+              "id": { "$ref": "#/$defs/claim_id" },
+              "type": { "const": "independent" },
+              "text_verbatim": { "type": "string", "minLength": 1 },
+              "elements": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/element" } }
+            }
+          }
+        },
+        "dependents": { "type": "array", "items": { "$ref": "#/$defs/dependent" } },
+        "applicant_interest": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["claim", "signal", "material_id"],
+            "properties": {
+              "claim": { "$ref": "#/$defs/claim_id" },
+              "signal": { "type": "string", "minLength": 1 },
+              "material_id": { "$ref": "#/$defs/item_id" }
+            }
+          }
+        }
+      }
+    },
+    "figure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "numerals", "caption_quote", "raw_path", "asset_path"],
+      "properties": {
+        "id": { "$ref": "#/$defs/figure_id" },
+        "numerals": { "type": "array", "items": { "type": "string" } },
+        "caption_quote": { "type": "string" },
+        "raw_path": { "type": "string" },
+        "asset_path": { "type": ["string", "null"] }
+      }
+    },
+    "item_common": {
+      "type": "object",
+      "required": ["id", "kind", "status", "superseded_by"],
+      "properties": {
+        "id": { "$ref": "#/$defs/item_id" },
+        "kind": { "enum": ["component", "grounding", "fact", "implication", "positioning", "figure_note"] },
+        "status": { "enum": ["active", "retracted", "superseded"] },
+        "superseded_by": { "oneOf": [{ "$ref": "#/$defs/item_id" }, { "type": "null" }] }
+      }
+    },
+    "component_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "status", "superseded_by", "claim_ref", "label_en", "text_verbatim"],
+      "properties": {
+        "id": {}, "status": {}, "superseded_by": {},
+        "kind": { "const": "component" },
+        "claim_ref": { "type": "string", "pattern": "^CL-[0-9]+/(e[0-9]+(/e[0-9]+)*|a[0-9]+)$" },
+        "label_en": { "type": "string", "minLength": 1 },
+        "text_verbatim": { "type": "string", "minLength": 1 }
+      }
+    },
+    "grounding_item": {
+      "$comment": "S13·S14·S15(재정 R3). anchor_state 는 필수이며, 예외 상태에서만 해당 refs 배열이 빈 배열이 된다. search_note(KR)는 예외가 하나라도 있으면 필수다. 조건부 필드는 전부 properties 에 선언되어 있으므로 additionalProperties:false 와 충돌하지 않는다.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "status", "superseded_by", "component", "anchor_state", "spec_refs", "figure_refs"],
+      "properties": {
+        "id": {}, "status": {}, "superseded_by": {},
+        "kind": { "const": "grounding" },
+        "component": { "$ref": "#/$defs/item_id" },
+        "anchor_state": { "$ref": "#/$defs/anchor_state" },
+        "spec_refs": { "type": "array", "items": { "$ref": "#/$defs/quote_ref" } },
+        "figure_refs": { "type": "array", "items": { "$ref": "#/$defs/figure_ref" } },
+        "search_note": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["anchor_state"], "properties": { "anchor_state": { "required": ["spec"], "properties": { "spec": { "const": "found" } } } } },
+          "then": { "properties": { "spec_refs": { "minItems": 1 } } },
+          "else": { "properties": { "spec_refs": { "maxItems": 0 } } }
+        },
+        {
+          "if": { "required": ["anchor_state"], "properties": { "anchor_state": { "required": ["figure"], "properties": { "figure": { "const": "found" } } } } },
+          "then": { "properties": { "figure_refs": { "minItems": 1 } } },
+          "else": { "properties": { "figure_refs": { "maxItems": 0 } } }
+        },
+        {
+          "if": {
+            "required": ["anchor_state"],
+            "properties": {
+              "anchor_state": {
+                "anyOf": [
+                  { "required": ["spec"], "properties": { "spec": { "const": "no-anchor-found" } } },
+                  { "required": ["figure"], "properties": { "figure": { "const": "not-depicted" } } }
+                ]
+              }
+            }
+          },
+          "then": { "required": ["search_note"] }
+        }
+      ]
+    },
+    "fact_item": {
+      "$comment": "S7~S12(재정 R1). 공통 필드 + origin enum 까지 properties 로 표현하고, origin 별 부속 필드(source·derivation·figure_source·bib_source)는 전부 properties 에 선언한 뒤 allOf + if/then 으로 required 만 강제한다. 산식 재계산·스팬 일치 대조는 검증기 몫(파일 최상위 $comment 참조).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "status", "superseded_by", "label_en", "origin", "value_raw", "value_normalized", "unit", "machine_verifiable"],
+      "properties": {
+        "id": {}, "status": {}, "superseded_by": {},
+        "kind": { "const": "fact" },
+        "label_en": { "type": "string", "minLength": 1 },
+        "origin": { "enum": ["quoted", "derived", "figure-sourced", "bibliographic"] },
+        "value_raw": { "type": "string", "minLength": 1 },
+        "value_normalized": { "type": "string", "minLength": 1 },
+        "unit": { "type": ["string", "null"] },
+        "machine_verifiable": { "type": "boolean" },
+        "source": { "$ref": "#/$defs/fact_source" },
+        "derivation": { "$ref": "#/$defs/derivation" },
+        "figure_source": { "$ref": "#/$defs/figure_source" },
+        "bib_source": { "$ref": "#/$defs/bib_source" }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["origin"], "properties": { "origin": { "const": "quoted" } } },
+          "then": { "required": ["source"], "properties": { "machine_verifiable": { "const": true } } }
+        },
+        {
+          "if": { "required": ["origin"], "properties": { "origin": { "const": "derived" } } },
+          "then": { "required": ["derivation"], "properties": { "machine_verifiable": { "const": true } } }
+        },
+        {
+          "if": { "required": ["origin"], "properties": { "origin": { "const": "figure-sourced" } } },
+          "then": { "required": ["figure_source"], "properties": { "machine_verifiable": { "const": false } } }
+        },
+        {
+          "if": { "required": ["origin"], "properties": { "origin": { "const": "bibliographic" } } },
+          "then": { "required": ["bib_source"], "properties": { "machine_verifiable": { "const": true } } }
+        }
+      ]
+    },
+    "implication_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "status", "superseded_by", "statement_en", "basis", "derived_from", "evidence_quotes", "confidence"],
+      "properties": {
+        "id": {}, "status": {}, "superseded_by": {},
+        "kind": { "const": "implication" },
+        "statement_en": { "type": "string", "minLength": 1 },
+        "basis": { "enum": ["claim", "spec", "background", "effects"] },
+        "derived_from": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/item_id" } },
+        "evidence_quotes": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "confidence": { "enum": ["stated", "inferred"] }
+      }
+    },
+    "positioning_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "status", "superseded_by", "background_problem", "asserted_effect", "delta", "quotes"],
+      "properties": {
+        "id": {}, "status": {}, "superseded_by": {},
+        "kind": { "const": "positioning" },
+        "background_problem": { "type": "string", "minLength": 1 },
+        "asserted_effect": { "type": "string", "minLength": 1 },
+        "delta": { "type": "string", "minLength": 1 },
+        "quotes": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "figure_note_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "status", "superseded_by", "figure", "what_it_shows_en", "numerals"],
+      "properties": {
+        "id": {}, "status": {}, "superseded_by": {},
+        "kind": { "const": "figure_note" },
+        "figure": { "$ref": "#/$defs/figure_id" },
+        "what_it_shows_en": { "type": "string", "minLength": 1 },
+        "numerals": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "item": {
+      "allOf": [
+        { "$ref": "#/$defs/item_common" },
+        {
+          "oneOf": [
+            { "$ref": "#/$defs/component_item" },
+            { "$ref": "#/$defs/grounding_item" },
+            { "$ref": "#/$defs/fact_item" },
+            { "$ref": "#/$defs/implication_item" },
+            { "$ref": "#/$defs/positioning_item" },
+            { "$ref": "#/$defs/figure_note_item" }
+          ]
+        }
+      ]
+    },
+    "drop_signal": {
+      "$comment": "reason 은 KR(재정 R2: drop 제안 사유는 KR).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "verdict", "reason"],
+      "properties": {
+        "stage": { "enum": ["early", "final"] },
+        "verdict": { "enum": ["go", "drop-proposed"] },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["read_runs", "produced_at", "engine_commit"],
+      "properties": {
+        "read_runs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "produced_at": { "type": "string" },
+        "engine_commit": { "type": "string" }
+      }
+    }
+  }
+}

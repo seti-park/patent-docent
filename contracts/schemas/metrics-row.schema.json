@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patent-docent.local/contracts/schemas/metrics-row.schema.json",
+  "title": "metrics-row/v0",
+  "$comment": "지표 원장 1행(ledgers/metrics.jsonl, JSONL 1행 1레코드). 근거 = 헌장 D13(개정) + Owner 재정 2026-08-17 R12. ★ 규율: (1) 추가 전용(append-only) — 기존 행의 바이트를 수정하지 않는다. 오기는 entry_kind: \"correction\" 행을 추가해 정정하며 corrects 에 원 행 id 를 적는다. 검사 feedback.ledger-append-only 가 이전 행들의 바이트 불변을 확인하고 위반 시 halt 한다. (2) 원시 전량 영구 보존 — 절대량 필드(impressions·likes·reposts·quotes·bookmarks·replies)를 허용한다. 구 D13 의 '원시 조회수 금지' 조항은 폐기되었다. (3) 자동 정규화(백분위·이동 중앙값) 필드는 v1 에 두지 않는다. 시대 드리프트가 실측되면 배치 리뷰 상신으로 도입하며, 원시 보존이 소급 재계산을 보장한다. (4) 72h 스냅샷은 필수이고 ±12h 창을 벗어나면 within_window: false 로 기록하되 폐기하지 않는다. 168h(7일) 스냅샷은 선택이다. (5) v1 수집은 수동 입력이며 시스템은 입력 템플릿(90-feedback/metrics-input-template.md)만 제시한다. (6) 지표는 게이트가 아니다 — 출하물의 소급 판정을 바꾸지 않으며, 환류는 배치 리뷰 재정을 거쳐서만 생성계에 도달한다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "row_id", "entry_kind", "corrects", "run_id", "variant", "thread_url", "posted_at", "snapshot", "hook", "landing", "completion_proxy", "context", "entered_by", "entered_at"],
+  "properties": {
+    "schema": { "const": "metrics-row/v0" },
+    "row_id": { "$ref": "#/$defs/row_id" },
+    "entry_kind": { "enum": ["record", "correction"] },
+    "corrects": {
+      "oneOf": [{ "$ref": "#/$defs/row_id" }, { "type": "null" }]
+    },
+    "run_id": { "type": "string", "minLength": 1 },
+    "variant": { "type": "string", "pattern": "^v[0-9]+$" },
+    "thread_url": { "type": "string", "minLength": 1 },
+    "posted_at": { "$ref": "#/$defs/timestamp" },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["window_h", "taken_at", "within_window", "offset_h"],
+      "properties": {
+        "window_h": { "enum": [72, 168] },
+        "taken_at": { "$ref": "#/$defs/timestamp" },
+        "within_window": { "type": "boolean" },
+        "offset_h": { "type": "number" }
+      }
+    },
+    "hook": {
+      "$comment": "훅 트윗(T1)의 원시 계측값. 전부 정수, 전부 필수.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["impressions", "likes", "reposts", "quotes", "bookmarks", "replies"],
+      "properties": {
+        "impressions": { "type": "integer", "minimum": 0 },
+        "likes": { "type": "integer", "minimum": 0 },
+        "reposts": { "type": "integer", "minimum": 0 },
+        "quotes": { "type": "integer", "minimum": 0 },
+        "bookmarks": { "type": "integer", "minimum": 0 },
+        "replies": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "landing": {
+      "$comment": "착지 트윗 노출. 완주율 근사의 분자.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["impressions"],
+      "properties": {
+        "impressions": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "completion_proxy": {
+      "$comment": "landing.impressions / hook.impressions. 분모가 0이면 null.",
+      "type": ["number", "null"]
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["posted_at_local", "follower_count", "topic_tags", "series", "series_id"],
+      "properties": {
+        "posted_at_local": { "type": "string", "minLength": 1 },
+        "follower_count": { "type": "integer", "minimum": 0 },
+        "topic_tags": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "series": { "type": "boolean" },
+        "series_id": { "type": ["string", "null"] }
+      }
+    },
+    "entered_by": { "const": "owner" },
+    "entered_at": { "$ref": "#/$defs/timestamp" }
+  },
+  "allOf": [
+    {
+      "$comment": "정정 행은 반드시 원 행을 지목한다.",
+      "if": {
+        "required": ["entry_kind"],
+        "properties": { "entry_kind": { "const": "correction" } }
+      },
+      "then": {
+        "properties": { "corrects": { "$ref": "#/$defs/row_id" } }
+      }
+    }
+  ],
+  "$defs": {
+    "row_id": { "type": "string", "pattern": "^mr-[0-9]{6}$" },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:[.][0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    }
+  }
+}
