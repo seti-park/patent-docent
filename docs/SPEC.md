@@ -1,15 +1,16 @@
-# patent-docent 설계 스펙 (v0.3)
+# patent-docent 설계 스펙 (v0.4)
 
 **지위.** 이 문서는 헌장(`docs/CHARTER.md`, D1~D15)의 **공학 전개**다. 헌장이 상위 정본이며, 이 스펙이 헌장과 충돌하면 헌장이 이긴다 — 충돌을 발견하면 임의로 조정하지 말고 Owner에게 상신한다.
 
 **개정 이력.**
 
+- **v0.4 (2026-08-18, M1) — Owner 재정 2건(N14·N15) 반영 + M1 요구사항표 신설 + 계약 3종 신설·1종 개정 + READ 실행 경로 구현.** 재정 원문 = `docs/decisions/ruling-20260818-02-N14-N15.md`, 처분 기록 = `docs/decisions/D-20260818-02-m1-read.md`. **이 판부터 스펙은 로드맵 문서만이 아니다** — §8.4 M1이 서술하는 것은 예정이 아니라 실물이며, 그 사실을 §6.7 현황표가 대조한다.
 - v0.3 (2026-08-18, M0.6) — Owner 재정 13건(N1~N13) 반영 + M0.5 재감수 A군 13건 집행. 재정 원문 = `docs/decisions/ruling-20260818-01-N1-N13.md`, 처분 기록 = `docs/decisions/D-20260818-01-m06-enforcement.md`.
 - v0.2 (2026-08-17, M0.5) — Owner 재정 12건(R1~R12) 반영 + M0 독립 감수 지적 처분. 처분 기록 = `docs/decisions/D-20260817-02-spec-revision-m05.md`.
 
-**범위.** M0(부트스트랩) 산출물 + M0.5 개정. 계약·스키마·로드맵까지이며 **모듈 코드는 이 발주에 포함되지 않는다**(후속 발주). 스펙 안의 JSON·YAML·의사코드는 구현이 아니라 계약의 예시다.
+**범위.** M0(부트스트랩) → M0.5·M0.6 개정 → **M1(READ 모듈 구현)**. v0.3까지 이 문서는 "계약·스키마·로드맵까지이며 모듈 코드는 포함되지 않는다"고 적었고 그것이 사실이었다. **v0.4에서 그 문장은 더 이상 사실이 아니다** — M1이 결정론 검사 10종·READ 실행 경로·CP1 표면을 실물로 만들었다. 무엇이 실물이고 무엇이 예정인지는 서술로 관리하지 않는다: **정본은 §6.7 계약 파일 현황표이고 `tools/check_spec_refs.py`(K2)가 매 커밋 전에 대조한다.** 스펙 안의 JSON·YAML·의사코드는 여전히 구현이 아니라 계약의 예시다.
 
-다만 **계약 실파일 11종은 실제로 생성되었다** — M0.5에서 7종, M0.6에서 4종이 추가되었다.
+**계약 실파일 14종이 존재한다** — M0.5에서 7종, M0.6에서 4종, **M1에서 3종**이 추가되었다.
 
 | 실파일 | 담는 것 |
 |---|---|
@@ -24,6 +25,9 @@
 | `contracts/run-kinds.yaml` | 예행 런/게시 런의 정의와 게시 런 전제조건(계약 라인 `run-kinds/v0`). M0.6 신설(재정 N10) |
 | `contracts/lexicon/score-lint.yaml` | 점수 금지 린트 패턴 목록과 반례(계약 라인 `score-lint/v1`) — **자문 산출물 전용**. M0.6 신설(재정 N4) |
 | `contracts/schemas/verdict-check-row.schema.json` | 게이트 판정 행 서식(계약 라인 `verdict-check-row/v0`) — 검사 대상 수·위반 수·공허 종류. M0.6 신설(재정 N5) |
+| `reader/reader-rules.yaml` | **독해층 규칙 계약**(계약 라인 `reader-rules/v0`) — 청구항 인벤토리 파싱·종속 인용 5어형·항목 생애주기·수치 문법·수렴 6축. **이식 단위에 속한다**(재정 N8 ①). M1 신설(재정 N14 ①) |
+| `contracts/stages/{source,read,freeze}.yaml` | 스테이지 I/O 계약(계약 라인 `stage-contract/v0`) — 서식은 §1.2. M1 신설 |
+| `contracts/schemas/convergence.schema.json` | READ 검사 보고서 서식(계약 라인 `convergence/v0`) — 판정 행 배열 + CP1 표면 3목록. M1 신설 |
 
 **정본 포인터 원칙(고정).** 실파일이 존재하는 계약에 대해 **스펙은 사본을 싣지 않고 파일을 가리킨다.** 스펙에는 요건 요약·판정 기준·이유만 남기고, 기계 판독 문언(정규식·임계·enum 전량)은 실파일이 정본이다. 문서 사본은 표류의 원인이며, 표류한 사본은 그것을 그대로 옮겨 구현한 코드로 번진다(감수 2026-08-17 B6·B10의 구조적 교훈).
 
@@ -210,6 +214,7 @@
 각 스테이지는 `contracts/stages/<id>.yaml` 한 파일을 갖는다(파일명 = 스테이지 id). 서식은 고정이다.
 
 ```yaml
+schema: stage-contract/v0                 # 계약 라인 선언 (M1 추가 — 아래 확장 2 참조)
 id: read
 lane: { model: opus-5, effort: high }     # 담당 레인
 inputs: [...]                             # 경로 목록
@@ -224,7 +229,12 @@ failure:                                  # 실패 처리
 owner_checkpoint: { id: ..., surfaces: [...], confirm_file: ... }   # 있는 스테이지만
 ```
 
-**서식 확장 1건(재량).** `figures`는 두 하위 단계를 가지므로 `steps:` 키를 추가로 허용한다(§1.8). 그 밖의 확장은 두지 않는다.
+**서식 확장 2건(재량).**
+
+1. `figures`는 두 하위 단계를 가지므로 `steps:` 키를 추가로 허용한다(§1.8).
+2. **`schema: stage-contract/v0` 최상위 키**(M1 추가). 이유는 검사기의 대조 가능성이다 — `tools/check_spec_refs.py`의 K3는 계약 파일이 **자기 계약 라인을 선언할 때만** 문서와 양방향 대조를 할 수 있고, 선언이 없는 파일은 그 대조에서 통째로 빠진다. 계약 파일이 스스로를 계약이라고 말하지 않으면 검사기에게 그것은 그냥 YAML이다.
+
+그 밖의 확장은 두지 않는다. 위 키 밖의 항목은 계약이 아니라 **주석**이며(예: `contracts/stages/source.yaml`의 `exhibit_candidates` 블록), 그 사실을 파일 안에서 태그·`open` 필드로 드러낸다.
 
 **공통 규칙.**
 
@@ -1235,11 +1245,25 @@ owner_checkpoint:
 
 | 축 | 표기 | 위치 | 증가 조건 |
 |---|---|---|---|
-| 계약 라인 | `schema: "material-spec/v0"` | 인스턴스 최상위 필드 | 하위호환을 깨는 변경 = 새 라인(`.../v1`). v0 소비자는 v1 인스턴스를 **거부**한다. **M0.5·M0.6 개정은 v0 미동결 상태의 확장이므로 라인을 올리지 않는다** |
-| 구현 버전 | `reader_version: "0.3.0"` | 인스턴스 필드 + `READER-VERSION` | 필드 추가·검사 강화 = minor, 버그 수정 = patch, 계약 라인 변경 동반 = major. M0.5 개정(재정 R1·R2·R3) = 0.1.0 → 0.2.0, **M0.6 개정(재정 N9 + 재감수 B-02·M-01·M-02) = minor 상향 0.2.0 → 0.3.0** |
+| 계약 라인 | `schema: "material-spec/v0"` | 인스턴스 최상위 필드 | 하위호환을 깨는 변경 = 새 라인(`.../v1`). v0 소비자는 v1 인스턴스를 **거부**한다. **M0.5·M0.6·M1 개정은 v0 미동결 상태의 확장이므로 라인을 올리지 않는다**(재정 N15) |
+| 구현 버전 | `reader_version: "0.4.0"` | 인스턴스 필드 + `READER-VERSION` | 필드 추가·검사 강화 = minor, 버그 수정 = patch, 계약 라인 변경 동반 = major. M0.5(재정 R1·R2·R3) = 0.1.0 → 0.2.0, M0.6(재정 N9 + 재감수 B-02·M-01·M-02) = 0.2.0 → 0.3.0, **M1(재정 N14 ① — `value_type` 필수 + 검사 4종 신설·확장) = minor 상향 0.3.0 → 0.4.0**(근거 = 재정 N15의 `0.x` 미동결) |
 | 인스턴스 버전 | `spec_version: 1` | 인스턴스 필드 | 동결 스탬프. 개정 시 +1 단조 증가(런 내부 값이며 계약과 무관) |
 
-하위호환을 깨는 변경의 정의(계약 라인 major에 해당): 필드 삭제·의미 변경, 필수 필드 추가, enum 값 삭제, ID 문법 변경, 결정론 검사 판정 기준의 강화. **다만 v0이 동결되기 전 기간의 검사 강화는 라인을 승격하지 않고 minor 상향으로 표시한다** — 소비자가 아직 존재하지 않고(historian 미부트스트랩) 라인이 미동결이므로, 깨질 하위호환의 대상 자체가 없다. 라인은 **동결 시점에 확정**되며, 그 뒤의 검사 강화부터 위 정의가 그대로 적용된다. **enum 값 추가와 선택 필드 추가는 minor**로 취급하되, 소비자가 `additionalProperties: false`로 닫혀 있으므로 소비자 쪽 reader_version이 낮으면 검증 실패한다 — 그래서 다음 규율이 있다.
+하위호환을 깨는 변경의 정의(계약 라인 major에 해당): 필드 삭제·의미 변경, 필수 필드 추가, enum 값 삭제, ID 문법 변경, 결정론 검사 판정 기준의 강화.
+
+**★ `0.x = 미동결`(재정 2026-08-18 N15).** 위 정의가 언제부터 효력을 갖는지를 재정이 정했다. 재정 원문: *"`0.x = 미동결` — 강화·파괴 변경 자유(변경 기록만 필수), 계약 보증 없음. **v1.0.0 동결 사건 = historian 첫 이식 직전**(계약 상대가 생기는 순간부터 '강화=major' 엄격 규율 가동)."* 원장 = `docs/decisions/ruling-20260818-02-N14-N15.md`.
+
+| 구간 | 규율 | 지금 |
+|---|---|---|
+| `reader_version` **0.x** | 필수 필드 추가·의미 변경·검사 강화 **자유**. 라인 승격 없이 minor로 적고 **무엇을 왜 바꿨는지 기록**한다. 계약 보증이 없으므로 상대 리포 상신도 불요 | ← 현재 위치(`0.4.0`) |
+| **동결 사건** | historian 첫 이식 **직전**에 `reader_version` `1.0.0` + 계약 라인 `material-spec/v<N+1>`로 승격. 이식 = 계약 상대의 탄생이다 | 미도래 |
+| `1.x` 이후 | 위 정의가 그대로 적용 — major 증가 + 상대 리포 상신 | — |
+
+이 재정이 M0.6 재감수 **M-14**(총괄 재량 G9가 major 규율의 예외를 재정 없이 창설했다는 지적)의 처분이다. 지적은 타당했고, N15는 예외를 **뒤집지 않고 추인**하되 **종료 시점을 함께 못 박아** "언제까지 자유인가"라는 미결까지 닫았다. 그리고 이 재정이 없었다면 M1의 `value_type` 도입(§2.4 — 필수 필드 추가)은 계약 라인 승격을 강제했을 것이며, §9.28이 그 확장을 유보한 근거도 정확히 그것이었다.
+
+**기록 의무의 실물**: 무엇을 왜 바꿨는가는 세 자리에 남는다 — 스키마 파일의 `$comment` 번호 목록 · §6.3의 버전 이력 · 처분 기록 `docs/decisions/D-*.md`. "자유"는 기록 없는 자유가 아니다.
+
+**enum 값 추가와 선택 필드 추가는 minor**로 취급하되, 소비자가 `additionalProperties: false`로 닫혀 있으므로 소비자 쪽 reader_version이 낮으면 검증 실패한다 — 그래서 다음 규율이 있다.
 
 **상호 체크 (D14)**: 독해층을 수정하거나 주로 사용하는 작업에서는 상대 리포의 `READER-VERSION`을 확인한다. 어긋남을 발견하면 **자동 동기화 금지, Owner 상신**. 도구는 `tools/check_reader_version.py`(§8 모듈 로드맵의 M11), 규율의 명문화 위치는 리포 `CLAUDE.md`다.
 
@@ -1567,20 +1591,24 @@ M5는 남고 M9가 추가된다. `[M5]`를 인용했던 문장은 `citation.reso
 
 `numerals`는 숫자 전수 대조(§4.4)의 정답지에 **포함하지 않는다**. 도면부호는 본문에 등장할 이유가 없고, 등장한다면 그것 자체가 도슨트 실패다(D2 독자상). 본문에 도면부호를 쓰고 싶으면 `fact` 항목으로 별도 등재해야 한다.
 
-### §2.6 결정론 검사 6종
+### §2.6 결정론 검사 8종
 
 D6 규율 ③의 구현이다. 규율 원문이 이 절의 헌법이다: **"독해 자체는 LLM 판단을 필요로 한다. 따라서 결정론은 절차 고정 + 산출물 형식 구조화 + 검증 기계화에 산다."** 다시 말해 이 6종은 "독해가 옳은가"를 판정하지 않는다. 판정하는 것은 **"독해가 자기 산출물에 대해 거짓말을 하지 않았는가"**뿐이다. 6종을 전부 통과한 명세도 여전히 얕거나 초점이 틀릴 수 있으며, 그 판단은 체크포인트 1의 Owner 몫이다(D6 — 재료 검토가 Owner 이해층을 겸한다).
 
-실행 위치는 READ 스테이지의 `checks_before_exit`이며(§1.4), 산출은 `10-read/convergence.json`이다. 검사 5·6은 재정 R1이 신설했다.
+실행 위치는 READ 스테이지의 `checks_before_exit`이며(§1.4), 산출은 `10-read/convergence.json`이다(계약 = `convergence/v0`). 검사 5·6은 재정 R1이, **검사 7·8은 재정 N14 ①이** 신설했다. 동결 단계의 2종(`freeze.id-monotonic`·`freeze.payload-immutable`)은 §1.6이 관할하며 구현은 같은 이식 단위(`reader/lib/freeze_integrity.py`)에 산다.
+
+**모든 검사 행은 `verdict-check-row/v0` 서식으로 보고된다**(재정 N5) — 검사 id · 적용 규칙 목록과 그 버전 · **법의 항목 수** · **검사 대상 수** · 위반 수 · 상태 · 공허 종류. 이 서식이 강제되는 이유는 이 절의 검사들이 정확히 그 함정에 취약하기 때문이다: **대상이 0건이면 어떤 검사든 통과한다.** `checked: 0`인 행은 `vacuous: "empty-target"`으로 자동 날인되므로, "검사가 아무것도 세지 않고 통과하는" 상태가 보고서에서 눈에 보인다.
 
 | # | 검사 | 대상 | 무엇을 반증하는가 | 판정 기준 | 실패 시 조치 |
 |---|---|---|---|---|---|
-| 1 | **verbatim 존재** | 모든 `text_verbatim`(청구항·종속항 전문 포함)·`quote`·`caption_quote`·`evidence_quotes[]` | LLM이 원문을 **다듬어 인용**하거나 없는 문장을 지어낸 것 | `source_path` 파일의 **바이트 정확 부분문자열**. 청구항 `text_verbatim`은 청구항 구간 안에서 | 해당 항목 목록 반환, READ 재작업(자동 재시도 없음 — 재시도는 같은 오류를 재생산한다) |
+| 1 | **verbatim 존재** | 모든 `text_verbatim`(청구항·종속항 전문 포함)·`quote`(`spec_refs[]`·`fact.source`·**`derivation.inputs[].quote`** 포함)·`caption_quote`·`evidence_quotes[]`·`positioning.quotes[]` | LLM이 원문을 **다듬어 인용**하거나 없는 문장을 지어낸 것 | `source_path` 파일의 **바이트 정확 부분문자열**. 청구항 `text_verbatim`은 청구항 구간 안에서 | 해당 항목 목록 반환, READ 재작업(자동 재시도 없음 — 재시도는 같은 오류를 재생산한다) |
 | 2 | **포인터 해소** | `claim_ref`·`material_id`·`component`·`attaches_to`·`derived_from[]`·`figure`·`superseded_by`·`applicant_interest.claim`·`derivation.inputs[].ref` | 존재하지 않는 대상을 참조하는 유령 링크, 오타 ID | 각 참조가 실재 대상으로 해소 + **kind 제약** 충족(아래 표) | 실패 참조 목록 반환, READ 재작업 |
 | 3 | **커버리지** | 독립항 트리의 모든 element(재귀) **+ 종속항 `additions[]` 전량** | 청구항 일부를 **읽지 않고 넘어간 것**, 접지 1건이 여러 구성요소를 덮는 것 | ① 각 element·addition의 `material_id`(component 항목)를 `grounding.component`로 참조하는 항목이 **1개 이상** ② element·addition의 `material_id`는 **1:1**이다 — 두 element가 같은 component 항목을 공유할 수 없다 ③ `component.claim_ref`는 자기를 가리킨 element·addition의 id와 **역방향으로 일치**한다(②③ = 재감수 B-02) | 미접지·중복·역참조 불일치 목록 반환. 필수 실패 |
 | 4 | **재독해 수렴** | 독립 2회 READ의 청구항 트리 | 독해가 **재현되지 않는 것**(1회성 추론) | 독립항 수 동일 **그리고** element `text_verbatim` 집합 Jaccard ≥ 0.95 | 재실행 1회 → 여전히 미달이면 **Owner 에스컬레이션**(불안정 신호) |
 | 5 | **종속 인용 파싱**(`read.dependency-parse`) | 종속항 `text_verbatim` ↔ `depends_on[]`·`dependency_type` | 다중 종속의 **논리 형태를 잃거나 잘못 적은 것** | §2.3의 파싱 규칙 5종으로 얻은 집합 == `depends_on` 집합, 어형 ↔ `dependency_type` 정합. 파싱 불능도 실패 | 불일치 목록 + 원문 첨부, READ 재작업 |
-| 6 | **수치 파생 대조**(`read.value-derivation`) | 전 `fact` 항목 | 인용문 옆에 **날조한 수치**를 적어 넣은 것, 정규화값을 잘못 적은 것, 파생 사슬로 원천을 흐린 것 | origin별: `quoted` = `value_raw == quote[span]` 바이트 동일 / `derived` = 산식 재계산 == `value_normalized` / `bibliographic` = `patent` 필드와 일치 / `figure-sourced` = 검증 면제하되 수집. **전 origin 공통** = `value_normalized == normalize(value_raw)`. **파생 그래프 추가 조건**(재정 N9) = 비순환 · 자기참조 금지 · **깊이 1**(`inputs[].ref`가 가리키는 항목의 `origin == "quoted"` — 원문 스팬만이 원천이다, 재감수 M-01). **`_en` 필드 언어 검사**(재감수 M-02)도 이 검사에 함께 실린다 — 스키마(`$defs/en_text`)가 1차로 거부하고, 검사가 집행 대상 필드(§2.4) 전건에 한글 문자가 없음을 **스크립트로** 재확인한다 | 불일치 목록 반환, READ 재작업 |
+| 6 | **수치 파생 대조**(`read.value-derivation`) | 전 `fact` 항목 | 인용문 옆에 **날조한 수치**를 적어 넣은 것, 정규화값을 잘못 적은 것, 파생 사슬로 원천을 흐린 것, **범위·부등호를 스칼라로 뭉갠 것** | origin별: `quoted` = `value_raw == quote[span]` 바이트 동일 / `derived` = 산식 재계산 == `value_normalized` / `bibliographic` = `patent` 필드와 일치 / `figure-sourced` = 검증 면제하되 수집. **전 origin 공통** = `value_normalized == normalize(value_raw)`. **파생 그래프 추가 조건**(재정 N9) = 비순환 · 자기참조 금지 · **깊이 1**(`inputs[].ref`가 가리키는 항목의 `origin == "quoted"` — 원문 스팬만이 원천이다, 재감수 M-01). **`_en` 필드 언어 검사**(재감수 M-02)도 이 검사에 함께 실린다 — 스키마(`$defs/en_text`)가 1차로 거부하고, 검사가 집행 대상 필드(§2.4) 전건에 한글 문자가 없음을 **스크립트로** 재확인한다 | 불일치 목록 반환, READ 재작업 |
+| 7 | **청구항 인벤토리**(`read.claim-inventory`) | `00-source/patent.md`의 청구항 구간 ↔ `claims` 등재분 | 청구항 하나가 **통째로 빠진 것**(현행 커버리지는 등재된 것들 **사이의** 접지만 본다), 원천에 없는 청구항을 지어낸 것, 독립/종속 분류가 원천과 어긋난 것 | 파싱 규칙 = `reader/reader-rules.yaml#claim_inventory`. ① 등재 양방향 일치(취소 청구항 제외) ② 독립/종속 분류가 종속 인용 파싱과 정합 ③ 각 청구항 `text_verbatim`이 **자기 구간 안의** 부분문자열 ④ **파싱 0건 = 실패** | 누락·유령·분류 불일치 목록 반환, READ 재작업 |
+| 8 | **재독해 수렴 — 구조 축**(검사 4의 확장) | 두 독립 READ의 트리 간선·종속항 서명·부가 한정 부착 | 같은 문자열 집합이 **서로 다른 계층으로 조립된 것**, 종속 구조가 흔들린 것 | `#convergence.axes`의 6축 전부. 신설 4축은 `[가설]` 태그 | 축별 Jaccard 보고 → 재실행 1회 → **Owner 에스컬레이션** |
 
 **검사 2의 kind 제약**
 
@@ -1591,14 +1619,16 @@ D6 규율 ③의 구현이다. 규율 원문이 이 절의 헌법이다: **"독�
 | `grounding.component` | `items[].id` | `component` |
 | `derivation.inputs[].ref` | `items[].id` | `fact` |
 | `implication.derived_from[]` | `items[].id` | 제약 없음(모든 kind 허용) |
-| `superseded_by` | `items[].id` | 동일 kind + `status: "active"` |
+| `superseded_by` | `items[].id` | 동일 kind + **사슬 비순환 + 종단이 `active`**(구 규칙 "가리키는 대상이 `active`"는 §9.27에서 폐기 — 2차 승계 A→B→C에서 동결본 수정을 강요했다) |
 | `claim_ref` | element id 또는 addition id | — |
 | `attaches_to` | element id | — |
 | `figure`, `figure_refs[].figure` | `figures[].id` | — |
 
 **검사 1 보조 규정.** 원천 `00-source/patent.md`는 생성 시 1회 NFC 정규화된 UTF-8로 고정한다(§1.3). 검사는 그 위에서 추가 정규화 **없이** 바이트 비교한다. 공백 접힘·따옴표 치환 같은 "친절한" 정규화를 넣지 않는 이유: 정규화가 관대해질수록 검사가 반증할 수 있는 대상이 줄어든다. 원문이 줄바꿈을 포함하면 인용도 줄바꿈을 포함하면 된다(바이트 비교이므로 문제되지 않는다). 청구항 구간의 경계 표기는 원천 정본 생성 규약 소관이다(§1.3).
 
-**검사 3 보조 규정 (재정 R3).** 필수 대상은 **독립항 element 전량 + 종속항 `additions[]` 전량**이다. 구 스펙의 "종속항 접지는 권고" 완화와 그 산출 키(~~`coverage.advisory`~~[폐지])는 **전면 삭제**되었다 — D5 ③은 "전 구성요소"라고 적었고, 비용을 이유로 헌장을 완화하는 것은 스펙의 권한이 아니다(감수 B2). 비용은 관할이 아니라 **레인의 격**으로 흡수한다(§1.4). 접지가 성립하지 않는 구성요소는 누락이 아니라 **예외 상태**(`no-anchor-found`·`not-depicted`)로 신고되며, `convergence.json`의 `grounding_exceptions[]`로 CP1에 노출된다.
+**검사 3 보조 규정 ② — 고아 `component` 금지(M1 신설).** 커버리지는 **청구항 쪽에서 세므로**, 청구항이 통째로 명세에서 빠지면 셀 대상도 함께 빠져 통과한다(M1 코퍼스 레인이 실측). 인벤토리 검사(검사 7)가 그 구멍의 주 방어이고, 그 뒤에 남는 잔여가 **어느 element·addition도 가리키지 않는 `component` 항목**이다 — 청구항을 지우면서 성분 항목만 남긴 흔적이다. 검사 3은 그런 고아를 결함으로 낸다(`coverage.no-orphan-component`). 두 검사는 같은 결함을 양쪽에서 본다: 하나는 원천 쪽 목록으로, 하나는 명세 안의 참조 균형으로.
+
+**검사 3 보조 규정 ① (재정 R3).** 필수 대상은 **독립항 element 전량 + 종속항 `additions[]` 전량**이다. 구 스펙의 "종속항 접지는 권고" 완화와 그 산출 키(~~`coverage.advisory`~~[폐지])는 **전면 삭제**되었다 — D5 ③은 "전 구성요소"라고 적었고, 비용을 이유로 헌장을 완화하는 것은 스펙의 권한이 아니다(감수 B2). 비용은 관할이 아니라 **레인의 격**으로 흡수한다(§1.4). 접지가 성립하지 않는 구성요소는 누락이 아니라 **예외 상태**(`no-anchor-found`·`not-depicted`)로 신고되며, `convergence.json`의 `grounding_exceptions[]`로 CP1에 노출된다.
 
 **검사 6 보조 규정.** `figure-sourced`는 원문 텍스트가 존재하지 않으므로 기계가 대조할 대상이 없다. 검사는 이 항목을 **통과시키되 `manual_verification_required[]`에 수집**하고, CP1이 사람 눈으로 본다. "검증 불가"를 "검증 완료"로 조용히 바꾸지 않는 것이 이 처리의 요점이다.
 
@@ -2066,7 +2096,7 @@ FIG. 2 is a section view of the heat spreader.
 | 5 | 정규화 일관성(`value_normalized == normalize(value_raw)`, 단위 일치) | `read.value-derivation` |
 | 6 | 항목 ID 연속성(`M1..Mn` 빠짐 없음, append-only) | 검증기 부가 검사 |
 | 7 | `superseded_by`의 non-null 조건이 `status == "superseded"`와 일치 | 검증기 부가 검사 |
-| 8 | `derivation.inputs[].ref`가 자기 id를 가리키지 않고 참조 그래프가 **비순환** | `read.pointer-resolve` |
+| 8 | 항목 간 참조 그래프에 **자기참조가 없고 순환이 없다** — 간선 = `derivation.inputs[].ref` ∪ **`implication.derived_from[]`** ∪ `superseded_by` ∪ `grounding.component` | `read.pointer-resolve` |
 | 9 | **파생의 파생 금지** — `derivation.inputs[].ref`가 가리키는 `fact`의 `origin`이 `quoted`임(**깊이 1** = 원문 스팬만이 원천, 재정 N9 · 재감수 M-01) | `read.value-derivation` |
 | 10 | element·addition의 `material_id`가 component 항목과 **1:1**이고, `component.claim_ref`가 **역방향으로 일치**(재감수 B-02) | `read.coverage` |
 | 11 | 하류 산출물의 참조 `spec_version`·`spec_digest` 정합 — 불일치 = 자동 무효(재정 N11) | `design.spec-digest`·`compose.spec-digest`·게이트 버전 정합 검사 |
@@ -3105,7 +3135,13 @@ patent-docent/
     parameters.yaml          # ★현행. 조정 가능 파라미터 4종 (재정 R9, 파생 규칙 M-04)
     run-kinds.yaml           # ★현행. 예행/게시 런 정의 + 게시 런 전제조건 (재정 N10)
     pipeline.yaml            # (M12 예정) 스테이지 그래프·체크포인트·프로필
-    stages/*.yaml            # (M2·M5·M7·M8·M9·M10 예정) 스테이지별 I/O 계약 (파일명 = 스테이지 id)
+    stages/                  # 스테이지별 I/O 계약 (파일명 = 스테이지 id, 계약 라인 stage-contract/v0)
+      source.yaml            # ★현행 (M1) — 조기 보고·전시물 후보 산정식(잠정)
+      read.yaml              # ★현행 (M1) — D5 5단계·레인 배정·CP1 부착
+      freeze.yaml            # ★현행 (M1) — 동결 3동작·봉투 검증
+      design.yaml            # (M5 예정)   compose.yaml (M5)   figures.yaml (M9)
+      gate.yaml              # (M4 예정)   probe.yaml (M7)     critique.yaml (M8)
+      ship.yaml              # (M10 예정)  feedback.yaml (M10)
     schemas/                 # docent 전용 스키마 (JSON Schema draft 2020-12)
       approval-envelope.schema.json  # ★현행 (재정 R8, 재감수 M-03·B-07 + 재정 N9)
       metrics-row.schema.json        # ★현행 (재정 R12, 재감수 M-05)
@@ -3117,22 +3153,26 @@ patent-docent/
       gate-report.schema.json        # (M4 예정)
       probe-report.schema.json       # (M7 예정)
       probe-score.schema.json        # (M7 예정)
-      convergence.schema.json        # (M2 예정)
+      convergence.schema.json        # ★현행 (M1). READ 검사 보고서 — 판정 행 배열(재정 N5)
       run.schema.json                # (M12 예정)
     lexicon/
       speech-acts.yaml       # ★현행. 화행 술어 3종 (등재·개정은 Owner 재정으로만, 재정 R7)
       defect-catalog.yaml    # ★현행. 결함 카탈로그 — 빈 상태 출발 (등재는 Owner 재정으로만)
       score-lint.yaml        # ★현행. 점수 금지 린트 패턴 + 반례 — 자문 산출물 전용 (재정 N4)
     invariants.md            # (M4 예정)
-    glossary.md              # (M1 예정)
+    glossary.md              # ★현행 (M1). 계약층 **식별자** 사전 (개념 정본은 §0.5)
   reader/                    # ★ 이식 단위 (historian과 공유하는 독해층)
-    READER-VERSION           # semver 한 줄
-    README.md
+    READER-VERSION           # semver 한 줄 — 현행 0.4.0
+    README.md                # ★현행 (M1)
+    reader-rules.yaml        # ★현행 (M1). 독해층 규칙 계약 (reader-rules/v0)
     schemas/
       material-spec.schema.json   # ★ 두 프로젝트 간 계약 (단일 진원)
     procedure/               # D5 5단계 독해 절차 문서·프롬프트
-    lib/                     # 결정론 검사 유틸 (verbatim·포인터 해소·수렴)
+    lib/                     # ★현행 (M1). 결정론 검사 유틸 — 검사 10종의 구현
   engine/                    # docent 전용 러너·게이트·strip·프로브
+    stages/                  # ★현행 (M1): source.py · read.py · freeze.py
+    render/                  # ★현행 (M1): material_spec_md.py (CP1 KR 표면 렌더)
+    lanes/                   # ★현행 (M1): 독해 LLM 레인 호출 구조
   studio/                    # 도면 렌더 (HTML/CSS/SVG + 헤드리스 Chromium)
     templates/
     tokens/
@@ -3151,9 +3191,11 @@ patent-docent/
     fixtures/                # 검사기·회귀 표본 데이터 (자기매칭 격리 요건 2항 — §4.8)
       check_spec_refs/       # ★현행. 정합 검사기 픽스처(ok + 결함 5계열)
       schema-enforcement/    # ★현행. 스키마 집행 경계 픽스처(reject / accept / validator-scope 3계열)
+      reader/                # ★현행 (M1). 합성 코퍼스 — 가공 특허 1벌 + 정상 3판 + 변조본 다수
   tools/                     # 개발자 도구 (read-only)
     check_spec_refs.py       # ★현행. 문서·계약 정합 검사기 K1~K7 (커밋 전 필수 관문 — §8.3)
     check_schema_enforcement.py  # ★현행. 스키마 집행 실증 도구 (커밋 전 필수 관문 — §8.3)
+    check_validator_enforcement.py # ★현행 (M1). 검증기 집행 실증 도구 (커밋 전 필수 관문 — §8.3)
     retired-tokens.yaml      # ★현행. 폐지 토큰 데이터 정본 (K5가 읽는다)
     check_reader_version.py  # (M11 예정) reader-version 상호 체크
 ```
@@ -3210,6 +3252,9 @@ patent-docent/
 | 런 종류 정의(`run-kinds.yaml`) | `contracts/` | 게시 여부·방어층 가동은 파이프라인 상태 조건(판별식 4) |
 | 점수 금지 린트(`lexicon/score-lint.yaml`) | `contracts/` | 자문 층(L2·소견·계기 보고)의 규율 = 심급 구조 의존(판별식 4) |
 | 게이트 판정 행 서식(`schemas/verdict-check-row.schema.json`) | `contracts/` | 게이트 판정문의 서식(판별식 4) |
+| **독해층 규칙(`reader-rules.yaml`)** | **`reader/`** | 청구항을 어디서 끊는가·종속 인용을 어떻게 읽는가·항목의 생애가 어떻게 흐르는가·수치 문자열을 어떤 타입으로 읽는가 — 넷 다 "특허를 읽는 일"이며 출력 채널을 모른다(판별식 3). historian은 이 규칙 없이 재료 명세를 해석할 수 없다 |
+| **스테이지 I/O 계약(`stages/*.yaml`)** | `contracts/` | 스테이지 그래프·체크포인트·레인 배정은 파이프라인 지식이다(판별식 4) |
+| **검사 보고서 서식(`schemas/convergence.schema.json`)** | `contracts/` | 검사 **자체**(`reader/lib/`)는 이식 단위에 있고, 그 결과를 담는 **봉투**만 여기 있다. historian은 재료 명세를 받지 이 보고서를 받지 않는다 |
 
 `drop_signal` 행이 경계선의 성격을 잘 보여준다: **스키마 필드는 계약에 남고, 그 필드를 어떤 기준으로 채우는지는 소비 프로젝트가 정한다.** historian은 같은 필드를 "교차 분석 가치 없음" 같은 자기 기준으로 채울 수 있다.
 
@@ -3223,12 +3268,12 @@ patent-docent/
 | MINOR | 하위호환 확장 | optional 필드 추가, 새 `kind` 추가, 새 결정론 검사 추가, **v0 미동결 기간의 검사 강화** |
 | PATCH | 계약 불변 | 검사기 버그 수정, 절차 문서 문구, 프롬프트 조정, 정규화 표의 별칭 추가 |
 
-[^v0-freeze]: **단, v0 동결 전 기간은 예외이며 그 사실을 §2.1이 규정한다.** 미동결 계약에는 깨뜨릴 소비자가 없으므로, 그 기간의 검사 강화(예: 빈 배열 금지·값 언어 제약)는 형식상 파괴 방향이더라도 **라인 승격 없이 minor**로 처리한다. M0.6의 `0.2.0 → 0.3.0`이 그 적용례다(계약 라인은 `material-spec/v0` 유지).
+[^v0-freeze]: **단, `0.x` 미동결 구간은 예외이며 그 근거는 재량이 아니라 재정이다** — Owner 재정 2026-08-18 **N15**: "`0.x = 미동결` — 강화·파괴 변경 자유(변경 기록만 필수), 계약 보증 없음. **v1.0.0 동결 사건 = historian 첫 이식 직전**." 미동결 계약에는 깨뜨릴 소비자가 없으므로, 그 구간의 검사 강화(예: 빈 배열 금지·값 언어 제약·필수 필드 추가)는 형식상 파괴 방향이더라도 **라인 승격 없이 minor**로 처리한다. 적용례 = M0.6의 `0.2.0 → 0.3.0`, M1의 `0.3.0 → 0.4.0`(계약 라인은 세 판 모두 `material-spec/v0`). 상세 = §2.1.
 
 - 스키마 문자열 `schema: "material-spec/vN"`의 `N`은 **MAJOR와 연동**한다. MAJOR 증가 없이 `vN`이 바뀌거나 그 반대는 계약 위반이다.
 - 런 산출물의 `reader_version`은 **생산 시점 값**을 기록한다. 동결본(`15-frozen/`)에 박힌 값은 이후 어떤 이유로도 갱신하지 않는다 — 그 재료가 어떤 계약 아래 만들어졌는지가 사후 감사의 기준점이다.
 - MAJOR 증가는 historian 쪽 동시 상신 사안이다(§6.3 말미 프로토콜).
-- **현행 값 = `0.3.0`**(M0.6). 이력 = `0.1.0`(M0 초판) → `0.2.0`(M0.5, 재정 R1·R2·R3) → `0.3.0`(M0.6, 재정 N9 + 재감수 B-02·M-01·M-02의 검사 강화). 계약 라인은 세 판 모두 `material-spec/v0`이다.
+- **현행 값 = `0.4.0`**(M1). 이력 = `0.1.0`(M0 초판) → `0.2.0`(M0.5, 재정 R1·R2·R3) → `0.3.0`(M0.6, 재정 N9 + 재감수 B-02·M-01·M-02의 검사 강화) → **`0.4.0`(M1, 재정 N14 ① — `fact.value_type` 필수 신설 + `read.claim-inventory`·`freeze.payload-immutable` 신설 + `read.coverage`·`read.convergence` 확장 + `superseded_by` 해소 규칙 교체)**. 계약 라인은 네 판 모두 `material-spec/v0`이다(재정 N15의 `0.x` 미동결).
 
 **`PORTED-FROM.md` 서식** (수신 측 리포의 `reader/PORTED-FROM.md`. docent가 원천일 때 docent에는 이 파일이 없다):
 
@@ -3433,8 +3478,21 @@ effective_from: gate_version 1.3
 | `contracts/run-kinds.yaml` | 현행 | M0.6 |
 | `contracts/lexicon/score-lint.yaml` | 현행 | M0.6 |
 | `contracts/schemas/verdict-check-row.schema.json` | 현행 | M0.6 |
+| `reader/reader-rules.yaml` | 현행 | M1 |
+| `contracts/stages/source.yaml` | 현행 | M1 |
+| `contracts/stages/read.yaml` | 현행 | M1 |
+| `contracts/stages/freeze.yaml` | 현행 | M1 |
+| `contracts/schemas/convergence.schema.json` | 현행 | M1 |
+| `contracts/glossary.md` | 현행 | M1 |
 | `contracts/pipeline.yaml` | 예정 | M12 |
-| `contracts/stages/*.yaml` | 예정 | M2·M5·M7·M8·M9·M10 |
+| `contracts/stages/design.yaml` | 예정 | M5 |
+| `contracts/stages/figures.yaml` | 예정 | M9 |
+| `contracts/stages/compose.yaml` | 예정 | M5 |
+| `contracts/stages/gate.yaml` | 예정 | M4 |
+| `contracts/stages/probe.yaml` | 예정 | M7 |
+| `contracts/stages/critique.yaml` | 예정 | M8 |
+| `contracts/stages/ship.yaml` | 예정 | M10 |
+| `contracts/stages/feedback.yaml` | 예정 | M10 |
 | `contracts/schemas/annotation.schema.json` | 예정 | M3 |
 | `contracts/schemas/annotation-index.schema.json` | 예정 | M3 |
 | `contracts/schemas/thread.schema.json` | 예정 | M3 |
@@ -3442,14 +3500,16 @@ effective_from: gate_version 1.3
 | `contracts/schemas/gate-report.schema.json` | 예정 | M4 |
 | `contracts/schemas/probe-report.schema.json` | 예정 | M7 |
 | `contracts/schemas/probe-score.schema.json` | 예정 | M7 |
-| `contracts/schemas/convergence.schema.json` | 예정 | M2 |
 | `contracts/schemas/run.schema.json` | 예정 | M12 |
 | `contracts/invariants.md` | 예정 | M4 |
-| `contracts/glossary.md` | 예정 | M1 |
 
-글로브(`*`)를 포함한 행은 존재 검사에서 제외하고 부모 디렉터리만 확인한다.
+글로브(`*`)를 포함한 행은 존재 검사에서 제외하고 부모 디렉터리만 확인한다. **M1에서 `contracts/stages/*.yaml` 글로브 행은 스테이지별 실경로 행으로 분해되었다** — 세 스테이지(`source`·`read`·`freeze`)가 실물이 되면서 글로브 하나로는 "만든 것"과 "만들 것"을 구별할 수 없게 되었기 때문이다. K2는 `현행` 행의 실재와 `예정` 행의 부재를 각각 대조하므로, 분해하지 않으면 나머지 여덟 스테이지가 이미 존재한다는 잘못된 인상이 표에 남는다.
 
-`현행` 파일이 선언하는 계약 라인은 `material-spec/v0` · `l0-format/v0` · `parameters/v0` · `speech-acts/v1` · `defect-catalog/v0` · `approval-envelope/v0` · `metrics-row/v0` · `format-parameters/v0` · `run-kinds/v0` · `score-lint/v1` · `verdict-check-row/v0` **열하나**다(M0.5의 7종 + M0.6의 4종). K3가 문서의 언급과 파일의 선언(`title` 또는 `properties.schema.const`, YAML은 최상위 `schema`)을 **양방향**으로 대조하므로, 파일에만 있는 계약도 문서에만 있는 계약도 결함으로 잡힌다.
+`현행` 파일이 선언하는 계약 라인은 `material-spec/v0` · `l0-format/v0` · `parameters/v0` · `speech-acts/v1` · `defect-catalog/v0` · `approval-envelope/v0` · `metrics-row/v0` · `format-parameters/v0` · `run-kinds/v0` · `score-lint/v1` · `verdict-check-row/v0` · `reader-rules/v0` · `stage-contract/v0` · `convergence/v0` **열넷**이다(M0.5의 7종 + M0.6의 4종 + **M1의 3종**). K3가 문서의 언급과 파일의 선언(`title` 또는 `properties.schema.const`, YAML은 최상위 `schema`)을 **양방향**으로 대조하므로, 파일에만 있는 계약도 문서에만 있는 계약도 결함으로 잡힌다.
+
+M1이 신설한 계약 3종의 자리는 §6.2의 배치 예시 표가 판별과 함께 싣는다.
+
+**`reader/*.yaml`이 검사기 스캔 대상에 추가되었다.** `tools/check_spec_refs.py`의 `CONTRACT_GLOBS`는 M0.6까지 `reader/schemas/*.json`만 보았으므로, `reader/` 루트의 YAML 계약이 K3의 파일 측 대조에서 통째로 빠졌을 것이다 — 파일이 선언한 계약 라인이 영영 문서와 대조되지 않는 구멍이다.
 
 ---
 
@@ -3798,12 +3858,13 @@ if got != want:
 4. **최적화 모드 회귀**: 검증 도구는 `python3 -O`로도 동일한 종료 코드를 내야 한다. M11이 이 동치성을 서브프로세스 테스트로 강제한다(`test_checker_behaves_identically_under_O`).
 5. 산출물 스키마 검증은 JSON Schema draft 2020-12로 하고, **금지 필드는 `additionalProperties: false`로 집행**한다(점수 금지 등 — D15). ※ 앵커 원장의 절대량 필드 금지는 재정 R12로 폐기되었고, 남은 금지는 **점수·판정 필드**다(§4.6·§5.7).
 6. 회귀 스위트는 "**변조본 검출 실패 = 테스트 실패**"로 설계한다(§8.5).
-7. **커밋 전 필수 관문은 둘이다.** 문서(`docs/**`)나 계약(`contracts/**`·`reader/schemas/**`)을 고쳤으면 아래 두 도구가 **전부 exit 0**을 내는지 확인한 뒤 커밋한다.
+7. **커밋 전 필수 관문은 셋이다**(M1에서 하나 늘었다). 문서(`docs/**`)·계약(`contracts/**`·`reader/schemas/**`·`reader/*.yaml`)·검증기(`reader/lib/**`)를 고쳤으면 아래 세 도구가 **전부 exit 0**을 내는지 확인한 뒤 커밋한다. **세 도구는 각자 하나의 주장만 증명하며, 하나의 통과는 다른 하나의 증거가 아니다.**
 
 | 도구 | 무엇을 보는가 | 없으면 무엇이 새는가 |
 |---|---|---|
 | `tools/check_spec_refs.py` | 문서·계약 **정합** — K1 절 참조 해소 · K2 §6.7 계약 파일 현황 · K3 계약 라인 양방향 일치 · K4 조항 참조 범위 · K5 폐지 토큰 부재 · K6 계약 파일 파싱 · K7 스키마 메타 검증 | M0 병렬 집필이 남긴 이음매 결함(문서-계약 불일치) |
-| `tools/check_schema_enforcement.py` | **스키마가 강제하는 것의 경계** 측정 — 무효 인스턴스가 REJECT되고 유효 인스턴스가 ACCEPT되는가, 그리고 **스키마가 설계상 통과시키는 무효 인스턴스**(`validator-scope`)가 몇 건이며 각각 어느 검증기 검사의 몫인가(픽스처 = `tests/fixtures/schema-enforcement/`). 전건 통과는 **의미 집행 완료가 아니다** — `VALIDATOR_SCOPE` 계수는 실적이 아니라 아직 코드가 없는 불변식의 부채 목록이다(재감수 B-02) | 이름·경로·메타스키마는 정합하나 **불변식은 통과시키는** 스키마 |
+| `tools/check_schema_enforcement.py` | **스키마가 강제하는 것의 경계** 측정 — 무효 인스턴스가 REJECT되고 유효 인스턴스가 ACCEPT되는가, 그리고 **스키마가 설계상 통과시키는 무효 인스턴스**(`validator-scope`)가 몇 건이며 각각 어느 검증기 검사의 몫인가(픽스처 = `tests/fixtures/schema-enforcement/`). 전건 통과는 **의미 집행 완료가 아니다** — `VALIDATOR_SCOPE` 계수는 실적이 아니라 아직 코드가 없는 불변식의 부채 목록이다(재감수 B-02). M1에서 각 `validator-scope` 항목이 `enforced_status`(`planned`\|`implemented`)와, `implemented`면 **그 거부를 실증하는 테스트 노드 id**를 함께 들도록 강화되었다 — 근거 없이 "구현되었다"고 적는 경로를 막는다 | 이름·경로·메타스키마는 정합하나 **불변식은 통과시키는** 스키마 |
+| `tools/check_validator_enforcement.py`(M1 신설) | **검증기가 실제로 거부하는가**의 실증 — 합성 코퍼스(`tests/fixtures/reader/`)의 각 변조본에 대해 **정확히 선언된 검사만** 실패하는지 대조한다. 변조본은 전부 스키마를 **통과**하므로, 여기서 잡히는 것은 오직 검증기 코드의 몫이다. **케이스 수 하한과 검사별 배분 하한**을 함께 검사해 "픽스처 0건이라 통과"를 봉쇄한다 | 계약과 스키마는 옳으나 **집행 코드가 없거나 잘못 잡는** 상태(재감수 B-04·M-07·M-08·M-09가 전부 이 자리였다) |
 
    두 번째 도구가 필요한 이유가 M0.5의 교훈이다 — **정합 검사기 통과가 곧 계약 집행을 뜻하지 않는다.** M0.5는 K1~K7을 전부 통과한 상태에서 빈 `additions`·한국어 `_en`·조건부 승인·유령 `corrects`를 전부 통과시켰다(재감수 B-02·M-02·M-03·M-05). 이름이 맞는 것과 법이 집행되는 것은 다른 사건이다. 종료 코드는 두 도구 모두 위 3항 규약을 따른다.
 8. **자기매칭 격리(§4.8의 4항)는 검사 도구에도 동일 적용한다.** 스캔 대상 allowlist 명시 · 탐지 패턴과 표본 데이터의 파일 분리(`tools/retired-tokens.yaml`·`tests/fixtures/`) · 자기 파일이 스캔 목록에 있으면 **판정이 아니라 실행 거부**(exit 2). 검출기가 자기 그림자를 잡는 사고는 M0에서 실제로 났다.
@@ -3812,9 +3873,23 @@ if got != want:
 
 각 모듈은 **산출 파일 · 완료 판정(DoD) · 검증 계획**을 갖는다. 검증 계획의 각 행은 "이 테스트가 없으면 무엇이 공허해지는가"를 기록한다.
 
-#### M1 — `reader/` 부트스트랩 ★크리티컬 ①
+#### M1 — `reader/` 부트스트랩 + READ 실행 경로 ★크리티컬 ①
 
-- **산출**: `reader/schemas/material-spec.schema.json`(M0.5 실파일 — 검증기가 이 파일을 로드한다), `reader/lib/verbatim.py`, `reader/lib/pointers.py`, `reader/lib/coverage.py`, `reader/lib/convergence.py`, `reader/lib/dependency_parse.py`, `reader/lib/derivation.py`, `reader/lib/normalize.py`, `reader/READER-VERSION`, `reader/README.md`, `contracts/glossary.md` 초판
+**★ M1의 범위는 재정 N14로 확장되었다.** 초판 M1은 "스키마 + 검사 6종"이었고 READ 스테이지 러너는 M2였다. 재정 N14는 M0.6 재감수 FAIL에도 M1 착수를 허용하되 **생존 지적의 M1 관할분을 M1 정식 요구사항표로 편입**하고, **종결 요건을 "sol 재감수에서 구현으로 해소되었음을 실증"**으로 정했다. 그 결과 M1은 아래 셋을 함께 진다.
+
+| 갈래 | 내용 | 근거 |
+|---|---|---|
+| ① 검증기 | 결정론 검사 **10종**(구 6종 + 신설 `read.claim-inventory`·`freeze.payload-immutable` + `read.schema`·`freeze.id-monotonic`의 실구현) | 초판 M1 + 재정 N14 |
+| ② 실행 경로 | `source` 조기 보고 → D5 5단계 독해(LLM 레인) → CP1 승인 자료 → `freeze`. **구 M2의 러너 갈래를 M1이 흡수**했다 | 재정 N14 발주 |
+| ③ 계약 확장 | `value_type` 판별 유니온 · `reader-rules/v0` · `stage-contract/v0` · `convergence/v0` | 재정 N14 ① + N15 |
+
+**§8.1 의존 그래프에 미치는 영향.** M1이 구 M2의 러너를 흡수했으므로 간선 `M1→M2`는 남되 M2의 잔여는 **재요리 경로·절차 문서의 완성**으로 축소된다. 크리티컬 패스는 여전히 M1이며, 오히려 굵어졌다.
+
+- **산출**
+  - 계약: `reader/schemas/material-spec.schema.json`(개정 — `value_type` 필수), **`reader/reader-rules.yaml`**(신설), `contracts/stages/{source,read,freeze}.yaml`(신설), `contracts/schemas/convergence.schema.json`(신설), `contracts/glossary.md`(신설), `reader/READER-VERSION` = **`0.4.0`**
+  - 검증기: `reader/lib/` — `report.py` · `rules.py` · `spec_io.py` · `normalize.py` · `value_grammar.py` · `schema_check.py` · `verbatim.py` · `pointers.py` · `coverage.py` · `dependency_parse.py` · `derivation.py` · **`inventory.py`** · `convergence.py` · **`freeze_integrity.py`** · `run_checks.py`
+  - 러너: `engine/stages/{source,read,freeze}.py`, `engine/render/material_spec_md.py`(CP1 KR 표면), `engine/lanes/`(독해 LLM 레인 호출 구조), `reader/procedure/*.md`(D5 5단계 절차·프롬프트), `reader/README.md`
+  - 도구: `tools/check_validator_enforcement.py`(신설 — 검증기가 실제로 거부하는지의 실증)
 - **DoD**
   - §2.7의 예시 인스턴스가 스키마를 통과하고, 결정론 검사 **6종**을 전부 통과한다(§2.6).
   - 검사 6종 각각에 대해 **실패해야 하는 변조 인스턴스**가 준비되어 실제로 실패한다.
@@ -3824,9 +3899,49 @@ if got != want:
   - **해설 필드의 값이 EN이다**(재감수 M-02) — `label_en`·`statement_en` 등 `_en` 계열이 한글을 담으면 거부한다. 원문 인용 필드와 KR 규정 필드는 적용 대상이 아니다.
   - **element·addition ↔ `material_id`가 1:1**이고 `component.claim_ref`가 **역방향으로 일치**한다(재감수 B-02). 두 element가 같은 component 항목을 공유하면 접지 1건이 둘을 덮는다.
   - `M<n>` 추가 전용 규율이 개정본 비교 검사로 집행된다.
-  - `READER-VERSION` = **`0.3.0`**, 스키마 문자열 = `material-spec/v0`, 둘의 연동이 검사된다(v0 미동결분 강화이므로 라인 승격 없이 minor 상향 — §6.3).
-  - 수치 정규화 표가 `reader/lib/normalize.py` 한 곳에 있고, 게이트·계기가 이를 import한다(구현 이중화 금지).
-- **검증**: `.venv/bin/pytest tests/test_m1_reader.py -q`
+  - `READER-VERSION` = **`0.4.0`**, 스키마 문자열 = `material-spec/v0`, 둘의 연동이 검사된다(`0.x` 미동결 구간의 강화이므로 라인 승격 없이 minor 상향 — 재정 N15, §2.1·§6.3).
+  - 수치 정규화 표가 `reader/lib/normalize.py` 한 곳에 있고, 게이트·계기가 이를 import한다(구현 이중화 금지). `contracts/l0-format.yaml` §9의 본문 쪽 정규화 문언과의 **동치는 테스트가 대조**한다 — 사본을 두지 않는 이유는 `reader/`가 `contracts/`를 읽으면 이식 단위가 깨지기 때문이다(§6.2 판별식 1).
+  - **`source`가 `00-source/source-report.json`으로 도면 수·전시물 후보 수를 조기 보고**하고(READ의 전량 접지 비용 지출 **전**), 부족 시 `escalate`한다. 사유 표기는 `형식 전제 미충족`이며 D4의 `안도감 부적합`과 구별된다(재정 N12). 산정식은 **잠정**이며 `contracts/stages/source.yaml`이 `[가설]` 태그와 미결 3논점을 데이터로 싣는다(재감수 M-04).
+  - **CP1 표면**(`material-spec.md`)이 수치를 **3분류로 노출**하고(재정 N9), `manual_verification_required[]`·`grounding_exceptions[]`를 별도 절로 강조 노출한다(재정 R1·R3).
+  - **`freeze.approval-valid`가 봉투의 ack 목록을 재료와 대조**한다 — `derived_fact_ack[]` ⟺ `origin: "derived"` 항목 집합, `manual_verification_ack[]` ⟺ `origin: "figure-sourced"` 항목 집합. 대조 없는 목록은 승인이 아니라 서명이다(재감수 M-01 잔여).
+  - **모든 검사가 `verdict-check-row/v0` 서식으로 보고된다**(재정 N5) — 공허 2종이 자동 날인되므로 "검사가 아무것도 세지 않고 통과하는" 구멍이 보고서에서 눈에 보인다.
+
+##### M1 요구사항표 (재정 N14 ① — M0.6 재감수 생존 지적의 M1 관할분)
+
+**이 표가 M1의 종결 요건이다.** 재정 N14 ②는 "M1 종결 요건 = sol 재감수에서 해당 항목들이 **구현으로 해소**되었음을 실증"으로 정했다. 따라서 아래 각 행은 **구현 위치**와 **그것을 반증하는 테스트**를 함께 들고 다닌다 — 테스트 없는 구현 주장은 M0.6이 벌한 과장 보고와 같은 것이다.
+
+| # | 감수 id | 지적 요지 | 요구사항 | 구현 | 반증 테스트 |
+|---|---|---|---|---|---|
+| N14-1 | **B-04** (= M0 B5) | 유효 인용 + 날조 `value_raw`가 ACCEPT — 집행자가 없다 | `read.value-derivation` 신설 | `reader/lib/derivation.py` | `test_fabricated_value_raw_with_valid_quote_is_rejected` |
+| N14-2 | **B-02** 잔여 | `derivation.inputs[].ref` 자기참조가 ACCEPT(validator-scope 부채) | `read.pointer-resolve`에 자기참조·비순환 | `reader/lib/pointers.py` | `test_self_referencing_derivation_input_is_rejected` · `test_reference_graph_cycle_is_rejected` |
+| N14-3 | **M-01** 잔여 ① | 파생 깊이 1 미집행(스키마는 참조를 해소하지 못한다) | `derivation.inputs[].ref` 대상의 `origin == "quoted"` | `reader/lib/derivation.py` | `test_derived_fact_of_derived_fact_is_rejected` |
+| N14-4 | **M-01** 잔여 ② | `derived_fact_ack[]`가 실제 파생 집합과 대조되지 않아 빈 목록·유령 ID가 통과 | `freeze.approval-valid`의 ack 집합 대조 | `engine/stages/freeze.py` | `test_derived_fact_ack_must_match_derived_set` |
+| N14-5 | A군 **B-02** 잔여 | element·addition ↔ `material_id` 1:1과 `claim_ref` 역조건이 검증기 몫으로 남음 | `read.coverage` 확장 | `reader/lib/coverage.py` | `test_shared_component_between_elements_is_rejected` · `test_claim_ref_backreference_mismatch_is_rejected` |
+| N14-6 | **M-02** 잔여 | `_en` 한글 금지의 스크립트 재확인이 없음(스키마 1차 방어만) | `read.value-derivation`에 언어 재검 | `reader/lib/derivation.py` | `test_hangul_in_en_field_is_rejected` |
+| N14-7 | **M-07** (= M0 M12) 인벤토리 축 | 원천 청구항이 통째로 빠져도 남은 것들이 서로 접지되면 통과 | **`read.claim-inventory` 신설** + 파싱 규칙 계약화 | `reader/lib/inventory.py` · `reader/reader-rules.yaml#claim_inventory` | `test_claim_inventory_detects_missing_source_claim` · `test_claim_inventory_rejects_zero_parsed_claims` |
+| N14-8 | **M-07** 수렴 축 | 수렴이 집합만 보므로 종속항·트리 구조의 흔들림을 통과 | `read.convergence` **6축**으로 확장 | `reader/lib/convergence.py` · `reader-rules.yaml#convergence` | `test_convergence_detects_same_elements_different_tree` |
+| N14-9 | **M-08** (= M0 M13) | `freeze.id-monotonic`이 ID 존재만 보므로 내용이 조용히 바뀌어도 통과 | **`freeze.payload-immutable` 신설** — 정본 payload 해시·단방향 전이·비순환 승계 사슬 | `reader/lib/freeze_integrity.py` · `reader-rules.yaml#item_lifecycle` | `test_payload_change_under_same_id_is_rejected` · `test_lifecycle_transition_is_one_way` · `test_supersession_chain_terminal_must_be_active` |
+| N14-10 | **M-09** (= M0 M14) | `fact`가 정규화 문자열 하나뿐이라 범위·부등호·공차·과학표기를 담을 자리가 없음 | **`value_type` 판별 유니온** + `value_raw` 파싱 대조 | 스키마 `$defs/value_type` · `reader/lib/value_grammar.py` | `test_value_type_mismatch_with_value_raw_is_rejected` |
+| N14-11 | **M-14** | 총괄 재량 G9가 major 규율의 예외를 재정 없이 창설 | **재정 N15로 해소** — 문서 반영 | `CLAUDE.md` §2 · §2.1 · §6.3 | `test_reader_version_matches_schema_major` |
+| N14-12 | **M-04** | 재정 N12가 정하지 않은 전시물 후보 산정식을 SPEC이 확정 | 잠정 규칙을 `[가설]` 태그 + 미결 3논점과 함께 **계약 파일로** 등재, 소급 재계산 가능하게 근거 기록 | `contracts/stages/source.yaml` | `test_source_report_records_recompute_basis` |
+| N14-13 | **M-06** | Markush·조건부·수단항 operator 부재 + `alternative-form` 도달 불능 | **부분** — 파싱 규칙 확장은 입법(재정 대기)이므로, M1은 도달 불능을 **데이터로 드러내고** 그 값을 선언한 종속항을 **실패시킨다**(침묵 통과 금지) | `reader/reader-rules.yaml#dependency_citation.unreachable_values` | `test_alternative_form_declaration_is_rejected` |
+| N14-14 | **m-02** | 재정 N8이 요구한 `pytest --version` 실출력이 산출물에 없음 | 환경 실측을 처분 기록에 첨부 | `docs/decisions/D-20260818-02-m1-read.md` | — (기록 요건) |
+
+**M1 관할이 아닌 생존 지적**(같은 감수에서 나왔으나 다른 모듈·다른 재정의 몫이다. 여기 적는 이유는 **잔여 목록의 누락이 "닫혔다"는 인상을 만들기 때문**이다 — 그것이 M0에서 지적 2건을 잃게 만든 기제다, 재감수 M-17).
+
+| 감수 id | 지적 | 소관 |
+|---|---|---|
+| B-02 잔여 ② | `completion_proxy: 999` ACCEPT | M10 `feedback.row-consistency` |
+| M-02 | 점수 린트 단독 학점 통과·실행기 부재 | M4·M8 |
+| M-03 | 게시 전제조건 3종 중 2종에 기계 판정 좌표 없음 | **Owner 재정 대기** |
+| M-10 | D14 계약면 잔여(서지 단수·`drop_signal` 의미 불일치) | historian 실재 시점의 재정 |
+| M-11 | 한 줄 복수 문장의 per-sentence 태그 집행 | M3 (신설 거부권 = 재정) |
+| M-12 | `weakest_tweet`의 비인과 국소화 | M7 (프로브 산출 계약 변경) |
+| M-13 | `gate.no-rewrite`의 의미적 우회 4종 | M4 (§4.7 `[OPEN]`) |
+| M-15 | E26의 `ceil(n/2)` 완화 | **Owner 재정 대기**(유효 표본 하한) |
+| m-01 | 형식 수치 사본이 `l0-format.yaml` 주석·note에 잔존 | 문서 위생 — 값 표류는 현재 없음 |
+
+- **검증**: `.venv/bin/pytest tests/test_m1_reader.py tests/test_m1_corpus.py tests/test_m2_read.py -q` · `python3 tools/check_validator_enforcement.py`
 
 | 테스트 | 반증 대상 |
 |---|---|
@@ -4224,7 +4339,7 @@ CP1·CP2 외의 항목은 **예행 런**을 멈추지 않는다 — 재정 전�
 
 - **[ENG-확정]** (§9.0) — 헌장 범위 안의 공학 결정. 총괄이 조립 단계에서 확정했으며 Owner 재정을 기다리지 않는다. 본문과 이 절이 어긋나면 이 절이 이긴다. M0.5 라운드의 E1~E19 + M0.6 라운드의 **E20~E27**.
 - **[해소]** (§9.1~§9.23) — Owner 재정으로 종결된 항목. 2026-08-17 재정 12건(R1~R12)이 §9.1~§9.11·§9.13~§9.16을, **2026-08-18 재정 13건(N1~N13)이 §9.12·§9.17~§9.23을** 닫았다. 논점과 처분만 남기고 축약했으며, 초판의 추천안이 재정과 어긋나는 곳에는 **폐기 사실을 명기**했다. 처분 기록 전문 = `docs/decisions/D-20260817-02-spec-revision-m05.md`(M0.5) · `docs/decisions/D-20260818-01-m06-enforcement.md`(M0.6), 재정 원문 = `docs/decisions/ruling-20260818-01-N1-N13.md`.
-- **[OWNER-대기]** (§9.24·§9.26·§9.27·§9.28) — 헌장도 재정도 답하지 않은 잔여 사항. **엔진은 재정 전까지 이 항목에 의존하는 기능을 확정 구현하지 않는다.** 각 항목은 논점 · 왜 지금 결정할 수 없는가 · 잠정 처리(추천안) 3부로 적는다. 잠정 처리는 "재정 전까지 엔진이 어떻게 행동하는가"이지 재정이 아니다. 넷 중 §9.24는 재정 R12가 72h만 다룬 데서 남은 잔여이고, **§9.26~§9.28은 M0 감수 원문 복원으로 드러난 미처분분**이다(§9.25).
+- **[OWNER-대기]** (§9.24) — 헌장도 재정도 답하지 않은 잔여 사항. **엔진은 재정 전까지 이 항목에 의존하는 기능을 확정 구현하지 않는다.** 각 항목은 논점 · 왜 지금 결정할 수 없는가 · 잠정 처리(추천안) 3부로 적는다. 잠정 처리는 "재정 전까지 엔진이 어떻게 행동하는가"이지 재정이 아니다. §9.24는 재정 R12가 72h만 다룬 데서 남은 잔여다. **§9.26~§9.28은 M0 감수 원문 복원으로 드러난 미처분분이었고**(§9.25) **재정 N14·N15로 [해소]되어 M1 요구사항표로 편입되었다**(§8.4 M1).
 - **[기록]** (§9.25) — 재정 대기 항목이 아니라 **사료**다. M0 감수 원문의 복원 경위와 그로써 확인·정정된 것, 그리고 아직 열려 있는 것을 남긴다.
 
 **본문의 살아 있는 `> [OPEN]`은 둘뿐이다** — §1.15(168h 창 폭 → §9.24) · §4.7(`gate.no-rewrite` 탐지 범위). 후자는 M0 감수가 권고한 **구조화 지시문**(`{locus, rule, material_ids, action}`) 도입이 린트 확장이 아니라 레코드 구조의 재설계이므로 재정 사항이며, 목록은 `D-20260818-01` §6이 관리한다.
@@ -4494,28 +4609,37 @@ CP1·CP2 외의 항목은 **예행 런**을 멈추지 않는다 — 재정 전�
 | 접근 계약 불일치(BLOCKER) | `run.yaml` **쓰기** 소유자만 처분되고 **읽기** 절반은 그대로였다 — §7.4는 `00-source/`를 "전 스테이지" 읽기로, §1.17 교차표는 하류 전부 **X(금지)**로 적었다. 주방 분리(D6)의 핵심 격리가 두 표에서 정반대였다 | §1.17을 접근 권한의 **정본**으로 선언하고 §7.4를 맞췄다(§7.4) |
 | `gate.no-rewrite` 집행(BLOCKER) | §1.10은 실패를 `halt`로, §4.7은 같은 검사를 "경고"로 적었다. 구 처분 기록은 이 지적을 strip/ship의 무개작 통제와 뒤섞어 닫았는데 그것은 **다른 문장**이었다 | 하드/소프트 모순을 `halt`로 통일했다(§4.7). **탐지 범위**는 잔여로 남아 `> [OPEN]`이다 |
 
-**아직 닫히지 않은 M0 지적 3건.** 처분에 **새 설계가 필요해** 총괄이 임의로 닫지 않았다. 각각 §9.26·§9.27·§9.28이 그 처분(= 재정 상신)이다.
+**M0 지적 3건이 여기서 상신되었고, 재정 N14·N15가 그 상신을 처분했다.** 초판은 "처분에 새 설계가 필요해 총괄이 임의로 닫지 않았다"고 적었다. 재정 N14는 셋을 **M1 요구사항표로 편입**했고(빚의 탕감이 아니라 갚을 수 있는 단계로의 이월), N15는 그중 §9.28의 유보 근거였던 계약 동결 문제를 제거했다.
 
-| # | 지적 | 등재 |
-|---|---|---|
-| 1 | 청구항 인벤토리·수렴의 깊이 — 원천 청구항의 전량 등재를 증명하는 검사가 없고, 수렴 비교가 종속항·트리 구조를 통과시킨다 | §9.26 |
-| 2 | 동결 항목 payload의 불변성 — ID의 존재만 보므로 기존 `active` 항목의 내용이 조용히 바뀌어도 통과한다 | §9.27 |
-| 3 | 재료 측 수치 문법 — `fact`가 정규화 문자열 하나뿐이라 범위·부등호·공차·과학표기를 담을 자리가 없다 | §9.28 |
+| # | 지적 | 등재 | 처분 |
+|---|---|---|---|
+| 1 | 청구항 인벤토리·수렴의 깊이 — 원천 청구항의 전량 등재를 증명하는 검사가 없고, 수렴 비교가 종속항·트리 구조를 통과시킨다 | §9.26 | **[해소]** 재정 N14 → `read.claim-inventory` 신설 · `read.convergence` 6축 |
+| 2 | 동결 항목 payload의 불변성 — ID의 존재만 보므로 기존 `active` 항목의 내용이 조용히 바뀌어도 통과한다 | §9.27 | **[해소]** 재정 N14 → `freeze.payload-immutable` 신설 |
+| 3 | 재료 측 수치 문법 — `fact`가 정규화 문자열 하나뿐이라 범위·부등호·공차·과학표기를 담을 자리가 없다 | §9.28 | **[해소]** 재정 N14 + N15 → `value_type` 판별 유니온 |
 
 **이 복원이 남기는 것.** 부풀린 처분의 가격표가 실측되었다 — **요약이 원문을 대체하면, 요약이 뭉갠 자리에서 결함이 조용히 생존한다.** 위 2건은 "닫힌 것으로 적혀 있으나 살아 있는" 상태로 M1 구현까지 흘러갈 뻔했다. 재정 N7 ①(원문 보존 의무)이 막는 것은 이 다음번이다.
 
-### §9.26 [OWNER] 청구항 인벤토리·수렴의 깊이
+### §9.26 [해소] 청구항 인벤토리·수렴의 깊이
 
 **논점.** 둘이 겹쳐 있다.
 
 - **인벤토리.** D5는 "전 청구항 분해"를 요구하는데, **원천의 청구항이 전부 명세에 등재되었는지**를 검증하는 결정론 검사가 없다. 현행 커버리지 검사는 등재된 것들 **사이의** 접지만 본다 — 청구항 하나가 통째로 빠져도 남은 것들이 서로 잘 접지되어 있으면 통과한다.
 - **수렴.** `read.convergence`는 독립 2회 독해를 비교할 때 **독립항 수와 element `text_verbatim` 집합**만 본다. 집합 비교이므로 **종속항과 트리 구조(부모-자식 관계)의 흔들림**은 통과한다 — 같은 문자열 집합이 서로 다른 계층으로 조립되어도 수렴한 것으로 판정된다.
 
-**왜 지금 결정할 수 없는가.** 처분이 **새 결정론 검사의 신설**이며, 그러려면 원천에서 청구항 목록을 뽑는 **파싱 규칙을 입법**해야 한다(어디까지가 한 청구항인가, 번호 표기의 변형을 어떻게 정규화하는가). 입법은 재정 사항이고(D7), 파싱 규칙 없이 검사만 만들면 그 검사가 곧 자기 입법이 된다.
+**초판이 결정할 수 없었던 이유.** 처분이 **새 결정론 검사의 신설**이며, 그러려면 원천에서 청구항 목록을 뽑는 **파싱 규칙을 입법**해야 한다(어디까지가 한 청구항인가, 번호 표기의 변형을 어떻게 정규화하는가). 입법은 재정 사항이고(D7), 파싱 규칙 없이 검사만 만들면 그 검사가 곧 자기 입법이 된다.
 
-**잠정 처리(추천).** **현행 유지. 새 검사를 임의로 신설하지 않는다.** 이 잔여가 남은 원인은 기록해 둔다 — `D-20260817-02`가 이 지적(옛 M12)을 "`value_normalized` 사각지대"로 **좁게 읽어** 닫았고, 인벤토리·트리 구조 부분은 처분되지 않은 채 닫힘 표기만 얻었다. 상신 시에는 ① 원천 청구항 인벤토리 대조 ② 종속 관계를 포함한 **구조 비교**(집합이 아니라 트리)를 함께 올린다.
+**재정 N14로 종결.** 재정은 이 논점을 **M1 요구사항표로 편입**하고 종결 요건을 "sol 재감수에서 구현으로 해소되었음을 실증"으로 정했다. 즉 재정이 검사의 신설을 **명했다**.
 
-### §9.27 [OWNER] 동결 항목 payload의 불변성
+| 축 | 처분 | 구현 |
+|---|---|---|
+| 인벤토리 | `read.claim-inventory` **신설** — 원천 청구항 목록 ↔ 등재분 **양방향** 일치 · 독립/종속 분류 정합 · 각 청구항 `text_verbatim`이 **자기 구간 안의** 부분문자열 · **파싱 0건 = 실패**(공허 통과 봉쇄) | `reader/lib/inventory.py` |
+| 수렴 | `read.convergence`를 **6축**으로 확장 — 독립항 수 · element 집합 · **트리 간선** · 종속항 수 · **종속항 서명**(문언+`depends_on`+`dependency_type`) · **부가 한정 부착** | `reader/lib/convergence.py` |
+
+**D7의 경고를 지킨 방법.** 검사를 만들지 않는 것이 아니라(재정이 만들라고 했다) **규칙을 재정 가능한 형태로 코드 밖에 내놓는 것**이다. 파싱 규칙은 전량 `reader/reader-rules.yaml`의 `claim_inventory`·`convergence` 블록에 데이터로 살고, `[가설]` 태그와 `open_question`이 **무엇이 아직 재정 밖인지**를 밝힌다 — 헤더 아닌 원천 형식의 허용 범위, 한 줄 두 청구항, 다항 번호 표기, 신설 4축의 임계 0.95. 코드는 그 파일을 읽을 뿐 자기 법을 갖지 않으므로, 재정이 내려오면 **diff 한 줄이 곧 개정**이다.
+
+**이 잔여가 남았던 원인은 기록해 둔다** — `D-20260817-02`가 이 지적(옛 M12)을 "`value_normalized` 사각지대"로 **좁게 읽어** 닫았고, 인벤토리·트리 구조 부분은 처분되지 않은 채 닫힘 표기만 얻었다. 반영 = §8.4 M1 요구사항표 N14-7·N14-8, 처분 기록 = `D-20260818-02`.
+
+### §9.27 [해소] 동결 항목 payload의 불변성
 
 **논점.** 셋이 한 뿌리에서 나온다.
 
@@ -4523,16 +4647,43 @@ CP1·CP2 외의 항목은 **예행 런**을 멈추지 않는다 — 재정 전�
 - **상태 전이의 허용 방향이 미정의**다. `active → retracted` 다음이 무엇인지, 되돌림이 가능한지가 규정되어 있지 않다.
 - `superseded_by`가 **`active` 항목을 가리키도록** 요구하는 규칙은 **2차 승계**(A→B→C)에서 무너진다 — B가 `superseded`가 되는 순간 A의 링크를 C로 다시 써야 하고, 그것은 동결본을 고치는 일이다.
 
-**왜 지금 결정할 수 없는가.** 처분이 전부 **새 설계**다 — 정본 payload의 해시 비교(무엇을 정본 직렬화로 삼을 것인가), 단방향 상태 전이의 정의, 비순환 승계 사슬과 그 종단 해소 규칙. 재료 명세 스키마는 historian과의 계약이므로(D14) 이 층의 변경은 상대 리포 상신을 동반한다.
+**초판이 결정할 수 없었던 이유.** 처분이 전부 **새 설계**다 — 정본 payload의 해시 비교(무엇을 정본 직렬화로 삼을 것인가), 단방향 상태 전이의 정의, 비순환 승계 사슬과 그 종단 해소 규칙. 재료 명세 스키마는 historian과의 계약이므로(D14) 이 층의 변경은 상대 리포 상신을 동반한다 — 고 적었으나, **재정 N15가 그 전제를 제거했다**(`0.x` 미동결 구간에는 상신할 상대가 없다).
 
-**잠정 처리(추천).** **현행 유지.** 개정은 계속 새 파일로 나가고(`material-spec.v<N+1>.json`), 기존 동결본은 0444로 남으므로 **같은 파일이 바뀌는 경로는 없다.** 지금 열려 있는 것은 "개정본이 옛 항목의 내용을 바꿔 적는 것"이며, 그 탐지가 없을 뿐이다. 상신 시에는 세 가지를 한 묶음으로 올린다 — 정본 payload 해시 대조 · 단방향 상태 전이표 · 비순환 승계 사슬(종단 `active` 항목으로 해소).
+**재정 N14 + N15로 종결.** 초판이 "상신 시 한 묶음으로 올린다"고 적은 세 가지가 그대로 구현되었다.
 
-### §9.28 [OWNER] 재료 측 수치 문법
+| # | 처분 | 규칙 정본 |
+|---|---|---|
+| ① | **정본 payload 해시 대조** — 항목에서 `status`·`superseded_by`(생애 상태)를 제외한 전 필드를 키 정렬 JSON으로 직렬화해 SHA-256. 두 판에 공통인 ID의 해시가 다르면 `freeze.payload-immutable` 실패 | `reader-rules.yaml#item_lifecycle.payload_canonicalization` |
+| ② | **단방향 상태 전이표** — `active → {retracted, superseded}`. 두 종단 상태에서 나가는 간선은 없다 | 동 `#item_lifecycle.transitions` |
+| ③ | **비순환 승계 사슬** — 구 규칙 "`superseded_by`는 `active` 항목을 가리킨다"를 **폐기**하고 "사슬은 비순환이며 **종단**이 `active`"로 교체 | 동 `#item_lifecycle.supersession_chain` |
+
+**③이 구 규칙을 폐기한 이유가 이 절의 논점 그 자체다.** 2차 승계(A→B→C)에서 B가 `superseded`가 되는 순간 구 규칙은 A의 링크를 C로 다시 쓸 것을 요구했고, 그것은 **동결본을 고치는 일**이었다 — 불변성을 지키려는 규칙이 불변성을 깨뜨리는 구조였다. 새 규칙에서 A는 B를 계속 가리키고, `[M_A]`를 인용한 문장의 수정 지시는 사슬을 따라간 종단 C를 지목한다. 동결본을 고치는 경로가 없다.
+
+**직렬화 형태는 여전히 재정 밖이다**(`payload_canonicalization.open_question`). 키 정렬 JSON은 결정론을 주지만 유일한 선택은 아니며(JCS RFC 8785가 대안), historian이 같은 해시를 재현해야 하는 시점에 상호 확인이 필요하다. 지금은 구현이 `reader/lib/freeze_integrity.py` 한 곳뿐이므로 표류하지 않는다. 반영 = §8.4 M1 요구사항표 N14-9, 처분 기록 = `D-20260818-02`.
+
+### §9.28 [해소] 재료 측 수치 문법
 
 **논점.** `fact`는 `value_normalized` **문자열 하나**만 갖는다. 그 자리에 범위(`0.05–0.10 mm`)·부등호(이상/이하)·"약(about)"·공차(`±5%`)·과학표기·분수·음수를 **구별해 담을 자리가 없다.** 그 결과 게이트의 `numeric.exhaustive`가 그런 값을 만나면 **문자열 일치 여부밖에 판정할 수 없다** — 본문이 "약 0.08 mm"라고 쓰고 재료가 `0.05–0.10 mm`를 담고 있으면, 사람 눈에는 정합인데 기계는 불일치로 읽는다(반대 방향의 오탐도 같은 구조다).
 
 **`contracts/l0-format.yaml`의 토큰화가 이 문제를 풀지 못하는 이유**는 층이 다르기 때문이다. 그 블록은 **본문 쪽** 문법이다 — 스레드 텍스트에서 무엇을 수치로 인식할지를 정할 뿐, **재료 쪽의 표현 유형**을 만들지 않는다. 대조는 두 쪽이 같은 유형 체계를 가질 때만 정확해진다.
 
-**왜 지금 결정할 수 없는가.** 처분은 **판별 유니온**(`scalar` / `range` / `set` + 경계값·포함성·단위)의 도입이며, 이는 재료 명세 스키마 = **D14 계약을 넓히는 변경**이다. 상대 리포가 아직 없어 요구 형태를 실측할 수 없고, 지금 지어내면 historian이 실재할 때 두 번 고치게 된다.
+**초판이 결정할 수 없었던 이유.** 처분은 **판별 유니온**(`scalar` / `range` / `set` + 경계값·포함성·단위)의 도입이며, 이는 재료 명세 스키마 = **D14 계약을 넓히는 변경**이다. 상대 리포가 아직 없어 요구 형태를 실측할 수 없고, 지금 지어내면 historian이 실재할 때 두 번 고치게 된다 — 고 적었다.
 
-**잠정 처리(추천).** **현행 유지 — 문자열 정확 일치.** 그리고 이 확장은 **historian 부트스트랩 시점의 minor 확장(§9.19)과 함께 재정하는 편이 싸다** — 둘 다 같은 계약을 넓히는 변경이므로 한 번의 상신·한 번의 상호 체크·한 번의 minor 상향으로 처리된다. 그때까지 범위·부등호가 실린 수치는 CP1에서 Owner의 눈에 걸리는 것에 의존하며, 그 의존을 감수한다는 사실 자체가 이 잠정 처리의 내용이다.
+**재정 N15가 그 유보 근거를 제거했다.** `0.x = 미동결`이므로 넓히는 변경이 자유이고, 계약 상대가 생기는 시점(historian 첫 이식 직전)이 곧 동결 시점이다. "두 번 고치게 된다"는 걱정은 **한 번 고치는 값이 이미 공짜인 구간**에서는 성립하지 않는다. 그리고 재정 N14가 이 논점을 M1 요구사항으로 편입했다.
+
+**처분 — `value_type` 판별 유니온**(스키마 `$defs/value_type`, `fact`의 필수 필드).
+
+| kind | 필드 | 예 |
+|---|---|---|
+| `scalar` | `value` | `0.08` |
+| `range` | `low` · `high` · `low_inclusive` · `high_inclusive` | `0.05–0.10` |
+| `inequality` | `bound` · `direction`(`at-least`\|`at-most`\|`greater-than`\|`less-than`) | `at least 12` |
+| `tolerance` | `center` · `tolerance` · `tolerance_unit`(`absolute`\|`percent`) | `50 ±5 %` |
+| `set` | `members[]`(≥2, 유일) | `4, 8, 16` |
+
+- **`approximate`는 kind와 직교한 불리언**이다. "약 0.08"과 "0.08"은 다른 주장이며, 렌더에서 `~` 접두로 구별되어 MATCH_KEY가 섞이지 않는다.
+- **수치 필드는 정규화된 십진만 허용**한다(`$defs/decimal`) — 선행 `+`·선행 0 패딩·후행 0·과학표기 금지. 같은 수가 두 표기를 가지면 MATCH_KEY가 두 벌이 되어 숫자 전수 대조가 원리적으로 성립하지 않는다.
+- **집행은 두 겹이다** — 스키마가 구조를 닫고, `read.value-derivation`이 `parse_value(value_raw) == value_type`과 `value_normalized == render(value_type)`을 대조한다. 파싱 규칙·렌더 규칙의 정본은 `reader/reader-rules.yaml#value_grammar`다.
+- **지원하지 않는 형태는 시끄럽게 실패한다** — 분수(`1/2`)와 혼합 단위 범위(`1 mm to 2 cm`)는 파싱 실패로 처리하고 **조용히 근사하지 않는다**. 근거와 함께 `#value_grammar.unsupported_forms`에 데이터로 적혀 있다.
+
+**남은 미결은 비교 의미론이다**(`#value_grammar.open_question`). 본문이 "약 0.08 mm"이고 재료가 `0.05–0.10 mm`일 때 게이트가 정합으로 볼 것인가 — 현행은 `match_policy: exact-only`(`l0-format.yaml` §9)이므로 **불일치로 읽는다**. 포함 관계 대조로 바꾸는 것은 게이트 관할의 확장이므로 재정 사항이다(D7). 즉 이번에 닫힌 것은 **담을 자리가 없다**는 결함이고, **어떻게 비교할 것인가**는 열려 있다. 반영 = §2.4·§8.4 M1 요구사항표 N14-10, 처분 기록 = `D-20260818-02`.
