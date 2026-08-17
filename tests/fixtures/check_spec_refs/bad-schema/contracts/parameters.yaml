@@ -1,0 +1,4 @@
+schema: parameters/v0
+adjustable:
+  gate.l1.k: 3
+  probe.n: 5

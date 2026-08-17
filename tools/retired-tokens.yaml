@@ -1,0 +1,44 @@
+# 폐지 토큰 목록 — check_spec_refs.py K5 검사의 데이터 정본
+#
+# ★ 이 파일이 코드가 아니라 데이터인 이유 = 자기매칭 격리 요건 2항(DESIGN §12.2).
+#   탐지 대상 문자열을 검사기 소스에 리터럴로 두면 검사기 자신이 탐지 대상이 된다.
+#   토큰과 예외 규칙은 여기에만 두고, `tools/`는 어떤 검사의 스캔 대상도 아니다.
+#
+# 등재·삭제는 재정 문서를 근거로만 한다(CLAUDE.md §1 규율 7과 같은 취지).
+
+version: 1
+
+# 검사 대상 문서(docs/SPEC.md·docs/CHARTER.md)에 등장하면 finding.
+tokens:
+  - token: "grok"
+    case_insensitive: true
+    note: "재정 2026-08-17 R10 — 교차벤더에서 폐기. 헌장 D10·스펙 전문에서 언급 전량 삭제."
+  - token: "forbidden.yaml"
+    case_insensitive: false
+    note: "재정 2026-08-17 R7 — 금지 어휘 사전 구상 폐기. contracts/lexicon/speech-acts.yaml이 대체."
+  - token: "lexicon.forbidden"
+    case_insensitive: false
+    note: "재정 2026-08-17 R7 — L0 규칙에서 삭제된 금지 어휘 게이트 id."
+  - token: "label_kr"
+    case_insensitive: false
+    note: "재정 2026-08-17 R2 — 재료 명세 해설 필드 EN 단일화. label_en으로 교체."
+  - token: "statement_kr"
+    case_insensitive: false
+    note: "재정 2026-08-17 R2 — statement_en으로 교체."
+  - token: "what_it_shows_kr"
+    case_insensitive: false
+    note: "재정 2026-08-17 R2 — what_it_shows_en으로 교체."
+  - token: "coverage.advisory"
+    case_insensitive: false
+    note: "재정 2026-08-17 R3 — 종속항 접지 권고 개념 전면 삭제(접지는 전량 필수)."
+
+# 예외 규칙 — "이 토큰은 폐지되었다"고 기록하는 문맥까지 잡으면 오탐이다.
+exemptions:
+  - kind: span
+    id: strikethrough
+    pattern: "~~(?:.+?)~~"
+    note: "취소선 안의 토큰 = 폐지 기록 표기."
+  - kind: line-marker
+    id: retired-marker
+    marker: "[폐지]"
+    note: "행에 폐지 표지가 있으면 그 행은 폐지 사실의 기록으로 본다."

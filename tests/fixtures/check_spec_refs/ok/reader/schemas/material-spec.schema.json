@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patent-docent.local/schemas/material-spec.schema.json",
+  "title": "material-spec/v0",
+  "type": "object",
+  "required": ["schema", "spec_version"],
+  "properties": {
+    "schema": { "const": "material-spec/v0" },
+    "spec_version": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}
