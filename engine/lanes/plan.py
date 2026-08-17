@@ -402,6 +402,48 @@ def plan_grounding(
     return requests
 
 
+def referenced_figures(groundings: list[dict] | None) -> list[str]:
+    """접지 레인이 실제로 참조한 도면 id 목록(정렬·중복 제거)."""
+    found: set[str] = set()
+    for payload in groundings or ():
+        for item in (payload or {}).get("items") or ():
+            for ref in item.get("figure_refs") or ():
+                figure = ref.get("figure")
+                if isinstance(figure, str) and figure:
+                    found.add(figure)
+
+    def sort_key(figure_id: str):
+        tail = figure_id[4:] if figure_id.startswith("FIG-") else figure_id
+        digits = "".join(ch for ch in tail if ch.isdigit())
+        return (int(digits) if digits else 0, figure_id)
+
+    return sorted(found, key=sort_key)
+
+
+def _figure_registry_block(figures: list[str]) -> str:
+    """접지가 참조한 도면을 반드시 등재하라는 지시.
+
+    ★ 2026-08-18 실특허 스모크에서 접지 레인이 올린 결합 공백의 처분. `figures[]` 는
+    **synthesize 산출에서만** 조립되는데(`engine/stages/read.py`), `figure_refs[].figure` 는
+    `read.pointer-resolve` 가 그 배열에 대고 해소한다. 접지 레인은 자기가 참조한 도면을
+    등재할 수단이 없고 synthesize 는 무엇이 참조되었는지 알 방법이 없었다 — 두 레인 사이에
+    아무도 책임지지 않는 구간이 있었고, 거기서 유령 참조가 **구조적으로** 발생한다.
+    """
+    if not figures:
+        return (
+            "\n\n**도면 등재.** 접지 레인이 참조한 도면이 없다. `figures` 는 빈 배열이어도 되지만,"
+            "\n네가 `figure_note` 나 `figure-sourced` 수치를 만든다면 그 도면은 반드시 등재한다."
+        )
+    listed = " · ".join(f"`{figure}`" for figure in figures)
+    return (
+        "\n\n**★ 도면 등재(필수).** 접지 레인이 아래 도면을 참조했다. `figures` 배열에 "
+        "**전건을 등재**하라 —\n"
+        f"{listed}\n"
+        "등재하지 않으면 그 접지 항목의 `figure_refs` 가 해소되지 않아 `read.pointer-resolve` 가\n"
+        "실패한다. 네가 추가로 참조하는 도면이 있으면 함께 등재한다. `asset_path` 는 영구히 `null` 이다."
+    )
+
+
 def plan_synthesis(
     read_run: str,
     claims: dict,
@@ -409,6 +451,7 @@ def plan_synthesis(
     profiles: dict,
     attempt: int = 0,
     defects: list[dict] | None = None,
+    groundings: list[dict] | None = None,
 ) -> list[LaneRequest]:
     """D5 ④⑤ — 유기적 통합·포지셔닝·수치 사실·최종 drop 신호."""
     claim_ids = [claim.get("id") for claim in claims.get("independent") or []]
@@ -429,6 +472,7 @@ def plan_synthesis(
             )
             * ID_BAND_WIDTH
         )
+        + _figure_registry_block(referenced_figures(groundings))
         + _defect_block(defects)
     )
     return [

@@ -46,6 +46,7 @@ from engine.lanes.plan import (  # noqa: E402
     plan_decompose,
     plan_grounding,
     plan_synthesis,
+    referenced_figures,
 )
 from engine.lanes.replay_adapter import ReplayLaneAdapter  # noqa: E402
 from engine.paths import RunPaths, format_parameter  # noqa: E402
@@ -811,6 +812,30 @@ def test_lane_effort_ladder_comes_from_contract() -> None:
                 f"{task}: 로더 {profile['model']}/{profile['effort']} != "
                 f"계약 {declared[task][0]}/{declared[task][1]}"
             )
+
+
+def test_synthesis_request_names_every_figure_the_grounding_referenced() -> None:
+    """등재 지시가 없으면 `figure_refs` 가 해소될 도면이 존재하지 않는다 — 유령 참조가 구조적으로 발생한다.
+
+    ★ 2026-08-18 실특허 스모크에서 접지 레인이 올린 결합 공백이다. `figures[]` 는
+    **synthesize 산출에서만** 조립되는데 `figure_refs[].figure` 는 `read.pointer-resolve` 가
+    그 배열에 대고 해소한다. 접지 레인은 자기가 참조한 도면을 등재할 수단이 없고 synthesize 는
+    무엇이 참조되었는지 알 방법이 없었다 — 두 레인 사이에 **아무도 책임지지 않는 구간**이
+    있었다. 그 구간은 레인이 아무리 성실해도 닫히지 않는다.
+    """
+    view = ReadView(SOURCE, RULES)
+    profiles = lane_profiles()
+    claims = decompose_payload()["claims"]
+    groundings = [ground_independent_payload(), ground_dependent_payload()]
+
+    referenced = referenced_figures(groundings)
+    assert referenced, "픽스처의 접지 산출이 도면을 하나도 참조하지 않는다 — 이 테스트가 공허해진다"
+
+    request = plan_synthesis("read-a", claims, view, profiles, groundings=groundings)[0]
+    for figure_id in referenced:
+        assert figure_id in request.instructions, (
+            f"synthesize 요청이 접지가 참조한 {figure_id} 의 등재를 지시하지 않는다"
+        )
 
 
 def test_lane_requests_carry_disjoint_item_id_bands() -> None:

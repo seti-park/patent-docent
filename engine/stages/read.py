@@ -370,7 +370,12 @@ def _execute_read_run(
         response.payload for response in _dispatch(adapter, grounding_requests, journal)
     ]
     synthesis = _dispatch(
-        adapter, plan_synthesis(read_run, claims, view, profiles, attempt, defects), journal
+        adapter,
+        # 접지 산출을 넘기는 이유: `figures[]` 는 synthesize 만 만들 수 있는데 그 배열에
+        # 해소되어야 하는 `figure_refs` 는 접지가 만든다. 무엇이 참조되었는지 알려 주지
+        # 않으면 두 레인 사이에 아무도 책임지지 않는 구간이 남는다(실특허 스모크 적발).
+        plan_synthesis(read_run, claims, view, profiles, attempt, defects, groundings),
+        journal,
     )[0].payload
     return {
         "early_drop": None,
