@@ -20,8 +20,15 @@ meanings:
     description: "L1 국소 대조의 독립 실행 반복 수(홀수 유지). 과반 일치 항목만 defect 로 채택하고, 미달은 flag(origin: minority-vote)로 강등한다."
     basis: "D8 + 재정 2026-08-17 R9"
   probe.n:
-    description: "계기(프로브) 시독 대수. 행동 프로브를 독립 n대에 돌린다."
-    basis: "D9 + 재정 2026-08-17 R9"
+    description: >-
+      계기(프로브) 시독 대수. 행동 프로브를 독립 n대에 돌린다.
+      유효 응답 수가 ceil(probe.n / 2) 미만이면 escalate 한다. n=5 에서 3이며(현행 동작 불변),
+      n 을 조정하면 하한이 함께 따라간다 — 리터럴 3을 코드·스펙에 박지 않는다(재감수 M-04).
+    basis: "D9 + 재정 2026-08-17 R9 + M0.5 재감수 M-04"
+    min_effective_rule: "ceil(probe.n / 2)"
+    min_effective_note: >-
+      파생 규칙이며 신규 조정 파라미터가 아니다(adjustable 은 4종 그대로).
+      probe.n 이 바뀌어도 "과반 유효 응답"이라는 판정 의미가 보존된다.
   review.batch_runs:
     description: "배치 리뷰 주기(런 수). 카탈로그 등재·앵커 가중·파라미터 변경의 재정 자리."
     basis: "D13 + 재정 2026-08-17 R9"

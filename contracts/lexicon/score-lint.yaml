@@ -1,0 +1,172 @@
+# 점수 금지 린트 — 기계 판독 정본
+#
+# 근거: 헌장 D8(게이트 구조)·D15(굿하트 가드) + Owner 재정 2026-08-18 N4
+#       (구 SPEC §9.18 해소 — 별점·학점형 등급·백분율 척도 3종 확장 승인).
+# 점수 금지는 규범 선언이 아니라 기계 집행이다(SPEC §4.6의 세 겹 중 세 번째 겹).
+# 이 파일이 린트 패턴 목록의 정본이며, 판정문은 이 파일의 버전과 항목 수를 날인한다.
+# 산문 주석·정의는 KR, 패턴·정규식·id 는 EN 원문.
+
+schema: score-lint/v1
+version: "1.0"
+
+# ---------------------------------------------------------------------------
+# 관할 조항 (재정 N4 — 자문 산출물 전용)
+# ---------------------------------------------------------------------------
+scope: >-
+  이 린트의 대상은 자문 산출물 전용이다(소견·계기 보고·비평 메모).
+  본문 스레드는 대상이 아니다 — 스레드 안의 수치는 numeric.exhaustive 의 관할이며,
+  점수 금지는 "자문 층이 등급을 발행하는 것"을 막는 규율이지 본문 표기 규제가 아니다.
+
+targets:
+  - path: "50-gate/<variant>/l2.md"
+    note: "L2 자문 산출물 전문"
+  - path: "50-gate/<variant>/verdict.json#l2.memos[]"
+    note: "memo 객체의 키와 본문 양쪽"
+  - path: "50-gate/<variant>/verdict.json#final_eyes.observations[]"
+    note: "최종 심급의 관할 밖 소견(재정 R4)"
+  - path: "65-critique/<variant>/memo.md"
+    note: "소견 전문(D9)"
+  - path: "60-probe/<variant>/score.json"
+    field_class: narrative
+    note: >-
+      계기 보고의 서술 필드만 대상이다. 계기의 집계 수치(locus·issue·count·n)는
+      측정치이며 점수가 아니다(parameters.yaml instrument_reporting).
+
+not_targets:
+  - path: "40-compose/<variant>/thread.annotated.md"
+  - path: "50-gate/<variant>/thread.stripped.md"
+  - path: "50-gate/<variant>/verdict.json#advisory_measurements"
+    note: >-
+      단어 수·가중 글자 수는 점수가 아니라 측정치다. 등급을 매기지 않고 순위를 만들지 않으며
+      어떤 판정도 그 값으로 갈리지 않는다(SPEC §4.6).
+
+# ---------------------------------------------------------------------------
+# 자기매칭 격리 (SPEC §4.8 4항)
+# ---------------------------------------------------------------------------
+isolation: >-
+  이 파일과 회귀 표본(ledgers/regression/)은 린트의 스캔 대상이 아니다 — 스캔 대상은 위
+  targets[] allowlist 뿐이며 암묵 전수 스캔을 금지한다. 패턴과 표본이 같은 스캔 공간에 있으면
+  검사는 자기 그림자를 잡는다. 스캔 목록에 이 파일이나 표본 디렉터리가 들어 있으면 린터는
+  판정을 내지 않고 오류로 중단한다(격리 위반 = 결함 보고가 아니라 실행 거부).
+
+# ---------------------------------------------------------------------------
+# 등재 형식 4요소 (전부 필수). 아래 필드가 빠진 항목은 로드 거부다.
+#   ① 패턴 정의        : pattern
+#   ② 검출 방법        : detection.method + detection.regex
+#   ③ 예외·반례        : counter_examples[] (등재 즉시 golden 표본으로 추가)
+#   ④ 재정 기록        : decision
+# ---------------------------------------------------------------------------
+entry_schema:
+  required: [id, pattern, detection, counter_examples, decision, added]
+  load_refusal: >-
+    decision · counter_examples 중 하나라도 없는 항목은 로드 거부한다.
+    입법 없이 집행하지 않으며(D7), 반례가 없는 패턴은 오탐을 증명할 방법이 없다.
+
+# ---------------------------------------------------------------------------
+# 패턴 목록
+#   ★ 정규식은 반례 3종에 대해 하나도 매칭되지 않아야 하고, 실제 점수 표기는 전부
+#     매칭되어야 한다. 회귀 케이스 rc-0002(반례 golden)·rc-0003(변조본)이 이를 상시 검증한다.
+#   ★ 하이픈은 단어 경계로 취급하지 않는 것이 함정이었다 — 'automotive-grade' 의 grade 는
+#     \bgrade\b 에 걸린다. 그래서 경계 조건을 (?<![\w-]) · (?![\w-]) 로 보수했다.
+# ---------------------------------------------------------------------------
+patterns:
+  - id: sl-001
+    pattern: >-
+      점수·평점·등급을 직접 지칭하는 어휘(score · rating · grade · 점수)와 10점 척도 표기(N/10).
+      M0.5 까지 집행되던 기존 패턴의 승계이며, 단어 경계만 보수했다.
+    detection:
+      method: regex
+      regex: '(?i)(?:(?<![\w-])(?:score|rating|grade)(?![\w-])|점수|\d+\s*/\s*10)'
+    counter_examples:
+      - { text: "A-1 구조", golden_case_id: rc-0002 }
+      - { text: "automotive-grade", golden_case_id: rc-0002 }
+      - { text: "the specification asserts a 4x improvement", golden_case_id: rc-0002 }
+    decision: D-20260818-01-m06-enforcement
+    added: 2026-08-18
+    note: >-
+      구 패턴 /score|rating|grade|점수|\d+\s*\/\s*10/ 의 승계.
+      하이픈 결합어(automotive-grade · investment-grade)와 어중 일치(operating 의 rating,
+      underscore 의 score)를 (?<![\w-]) · (?![\w-]) 로 배제한다.
+
+  - id: sl-002
+    pattern: >-
+      별점 — 별 계열 기호가 2개 이상 연속하는 표기(★★★☆☆ 등). 1개 단독 기호는 강조·각주
+      용법이 있으므로 금지하지 않는다.
+    detection:
+      method: regex
+      regex: '[★☆✩✰⭐✭✮✯]{2,}'
+    counter_examples:
+      - { text: "A-1 구조", golden_case_id: rc-0002 }
+      - { text: "automotive-grade", golden_case_id: rc-0002 }
+      - { text: "the specification asserts a 4x improvement", golden_case_id: rc-0002 }
+    decision: D-20260818-01-m06-enforcement
+    added: 2026-08-18
+    regression_case: rc-0003
+
+  - id: sl-003
+    pattern: >-
+      학점형 등급 — A~F 문자가 등급 문맥(등급 · 학점 · grade · rating)과 인접해 나타나는 표기.
+      [A-F][+-] 단독 표기는 금지하지 않는다(도면부호·청구항 라벨·품종 표기와 구별 불가).
+      하이픈 결합형(A-grade · investment-grade)은 품질 등급 관용어이므로 대상에서 뺀다.
+    detection:
+      method: regex
+      regex: '(?:(?<![\w가-힣-])[A-F](?:[+]|-(?=\s))?\s*(?:등급|학점|(?i:grade|rating)(?![\w-]))|(?:등급|학점|(?i:grade|rating)(?![\w-]))\s*[:：=]?\s*[A-F][+\-]?(?![\w-]))'
+    counter_examples:
+      - { text: "A-1 구조", golden_case_id: rc-0002 }
+      - { text: "automotive-grade", golden_case_id: rc-0002 }
+      - { text: "the specification asserts a 4x improvement", golden_case_id: rc-0002 }
+    decision: D-20260818-01-m06-enforcement
+    added: 2026-08-18
+    note: >-
+      두 어순을 모두 본다 — 'B+ 등급'(등급어 후행)과 '등급: A'(등급어 선행).
+      등급 수식자 '-' 는 뒤에 공백이 올 때만 인정한다('B- 등급'은 걸리고 'A-grade'는 걸리지 않는다).
+
+  - id: sl-004
+    pattern: >-
+      백분율 척도 — N/100 형태의 점수 표기. '85/100' · '85점/100' · '85 pts / 100'.
+    detection:
+      method: regex
+      regex: '(?i)\d+\s*(?:점|pts?)?\s*/\s*100(?!\d)'
+    counter_examples:
+      - { text: "A-1 구조", golden_case_id: rc-0002 }
+      - { text: "automotive-grade", golden_case_id: rc-0002 }
+      - { text: "the specification asserts a 4x improvement", golden_case_id: rc-0002 }
+    decision: D-20260818-01-m06-enforcement
+    added: 2026-08-18
+
+# ---------------------------------------------------------------------------
+# 반례 원장 (재정 N4 — 반례 golden 동반 필수)
+#   패턴별 counter_examples[] 와 같은 문장이며, 회귀 스위트가 오탐을 상시 반증한다.
+#   반례 문장의 정본 사본은 golden 표본(ledgers/regression/golden/) 안에 있다.
+# ---------------------------------------------------------------------------
+counter_examples:
+  - text: "A-1 구조"
+    golden_case_id: rc-0002
+    why: "도면부호·청구항 라벨 표기. 학점형 등급이 아니다."
+  - text: "automotive-grade"
+    golden_case_id: rc-0002
+    why: "품질 등급 관용어. grade 를 어중·하이픈 결합으로 포함할 뿐 점수를 발행하지 않는다."
+  - text: "the specification asserts a 4x improvement"
+    golden_case_id: rc-0002
+    why: "명세서가 주장하는 기술 효과의 서술. 배수 표기는 점수가 아니다."
+
+# ---------------------------------------------------------------------------
+# 판정문 기록 (재정 N4 — 패턴 목록 버전 관리 + 판정문 버전 명기)
+# ---------------------------------------------------------------------------
+verdict_record:
+  legislated_fields: [score_lint_version, score_lint_patterns]
+  note: >-
+    verdict.json 의 legislated 블록에 score_lint_version(이 파일의 version)과
+    score_lint_patterns(patterns[] 항목 수)를 명기한다. 검사 행은
+    verdict-check-row/v0 서식으로 ruleset: score-lint · ruleset_size: <항목 수> 를 보고한다(재정 N5).
+
+# ---------------------------------------------------------------------------
+# 등재·개정 (D7·D15)
+# ---------------------------------------------------------------------------
+amendment:
+  gate: >-
+    배치 리뷰 상신 → Owner 재정 → docs/decisions/ 등재 → 이 파일 수정 →
+    회귀 케이스 추가(변조 1건 + 반례 golden 1건)
+  applies_to: [add, modify, retire]
+  in_run_addition: forbidden      # 런 중 즉석 등재 금지
+  automatic_addition: forbidden   # 자동 등재 금지

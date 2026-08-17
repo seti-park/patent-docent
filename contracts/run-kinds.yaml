@@ -1,0 +1,74 @@
+# 런 종류 — 기계 판독 정본
+#
+# 근거: Owner 재정 2026-08-18 N10(구 재감수 B-01 해소).
+# 로드맵은 회차가 아니라 **런 종류**로 정의된다. 게시 런 진입을 결정하는 것은 몇 번째 런인가가
+# 아니라 **상태 조건의 충족 여부**다. 그 조건을 L0 가 런 시작 시점에 기계로 검사한다.
+# 산문 주석은 KR, 필드명·enum·검사 id 는 EN 원문.
+
+schema: run-kinds/v0
+version: "0"
+
+# ---------------------------------------------------------------------------
+# 런 종류 2종
+# ---------------------------------------------------------------------------
+kinds:
+  rehearsal:
+    purpose: "파이프라인 통주 검증."
+    publishes: false                 # 비게시
+    requires_defense_layers: false   # 방어층 미완이어도 실행 가능
+    artifacts: >-
+      산출물(재료·도면·변주·선택 데이터)은 실자산으로 보존한다. 예행이라는 이유로 버리지 않는다.
+    anchor_ledger: excluded
+    anchor_ledger_note: >-
+      예행 런은 앵커 원장에 편입하지 않는다. 다만 변주 선택 취향 데이터는 정상 수확한다(D10).
+    promotion_to_publish: >-
+      예행 산출물을 게시하려면 방어층을 완비한 뒤 게이트 전체를 재통과해야 한다(새 버전).
+      예행 판정을 게시 자격으로 승계하지 않는다.
+
+  publish:
+    purpose: "게시물 산출."
+    publishes: true
+    requires_defense_layers: true
+    entry_note: >-
+      아래 requirements 를 전부 충족해야 런을 시작할 수 있다. 회차가 아니라 상태 조건이
+      게시 런 진입을 결정한다.
+
+# ---------------------------------------------------------------------------
+# 게시 런 자격 요건 3종 (전부 충족해야 런 시작 가능)
+# ---------------------------------------------------------------------------
+requirements:
+  - id: defense_layers
+    description: "전 방어층 가동 — L1 정합·화행 플래그·계기·최종 심급."
+    layers: [l1_veto, speech_act_flag, instrument, final_eyes]
+  - id: figures_usage_rights_decision
+    description: >-
+      도면 사용권 재정 완료. 재정 파일 ID 가 run.yaml 에 기입되어 있고 그 파일이
+      docs/decisions/ 에 실재해야 한다(재정 R11 — 첫 출하 전 Owner 재정 1회).
+    run_yaml_key: figures.usage_rights_decision   # ★ run.yaml 안의 키 경로(요건 id 와 표기가 다르다)
+    evidence: "run.yaml 의 figures.usage_rights_decision 값 + docs/decisions/<ID>.md 실재"
+    null_semantics: >-
+      값이 null 이면 사용권 재정이 아직 없다는 뜻이다. rehearsal 런에서는 정상이며
+      자산 생성·내부 검토가 허용된다. publish 런에서는 이 요건이 미충족이므로 런이 시작되지 않는다.
+  - id: template_freeze
+    description: "템플릿 동결 완료."
+
+# ---------------------------------------------------------------------------
+# 집행 (재정 N10 — 기계 봉쇄)
+# ---------------------------------------------------------------------------
+enforcement:
+  check_id: run.publish-preconditions
+  rule_source: contracts/l0-format.yaml   # rules[] 에 stage: run-start 로 등재됨
+  when: "런 시작(source 스테이지 진입 전)"
+  applies_to: publish
+  on_unmet: halt
+  on_unmet_note: "미충족 시 런 시작 불가. 부분 가동으로 진행하지 않는다."
+  report_row: contracts/schemas/verdict-check-row.schema.json   # 판정 행 서식(재정 N5)
+
+# ---------------------------------------------------------------------------
+# run.yaml 결속
+# ---------------------------------------------------------------------------
+run_yaml_field: run_kind
+run_kind_enum: [rehearsal, publish]
+first_run: rehearsal          # 재정 N10 — 첫 런 = 예행
+
+amendment: "배치 리뷰 상신 → Owner 재정 → docs/decisions/ 등재 → 이 파일 수정"
