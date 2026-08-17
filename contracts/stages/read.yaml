@@ -31,8 +31,11 @@ lane:
       model: opus-5
       effort: low
       scope: >-
-        D5 ③ 종속항 additions 3중 접지. 저비용 레인 허용(재정 R3) — 정확성은 레인의 격이
-        아니라 read.pointer-resolve·read.coverage 의 결정론 포인터 해소 검증이 보증한다.
+        D5 ③ 종속항 additions 3중 접지. 저비용 레인 허용(재정 R3) — 관할을 낮춘 것이 아니라
+        레인을 낮춘 것이다. ★ 다만 두 검사가 보증하는 것은 **구조**뿐이다(참조 해소·kind 제약·
+        1:1·역참조·anchor_state 정합). 인용한 문단이 그 구성요소를 실제로 조응하는지는 어떤
+        결정론 검사도 판정하지 못하며, 그 판단은 CP1 의 Owner 몫이다(M1 재감수 M-03 처분 —
+        구 문언은 "정확성을 보증한다"고 적어 검사의 관할을 실제보다 넓게 말했다).
     - id: synthesize
       model: opus-5
       effort: max
