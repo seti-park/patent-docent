@@ -97,6 +97,10 @@ class Rules:
     def convergence(self) -> dict:
         return self.raw["convergence"]
 
+    @property
+    def figure_captions(self) -> dict:
+        return self.raw["figure_captions"]
+
     # -- 컴파일 -------------------------------------------------------------
 
     def _compile(self) -> None:
@@ -104,6 +108,17 @@ class Rules:
         self._compile_dependency()
         self._compile_value_grammar()
         self._compile_convergence()
+        self._compile_figure_captions()
+
+    def _compile_figure_captions(self) -> None:
+        """도면 캡션 패턴. 탐지 패턴은 코드가 아니라 규칙 파일에 산다(SPEC §4.8 격리 요건 2항)."""
+        block = self.raw.get("figure_captions") or {}
+        line = block.get("caption_line")
+        if not line:
+            raise RulesError("figure_captions.caption_line 이 없다")
+        self.figure_caption_line = re.compile(line, re.MULTILINE)
+        strip = block.get("number_strip")
+        self.figure_number_strip = re.compile(strip) if strip else None
 
     def _compile_inventory(self) -> None:
         block = self.claim_inventory

@@ -29,6 +29,38 @@ def check(ctx: CheckContext) -> CheckRow:
     checked = 0
     edges: dict[str, list[tuple[str, str]]] = {}
 
+    # ★ 불변식 I5(SPEC §2.2) — `items[].id` 는 인스턴스 안에서 유일하다.
+    #
+    # 스펙은 위반 시 "스키마 검증 실패"라고 적었으나 **JSON Schema 는 이것을 표현하지
+    # 못한다**(`uniqueItems` 는 원소 전체의 동일성만 보므로, 같은 id 에 다른 내용을 담은
+    # 두 항목은 서로 다른 원소여서 통과한다). 그 결과 I5 는 선언만 있고 집행자가 없었다.
+    #
+    # 위험은 조용하다: 두 레인이 같은 `M<n>` 을 쓰면 조립이 그대로 이어 붙이고,
+    # `SpecIndex` 와 동결 검사의 dict 인덱싱이 **뒤엣것으로 덮어써** 항목 하나가 소리 없이
+    # 사라진다. 결번이 아니므로 ID 연속성 검사도 보지 못한다. 인용 `[M7]` 이 가리키는
+    # 대상이 조용히 바뀌는 것은 append-only 규율이 막으려던 실패의 원형 그 자체다(§2.4).
+    # 2026-08-18 실특허 스모크에서 레인이 이 경로를 지적했고 총괄이 재현했다.
+    raw_items = spec.get("items")
+    if isinstance(raw_items, list):
+        seen_ids: set[str] = set()
+        for position, item in enumerate(raw_items):
+            if not isinstance(item, dict):
+                continue
+            item_id = item.get("id")
+            if not isinstance(item_id, str):
+                continue
+            checked += 1
+            if item_id in seen_ids:
+                row.add(
+                    "pointer.item-id-unique",
+                    f"items[{position}].id",
+                    item_id,
+                    "인스턴스 안에서 유일한 항목 ID",
+                    "같은 항목 ID 가 두 번 등재되었다 — 인덱싱이 뒤엣것으로 덮어써 "
+                    "항목 하나가 조용히 사라진다(불변식 I5)",
+                )
+            seen_ids.add(item_id)
+
     def resolve_item(locus: str, ref, kind: str | None, owner: str | None = None) -> None:
         """항목 참조 1건을 해소한다. `kind` 가 None 이면 kind 제약 없음."""
         nonlocal checked

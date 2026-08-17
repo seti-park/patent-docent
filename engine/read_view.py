@@ -131,14 +131,35 @@ class ReadView:
     # -- 도면 캡션 ----------------------------------------------------------
 
     def figure_captions(self) -> list[FigureCaption]:
-        """`FIG.` 로 시작하는 캡션 행 목록. 같은 도면이 두 번 나오면 첫 행만 취한다."""
+        """도면 캡션 행 목록. 같은 도면이 두 번 나오면 첫 행만 취한다.
+
+        ★ 패턴은 코드가 아니라 `reader/reader-rules.yaml#figure_captions` 에 산다
+        (SPEC §4.8 격리 요건 2항 — 탐지 패턴은 코드에서 분리한다).
+
+        ★ 실측 적발(2026-08-18 실특허 스모크). 구 구현은 코드 리터럴로
+        `^(?:\\*\\*)?FIG…` 를 썼고, 그것은 **행 머리의 `FIG`** 와 **전체를 감싼 강조**만
+        보았다. 실물 공개공보의 캡션은 셋 다 다르다 —
+          ① 행 머리에 문단 로케이터가 붙는다      `[0019] FIG. 1 illustrates …`
+          ② 강조가 **번호만** 감싼다              `FIG. **1**`
+          ③ 복수형·범위 표기가 쓰인다             `FIGS. **7**-**8** illustrate …`
+        그 결과 도면 64장짜리 특허에서 캡션 **0건**이 나왔고, 접지 레인은 볼 도면이
+        없어 전 구성요소를 `not-depicted` 로 신고할 참이었다. 재정 R3이 금지한 것은
+        예외의 **은폐**만이 아니라 예외의 **날조**이기도 하다 — 도면이 있는데 없다고
+        적는 것은 후자다. 합성 픽스처의 정갈한 표기가 이 결함을 가렸다.
+        """
         out: list[FigureCaption] = []
         seen: set[str] = set()
-        for mark in FIGURE_CAPTION.finditer(self.source_text):
+        strip = self.rules.figure_number_strip
+        for mark in self.rules.figure_caption_line.finditer(self.source_text):
             line_end = self.source_text.find("\n", mark.start())
             if line_end == -1:
                 line_end = len(self.source_text)
-            figure_id = f"FIG-{mark.group('number')}"
+            numbers = mark.group("numbers") or ""
+            if strip is not None:
+                numbers = strip.sub("", numbers)
+            # 범위·열거는 전개하지 않는다(`figure_captions.range_expansion: false`).
+            # 캡션 행을 있는 그대로 넘기고 도면 id 배정은 하류가 한다 — 세지 않고 보여 준다.
+            figure_id = f"FIG-{numbers.strip()}"
             if figure_id in seen:
                 continue
             seen.add(figure_id)
