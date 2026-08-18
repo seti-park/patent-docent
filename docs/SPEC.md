@@ -306,6 +306,8 @@ owner_checkpoint: { id: ..., surfaces: [...], confirm_file: ... }   # 있는 스
 
 **읽기 권한.** 제약이 없는 유일한 스테이지다. 대신 **쓰기 대상이 `00-source/`와 `run.yaml`로 한정**되며, 이후 어떤 스테이지도 `00-source/` 아래를 수정하지 못한다(읽기 전용 고정).
 
+**런 결박을 거는 자리도 여기다(재정 P-U1·P-8).** 이 스테이지가 **진입 시점에** git 커밋을 확정해 `run.yaml`의 `engine.commit`·`engine.worktree`에 기입한다(구현 = `engine/stages/source.py#_engine_pin`, 계약 선언 = `contracts/stages/source.yaml#run_binding`, 필드 명세 = §7.3). 도구(`tools/run_worktree.py`)는 worktree를 만들 뿐 `run.yaml`을 쓰지 않으므로, 러너가 쓰지 않으면 **아무도 쓰지 않는다** — 실제로 그 공백 때문에 첫 통주에서 핀이 빈 문자열로 남고 사람이 손으로 넣어야 했다(2026-08-18 실측). 손으로 넣어야 하는 결박은 결박이 아니다. 시작 전제(더러운 트리 거부·git 필수)는 §7.3의 같은 표가 든다.
+
 **종료 전 검사.**
 
 | 검사 id | 판정 기준 |
@@ -346,6 +348,8 @@ owner_checkpoint: { id: ..., surfaces: [...], confirm_file: ... }   # 있는 스
 | 청구항 구간 경계 식별 실패 | `escalate` | 원천 형식 문제이므로 자동 복구 대상 아님 |
 | **도면 부재 또는 전시물 후보 < 트윗 하한** | `escalate` | 런 중단 · Owner 상신(재정 N12). 사유는 **`형식 전제 미충족`**으로 표기하며, D4의 drop 판단(**`안도감 부적합`**)과 **사유를 구별해 적는다** — 판단의 종류가 다르다. ★ drop의 처분 자리는 재정 P-A 이후 CP1 한 곳이며 이 행과 섞이지 않는다 |
 | **원천 변경 감지**(`checks_on_entry: source.input-digest`) | `halt` | 사유 = **`환경 오류`**(재정 P-C). 기존 `00-source/`를 덮어쓰지 않고 중단하며, 처분은 새 런이다(재정 P-U2) |
+| **작업 트리가 더러움**(커밋 핀 불가) | `halt` | 커밋되지 않은 변경은 커밋에 결박될 수 없다(재정 P-U1). 진단에 더러운 파일 목록을 싣고, 처분은 커밋·되돌림 후 재개시다 — 우회 스위치는 없다. `tools/run_worktree.py create`와 **같은 판정**이다(정본 = `engine/gitpin.py`) |
+| **git 부재·git 작업 트리 아님**(커밋 핀 불가) | `halt` | 사유 = **`환경 오류`**(재정 P-U1·P-C). 핀을 만들 수 없다는 것은 "이 런의 법이 무엇이었는가"에 답할 수 없다는 뜻이다 — 핀 없는 런은 열지 않는다 |
 | `run_id` 형식 위반 | `halt` | 디렉토리 재생성 필요 |
 
 **규칙 완화·대체 모드를 선제 설계하지 않는다**(재정 N12). "도면이 적은 특허를 위한 축약 스레드" 같은 대체 경로를 미리 만들어 두지 않으며, 실투입 결정이 필요해진 시점에 Owner 재정 1회로 정한다.
@@ -542,7 +546,7 @@ owner_checkpoint:
 |---|---|
 | `id` | `freeze` |
 | `lane` | 도구 실행(비-LLM) |
-| `checks_on_entry` | `freeze.input-digest` — 선언 입력 전건의 존재·지문 대조(`material-spec.json`의 실측 SHA-256 ↔ 승인 봉투 `target.digest`, 판독본 존재, 명세의 `patent.source_digest` ↔ `patent.sha256`). 불일치 = **환경 오류**(재정 P-C). 출구의 `freeze.approval-valid`와 층이 다르다 — 진입은 **환경 전제**를, 출구는 봉투의 **신원과 항목 대조**를 본다 |
+| `checks_on_entry` | `freeze.input-digest` — 선언 입력 전건의 존재·지문 대조(`material-spec.json` 존재, 판독본 존재, 명세의 `patent.source_digest` ↔ `patent.sha256`). 불일치 = **환경 오류**(재정 P-C). 출구의 `freeze.approval-valid`와 층이 다르다 — 진입은 **환경 전제**를, 출구는 봉투의 **신원·결속·항목 대조**를 본다. **승인 봉투는 이 층에서 열지 않는다**(아래 각주) |
 | `inputs` | `10-read/material-spec.json`, `10-read/material-spec.md`(CP1 판독본), `15-frozen/approval-v<N>.md` |
 | `outputs` | `15-frozen/material-spec.v<N>.json` |
 | `may_read` | `10-read/**`, `15-frozen/**`, `00-source/patent.sha256` |
@@ -585,9 +589,11 @@ owner_checkpoint:
 
 | 조건 | 조치 |
 |---|---|
-| **진입 지문 불일치**(`checks_on_entry: freeze.input-digest`) | `halt` — 사유 `환경 오류`. 봉투는 자동 실효된다(재정 P-C·R8) |
+| **진입 지문 불일치**(`checks_on_entry: freeze.input-digest`) | `halt` — 사유 `환경 오류`(재정 P-C) |
 | 승인 봉투 부재·`decision != "approved"`·`owner_quote` 부재 | `halt` |
-| `target.digest` 불일치(승인 후 재료 변경) | `halt` — 봉투 자동 실효, 재승인 필요(재정 R8) |
+| `target.digest` 불일치(승인 후 재료 변경) | `halt` — 봉투 자동 실효, **재승인 필요**(재정 R8). 판정 행 = `freeze.approval-valid#approval.target-digest` |
+
+**★ 봉투 결속 대조는 출구의 관할이다(재정 R8 우선).** 구 문언은 같은 대조를 `checks_on_entry`에도 실었고 구현이 그것을 먼저 잡아 `StageEnvironmentError`를 던졌다 — 그 결과 출구 규칙 `approval.target-digest`에 **제어가 닿지 않았다**(도달 불능). 두 실패는 성질이 다르다. 진입 지문 불일치는 **세계가 어긋난 것**(선언된 입력이 기록과 다르다)이고, 봉투 `target.digest` 불일치는 **세계는 멀쩡한 채 승인이 실효한 것**이다. 재료가 개정되면 봉투가 자동 실효하는 것은 결함이 아니라 **정상적인 생애 사건**이며(§1.5), 그때 필요한 것은 "환경을 진단하라"가 아니라 **"다시 승인받아라"**다. 진입 검사가 그것을 삼키면 재승인 경로가 판정문에서 사라진다. 반증 = `tests/test_m2_read.py::test_stale_approval_digest_is_halt_not_environment_error`(출구 판정 행) ↔ `::test_freeze_entry_digest_mismatch_is_environment_error`(진입은 여전히 환경 오류) 두 시험이 함께 선다.
 | `freeze.digest-match` 실패(원천 다이제스트 불일치) | `halt` |
 | `freeze.render-parity` 실패 | `reject-upstream`(→ `read`, 렌더 재생성) |
 | `freeze.id-monotonic` 실패(항목 삭제·재번호) | `reject-upstream`(→ `read`) |
@@ -2057,15 +2063,22 @@ FIG. 2 is a section view of the heat spreader.
         "elements": [
           {
             "id": "CL-1/e1",
-            "text_verbatim": "a substrate having a first surface;",
+            "text_verbatim": "a substrate having a first surface",
             "material_id": "M1",
             "children": []
           },
           {
             "id": "CL-1/e2",
-            "text_verbatim": "a heat spreader thermally coupled to the first surface, the heat spreader defining a fluid channel.",
+            "text_verbatim": "a heat spreader thermally coupled to the first surface",
             "material_id": "M2",
-            "children": []
+            "children": [
+              {
+                "id": "CL-1/e2/e1",
+                "text_verbatim": "the heat spreader defining a fluid channel",
+                "material_id": "M16",
+                "children": []
+              }
+            ]
           }
         ]
       }
@@ -2081,7 +2094,7 @@ FIG. 2 is a section view of the heat spreader.
         "additions": [
           {
             "id": "CL-5/a1",
-            "attaches_to": "CL-1/e2",
+            "attaches_to": "CL-1/e2/e1",
             "text_verbatim": "wherein the fluid channel has a hydraulic diameter of 0.08 mm",
             "material_id": "M3"
           }
@@ -2098,7 +2111,7 @@ FIG. 2 is a section view of the heat spreader.
         "additions": [
           {
             "id": "CL-7/a1",
-            "attaches_to": "CL-1/e2",
+            "attaches_to": "CL-1/e2/e1",
             "text_verbatim": "wherein the fluid channel has a flow path length of 12 mm",
             "material_id": "M9"
           }
@@ -2135,7 +2148,7 @@ FIG. 2 is a section view of the heat spreader.
       "superseded_by": null,
       "claim_ref": "CL-1/e1",
       "label_en": "substrate having a first surface",
-      "text_verbatim": "a substrate having a first surface;"
+      "text_verbatim": "a substrate having a first surface"
     },
     {
       "id": "M2",
@@ -2143,8 +2156,8 @@ FIG. 2 is a section view of the heat spreader.
       "status": "active",
       "superseded_by": null,
       "claim_ref": "CL-1/e2",
-      "label_en": "heat spreader that defines the fluid channel in its own body",
-      "text_verbatim": "a heat spreader thermally coupled to the first surface, the heat spreader defining a fluid channel."
+      "label_en": "heat spreader thermally coupled to the first surface",
+      "text_verbatim": "a heat spreader thermally coupled to the first surface"
     },
     {
       "id": "M3",
@@ -2170,8 +2183,8 @@ FIG. 2 is a section view of the heat spreader.
           "locator": "[0042]",
           "quote": "The heat spreader 210 is bonded to the first surface 112 of the substrate 110.",
           "span": {
-            "start": 503,
-            "end": 581
+            "start": 838,
+            "end": 916
           }
         }
       ],
@@ -2260,8 +2273,8 @@ FIG. 2 is a section view of the heat spreader.
           "locator": "[0042]",
           "quote": "the first surface 112 of the substrate 110",
           "span": {
-            "start": 538,
-            "end": 580
+            "start": 873,
+            "end": 915
           }
         }
       ],
@@ -2432,6 +2445,45 @@ FIG. 2 is a section view of the heat spreader.
         ],
         "locator": "FIG. 2"
       }
+    },
+    {
+      "id": "M16",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-1/e2/e1",
+      "label_en": "fluid channel defined within the heat spreader body",
+      "text_verbatim": "the heat spreader defining a fluid channel"
+    },
+    {
+      "id": "M17",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M16",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "found"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0042]",
+          "quote": "the channel is formed within the spreader so that a separate cold plate is not required",
+          "span": {
+            "start": 937,
+            "end": 1024
+          }
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-2",
+          "numerals": [
+            "214"
+          ],
+          "caption_quote": "FIG. 2 is a section view of the heat spreader."
+        }
+      ]
     }
   ],
   "provenance": {
@@ -4140,7 +4192,9 @@ numeric_whitelist:                 # ★ §4.4(숫자 전수 대조)가 소비
 | 재개 런 | **같은 커밋**을 쓴다. 재개는 새 법 아래 다시 시작하는 일이 아니다 |
 | 만료 통지 | 런 **종료 시** 핀과 현재 `HEAD`를 대조해 그 사이 개정이 있었는지 확인하고, 있었으면 **완주 보고에 명기**한다 |
 | 도구 | `tools/run_worktree.py` — `create <run-id>`(커밋 확정 + worktree 체크아웃) / `expiry <run.yaml>`(만료 통지). 종료 코드 **0**(핀 == HEAD) · **3**(개정 있었음 — 실패가 아니라 통지) · **2**(입력·환경 오류) |
-| 기입 주체 | 도구는 `run.yaml`을 쓰지 않는다. `engine.commit`·`engine.worktree`의 기입은 **러너의 몫**이다(기록 주체를 둘로 늘리면 "누가 쓴 값인가"가 다시 미정이 된다) |
+| 기입 주체 | 도구는 `run.yaml`을 쓰지 않는다. `engine.commit`·`engine.worktree`의 기입은 **러너의 몫**이다(기록 주체를 둘로 늘리면 "누가 쓴 값인가"가 다시 미정이 된다). 구현 = `engine/stages/source.py#run`이 **진입 시점에 스스로 확정해 기입**한다(`_engine_pin`), 계약 선언 = `contracts/stages/source.yaml#run_binding` |
+| 시작 전제 | **작업 트리가 더러우면 런을 시작하지 않는다**(커밋되지 않은 변경은 커밋에 결박될 수 없다) — 조치는 `halt`이고 진단에 더러운 파일 목록을 싣는다. **git이 없거나 git 작업 트리가 아니면** 핀을 만들 수 없으므로 **환경 오류**다. 더러움에서 제외되는 것은 이 결박 기제 자신의 생성물뿐이다(`.worktrees/`·그 런의 작업장) |
+| 판정의 정본 | `engine/gitpin.py` **한 곳**이다 — 도구(`tools/run_worktree.py`)와 러너가 같은 함수를 부른다. 두 벌로 적으면 한 벌이 낡고, 그날 도구와 러너가 같은 런을 서로 다른 기준으로 판정한다 |
 
 **소급 재검 가능성이 이 핀의 값이다.** `engine.commit`이 남아 있는 한 같은 커밋으로 worktree를 다시 만들어 **당시의 계약·검증기로 산출물을 재실행·재검**할 수 있다. 만료 통지는 그 재검을 막지 않는다 — 그 뒤에 무엇이 달라졌는지를 함께 알려 줄 뿐이다.
 
@@ -4538,7 +4592,9 @@ if got != want:
 | `test_verbatim_accepts_exact_substring` | 정상 인용이 거부되면 검사가 실사용 불가 |
 | `test_pointer_resolution_detects_dangling_attaches_to` | 존재하지 않는 `attaches_to`가 통과하면 포인터 해소 검사가 무의미 |
 | `test_coverage_flags_ungrounded_element` | 접지 없는 청구항 element가 통과하면 커버리지 검사가 무의미 |
-| `test_convergence_jaccard_below_threshold_fails` | 0.95 미만 쌍이 pass면 수렴 임계가 집행되지 않음 |
+| `test_dependent_set_axis_requires_exact_match` | 종속항 서명축이 0.95 로 남으면 재정 P-3 의 **1.0 승격**이 미집행 — 결정론적으로 유일해야 하는 구조 사실이 근사로 통과한다 |
+| `test_interpretive_axis_below_threshold_escalates_not_fails` | 해석 축(`element-set`·`tree-edges`) 미달이 `fail` 로 나면 재정 P-3 의 **"실패가 아니라 상신"** 이 미집행 |
+| `test_addition_attachment_axis_is_measure_only` | 측정 전용 축이 판정에 참여하면 **부착 관례가 입법되기 전에 법이 생긴다** |
 | `test_material_id_append_only_rejects_renumber` | 개정본이 `M7`을 다른 내용으로 재사용해도 통과하면 ID 규율 붕괴 |
 | `test_reader_version_matches_schema_major` | 버전과 `material-spec/vN`이 어긋나도 통과하면 semver 정책이 문서로만 존재 |
 | `test_dependency_parse_matches_multiple_dependency_array` | 다중 종속 원문("claims 1 or 2")과 `depends_on[]`이 어긋나도 통과하면 종속 구조가 다시 손실 표현이 됨(재정 R1) |

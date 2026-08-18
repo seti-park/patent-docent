@@ -122,14 +122,22 @@ def _declared_paths(contract: dict) -> list[str]:
     return out
 
 
-def shadow_screening_ledger(repo: str | None = None) -> str:
+def shadow_screening_ledger(repo: str | None = None, shadow_root: str | None = None) -> str:
     """맹검 스크리닝 메모의 섀도 원장 — `<repo>/ledgers/shadow/screening.jsonl`.
 
     ★ 런 **밖**이다(재정 P-U4). 메모는 재료 명세 계약면 밖의 관찰 기록이며, 한 런의 산출이
     아니라 여러 런에 걸쳐 쌓이는 축적물(historian 스크리닝의 사전 훈련 데이터 — 헌장 D4)이다.
     그래서 `RunPaths` 의 프로퍼티가 아니라 리포 수준의 모듈 함수로 노출한다.
+
+    ★ `shadow_root` = 원장이 누적되는 루트를 **명시로** 갈아끼우는 자리(기본 `None` = 생산 자리).
+    테스트 하네스 전용이다 — 재정 P-U2 가 "표본은 자기완결 미니 세계"라고 못 박았는데, 합성
+    픽스처의 메모가 생산 원장에 섞이면 축적물의 값(D4 훈련 데이터)이 사라진다. 환경 변수 같은
+    암묵 경로를 두지 않는 이유는 이 리포의 규율 그대로다 — 경로는 인자로 드러나야 한다.
+    `repo` 는 계약 트리의 루트이고 `shadow_root` 는 원장의 루트다. 둘은 층이 다르므로 분리한다.
     """
-    return os.path.join(repo or _REPO_ROOT, "ledgers", "shadow", "screening.jsonl")
+    return os.path.join(
+        shadow_root or repo or _REPO_ROOT, "ledgers", "shadow", "screening.jsonl"
+    )
 
 
 class RunPaths:

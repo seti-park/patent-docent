@@ -98,8 +98,10 @@ element·addition 하나마다 `kind: "component"` 항목을 **1:1로** 만든�
 ```json
 { "id": "M1", "kind": "component", "status": "active", "superseded_by": null,
   "claim_ref": "CL-1/e1", "label_en": "substrate having a first surface",
-  "text_verbatim": "a substrate having a first surface;" }
+  "text_verbatim": "a substrate having a first surface" }
 ```
+
+> **★ 예시가 §2 규약과 싸우던 자리다(2026-08-18 통주 실측 · 두 레인이 독립으로 지적).** 구 예시는 `text_verbatim` 에 끝 구분자 `;` 를 포함했는데, 그것은 §2 경계 규약 ③(끝 구분자는 element 에 포함하지 않는다)의 **정확한 반례**였다. 레인은 규약과 예시가 갈리면 어느 쪽을 따를지 스스로 정해야 했고, 그 선택이 갈리면 수렴이 깨진다. **예시는 규약의 사본이며, 사본은 반드시 낡는다** — 규약을 고칠 때 이 블록을 함께 고쳐라.
 
 - `claim_ref`는 자기를 가리킨 element·addition의 id와 **역방향으로 일치**해야 한다.
 - 두 element가 같은 component 항목을 공유할 수 없다. 공유하면 접지 1건이 둘을 덮는다.

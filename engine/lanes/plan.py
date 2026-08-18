@@ -202,8 +202,23 @@ RESPONSE_SCHEMAS: dict[str, dict] = {
 # ---------------------------------------------------------------------------
 
 
+def _accepted_models(lane: dict, label: str) -> tuple[str, ...]:
+    """티어 라벨 하나가 받아들이는 표기 전량(라벨 자신 포함).
+
+    정본 = `read.yaml#lane.model_identity.labels`. 계약이 그 블록을 선언하지 않으면 **빈 튜플**을
+    돌려주고, 그러면 대조는 구 동작(문자열 동등)으로 남는다 — 계약이 라벨 공간을 말하지 않은
+    스테이지에서 코드가 제멋대로 관대해지지 않게 하기 위함이다(D7: 코드는 자기 법을 갖지 않는다).
+    """
+    identity = lane.get("model_identity") or {}
+    for entry in identity.get("labels") or []:
+        if entry.get("label") == label:
+            aliases = [str(name) for name in (entry.get("aliases") or [])]
+            return tuple(dict.fromkeys([label, *aliases]))
+    return ()
+
+
 def lane_profiles(repo: str | None = None) -> dict[str, dict]:
-    """`read.yaml#lane.sub_lanes` → `{task: {model, effort, scope}}`."""
+    """`read.yaml#lane.sub_lanes` → `{task: {model, effort, scope, accepted_models}}`."""
     contract = load_stage_contract("read", repo)
     lane = contract.get("lane") or {}
     profiles: dict[str, dict] = {}
@@ -218,7 +233,12 @@ def lane_profiles(repo: str | None = None) -> dict[str, dict]:
                 f"read.yaml 의 sub_lane {task} 에 model·effort 가 없다 — "
                 "레인 지정은 API 레벨 하드 지정이며 빈 값을 허용하지 않는다"
             )
-        profiles[task] = {"model": str(model), "effort": str(effort), "scope": entry.get("scope", "")}
+        profiles[task] = {
+            "model": str(model),
+            "effort": str(effort),
+            "scope": entry.get("scope", ""),
+            "accepted_models": _accepted_models(lane, str(model)),
+        }
     missing = [task for task in TASKS if task not in profiles]
     if missing:
         raise LaneContractError(
@@ -437,6 +457,7 @@ def _request(
         slices=slices,
         response_schema=RESPONSE_SCHEMAS[task],
         batch=batch,
+        accepted_models=profile.get("accepted_models", ()),
     )
 
 

@@ -64,6 +64,10 @@ class LaneRequest:
     slices: dict = field(default_factory=dict)
     response_schema: dict = field(default_factory=dict)
     batch: int = 0
+    # ★ 같은 모델의 다른 표기(2026-08-18 통주 실측). 정본 = `read.yaml#lane.model_identity`.
+    #   계약이 쓰는 값은 티어 라벨이고 레인이 관측하는 값은 API 식별자다 — 문자열 동등으로
+    #   대조하면 **정직한 레인이 벌받는다**. 비어 있으면 문자열 동등으로 되돌아간다(구 동작).
+    accepted_models: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         # 모델·effort 미지정 요청은 만들어지지 않는다(규율 ①).
@@ -108,7 +112,23 @@ class LaneResponse:
     payload: dict
 
     def mismatches(self, request: LaneRequest) -> bool:
-        return self.model != request.model or self.effort != request.effort
+        """요청과 다른 모델·effort 로 돌았는가(조용한 대체 금지 — 재정 R10 규율 4).
+
+        모델 대조는 **티어 라벨로 정규화한 뒤** 한다. 계약은 라벨(`opus-5`)을 쓰고 레인은
+        API 식별자(`claude-opus-5[1m]`)를 관측하므로, 문자열 동등으로 보면 같은 모델이
+        대체로 잡힌다 — 2026-08-18 실특허 통주에서 실제로 일어난 일이며, 그때 레인은
+        검사를 통과시키려 자기 관측을 고쳐 적어야 했다. 거짓 경보를 내는 검사는 우회되고,
+        우회되는 검사는 없는 검사보다 나쁘다. 허용 표기의 정본은 계약이며
+        (`contracts/stages/read.yaml#lane.model_identity`) 코드는 그것을 읽을 뿐이다.
+
+        `accepted_models` 가 비면 구 동작(문자열 동등)으로 되돌아간다 — 계약이 라벨 공간을
+        선언하지 않은 스테이지에서 코드가 관대해지지 않게 하기 위함이다.
+        """
+        if request.accepted_models:
+            model_ok = self.model in request.accepted_models
+        else:
+            model_ok = self.model == request.model
+        return (not model_ok) or self.effort != request.effort
 
 
 @runtime_checkable

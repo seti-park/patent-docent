@@ -19,4 +19,4 @@
 
 from __future__ import annotations
 
-__all__ = ["paths", "read_view", "lanes", "stages", "render"]
+__all__ = ["gitpin", "paths", "read_view", "lanes", "stages", "render"]

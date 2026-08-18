@@ -15,18 +15,25 @@ lane:
   effort: null
 
 # ★ 진입 지문 검사(재정 P-C). 출구의 freeze.approval-valid 와 겹쳐 보이지만 층이 다르다 —
-#   진입은 **환경 전제**(선언 입력이 실재하고 승인 시점 이후 조용히 바뀌지 않았는가)를 보고,
-#   출구는 봉투의 **신원과 항목 대조**(어느 관문의·어느 런의·무엇에 대한 승인인가)를 본다.
+#   진입은 **환경 전제**(선언된 입력이 실재하고 기록과 일치하는가)를 보고, 출구는 봉투의
+#   **신원과 결속과 항목 대조**(어느 관문의·어느 런의·무엇에 대한 승인이며 아직 유효한가)를 본다.
 #   진입 불일치는 품질 결함이 아니므로 재시도·수정 루프에 넣지 않는다.
+#
+# ★★ 폐기(재정 R8 우선): 구 문언은 진입 대조 목록에 **승인 봉투 target.digest** 를 넣었고
+#    구현도 그렇게 했다. 그 결과 출구 규칙 approval.target-digest 에 제어가 닿지 않았다(도달 불능).
+#    두 실패는 성질이 다르다 — 진입 지문은 "세계가 어긋났다"(환경 오류)이고, 봉투 결속 실효는
+#    "세계는 멀쩡한데 승인이 실효했다"(halt + **재승인**)이다. 재료 개정으로 봉투가 실효하는 것은
+#    결함이 아니라 정상적인 생애 사건이며(R8), 그 사건은 판정 행에 남아 Owner 에게 재승인을
+#    요구해야 한다. 진입이 삼키면 재승인 경로가 판정문에서 사라진다. 그래서 결속은 출구 관할이다.
 checks_on_entry:
   - id: freeze.input-digest
     criterion: >-
-      선언된 입력 전건의 존재·지문 대조 — 10-read/material-spec.json 의 실측 SHA-256 ↔
-      승인 봉투 target.digest, 10-read/material-spec.md 존재, 그리고 명세의
-      patent.source_digest ↔ 00-source/patent.sha256.
+      선언된 입력 전건의 존재·지문 대조 — 10-read/material-spec.json 존재,
+      10-read/material-spec.md 존재, 그리고 명세의 patent.source_digest ↔
+      00-source/patent.sha256. 승인 봉투는 이 층에서 열지 않는다(위 ★★ 참조).
     implemented_by: engine/stages/__init__.py
     on_mismatch: environment-error
-    note: "불일치는 품질 결함이 아니라 환경 오류다 — 즉시 중단+진단(재정 P-C). 봉투는 자동 실효된다(재정 R8)."
+    note: "불일치는 품질 결함이 아니라 환경 오류다 — 즉시 중단+진단(재정 P-C)."
 
 inputs:
   - 10-read/material-spec.json
@@ -69,6 +76,8 @@ checks_before_exit:
     criterion: >-
       approval-v<N>.md 프런트매터가 approval-envelope/v0 를 통과하고, decision: "approved" ·
       owner_quote 비어 있지 않음 · target.digest 가 실제 파일 SHA-256 과 일치(재정 R8).
+      ★ target.digest 대조는 **이 출구 검사의 관할이다** — 진입 지문 검사로 옮기면 봉투 실효가
+      환경 오류로 오분류되고 재승인 경로가 판정문에서 사라진다(위 checks_on_entry ★★).
       ★ 더해 봉투와 재료를 함께 읽어야 판정되는 3항을 여기서 본다(스키마 밖):
       ① extensions.docent.drop_signal.verdict == "drop-proposed" 이면 drop_decision 필수
          (경로 정정 — drop_signal 은 공유 코어가 아니라 docent 확장 블록에 산다: 재정 P-2 ⓑ.

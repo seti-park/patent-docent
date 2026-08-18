@@ -23,9 +23,15 @@
 **재개 런은 같은 커밋을 쓴다** — 그래서 `create` 는 같은 커밋에 대해 멱등이다(기존 worktree 재사용).
 
 **이 도구는 `run.yaml` 을 쓰지 않는다.** 커밋을 확정해 stdout 으로 낼 뿐이고, `engine.commit` ·
-`engine.worktree` 의 기입은 **러너의 몫**이다. 기록 주체를 둘로 늘리면 "누가 쓴 값인가"가 다시
-미정이 되고, 도구가 런 상태를 건드리는 순간 read-only 도구 계열의 규율도 함께 깨진다.
+`engine.worktree` 의 기입은 **러너의 몫**이다(`engine/stages/source.py#run` — 진입 시점에
+스스로 기입한다). 기록 주체를 둘로 늘리면 "누가 쓴 값인가"가 다시 미정이 되고, 도구가 런
+상태를 건드리는 순간 read-only 도구 계열의 규율도 함께 깨진다.
 (worktree 생성 자체는 이 도구의 유일한 쓰기다 — 그 쓰기 대상은 런 산출물이 아니라 체크아웃이다.)
+
+**★ git 판정은 이 파일이 소유하지 않는다.** 깨끗함·HEAD·worktree 여부의 판정은
+`engine/gitpin.py` 한 곳에 있고 이 도구와 러너가 그것을 함께 부른다(문언까지 공유한다).
+두 벌로 적으면 한 벌이 낡고, 그날 도구와 러너가 같은 런을 서로 다른 기준으로 판정한다.
+이 도구가 소유하는 것은 그 판정의 **처분**(종료 코드 0/2/3)과 worktree 배치뿐이다.
 
 종료 코드 (SPEC §8.3 관례):
   0 = 정상 (create 성공 / expiry: 핀 == HEAD, 만료 없음)
@@ -44,15 +50,19 @@ import re
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+from engine import gitpin  # noqa: E402  (경로 삽입 후에만 import 할 수 있다)
+
 EXIT_OK = 0
 EXIT_INPUT = 2
 EXIT_EXPIRED = 3
 
 # worktree 루트 기본값 — 리포 **안**이다. 런 작업장이 리포와 함께 이동해야 핀의 의미가 산다.
 # (`.worktrees/` 를 git 무시 목록에 넣는 일은 이 도구의 관할이 아니다 — 아래 dirty 검사 주석 참조.)
-DEFAULT_ROOT_REL = ".worktrees"
+DEFAULT_ROOT_REL = gitpin.DEFAULT_WORKTREE_ROOT
 
-COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+COMMIT_RE = gitpin.COMMIT_RE
 # 런 ID 는 경로 성분 하나다. 경로 조작·상위 탈출을 원천 차단한다.
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
@@ -67,7 +77,6 @@ LAW_PATH_PREFIXES: tuple[str, ...] = (
     "tools/",
 )
 MAX_CHANGED_PATHS = 50
-MAX_DIRTY_LISTED = 20
 
 EPILOG = """\
 하는 일:
@@ -93,106 +102,40 @@ def fail_env(message: str, detail: list[str] | None = None) -> None:
     sys.exit(EXIT_INPUT)
 
 
-def run_git(cwd: str, args: list[str]) -> subprocess.CompletedProcess:
+def guarded(call, *args, **kwargs):
+    """`engine/gitpin.py` 의 판정을 부르고, 판정 불능(`GitUnavailable`)을 exit 2 로 처분한다.
+
+    판정은 저쪽이 하고 처분은 이쪽이 한다 — 그 경계가 이 함수 하나다.
+    """
     try:
-        return subprocess.run(
-            ["git", "-C", cwd] + args,
-            capture_output=True,
-            text=True,
-        )
-    except FileNotFoundError as exc:  # pragma: no cover - 환경 오류 경로
-        fail_env(f"git 실행 파일을 찾을 수 없다: {exc}")
+        return call(*args, **kwargs)
+    except gitpin.GitUnavailable as exc:
+        fail_env(str(exc))
         raise  # 도달하지 않는다(fail_env 가 종료한다) — 타입 흐름용
 
 
+def run_git(cwd: str, args: list[str]) -> subprocess.CompletedProcess:
+    return guarded(gitpin.run_git, cwd, args)
+
+
 def git_out(cwd: str, args: list[str], what: str) -> str:
-    proc = run_git(cwd, args)
-    if proc.returncode != 0:
-        fail_env(
-            f"{what} 실패 (git {' '.join(args)} · exit {proc.returncode})",
-            [line for line in proc.stderr.strip().splitlines() if line],
-        )
-    return proc.stdout.strip()
+    return guarded(gitpin.git_out, cwd, args, what)
 
 
 def resolve_repo(raw: str) -> str:
-    repo = os.path.realpath(raw)
-    if not os.path.isdir(repo):
-        fail_env(f"리포 경로가 디렉터리가 아니다: {raw}")
-    proc = run_git(repo, ["rev-parse", "--git-common-dir"])
-    if proc.returncode != 0:
-        fail_env(f"git 작업 트리가 아니다: {repo}")
-    return repo
+    return guarded(gitpin.resolve_repo, raw)
 
 
 def git_common_dir(repo: str) -> str:
-    raw = git_out(repo, ["rev-parse", "--git-common-dir"], "git 디렉터리 조회")
-    return os.path.realpath(os.path.join(repo, raw))
+    return guarded(gitpin.git_common_dir, repo)
 
 
 def head_commit(repo: str) -> str:
-    commit = git_out(repo, ["rev-parse", "HEAD"], "HEAD 조회")
-    if not COMMIT_RE.match(commit):
-        fail_env(f"HEAD 가 40hex 커밋이 아니다: {commit!r}")
-    return commit
-
-
-def porcelain_entries(repo: str) -> list[tuple[str, str]]:
-    """`git status --porcelain -z` 를 (상태, 경로) 목록으로 읽는다.
-
-    `-z` 를 쓰는 이유는 경로 인용(따옴표·이스케이프) 해석을 피하기 위해서다. 이름 변경·복사
-    항목(`R`·`C`)은 원본 경로가 **다음 레코드**로 따라오므로 함께 소비한다.
-    """
-    raw = subprocess.run(
-        ["git", "-C", repo, "status", "--porcelain", "-z"],
-        capture_output=True,
-        text=True,
-    )
-    if raw.returncode != 0:
-        fail_env(
-            f"작업 트리 상태 조회 실패 (exit {raw.returncode})",
-            [line for line in raw.stderr.strip().splitlines() if line],
-        )
-    records = [rec for rec in raw.stdout.split("\0") if rec]
-    entries: list[tuple[str, str]] = []
-    index = 0
-    while index < len(records):
-        record = records[index]
-        index += 1
-        if len(record) < 4:
-            continue
-        status, path = record[:2], record[3:]
-        if status[0] in ("R", "C") and index < len(records):
-            index += 1  # 원본 경로 레코드 소비
-        entries.append((status, path))
-    return entries
-
-
-def dirty_entries(repo: str, exclude_rel: str | None) -> list[tuple[str, str]]:
-    """더러운 항목 목록. `exclude_rel` 아래는 제외한다.
-
-    제외를 두는 이유: worktree 루트(`.worktrees/`)는 **이 도구가 만든 생성물**이며 소스가 아니다.
-    그것을 더러움으로 세면 첫 런을 만든 순간 두 번째 런과 재개 런이 전부 막힌다(자기 봉쇄).
-    무시 규칙(`.gitignore`)을 두는 것은 리포 총괄의 처분이고, 이 도구는 그 처분의 유무와
-    무관하게 같은 판정을 내야 한다.
-    """
-    entries = porcelain_entries(repo)
-    if not exclude_rel:
-        return entries
-    prefix = exclude_rel.rstrip("/") + "/"
-    return [
-        (status, path)
-        for status, path in entries
-        if path != exclude_rel.rstrip("/") and not path.startswith(prefix)
-    ]
+    return guarded(gitpin.head_commit, repo)
 
 
 def relative_inside(repo: str, path: str) -> str | None:
-    """`path` 가 리포 안이면 리포 상대 경로를, 밖이면 None 을 돌려준다."""
-    rel = os.path.relpath(os.path.realpath(path), repo)
-    if rel == os.pardir or rel.startswith(os.pardir + os.sep) or os.path.isabs(rel):
-        return None
-    return rel.replace(os.sep, "/")
+    return gitpin.relative_inside(repo, path)
 
 
 def emit(payload: dict) -> None:
@@ -215,22 +158,17 @@ def cmd_create(args: argparse.Namespace) -> int:
     root = os.path.realpath(args.root) if args.root else os.path.join(repo, DEFAULT_ROOT_REL)
     root_rel = relative_inside(repo, root)
 
-    # ① 더러운 작업 트리 거부 — 커밋되지 않은 변경은 커밋에 결박될 수 없다(재정 P-U1).
-    dirty = dirty_entries(repo, root_rel)
-    if dirty:
-        listed = [f"{status} {path}" for status, path in dirty[:MAX_DIRTY_LISTED]]
-        if len(dirty) > MAX_DIRTY_LISTED:
-            listed.append(f"... 외 {len(dirty) - MAX_DIRTY_LISTED}건")
+    # ①② 더러운 작업 트리 거부 후 커밋 확정 — 판정은 `engine/gitpin.py#resolve_pin` 하나다.
+    #    러너(`source`)가 부르는 것과 **같은 함수**이며, 그래서 도구가 만든 worktree 와 러너가
+    #    기입하는 핀이 어긋날 자리가 없다(재정 P-U1).
+    try:
+        commit, _worktree = guarded(gitpin.resolve_pin, repo, exclude_rels=[root_rel])
+    except gitpin.DirtyWorktree as dirty:
         fail_env(
-            f"작업 트리가 더럽다 — 커밋되지 않은 변경은 커밋에 결박될 수 없다 (재정 P-U1) · {len(dirty)}건",
-            listed
-            + [
-                "처분: 변경을 커밋하거나 되돌린 뒤 다시 개시한다. 우회 스위치는 없다.",
-            ],
+            f"{gitpin.DIRTY_HEADLINE} · {len(dirty.entries)}건",
+            gitpin.format_dirty(dirty.entries) + [gitpin.DIRTY_REMEDY],
         )
-
-    # ② 커밋 확정.
-    commit = head_commit(repo)
+        raise  # 도달하지 않는다 — 타입 흐름용
     target = os.path.join(root, run_id)
 
     # ③ 이미 있는 경로는 **덮어쓰지 않는다** — 같은 커밋이면 재사용(재개 런), 다르면 거부.

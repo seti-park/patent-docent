@@ -696,7 +696,12 @@ def screening_memo(read_run: str, decompose: dict) -> dict:
 
 
 def append_screening_ledger(
-    repo: str | None, *, run_id: str, memos: list[dict], final: dict | None
+    repo: str | None,
+    *,
+    run_id: str,
+    memos: list[dict],
+    final: dict | None,
+    shadow_root: str | None = None,
 ) -> str | None:
     """섀도 원장(`ledgers/shadow/screening.jsonl`)에 **한 행**을 추가한다(재정 P-U4).
 
@@ -706,10 +711,14 @@ def append_screening_ledger(
 
     목적은 섀도 모드다: 청구항만 본 맹검 판단 · 접지 후 최종 평가 · Owner 재정의 3층이
     자매 프로젝트 patent-historian 의 스크리닝 능력에 대한 사전 훈련 데이터가 된다(D4).
+
+    `shadow_root` 는 원장 루트의 명시 주입구다(기본 `None` = 생산 자리). 테스트 하네스만 채운다 —
+    합성 픽스처의 메모가 생산 원장에 섞이면 축적물이 훈련 데이터로서 죽는다(재정 P-U2 의
+    "표본은 자기완결 미니 세계"를 재정 P-U4 의 원장에 적용한 것이다).
     """
     if not memos:
         return None
-    path = shadow_screening_ledger(repo)
+    path = shadow_screening_ledger(repo, shadow_root)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     row = {
         "run_id": run_id,
@@ -893,10 +902,15 @@ def run(
     rules: Rules,
     read_runs: tuple[str, str] = ("read-a", "read-b"),
     repo: str | None = None,
+    shadow_root: str | None = None,
 ) -> dict:
     """READ 스테이지 1회. 실행 순서는 모듈 docstring 의 ①~⑩ 그대로다.
 
     반환 = `{"rows", "spec", "convergence", "status", "reason_label"}`.
+
+    `shadow_root` = 섀도 원장 루트의 명시 주입구(기본 `None` = 생산 자리 `<repo>/ledgers/shadow/`,
+    재정 P-U4). 런 작업장은 격리되어도 원장은 리포 루트에 누적되므로, 합성 픽스처로 이 함수를
+    부르는 하네스는 이 인자를 반드시 채운다(재정 P-U2 — 표본은 자기완결 미니 세계).
     """
     paths = RunPaths(run_root, repo)
     contract = paths.contracts[STAGE_ID]
@@ -1135,7 +1149,13 @@ def run(
     finally:
         _finish_lane_log(paths, journal)
         # 메모는 런의 성패와 무관하게 남는다 — 축적물이 목적이므로 중단된 런의 관찰도 신호다.
-        append_screening_ledger(paths.repo, run_id=run_id, memos=memos, final=final_signal)
+        append_screening_ledger(
+            paths.repo,
+            run_id=run_id,
+            memos=memos,
+            final=final_signal,
+            shadow_root=shadow_root,
+        )
 
 
 def _failure_verdict(contract: dict, failing: list[CheckRow]) -> tuple[str, str | None]:

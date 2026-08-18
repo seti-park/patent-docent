@@ -247,16 +247,13 @@ def run(
     contract = paths.contracts[STAGE_ID]
     paths.ensure_frozen_dir()
 
-    # ★ 진입 지문 검사(재정 P-C). 출구의 freeze.approval-valid 와 겹쳐 보이지만 층이 다르다 —
-    #   진입은 **환경 전제**(선언 입력이 실재하고 승인 시점 이후 조용히 바뀌지 않았는가)를
-    #   보고, 출구는 봉투의 **신원과 항목 대조**(어느 관문의·어느 런의·무엇에 대한 승인인가)를
-    #   본다. 봉투 부재·신원 위조는 여기서 판정하지 않는다(그 처분은 출구 검사의 몫이다).
-    verify_declared_inputs(
-        paths,
-        contract,
-        STAGE_ID,
-        inputs={"approval_path": paths.approval(spec_version)},
-    )
+    # ★ 진입 지문 검사(재정 P-C). 보는 것은 **선언된 입력**(재료 명세·판독본의 실재와, 그
+    #   재료가 이 런의 원천 위에서 만들어졌는가)까지다. 봉투는 이 층에 오지 않는다 —
+    #   부재·신원 위조·target.digest 실효 전부 아래 출구 검사(freeze.approval-valid)의 몫이며,
+    #   특히 **봉투 실효는 환경 오류가 아니라 정상적인 생애 사건**(승인 후 재료 개정 → 자동
+    #   실효 → 재승인)이므로 판정 행에 남아야 한다(재정 R8 · P-C). 그래서 봉투 경로를
+    #   진입 검사에 넘기지 않는다.
+    verify_declared_inputs(paths, contract, STAGE_ID)
 
     frozen_path = paths.frozen_spec(spec_version)
     rows: list[CheckRow] = []
@@ -376,12 +373,16 @@ def run(
     else:
         actual = sha256_file(target_path)
         if actual != target.get("digest"):
+            # ★ 이 자리는 **도달 가능해야** 한다(재정 R8). 한때 진입 지문 검사가 같은
+            #   불일치를 먼저 환경 오류로 삼켜 여기 제어가 닿지 않았고, 그 동안 판정문에서
+            #   재승인 경로가 사라졌다. 승인 후 재료가 바뀌는 것은 결함이 아니라 정상적인
+            #   생애 사건이며, 그 처분은 진단이 아니라 **재승인**이다.
             approval_row.add(
                 "approval.target-digest",
                 "target.digest",
                 str(target.get("digest")),
                 actual,
-                "승인 시점 대상과 현재 파일이 다르다 — 봉투는 자동 실효한다(재정 R8)",
+                "승인 시점 대상과 현재 파일이 다르다 — 봉투는 자동 실효한다. 처분은 재승인이다(재정 R8)",
             )
 
     # ④ 스키마 밖 3항
@@ -413,7 +414,17 @@ def run(
     )
     rows.append(approval_row)
     if approval_row.status == "fail":
-        statuses.append(str(failure_entry(contract, "승인 봉투 부재").get("action")))
+        # 조치의 정본은 계약의 failure 목록이다. 봉투 **실효**(target.digest)는 계약이 별도
+        # 행으로 든 조건이므로 그 행을 조회한다 — 조치는 같은 halt 지만, 어느 조건으로 멈췄는지가
+        # 계약에서 조회되어야 "재승인 필요"라는 처분이 계약 문언에 붙어 있게 된다(재정 R8).
+        stale = any(finding.rule == "approval.target-digest" for finding in approval_row.findings)
+        statuses.append(
+            str(
+                failure_entry(
+                    contract, "target.digest 불일치" if stale else "승인 봉투 부재"
+                ).get("action")
+            )
+        )
 
     # ⑤ 원천 다이제스트 대조
     digest_row = CheckRow(check_id="freeze.digest-match", checked=1)

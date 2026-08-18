@@ -56,6 +56,7 @@ from engine.render.material_spec_md import render  # noqa: E402
 from engine.stages import (  # noqa: E402
     StageEnvironmentError,
     StageError,
+    StageHaltError,
     load_json,
     load_yaml,
     read_text,
@@ -514,6 +515,84 @@ PATENT_META = {
 }
 
 
+# ---------------------------------------------------------------------------
+# 법 리포 — 런이 결박될 **깨끗한 git 커밋**을 가진 소형 리포 (재정 P-U1 · P-8)
+# ---------------------------------------------------------------------------
+#
+# `source.run` 은 진입 시점에 리포의 HEAD 를 핀으로 확정하고, 작업 트리가 더러우면 런을
+# 시작하지 않는다. 그래서 시험이 **본 리포의 작업 상태에 좌우되면 안 된다** — 개발 중
+# 더러운 트리에서는 런이 거부되는 것이 정상이기 때문이다(같은 이유를
+# `test_run_is_pinned_to_engine_commit` 이 이미 적어 두었다: "본 리포의 HEAD 에 기대면
+# 시험이 작업 상태에 좌우된다"). 러너가 리포에서 읽는 것은 계약과 `reader/READER-VERSION`
+# 뿐이므로 그 둘만 복사해 커밋한 소형 리포를 세우고, 그것을 런의 법으로 준다.
+
+_LAW_REPO: list[str] = []  # 세션 캐시(모듈 전역 1개 — 만드는 비용을 시험마다 치르지 않는다)
+
+
+def git_law(repo: str, *args: str) -> None:
+    """법 리포에 git 명령 하나. 실패하면 그 자리에서 시험을 세운다(조용한 실패 금지)."""
+    import subprocess  # noqa: PLC0415
+
+    proc = subprocess.run(
+        ["git", *args], cwd=repo, capture_output=True, text=True, check=False
+    )
+    if proc.returncode != 0:
+        pytest.fail(f"법 리포 git {' '.join(args)} 실패(exit {proc.returncode}): {proc.stderr}")
+
+
+def make_law_repo(destination: str) -> str:
+    """계약 + `reader/READER-VERSION` 만 담은 **깨끗한** git 리포를 세운다."""
+    os.makedirs(destination, exist_ok=True)
+    shutil.copytree(
+        os.path.join(REPO, "contracts"),
+        os.path.join(destination, "contracts"),
+        ignore=shutil.ignore_patterns("__pycache__"),
+        dirs_exist_ok=True,
+    )
+    os.makedirs(os.path.join(destination, "reader"), exist_ok=True)
+    shutil.copy2(
+        os.path.join(REPO, "reader", "READER-VERSION"),
+        os.path.join(destination, "reader", "READER-VERSION"),
+    )
+    git_law(destination, "init", "-q")
+    git_law(destination, "config", "user.email", "runner@example.com")
+    git_law(destination, "config", "user.name", "runner")
+    commit_law(destination, "law snapshot")
+    return destination
+
+
+def law_head(repo: str) -> str:
+    """법 리포의 현재 HEAD."""
+    import subprocess  # noqa: PLC0415
+
+    proc = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True, check=False
+    )
+    if proc.returncode != 0:
+        pytest.fail(f"법 리포 HEAD 조회 실패(exit {proc.returncode}): {proc.stderr}")
+    return proc.stdout.strip()
+
+
+def commit_law(repo: str, message: str) -> str:
+    """법 리포의 현재 상태를 커밋하고 HEAD 를 돌려준다(`git add -A` 를 쓰지 않는다)."""
+    git_law(repo, "add", "contracts", "reader")
+    git_law(repo, "commit", "-q", "-m", message)
+    return law_head(repo)
+
+
+def law_repo() -> str:
+    """세션 공용 법 리포. 없으면 만들고, 프로세스 종료 시 지운다."""
+    import atexit  # noqa: PLC0415
+    import tempfile  # noqa: PLC0415
+
+    if not _LAW_REPO:
+        root = tempfile.mkdtemp(prefix="patent-docent-law-")
+        make_law_repo(root)
+        _LAW_REPO.append(root)
+        atexit.register(shutil.rmtree, root, True)
+    return _LAW_REPO[0]
+
+
 def make_source_inputs(tmp_path, *, figure_count: int = 6, source_text: str = SOURCE):
     """투입물(원문 파일 + 도면 원본)을 만든다. 런 작업장 밖의 자리다."""
     inbox = os.path.join(str(tmp_path), "inbox")
@@ -540,7 +619,8 @@ def run_source(tmp_path, *, figure_count: int = 6, source_text: str = SOURCE, re
         figures_dir=figures,
         run_id=run_id,
         patent_meta=copy.deepcopy(PATENT_META),
-        repo=repo,
+        # 법은 **깨끗한 커밋**에서 온다(재정 P-U1) — 위 `law_repo()` 주석 참조.
+        repo=repo or law_repo(),
     )
     return root, outcome
 
@@ -584,6 +664,40 @@ def write_lane_responses(
     return root
 
 
+def shadow_root_for(run_root: str) -> str:
+    """이 런의 섀도 원장 루트 — 런 작업장 **옆**의 임시 경로다(런 밖이라는 성질은 보존한다).
+
+    ★ 이 우회가 필요한 이유: 섀도 원장(재정 P-U4)은 런 디렉터리가 아니라 리포 루트에 누적되므로,
+    `tmp_path` 로 런을 격리해도 원장만은 격리되지 않는다. 재정 P-U2 가 세운 원칙("표본은
+    자기완결 미니 세계 — 재봉인 도구는 테스트 하네스에만")을 그 원장에 적용한 것이 이 함수다.
+    실측: 이 격리가 없던 동안 실제 런 0건인 리포 원장에 가공 런 ID 행 1,178 개가 쌓였다.
+    """
+    return os.path.abspath(os.path.join(run_root, os.pardir, "_shadow"))
+
+
+def shadow_ledger_for(run_root: str) -> str:
+    """`shadow_root_for()` 아래의 원장 파일 경로. 경로 조립은 엔진의 해석기에 맡긴다."""
+    return engine_paths.shadow_screening_ledger(shadow_root=shadow_root_for(run_root))
+
+
+def run_read_stage(
+    *, run_root: str, adapter, rules=RULES, shadow_root: str | None = None, **kwargs
+):
+    """`read_stage.run` 의 **유일한** 테스트 진입점 — 섀도 원장을 임시 경로로 돌린다.
+
+    엔진 함수를 직접 부르지 마라(`read_stage` 의 `run`). `shadow_root` 를 비우고 부르면 생산 원장
+    (`<repo>/ledgers/shadow/screening.jsonl`)에 합성 메모가 쌓인다 — 그 재발을
+    `test_test_suite_does_not_write_production_shadow_ledger` 가 정적으로도 막는다.
+    """
+    return read_stage.run(
+        run_root=run_root,
+        adapter=adapter,
+        rules=rules,
+        shadow_root=shadow_root or shadow_root_for(run_root),
+        **kwargs,
+    )
+
+
 def run_read(tmp_path, *, payloads_by_run=None, model_override=None, run_root=None):
     """`source` → 레인 응답 배치 → `read` 통주."""
     root = run_root
@@ -599,7 +713,7 @@ def run_read(tmp_path, *, payloads_by_run=None, model_override=None, run_root=No
         root, payloads_by_run=payloads_by_run, model_override=model_override
     )
     adapter = ReplayLaneAdapter(lanes_root)
-    outcome = read_stage.run(run_root=root, adapter=adapter, rules=RULES)
+    outcome = run_read_stage(run_root=root, adapter=adapter, rules=RULES)
     return root, outcome, adapter
 
 
@@ -770,19 +884,16 @@ def test_exhibit_candidate_floor_comes_from_sheet(tmp_path) -> None:
         pytest.fail(f"하한 6 에서 도면 4개는 escalate 여야 한다, 실제 {strict['status']}")
 
     # ② 하한만 3 으로 바꾼 계약 사본에서 같은 입력 → 통과
-    fake_repo = os.path.join(str(tmp_path), "fake-repo")
-    shutil.copytree(os.path.join(REPO, "contracts"), os.path.join(fake_repo, "contracts"))
-    os.makedirs(os.path.join(fake_repo, "reader"), exist_ok=True)
-    shutil.copy2(
-        os.path.join(REPO, "reader", "READER-VERSION"),
-        os.path.join(fake_repo, "reader", "READER-VERSION"),
-    )
+    #    ★ 고친 법은 **커밋한다**(재정 P-U1). 커밋하지 않은 계약 위에서는 런이 시작되지도
+    #    않으므로, 여기서의 재커밋은 편의가 아니라 그 규율의 실연이다.
+    fake_repo = make_law_repo(os.path.join(str(tmp_path), "fake-repo"))
     sheet_path = os.path.join(fake_repo, "contracts", "format-parameters.yaml")
     with open(sheet_path, encoding="utf-8") as handle:
         sheet = yaml.safe_load(handle)
     sheet["parameters"]["tweet_count"]["value"]["min"] = 3
     with open(sheet_path, "w", encoding="utf-8") as handle:
         yaml.safe_dump(sheet, handle, allow_unicode=True, sort_keys=False)
+    commit_law(fake_repo, "tweet_count.value.min = 3")
 
     _, relaxed = run_source(
         tmp_path,
@@ -810,6 +921,7 @@ def test_source_refuses_to_write_00_source_twice(tmp_path) -> None:
             figures_dir=figures,
             run_id=RUN_ID,
             patent_meta=copy.deepcopy(PATENT_META),
+            repo=law_repo(),
         )
 
 
@@ -1394,7 +1506,7 @@ def test_lane_model_mismatch_is_recorded_as_defect(tmp_path) -> None:
     )
     adapter = ReplayLaneAdapter(lanes_root)
     with pytest.raises(read_stage.LaneAssignmentError):
-        read_stage.run(run_root=root, adapter=adapter, rules=RULES)
+        run_read_stage(run_root=root, adapter=adapter, rules=RULES)
     log = load_json(RunPaths(root).lane_log)
     mismatched = [row for row in log if row["mismatch"]]
     if not mismatched:
@@ -1465,7 +1577,7 @@ def test_entry_digest_mismatch_is_environment_error(tmp_path) -> None:
         root, payloads_by_run={"read-a": payload_set(), "read-b": payload_set()}
     )
     with pytest.raises(StageEnvironmentError) as excinfo:
-        read_stage.run(run_root=root, adapter=ReplayLaneAdapter(lanes_root), rules=RULES)
+        run_read_stage(run_root=root, adapter=ReplayLaneAdapter(lanes_root), rules=RULES)
 
     diagnosis = str(excinfo.value)
     # 진단이 "어긋났다"만 말하면 사람이 다시 찾아야 한다 — **어긋난 자리의 경로**와
@@ -1519,7 +1631,7 @@ def test_screening_memos_recorded_for_both_runs(tmp_path) -> None:
     }
     lanes_root = write_lane_responses(root, payloads_by_run=payloads)
     adapter = ReplayLaneAdapter(lanes_root)
-    outcome = read_stage.run(run_root=root, adapter=adapter, rules=RULES)
+    outcome = run_read_stage(run_root=root, adapter=adapter, rules=RULES)
 
     # ① 우려 메모가 런을 세우지 않는다(재정 P-A — 확정 재정의 자리는 CP1 하나다).
     if outcome["status"] != "ok":
@@ -1539,7 +1651,9 @@ def test_screening_memos_recorded_for_both_runs(tmp_path) -> None:
         pytest.fail("근거 요지가 비었다 — 방향만 남으면 판단 기록이 아니다")
 
     # ③ 섀도 원장(런 밖·계약면 밖)에 한 행으로 축적된다(재정 P-U4).
-    ledger = os.path.join(REPO, "ledgers", "shadow", "screening.jsonl")
+    #    ★ 보는 자리는 **격리 원장**이다 — 생산 원장을 보면 이 시험이 그 파일을 오염시킨다
+    #    (재정 P-U2). 원장 기입 자체는 여기서 그대로 반증된다.
+    ledger = shadow_ledger_for(root)
     if not os.path.exists(ledger):
         pytest.fail(f"섀도 원장이 없다: {ledger}")
     rows = [json.loads(line) for line in read_text(ledger).splitlines() if line.strip()]
@@ -1555,6 +1669,85 @@ def test_screening_memos_recorded_for_both_runs(tmp_path) -> None:
             pytest.fail(f"CP1 메모 절에 {needle} 이 없다")
 
 
+def _ledger_fingerprint(path: str):
+    """원장 파일의 상태 지문 — 미존재는 `None`, 존재하면 (바이트 수, sha256)."""
+    if not os.path.exists(path):
+        return None
+    with open(path, "rb") as handle:
+        blob = handle.read()
+    return len(blob), hashlib.sha256(blob).hexdigest()
+
+
+def _direct_engine_ledger_calls() -> list[str]:
+    """`shadow_root` 없이 엔진의 원장 기입 경로를 부르는 테스트 코드 자리(파일:행)."""
+    guarded = {("read_stage", "run"), ("read_stage", "append_screening_ledger")}
+    offenders: list[str] = []
+    for module in sorted(glob.glob(os.path.join(REPO, "tests", "test_*.py"))):
+        tree = ast.parse(read_text(module))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+                continue
+            owner = node.func.value
+            if not isinstance(owner, ast.Name):
+                continue
+            if (owner.id, node.func.attr) not in guarded:
+                continue
+            if any(keyword.arg == "shadow_root" for keyword in node.keywords):
+                continue
+            offenders.append(
+                f"{os.path.relpath(module, REPO)}:{node.lineno} "
+                f"({owner.id}.{node.func.attr})"
+            )
+    return offenders
+
+
+def test_test_suite_does_not_write_production_shadow_ledger(tmp_path) -> None:
+    """이 시험이 없으면 합성 픽스처의 메모가 생산 섀도 원장에 축적된다(재정 P-U4 · P-U2).
+
+    실측 결함(2026-08-18): 실제 런 0건인 리포의 `ledgers/shadow/screening.jsonl` 에 가공 런 ID
+    `example-xx1111111a1-rotary-feeder` 행이 1,178 개 쌓여 있었다. 원장의 값은 무편집 축적에
+    있고(historian 스크리닝의 사전 훈련 데이터 — D4), 합성 잡음이 섞인 순간 그 값이 사라진다.
+    재정 P-U2 가 "표본은 자기완결 미니 세계"라고 못 박은 원칙을 재정 P-U4 의 원장에 적용한다.
+    """
+    # ① 생산 기본값은 그대로다 — 격리가 생산 자리를 옮긴 것이 아님을 함께 못 박는다(재정 P-U4).
+    production = engine_paths.shadow_screening_ledger()
+    expected = os.path.join(REPO, "ledgers", "shadow", "screening.jsonl")
+    if production != expected:
+        pytest.fail(f"생산 원장 자리가 옮겨졌다: {production!r} (기대 {expected!r})")
+
+    before = _ledger_fingerprint(production)
+
+    # ② 원장을 실제로 기입하는 통주를 돌린다 — 기입이 없으면 이 시험이 공허해진다.
+    root, outcome, _ = run_read(tmp_path)
+    if outcome["status"] != "ok":
+        pytest.fail(f"통주가 ok 를 내지 않았다: {outcome['status']}")
+
+    # ③ 그 사이 생산 원장의 바이트는 변하지 않았다.
+    after = _ledger_fingerprint(production)
+    if after != before:
+        pytest.fail(f"생산 섀도 원장이 변했다: {before} → {after} ({production})")
+
+    # ③' 대신 격리 원장에 쌓였다 — 이 확인이 없으면 "기입을 통째로 막아" 통과하는 길이 열린다.
+    isolated = shadow_ledger_for(root)
+    rows = [
+        json.loads(line)
+        for line in (read_text(isolated) if os.path.exists(isolated) else "").splitlines()
+        if line.strip()
+    ]
+    if not [row for row in rows if row.get("run_id") == RUN_ID]:
+        pytest.fail(f"격리 원장에 이 런의 행이 없다 — 기입 경로가 죽었다: {isolated}")
+
+    # ④ 정적 관문 — 어떤 테스트 모듈도 `shadow_root` 없이 엔진 기입 경로를 부르지 않는다.
+    #    ②③ 은 이 시험이 부른 통주 하나만 보므로, 다음 사람이 다른 자리에 같은 구멍을 내는 것은
+    #    이 검사만 막을 수 있다.
+    offenders = _direct_engine_ledger_calls()
+    if offenders:
+        pytest.fail(
+            "shadow_root 없이 엔진 원장 기입 경로를 부른다(테스트는 run_read_stage 를 쓴다): "
+            + ", ".join(offenders)
+        )
+
+
 def test_screening_memo_is_withheld_from_synthesis_prompt(tmp_path) -> None:
     """메모가 통합 레인에 새면 앵커링 방지가 실패한다 — 두 판단의 독립성이 조용히 사라진다(재정 P-A)."""
     marker = "이 문장이 통합 레인에 새면 앵커링 방지가 무너진다."
@@ -1565,7 +1758,7 @@ def test_screening_memo_is_withheld_from_synthesis_prompt(tmp_path) -> None:
     }
     lanes_root = write_lane_responses(root, payloads_by_run=payloads)
     adapter = ReplayLaneAdapter(lanes_root)
-    outcome = read_stage.run(run_root=root, adapter=adapter, rules=RULES)
+    outcome = run_read_stage(run_root=root, adapter=adapter, rules=RULES)
     if outcome["status"] != "ok":
         pytest.fail(f"status 기대 ok, 실제 {outcome['status']} — {fail_rows(outcome['rows'])}")
 
@@ -1595,7 +1788,7 @@ def test_convergence_failure_escalates_after_one_retry(tmp_path) -> None:
     }
     lanes_root = write_lane_responses(root, payloads_by_run=payloads)
     adapter = ReplayLaneAdapter(lanes_root)
-    outcome = read_stage.run(run_root=root, adapter=adapter, rules=RULES)
+    outcome = run_read_stage(run_root=root, adapter=adapter, rules=RULES)
     if outcome["status"] != "escalate":
         pytest.fail(f"status 기대 escalate, 실제 {outcome['status']}")
     failing = [row.check_id for row in outcome["rows"] if row.status == "fail"]
@@ -1622,7 +1815,7 @@ def test_retry_returns_defects_to_the_lane(tmp_path) -> None:
     }
     lanes_root = write_lane_responses(root, payloads_by_run=payloads)
     adapter = ReplayLaneAdapter(lanes_root)
-    read_stage.run(run_root=root, adapter=adapter, rules=RULES)
+    run_read_stage(run_root=root, adapter=adapter, rules=RULES)
     retried = [
         request for request in adapter.dispatched if "/retry-1/" in request.lane_id
     ]
@@ -1816,20 +2009,37 @@ def test_freeze_stamps_monotonic_spec_version(tmp_path) -> None:
         freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
 
 
-def test_freeze_rejects_stale_target_digest(tmp_path) -> None:
+def test_stale_approval_digest_is_halt_not_environment_error(tmp_path) -> None:
     """승인 후 재료가 조용히 바뀌어도 통과하면 해시 결속이 장식이다(재정 R8).
 
-    ★ 판정 자리가 앞으로 옮겨졌다(재정 P-C). 같은 불일치를 **진입 지문 검사**가 먼저 잡고
-    환경 오류로 즉시 중단한다 — 승인 시점 대상과 현재 재료가 다른 것은 재료의 품질 문제가
-    아니라 환경이 서 있지 않은 것이기 때문이다.
+    ★ 판정 자리를 **출구로 되돌렸다**(구명 `test_freeze_rejects_stale_target_digest`).
+    한동안 진입 지문 검사(재정 P-C)가 같은 불일치를 먼저 잡아 `StageEnvironmentError` 로
+    중단했고, 그 결과 출구 규칙 `approval.target-digest` 에 제어가 닿지 않았다(도달 불능).
+
+    두 실패는 성질이 다르다. 진입 지문은 **세계가 어긋난 것**(환경 오류)이고, 봉투
+    `target.digest` 는 세계가 멀쩡한 채 **승인이 실효한 것**이다 — 재료가 개정되면 봉투는
+    자동 실효하는 것이 설계이며(R8), 그때 필요한 것은 진단이 아니라 **재승인**이다. 진입이
+    그것을 삼키면 재승인 경로가 판정문에서 사라진다.
+
+    쌍이 되는 반증 = `test_entry_digest_mismatch_is_environment_error`(원천 지문 불일치는
+    여전히 환경 오류다) · `test_freeze_entry_digest_mismatch_is_environment_error`.
     """
     root, _, _ = run_read(tmp_path)
     approval_envelope(root, digest="sha256:" + "0" * 64)
-    with pytest.raises(StageEnvironmentError) as excinfo:
-        freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
-    diagnosis = str(excinfo.value)
-    if "target.digest" not in diagnosis:
-        pytest.fail(f"진단이 어느 결속이 끊겼는지 밝히지 않는다: {diagnosis}")
+    try:
+        outcome = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
+    except StageEnvironmentError as exc:
+        pytest.fail(f"봉투 실효가 환경 오류로 처리됐다 — 이것은 재승인 사건이다: {exc}")
+
+    rules_hit = finding_rules(outcome["rows"])
+    if "approval.target-digest" not in rules_hit:
+        pytest.fail(f"출구 판정 행에 결속 실패가 없다: {fail_rows(outcome['rows'])}")
+    if outcome["status"] != "halt":
+        pytest.fail(f"status 기대 halt, 실제 {outcome['status']}")
+    # 판정문이 **무엇을 하라**를 말해야 한다 — "다시 승인받아라"(재정 R8).
+    message = " ".join(fail_rows(outcome["rows"]))
+    if "재승인" not in message:
+        pytest.fail(f"판정문에 재승인 경로가 없다: {message}")
     if os.path.exists(RunPaths(root).frozen_spec(1)):
         pytest.fail("해시가 어긋났는데 동결본이 쓰였다")
 
@@ -1838,6 +2048,29 @@ def test_freeze_rejects_stale_target_digest(tmp_path) -> None:
     outcome = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
     if outcome["status"] != "ok":
         pytest.fail(f"정상 봉투가 거부됐다: {fail_rows(outcome['rows'])}")
+
+
+def test_freeze_entry_digest_mismatch_is_environment_error(tmp_path) -> None:
+    """봉투 결속을 진입에서 뺐다고 진입 검사까지 무력해지면 P-C 가 약해진다.
+
+    freeze 의 진입 검사는 **선언된 입력**을 계속 본다 — 동결하려는 재료가 이 런의 원천 위에서
+    만들어졌는가. 그 불일치는 환경 오류이며 판정 행이 아니다(재정 P-C). 위 시험과 이 시험이
+    함께 서는 것이 이번 처분의 요점이다: 뺀 것은 봉투 결속 한 조각뿐이다.
+    """
+    root, _, _ = run_read(tmp_path)
+    approval_envelope(root)
+    paths = RunPaths(root)
+    with open(paths.patent_sha256, "w", encoding="utf-8") as handle:
+        handle.write("sha256:" + "0" * 64 + "\n")
+
+    with pytest.raises(StageEnvironmentError) as excinfo:
+        freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
+    diagnosis = str(excinfo.value)
+    for needle in ("환경 오류", "material-spec.json#patent.source_digest", "실측", "기대"):
+        if needle not in diagnosis:
+            pytest.fail(f"진단에 {needle} 이 없다: {diagnosis}")
+    if os.path.exists(paths.frozen_spec(1)):
+        pytest.fail("원천 지문이 어긋났는데 동결본이 쓰였다")
 
 
 # --- 봉투 신원(재감수 B-02) -------------------------------------------------
@@ -2184,7 +2417,7 @@ def test_convergence_runs_before_grounding(tmp_path) -> None:
     }
     lanes_root = write_lane_responses(root, payloads_by_run=payloads)
     adapter = ReplayLaneAdapter(lanes_root)
-    outcome = read_stage.run(run_root=root, adapter=adapter, rules=RULES)
+    outcome = run_read_stage(run_root=root, adapter=adapter, rules=RULES)
 
     if outcome["status"] != "escalate":
         pytest.fail(f"status 기대 escalate, 실제 {outcome['status']}")
@@ -2225,7 +2458,7 @@ def test_canonical_selection_is_content_blind(tmp_path) -> None:
             second: payload_set(direction="clear"),
         }
         lanes_root = write_lane_responses(root, payloads_by_run=payloads)
-        outcome = read_stage.run(
+        outcome = run_read_stage(
             run_root=root,
             adapter=ReplayLaneAdapter(lanes_root),
             rules=RULES,
@@ -2351,7 +2584,7 @@ def test_grounding_requires_convergence_verdict_or_envelope(tmp_path) -> None:
 
     # ① 판정서만 있고 봉투가 없으면 접지가 열리지 않는다.
     blocked_adapter = ReplayLaneAdapter(lanes_root)
-    blocked = read_stage.run(run_root=root, adapter=blocked_adapter, rules=RULES)
+    blocked = run_read_stage(run_root=root, adapter=blocked_adapter, rules=RULES)
     if blocked["status"] != "escalate":
         pytest.fail(f"상신 축 미달인데 status 가 {blocked['status']} 다")
     if blocked["reason_label"] != "독해 프로파일 상신":
@@ -2364,7 +2597,7 @@ def test_grounding_requires_convergence_verdict_or_envelope(tmp_path) -> None:
     # ② 다른 판정서에 결속된 봉투는 열지 못한다 — 결속이 없으면 '계속'은 무관한 종이다.
     _write_continue_envelope(root, digest="sha256:" + "0" * 64)
     stale_adapter = ReplayLaneAdapter(lanes_root)
-    stale = read_stage.run(run_root=root, adapter=stale_adapter, rules=RULES)
+    stale = run_read_stage(run_root=root, adapter=stale_adapter, rules=RULES)
     if stale["status"] != "escalate":
         pytest.fail(f"엉뚱한 판정서에 결속된 봉투가 접지를 열었다: {stale['status']}")
     if "결속" not in str(stale.get("gate_note", "")):
@@ -2373,7 +2606,7 @@ def test_grounding_requires_convergence_verdict_or_envelope(tmp_path) -> None:
     # ③ 이 판정서에 결속된 봉투가 있으면 접지가 열린다(과잉 제약 배제).
     _write_continue_envelope(root)
     opened_adapter = ReplayLaneAdapter(lanes_root)
-    opened = read_stage.run(run_root=root, adapter=opened_adapter, rules=RULES)
+    opened = run_read_stage(run_root=root, adapter=opened_adapter, rules=RULES)
     if "ground-independent" not in opened_adapter.tasks_dispatched():
         pytest.fail(f"유효한 계속 봉투인데 접지가 돌지 않았다: {opened['status']}")
 
@@ -2394,6 +2627,7 @@ def test_source_change_requires_new_run(tmp_path) -> None:
             figures_dir=figures,
             run_id=RUN_ID,
             patent_meta=copy.deepcopy(PATENT_META),
+            repo=law_repo(),
         )
     if "00-source/patent.md" not in str(excinfo.value):
         pytest.fail(f"진단이 어느 파일이 바뀌었는지 밝히지 않는다: {excinfo.value}")
@@ -2409,6 +2643,7 @@ def test_source_change_requires_new_run(tmp_path) -> None:
             figures_dir=more_figures,
             run_id=RUN_ID,
             patent_meta=copy.deepcopy(PATENT_META),
+            repo=law_repo(),
         )
     if "매니페스트" not in str(excinfo.value):
         pytest.fail(f"도면 세트 변경이 매니페스트 지문으로 판정되지 않았다: {excinfo.value}")
@@ -2424,6 +2659,7 @@ def test_source_change_requires_new_run(tmp_path) -> None:
             figures_dir=same_figures,
             run_id=RUN_ID,
             patent_meta=copy.deepcopy(PATENT_META),
+            repo=law_repo(),
         )
     if isinstance(excinfo.value, StageEnvironmentError):
         pytest.fail(f"같은 투입물인데 지문 불일치로 판정됐다: {excinfo.value}")
@@ -2516,3 +2752,87 @@ def test_run_is_pinned_to_engine_commit(tmp_path) -> None:
     )
     if unpinned.returncode != 2:
         pytest.fail(f"핀 없는 run.yaml 의 종료 코드 {unpinned.returncode} (기대 2)")
+
+
+def test_source_writes_engine_commit_pin(tmp_path) -> None:
+    """핀을 사람이 손으로 넣어야 하면 그것은 결박이 아니다(재정 P-U1 · P-8).
+
+    ★ 실측 배경: 실특허 통주 개시 때 `run.yaml#engine.commit` 이 **빈 문자열**로 나왔고 핀을
+    손으로 넣어야 했다. 도구(`tools/run_worktree.py`)는 의도적으로 `run.yaml` 을 쓰지 않으므로
+    (SPEC §7.3 기입 주체 행 — 기록 주체는 러너 하나다) **아무도 핀을 쓰지 않는** 공백이 있었다.
+    이 시험은 그 공백을 막는다: 도구를 부르지 않아도 러너가 스스로 핀을 든다.
+    """
+    law = make_law_repo(os.path.join(str(tmp_path), "law"))
+    head = law_head(law)
+
+    root, outcome = run_source(tmp_path, repo=law)
+    if outcome["status"] != "ok":
+        pytest.fail(f"source 가 ok 를 내지 않았다: {outcome['status']}")
+
+    engine_block = (load_yaml(RunPaths(root).run_yaml) or {}).get("engine") or {}
+    commit = str(engine_block.get("commit", ""))
+    if len(commit) != 40 or not all(char in "0123456789abcdef" for char in commit):
+        pytest.fail(f"engine.commit 이 40hex 가 아니다: {commit!r}")
+    if commit != head:
+        pytest.fail(f"핀이 그 시점 HEAD 와 다르다: {commit} != {head}")
+    if "worktree" not in engine_block:
+        pytest.fail(f"engine.worktree 가 기입되지 않았다: {engine_block}")
+    if engine_block["worktree"] is not None:
+        pytest.fail(f"주 작업 트리에서 돈 런인데 worktree 가 채워졌다: {engine_block['worktree']}")
+
+    # 격리 체크아웃(worktree)에서 돌면 **그 경로**가 기록된다 — 재정 P-U1 의 구현 형태다.
+    # `.worktrees/` 는 이 결박 기제 자신의 생성물이므로 더러움으로 세지 않는다(그렇지 않으면
+    # 첫 런을 만든 순간 다음 런이 전부 막힌다).
+    checkout = os.path.join(law, ".worktrees", RUN_ID)
+    git_law(law, "worktree", "add", "--detach", checkout, head)
+    wt_root, wt_outcome = run_source(tmp_path.joinpath("in-worktree"), repo=checkout)
+    if wt_outcome["status"] != "ok":
+        pytest.fail(f"격리 체크아웃에서 source 가 ok 를 내지 않았다: {wt_outcome['status']}")
+    wt_engine = (load_yaml(RunPaths(wt_root).run_yaml) or {}).get("engine") or {}
+    if wt_engine.get("commit") != head:
+        pytest.fail(f"체크아웃의 핀이 다르다: {wt_engine.get('commit')} != {head}")
+    if wt_engine.get("worktree") != f".worktrees/{RUN_ID}":
+        pytest.fail(f"worktree 경로가 기록되지 않았다: {wt_engine.get('worktree')!r}")
+
+
+def test_source_refuses_to_start_on_dirty_tree(tmp_path) -> None:
+    """커밋되지 않은 변경은 커밋에 결박될 수 없다 — 그런 런은 시작하지 않는다(재정 P-U1).
+
+    핀이 있어도 트리가 더러우면 그 핀은 거짓말이다("이 법 아래 돌았다"고 적힌 커밋에 실제로
+    돈 코드가 없다). `tools/run_worktree.py create` 가 같은 판정을 하며, 판정의 정본은
+    `engine/gitpin.py` 한 곳이다 — 도구와 러너가 두 벌로 적으면 한 벌이 낡는다.
+    """
+    law = make_law_repo(os.path.join(str(tmp_path), "law"))
+    # ① 추적 파일의 미커밋 개정 + ② 미추적 파일. 둘 다 더러움이다.
+    with open(os.path.join(law, "contracts", "format-parameters.yaml"), "a", encoding="utf-8") as handle:
+        handle.write("\n# 커밋되지 않은 개정\n")
+    with open(os.path.join(law, "untracked.md"), "w", encoding="utf-8") as handle:
+        handle.write("미추적 파일\n")
+
+    root = os.path.join(str(tmp_path), "runs", RUN_ID)
+    with pytest.raises(StageError) as excinfo:
+        run_source(tmp_path, repo=law, run_root=root)
+
+    diagnosis = str(excinfo.value)
+    # 더러운 트리는 **세계의 고장이 아니라 런을 열 전제의 미비**다 — 환경 오류가 아니다.
+    if isinstance(excinfo.value, StageEnvironmentError):
+        pytest.fail(f"더러운 트리가 환경 오류로 분류됐다(조치는 halt 다): {diagnosis}")
+    if not isinstance(excinfo.value, StageHaltError):
+        pytest.fail(f"조치가 halt 계열이 아니다: {type(excinfo.value).__name__} — {diagnosis}")
+    for needle in ("halt", "재정 P-U1", "contracts/format-parameters.yaml", "untracked.md"):
+        if needle not in diagnosis:
+            pytest.fail(f"진단에 {needle} 이 없다: {diagnosis}")
+
+    # 결박 전에는 **아무것도 쓰지 않는다** — 반쯤 열린 런을 남기지 않는다.
+    if os.path.exists(root):
+        pytest.fail(f"거부된 런의 작업장이 만들어졌다: {sorted(os.listdir(root))}")
+
+    # 대조군 — 변경을 정리하면 같은 입력으로 런이 열린다(과잉 제약 배제).
+    os.remove(os.path.join(law, "untracked.md"))
+    head = commit_law(law, "개정 커밋")
+    _, outcome = run_source(tmp_path, repo=law, run_root=root)
+    if outcome["status"] != "ok":
+        pytest.fail(f"깨끗해진 트리에서 런이 열리지 않았다: {outcome['status']}")
+    engine_block = (load_yaml(RunPaths(root).run_yaml) or {}).get("engine") or {}
+    if engine_block.get("commit") != head:
+        pytest.fail(f"핀이 방금 만든 커밋과 다르다: {engine_block.get('commit')} != {head}")

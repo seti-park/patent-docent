@@ -10,6 +10,11 @@
 **조기 보고를 여기서 내는 이유**(재정 N12): 도면 수와 전시물 후보 수는 READ 의 전량 접지
 비용을 지출하기 **전에** 확정된다. 형식 전제가 서지 않는 소재를 알아내려고 독해 2회분을
 태우는 것은 순서가 뒤바뀐 것이다.
+
+**런 결박을 거는 자리도 여기다**(재정 P-U1 · P-8). 파이프라인의 첫 스테이지가 진입 시점의
+git 커밋을 확정해 `run.yaml#engine.commit` 에 기입한다(`_engine_pin`). 도구가 아니라 러너가
+쓰는 이유는 SPEC §7.3 기입 주체 행 그대로다 — 기록 주체가 둘이면 "누가 쓴 값인가"가 다시
+미정이 된다. 손으로 넣어야 하는 결박은 결박이 아니다.
 """
 
 from __future__ import annotations
@@ -27,6 +32,7 @@ from reader.lib.rules import Rules
 from . import (
     StageEnvironmentError,
     StageError,
+    StageHaltError,
     failure_entry,
     figures_manifest_digest,
     load_yaml,
@@ -37,6 +43,7 @@ from . import (
     write_text,
     worst_status,
 )
+from .. import gitpin
 from ..paths import RunPaths, format_parameter, load_format_parameters, reader_version
 
 STAGE_ID = "source"
@@ -153,6 +160,55 @@ def _exhibit_block(contract: dict, figure_rows: list[dict], repo: str | None) ->
     }
 
 
+def _engine_pin(paths: RunPaths) -> tuple[str, str | None]:
+    """런 결박 핀 `(커밋 40hex, worktree 또는 None)` 을 **러너가 스스로 확정한다**(재정 P-U1·P-8).
+
+    재정 원문은 "런은 시작 시점의 git 커밋에 결박된다 … 예외 없음"이다. 손으로 넣어야 하는
+    결박은 결박이 아니므로, 이 값은 사람도 도구도 아닌 **러너**가 진입 시점에 기입한다
+    (`tools/run_worktree.py` 는 worktree 를 만들 뿐 `run.yaml` 을 쓰지 않는다 — SPEC §7.3
+    기입 주체 행). 판정 자체는 `engine/gitpin.py` 한 곳에서 오며 도구도 같은 함수를 부른다.
+
+    실패 두 갈래를 구별한다.
+
+      · **더러운 작업 트리** → `halt`. 커밋되지 않은 변경은 커밋에 결박될 수 없다. 세계가
+        고장 난 것이 아니라 런을 열 전제가 서지 않은 것이므로, 진단에 더러운 파일 목록을
+        싣고 사람이 커밋·되돌림 후 다시 개시한다. 우회 스위치는 없다.
+      · **git 부재·리포 아님** → **환경 오류**. 핀을 만들 수 없다는 뜻이고, 핀 없는 런은
+        "무엇이 당시 법이었는가"에 답하지 못한다. 조용히 넘어가지 않는다(재정 P-C 와 같은 성질).
+
+    기존 `run.yaml` 이 다른 커밋을 들고 있으면 덮어쓰지 않고 멈춘다 — **재개 런은 같은 커밋을
+    쓴다**(재정 P-U1). 핀이 달라졌다면 그것은 재개가 아니라 새 런이다.
+    """
+    # 이 결박 기제 자신의 생성물은 더러움으로 세지 않는다 — worktree 루트와 이 런의 작업장.
+    exclude = [gitpin.DEFAULT_WORKTREE_ROOT]
+    run_rel = gitpin.relative_inside(paths.repo, paths.run_root)
+    if run_rel:
+        exclude.append(run_rel)
+
+    try:
+        commit, worktree = gitpin.resolve_pin(paths.repo, exclude_rels=exclude)
+    except gitpin.DirtyWorktree as dirty:
+        listed = "; ".join(gitpin.format_dirty(dirty.entries))
+        raise StageHaltError(
+            f"[halt] {gitpin.DIRTY_HEADLINE} · {len(dirty.entries)}건 — {listed} · "
+            f"{gitpin.DIRTY_REMEDY}"
+        ) from dirty
+    except gitpin.GitUnavailable as exc:
+        raise StageEnvironmentError(
+            f"[환경 오류] 런 커밋 핀을 만들 수 없다: {exc} — 런은 시작 시점 git 커밋에 "
+            "결박된다(재정 P-U1·P-8). 핀 없는 런은 열지 않는다"
+        ) from exc
+
+    if os.path.exists(paths.run_yaml):
+        pinned = str((load_yaml(paths.run_yaml).get("engine") or {}).get("commit") or "")
+        if pinned and pinned != commit:
+            raise StageHaltError(
+                f"[halt] run.yaml 의 기존 핀과 현재 HEAD 가 다르다: 기존 {pinned} · HEAD {commit} — "
+                "재개 런은 같은 커밋을 쓴다(재정 P-U1). 커밋이 달라졌으면 그것은 새 런이다"
+            )
+    return commit, worktree
+
+
 def _provenance_md(
     *,
     run_id: str,
@@ -215,6 +271,11 @@ def run(
     """
     paths = RunPaths(run_root, repo)
     contract = paths.contracts[STAGE_ID]
+
+    # ⓪ 런 결박(재정 P-U1 · P-8) — 다른 무엇보다 먼저다. 이 런의 법(계약·스키마·검증기·러너)이
+    #    어느 커밋에서 고정되는지를 확정하지 못하면 그 뒤의 어떤 산출물도 "어떤 법 아래
+    #    만들어졌는가"에 답할 수 없다. 확정한 값은 아래 ④에서 run.yaml 에 기입된다.
+    commit, worktree = _engine_pin(paths)
 
     with open(source_patent_path, "rb") as handle:
         raw_bytes = handle.read()
@@ -304,7 +365,7 @@ def run(
     }
     write_json(paths.source_report, report)
 
-    # ④ run.yaml 골격
+    # ④ run.yaml 골격 — 여기서 커밋 핀이 실물이 된다(재정 P-U1).
     _write_run_yaml(
         paths=paths,
         run_id=run_id,
@@ -312,6 +373,8 @@ def run(
         patent_meta=patent_meta,
         canonical_digest=canonical_digest,
         repo=repo,
+        commit=commit,
+        worktree=worktree,
     )
 
     # ⑤ 종료 전 검사 5종
@@ -337,12 +400,23 @@ def _write_run_yaml(
     patent_meta: dict,
     canonical_digest: str,
     repo: str | None,
+    commit: str,
+    worktree: str | None,
 ) -> None:
-    """런 메타 골격(SPEC §7.3). 이미 있으면 원천 관련 필드만 갱신한다."""
+    """런 메타 골격(SPEC §7.3). 이미 있으면 원천 관련 필드와 **커밋 핀**만 갱신한다.
+
+    핀은 `_engine_pin` 이 확정한 값이며(재정 P-U1·P-8), 빈 문자열 골격을 남기지 않는다 —
+    빈 핀은 "아직 아무도 쓰지 않았다"를 "결박이 있다"처럼 보이게 만든다. 기존 블록의 다른
+    필드(`gate_version` 등)는 보존한다.
+    """
     existing = load_yaml(paths.run_yaml) if os.path.exists(paths.run_yaml) else {}
     patent = dict(patent_meta or {})
     patent.setdefault("source_path", "00-source/patent.md")
     patent["source_sha256"] = canonical_digest
+    engine_block = dict(existing.get("engine") or {})
+    engine_block["commit"] = commit
+    engine_block["worktree"] = worktree
+    engine_block.setdefault("gate_version", "")
     payload = {
         "schema": "run/v0",
         "run_id": run_id,
@@ -352,7 +426,7 @@ def _write_run_yaml(
         "status": "active",
         "run_kind": run_kind,
         "patent": patent,
-        "engine": existing.get("engine", {"commit": "", "gate_version": ""}),
+        "engine": engine_block,
         "reader_version": reader_version(repo),
         "numeric_whitelist": existing.get("numeric_whitelist", []),
     }

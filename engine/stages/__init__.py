@@ -37,6 +37,17 @@ class StageEnvironmentError(StageError):
     """
 
 
+class StageHaltError(StageError):
+    """런의 **전제**가 서지 않아 시작하지 못한다 — 조치는 `halt` 다.
+
+    `StageEnvironmentError` 와 층이 다르다. 환경 오류는 **세계가 어긋났다**(선언된 입력이
+    기록과 다르다)이고, 이것은 **세계는 멀쩡한데 런을 열 자격이 없다**(예: 작업 트리가
+    더러워 커밋에 결박될 수 없다 — 재정 P-U1)이다. 처분도 다르다 — 앞은 진단이고 이것은
+    사람이 전제를 갖춘 뒤 다시 개시하는 일이다. 두 실패를 한 예외로 접으면 진단문이
+    "무엇을 하라"를 말하지 못한다.
+    """
+
+
 def sha256_bytes(payload: bytes) -> str:
     """`sha256:<hex>` 형태의 다이제스트(글로사리 §3 ID 문법)."""
     return DIGEST_PREFIX + hashlib.sha256(payload).hexdigest()
@@ -283,12 +294,27 @@ def _entry_source_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) 
 
 
 def _entry_freeze_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) -> None:
-    """`freeze.input-digest` — 재료 명세·판독본의 실재와 승인 시점 대상의 불변."""
+    """`freeze.input-digest` — **선언된 입력**(재료 명세·판독본)의 실재와 지문 대조.
+
+    ★ 폐기(재정 R8 우선): 구 구현은 여기서 승인 봉투의 `target.digest` ↔ 재료 실측까지
+    대조하고 어긋나면 `StageEnvironmentError` 를 던졌다. 그 결과 출구 규칙
+    `freeze.approval-valid#approval.target-digest` 에 **제어가 닿지 않았다**(도달 불능).
+
+    두 실패는 성질이 다르므로 겹치면 안 된다.
+
+      · 진입 지문(재정 P-C) — **세계가 어긋났다**. 선언된 입력이 기록과 다르다. 환경 오류이며
+        즉시 중단 + 진단이다(재시도·수정 루프가 아니다).
+      · 봉투 `target.digest`(재정 R8) — 세계는 멀쩡하고 **승인이 실효**했다. 승인 후 재료가
+        개정되면 봉투는 자동 실효하는 것이 설계이며, 그때 필요한 것은 "환경을 진단하라"가
+        아니라 **"다시 승인받아라"**다. 처분은 `halt` + 재승인이고 그 사실은 **판정 행**에
+        남아야 한다 — 진입 검사가 그것을 삼키면 재승인 경로가 판정문에서 사라진다.
+
+    그러므로 봉투 결속은 출구(`engine/stages/freeze.py`)의 몫이고, 진입이 보는 것은 여기까지다.
+    """
     check_id = str(entry.get("id"))
     if not _require_file(row, check_id, paths.material_spec_json, "10-read/material-spec.json"):
         return
     row.checked += 1
-    spec_digest = sha256_file(paths.material_spec_json)
     _require_file(row, check_id, paths.material_spec_md, "10-read/material-spec.md")
     row.checked += 1
 
@@ -302,41 +328,11 @@ def _entry_freeze_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) 
             "동결하려는 재료가 이 런의 원천 위에서 만들어지지 않았다",
         )
 
-    # 봉투는 **있을 때만** 본다. 부재의 처분은 출구 검사(freeze.approval-valid)의 몫이고,
-    # 봉투가 재료 아닌 것을 가리키는 경우(신원 위조)도 마찬가지다 — 그것은 환경이 아니라
-    # 봉투의 정체 문제이며 층이 다르다(freeze.yaml checks_on_entry 주석).
-    approval_path = inputs.get("approval_path")
-    if not approval_path or not os.path.isfile(str(approval_path)):
-        return
-    envelope = _envelope_frontmatter(str(approval_path))
-    target = envelope.get("target") or {}
-    expected_target = os.path.relpath(paths.material_spec_json, paths.run_root).replace(
-        os.sep, "/"
-    )
-    if str(target.get("path", "")) != expected_target:
-        return
-    row.checked += 1
-    _compare(
-        row, check_id, f"{os.path.basename(str(approval_path))}#target.digest",
-        str(target.get("digest", "")), spec_digest,
-        "승인 시점 대상과 현재 재료가 다르다 — 봉투는 자동 실효한다(재정 R8)",
-    )
-
-
-def _envelope_frontmatter(path: str) -> dict:
-    """봉투 md 의 YAML 프런트매터만 얕게 판다(진입 검사용 최소 해석).
-
-    본 해석기는 `engine/stages/freeze.py#parse_envelope` 이며 여기서는 서식 위반을 판정하지
-    않는다 — 진입 검사가 봉투의 형식을 판정하면 출구 검사의 관할을 침범한다.
-    """
-    text = read_text(path)
-    if not text.startswith("---\n"):
-        return {}
-    end = text.find("\n---", 4)
-    if end < 0:
-        return {}
-    data = yaml.safe_load(text[4:end])
-    return data if isinstance(data, dict) else {}
+    # ★ 봉투는 여기서 열지 않는다. 부재·신원 위조·`target.digest` 실효 전부 출구
+    #   (`freeze.approval-valid`)의 관할이다 — 위 docstring 참조(재정 R8 · P-C).
+    #   구 구현의 봉투 프런트매터 얕은 해석기(`_envelope_frontmatter`)도 함께 폐기했다:
+    #   진입이 봉투를 읽을 이유가 사라졌고, 해석기가 둘이면 서식 판정이 두 자리에서 갈린다
+    #   (본 해석기 = `engine/stages/freeze.py#parse_envelope`).
 
 
 _ENTRY_CHECKS = {
@@ -384,6 +380,7 @@ __all__ = [
     "DIGEST_PREFIX",
     "StageEnvironmentError",
     "StageError",
+    "StageHaltError",
     "figures_manifest_digest",
     "verify_declared_inputs",
     "dump_yaml",
