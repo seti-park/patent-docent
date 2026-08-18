@@ -1,0 +1,62 @@
+[
+  {
+    "actual_effort": "max",
+    "actual_model": "claude-opus-5[1m]",
+    "batch": 0,
+    "lane_id": "read-a/decompose/batch-0",
+    "mismatch": false,
+    "ok": true,
+    "read_run": "read-a",
+    "requested_effort": "max",
+    "requested_model": "opus-5",
+    "task": "decompose"
+  },
+  {
+    "actual_effort": "max",
+    "actual_model": "claude-opus-5[1m]",
+    "batch": 0,
+    "lane_id": "read-b/decompose/batch-0",
+    "mismatch": false,
+    "ok": true,
+    "read_run": "read-b",
+    "requested_effort": "max",
+    "requested_model": "opus-5",
+    "task": "decompose"
+  },
+  {
+    "actual_effort": "high",
+    "actual_model": "claude-opus-5[1m]",
+    "batch": 0,
+    "lane_id": "read-a/ground-independent/batch-0",
+    "mismatch": false,
+    "ok": true,
+    "read_run": "read-a",
+    "requested_effort": "high",
+    "requested_model": "opus-5",
+    "task": "ground-independent"
+  },
+  {
+    "actual_effort": "low",
+    "actual_model": "opus-5",
+    "batch": 0,
+    "lane_id": "read-a/ground-dependent/batch-0",
+    "mismatch": false,
+    "ok": true,
+    "read_run": "read-a",
+    "requested_effort": "low",
+    "requested_model": "opus-5",
+    "task": "ground-dependent"
+  },
+  {
+    "actual_effort": "max",
+    "actual_model": "claude-opus-5[1m]",
+    "batch": 0,
+    "lane_id": "read-a/synthesize/batch-0",
+    "mismatch": false,
+    "ok": true,
+    "read_run": "read-a",
+    "requested_effort": "max",
+    "requested_model": "opus-5",
+    "task": "synthesize"
+  }
+]

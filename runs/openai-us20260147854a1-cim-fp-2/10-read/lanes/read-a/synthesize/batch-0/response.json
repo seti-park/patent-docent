@@ -1,0 +1,588 @@
+{
+ "lane_id": "read-a/synthesize/batch-0",
+ "model": "claude-opus-5[1m]",
+ "effort": "max",
+ "payload": {
+  "items": [
+   {
+    "id": "M2044",
+    "kind": "fact",
+    "status": "active",
+    "superseded_by": null,
+    "label_en": "count of VMM operating modes enumerated in Table 2 of FIG. 60",
+    "origin": "figure-sourced",
+    "value_raw": "8",
+    "value_normalized": "8",
+    "value_type": {
+     "kind": "scalar",
+     "approximate": false,
+     "value": "8"
+    },
+    "unit": null,
+    "machine_verifiable": false,
+    "figure_source": {
+     "figure": "FIG-60",
+     "numerals": [],
+     "locator": "FIG. 60, Table 2, 'Mode of Operation' column (rows 1 through 8)"
+    }
+   },
+   {
+    "id": "M2045",
+    "kind": "implication",
+    "status": "active",
+    "superseded_by": null,
+    "statement_en": "The floating point multiplier is dissolved into the memory array: each column cell builds the exponent and the mantissa of one primitive product where the weight is stored, so the accelerator carries no separate exponent tree outside the array.",
+    "basis": "spec",
+    "derived_from": [
+     "M1",
+     "M4",
+     "M5"
+    ],
+    "numeric_refs": [],
+    "evidence_quotes": [
+     "reducing the need for external exponent trees, minimizing data movement, and enabling support for multiple low-precision numeric formats while maintaining high throughput during VMM operations"
+    ],
+    "confidence": "stated"
+   },
+   {
+    "id": "M2046",
+    "kind": "implication",
+    "status": "active",
+    "superseded_by": null,
+    "statement_en": "Format agility is bought with zero-selection rather than with alternative datapaths: every exponent-stage multiplexer chooses between zero and a real sum, carry-out or carry-in bit, so a narrower format is run by driving the unused contributions to zero in the same wiring.",
+    "basis": "claim",
+    "derived_from": [
+     "M6",
+     "M7",
+     "M8",
+     "M9"
+    ],
+    "numeric_refs": [],
+    "evidence_quotes": [
+     "a first multiplexer configured to select zero or a prior stage carry-out bit from a prior stage half adder and output a first selection to a full adder",
+     "a multiplexer can be used to select zero or the bit stored in the bitcell associated with W0<4>, based on the FP format of weight value according to a control signal from the mode decoding unit"
+    ],
+    "confidence": "inferred"
+   },
+   {
+    "id": "M2047",
+    "kind": "implication",
+    "status": "active",
+    "superseded_by": null,
+    "statement_en": "The mode decoding unit derives the arithmetic mode from the pair of declared floating point formats and emits the control signals that drive the multiplexers inside the column cell.",
+    "basis": "claim",
+    "derived_from": [
+     "M2",
+     "M9",
+     "M26",
+     "M27"
+    ],
+    "numeric_refs": [],
+    "evidence_quotes": [
+     "a mode decoding unit configured to provide an arithmetic mode of the VMM operation according to a first floating point format of the activation values and a second floating point format of the weight values",
+     "can be controlled by one or more control signals from the mode decoding unit"
+    ],
+    "confidence": "stated"
+   },
+   {
+    "id": "M2048",
+    "kind": "implication",
+    "status": "active",
+    "superseded_by": null,
+    "statement_en": "The activation format and the weight format are declared separately and may differ, so combinations that pair a wider activation with a narrower weight are ordinary operating points of the same hardware.",
+    "basis": "claim",
+    "derived_from": [
+     "M2",
+     "M3",
+     "M19",
+     "M20",
+     "M42",
+     "M43"
+    ],
+    "numeric_refs": [
+     "M3067",
+     "M3069"
+    ],
+    "evidence_quotes": [
+     "a number of exponent bits in the activation value comprises at least one of 2, 3, 4 and 5",
+     "a number of exponent bits in the weight value comprises at least one of 2, 3, 4 and 5",
+     "different combinations of formats for activations and weights to be employed to balance accuracy, memory bandwidth, and power consumption"
+    ],
+    "confidence": "stated"
+   },
+   {
+    "id": "M2049",
+    "kind": "implication",
+    "status": "active",
+    "superseded_by": null,
+    "statement_en": "The bitcell count of a column cell is fixed by the least common multiple of the exponent widths the cell must support, which makes cell sizing a stated arithmetic rule rather than a per-format design choice.",
+    "basis": "claim",
+    "derived_from": [
+     "M33",
+     "M34",
+     "M35"
+    ],
+    "numeric_refs": [
+     "M3068"
+    ],
+    "evidence_quotes": [
+     "determining a number of bitcells in the column cell using a least common multiple among a plurality of possible number of exponent bits in the activation value and the weight value",
+     "a minimum number of exponent bits in each column cell is determined by finding the least common multiple among all the possible combination of exponent bits in the various FP formats supported by each column cell",
+     "the common cell **220** includes 12 columns and 12 rows, where number 12 is the least common multiple of number 4, 3, and 2"
+    ],
+    "confidence": "stated"
+   },
+   {
+    "id": "M2050",
+    "kind": "implication",
+    "status": "active",
+    "superseded_by": null,
+    "statement_en": "Because a cell of fixed width is divided into groups, a narrower exponent yields more weight elements per cell, so lowering precision converts the same silicon into storage capacity and throughput instead of leaving it idle.",
+    "basis": "spec",
+    "derived_from": [
+     "M11",
+     "M35"
+    ],
+    "numeric_refs": [],
+    "evidence_quotes": [
+     "the number of groups (or elements) of weight values for a given activation value bit (per row) can be determined for each column cell, which is the least common multiple of exponent bits divided by the number of exponent bits of per element of the weight value",
+     "For the weight value having exponent with 3b and 2b, the memory cells can be arranged into 4 groups and 6 groups, respectively.",
+     "the storage capacity of weight values in one column cell can be increased and the throughput of the column cell can also be increased by pipelining the adder tree through overlapping executions of multiple operations instructions"
+    ],
+    "confidence": "inferred"
+   },
+   {
+    "id": "M2051",
+    "kind": "implication",
+    "status": "active",
+    "superseded_by": null,
+    "statement_en": "Splitting each memory cell into two bitcells on separate wordlines but a shared bitline lets one bank be written while the other drives the multiplication, so a weight reload overlaps the vector matrix multiplication instead of interrupting it.",
+    "basis": "claim",
+    "derived_from": [
+     "M13",
+     "M14",
+     "M15",
+     "M16",
+     "M18",
+     "M31",
+     "M32"
+    ],
+    "numeric_refs": [],
+    "evidence_quotes": [
+     "the first bitcell and the second bitcell share a bitline and are addressed by different wordlines",
+     "the second bitcell is configured to concurrently update the second bit when the first bitcell is providing the first bit to the half adder",
+     "perform, in parallel, a write operation to the first set of bitcells and the VMM operation in the second set of bitcells based on a weight select signal"
+    ],
+    "confidence": "stated"
+   },
+   {
+    "id": "M2052",
+    "kind": "implication",
+    "status": "active",
+    "superseded_by": null,
+    "statement_en": "Primitive products leave the column cells as mantissa bits that are shifted into alignment and summed by an adder tree in the integer domain, with the return to a higher-precision format deferred to a dequantization step outside the macro.",
+    "basis": "spec",
+    "derived_from": [
+     "M1",
+     "M4"
+    ],
+    "numeric_refs": [],
+    "evidence_quotes": [
+     "a functional block configured to align mantissa bits of primitive products generated by column cells in the computing unit by shifting the mantissa bits",
+     "an adder tree configured to output an accumulation value of the primitive products in an integer format by adding the shifted mantissa bits",
+     "aligning mantissa bits via shifting, accumulating shifted mantissa bits in an integer domain, dequantizing accumulated results into a higher-precision format"
+    ],
+    "confidence": "stated"
+   },
+   {
+    "id": "M2053",
+    "kind": "implication",
+    "status": "active",
+    "superseded_by": null,
+    "statement_en": "Subnormal operands are handled by replacing the implicit leading one with a bit derived from the exponent, so the same column cell circuits serve both normal and subnormal floating point numbers.",
+    "basis": "spec",
+    "derived_from": [
+     "M4"
+    ],
+    "numeric_refs": [],
+    "evidence_quotes": [
+     "the same logic circuits of the column cell **220** can handle both normal and subnormal FP numbers"
+    ],
+    "confidence": "stated"
+   },
+   {
+    "id": "M2054",
+    "kind": "implication",
+    "status": "active",
+    "superseded_by": null,
+    "statement_en": "The same double-bitcell storage that carries weights is reused as a scan chain for test and diagnosis, which the specification presents as leaving normal computation timing untouched.",
+    "basis": "spec",
+    "derived_from": [
+     "M11",
+     "M13"
+    ],
+    "numeric_refs": [],
+    "evidence_quotes": [
+     "using scan control signals to test or diagnose the weight-storage and compute paths while preserving normal performance characteristics"
+    ],
+    "confidence": "stated"
+   },
+   {
+    "id": "M2055",
+    "kind": "implication",
+    "status": "active",
+    "superseded_by": null,
+    "statement_en": "The flexibility on offer is an enumerated table rather than an open range: Table 2 lists a finite set of activation and weight format pairs, and the exponent and mantissa widths the specification admits are likewise finite lists.",
+    "basis": "spec",
+    "derived_from": [
+     "M2",
+     "M3",
+     "M65"
+    ],
+    "numeric_refs": [
+     "M2044"
+    ],
+    "evidence_quotes": [
+     "Table 2 (in FIG. **60**) lists exemplary representations for the lower FP formats",
+     "the exponents of the activation values and weight values can have 5, 4, 3 or 2 bits and the mantissas of the activation values and weight values can have 4, 3, 2 or 1 bit"
+    ],
+    "confidence": "inferred"
+   },
+   {
+    "id": "M2056",
+    "kind": "positioning",
+    "status": "active",
+    "superseded_by": null,
+    "background_problem": "Compact numeric formats force activations and weights back and forth between numeric domains, and the specification states that each conversion step adds scaling, rounding and saturation logic that costs area, power and latency and accumulates quantization error, while fixed conversion pipelines and format-specific datapaths become hard to adapt as new low-bit encodings appear.",
+    "asserted_effect": "The specification asserts that a compute-in-memory macro operating under a mode decoding unit can execute vector matrix operations natively across a range of compact floating point formats, without separate conversion pipelines or a dedicated core per format, and while keeping a consistent external programming model.",
+    "delta": "The asserted difference is structural, not measured: one shared column-cell datapath is reconfigured by control signals derived from the declared formats, in place of per-format conversion pipelines and per-format datapaths. The specification offers no comparative performance figure for this difference.",
+    "numeric_refs": [
+     "M3067",
+     "M3068",
+     "M3069"
+    ],
+    "quotes": [
+     "Each conversion step requires additional scaling, rounding, and saturation logic, which adds area, power, and latency to already dense compute fabrics, and can introduce cumulative quantization errors that degrade numerical behavior over many layers",
+     "As new low-bit formats and variants are introduced to improve efficiency (such as different 8-bit or sub-8-bit floating-point encodings), fixed conversion pipelines and format-specific data paths become increasingly difficult to adapt",
+     "The techniques described herein disclose accelerators, systems, methods, apparatus, and/or devices that perform operations natively supporting multiple, flexible numeric formats for activations and weights under the control of a mode decoding unit",
+     "without requiring separate conversion pipelines or dedicated cores for each format",
+     "preserving a consistent external programming model and avoiding significant redesign of underlying storage arrays, arithmetic structures, or dataflow for new or evolving numeric schemes",
+     "Reduced precision formats (i.e., reduced bit widths) can greatly increase computation speed and lower memory usage with minimal loss in accuracy, and thereby greatly improve the latency and throughput of a deep learning process in a neural network."
+    ]
+   },
+   {
+    "id": "M2057",
+    "kind": "positioning",
+    "status": "active",
+    "superseded_by": null,
+    "background_problem": "Supporting several exponent widths in one array invites either a cell built for the widest format, which wastes bitcells on narrow ones, or a separate cell design per format, which is the redesign of storage and arithmetic structures the specification sets out to avoid.",
+    "asserted_effect": "The specification asserts that sizing a column cell to the least common multiple of the supported widths lets one cell serve every supported format by regrouping its bitcells, and states that this raises the storage capacity and the throughput of the cell.",
+    "delta": "The asserted difference is a sizing rule in place of a per-format cell: the cell's bit count follows from an arithmetic property of the supported width set, and a change of format becomes a regrouping of existing bitcells rather than a new array. No before and after measurement is given.",
+    "numeric_refs": [
+     "M3068"
+    ],
+    "quotes": [
+     "preserving a consistent external programming model and avoiding significant redesign of underlying storage arrays, arithmetic structures, or dataflow for new or evolving numeric schemes",
+     "a minimum number of exponent bits in each column cell is determined by finding the least common multiple among all the possible combination of exponent bits in the various FP formats supported by each column cell",
+     "the common cell **220** can include 60 columns and 60 rows, where number 60 is the least common multiple of number 5, 4, 3, and 2",
+     "For the weight value having exponent with 3b and 2b, the memory cells can be arranged into 4 groups and 6 groups, respectively.",
+     "the storage capacity of weight values in one column cell can be increased and the throughput of the column cell can also be increased by pipelining the adder tree through overlapping executions of multiple operations instructions",
+     "each exponent bit corresponds to a full adder that can be configured to support flexible FP data with various possible combinations using multiplexers"
+    ]
+   },
+   {
+    "id": "M2058",
+    "kind": "positioning",
+    "status": "active",
+    "superseded_by": null,
+    "background_problem": "Weight values resident in the array must be replaced between operations, and the specification frames the alternative to overlapping them as a macro that stalls for writes instead of computing.",
+    "asserted_effect": "The specification asserts that two bitcells per memory cell, addressed by separate wordlines and sharing a bitline, let a write proceed in one bank in parallel with the vector matrix multiplication in the other, hiding weight-update latency behind ongoing computation.",
+    "delta": "The asserted difference is a doubled storage element rather than a faster one: the gain is claimed as reduced idle time and sustained utilization, and the specification quantifies neither the idle time removed nor the area added by the second bitcell.",
+    "numeric_refs": [],
+    "quotes": [
+     "This concurrent access can improve bandwidth for weight updates and help keep the CIM macro busy with computation instead of stalling for writes",
+     "hide weight-update latency behind ongoing computation, supporting dynamic model updates, weight streaming, or multi-phase compute schedules",
+     "allowing concurrent loading of the next matrix of weight values while the previous weight values are still in use for the VMM computation",
+     "perform, in parallel, a write operation to the first set of bitcells and the VMM operation in the second set of bitcells based on a weight select signal"
+    ]
+   },
+   {
+    "id": "M2059",
+    "kind": "figure_note",
+    "status": "active",
+    "superseded_by": null,
+    "figure": "FIG-1",
+    "what_it_shows_en": "Block diagram of the compute engine as a whole: an input buffer streams the activation vector into the digital compute-in-memory macro, while a mode decoding unit supplies the arithmetic mode and the surrounding logic handles control and dequantization.",
+    "numerals": [
+     "100",
+     "101",
+     "110"
+    ]
+   },
+   {
+    "id": "M2060",
+    "kind": "figure_note",
+    "status": "active",
+    "superseded_by": null,
+    "figure": "FIG-2",
+    "what_it_shows_en": "Block diagram of the compute-in-memory macro, resolving it into columns of computing units, each column holding rows of column cells whose primitive products feed one adder tree to form a dot product.",
+    "numerals": [
+     "101",
+     "220",
+     "222"
+    ]
+   },
+   {
+    "id": "M2061",
+    "kind": "figure_note",
+    "status": "active",
+    "superseded_by": null,
+    "figure": "FIG-3",
+    "what_it_shows_en": "Block diagram of a single column cell, the unit that turns one activation value and one weight value into a primitive product.",
+    "numerals": [
+     "220",
+     "340"
+    ]
+   },
+   {
+    "id": "M2062",
+    "kind": "figure_note",
+    "status": "active",
+    "superseded_by": null,
+    "figure": "FIG-7-8",
+    "what_it_shows_en": "Enlarged view of the column cell, placing the exponent handling block beside the mantissa partial-product columns so the two datapaths can be read side by side.",
+    "numerals": [
+     "220",
+     "830"
+    ]
+   },
+   {
+    "id": "M2063",
+    "kind": "figure_note",
+    "status": "active",
+    "superseded_by": null,
+    "figure": "FIG-9",
+    "what_it_shows_en": "Scheme for the exponent datapath, showing half adders adding the activation and weight exponent bits position by position and full adders chaining the carries into the exponent of the primitive product.",
+    "numerals": [
+     "830"
+    ]
+   },
+   {
+    "id": "M2064",
+    "kind": "figure_note",
+    "status": "active",
+    "superseded_by": null,
+    "figure": "FIG-26",
+    "what_it_shows_en": "Gate-level logic circuits inside a column cell, showing the primitives from which the half adder, full adder and selection functions are built.",
+    "numerals": [
+     "220"
+    ]
+   },
+   {
+    "id": "M2065",
+    "kind": "figure_note",
+    "status": "active",
+    "superseded_by": null,
+    "figure": "FIG-28",
+    "what_it_shows_en": "Column cell arranged for several floating point formats, showing the multiplexers around each full adder that select zero in place of a real sum, carry-out or carry-in bit.",
+    "numerals": [
+     "220",
+     "830",
+     "2860",
+     "2862",
+     "2864",
+     "2866"
+    ]
+   },
+   {
+    "id": "M2066",
+    "kind": "figure_note",
+    "status": "active",
+    "superseded_by": null,
+    "figure": "FIG-28-29",
+    "what_it_shows_en": "The pair of exponent-handling column cell designs: the first surrounds each exponent full adder with multiplexers so one stage can serve several formats, and the second is a shared cell whose row and column count is the least common multiple of the supported exponent widths.",
+    "numerals": [
+     "220",
+     "830",
+     "2860",
+     "2862",
+     "2864",
+     "2866"
+    ]
+   },
+   {
+    "id": "M2067",
+    "kind": "figure_note",
+    "status": "active",
+    "superseded_by": null,
+    "figure": "FIG-32-33",
+    "what_it_shows_en": "Two resource-sizing procedures, each starting from the least common multiple of the supported exponent or mantissa widths and deriving the number of weight element groups and the number of full adders per column cell.",
+    "numerals": [
+     "3200",
+     "3202"
+    ]
+   },
+   {
+    "id": "M2068",
+    "kind": "figure_note",
+    "status": "active",
+    "superseded_by": null,
+    "figure": "FIG-43",
+    "what_it_shows_en": "Schematic of a stack of memory cells in which every memory cell holds two bitcells reached by separate wordlines and sharing one bitline.",
+    "numerals": [
+     "4303"
+    ]
+   },
+   {
+    "id": "M2069",
+    "kind": "figure_note",
+    "status": "active",
+    "superseded_by": null,
+    "figure": "FIG-44",
+    "what_it_shows_en": "Timing diagram of a write operation, showing the weight select signal choosing which bank of bitcells its wordlines activate while weight data moves on the bitlines.",
+    "numerals": [
+     "4400"
+    ]
+   },
+   {
+    "id": "M2070",
+    "kind": "figure_note",
+    "status": "active",
+    "superseded_by": null,
+    "figure": "FIG-60",
+    "what_it_shows_en": "Table 2, enumerating operating modes as pairs of an activation format and a weight format and giving, for each mode, the sign, exponent and mantissa bit assignment of the operands and of the primitive product.",
+    "numerals": []
+   }
+  ],
+  "figures": [
+   {
+    "id": "FIG-1",
+    "numerals": [
+     "100",
+     "101",
+     "110"
+    ],
+    "caption_quote": "FIG. **1** illustrates a block diagram of an exemplary hardware accelerator, in accordance with some aspects of the present disclosure.",
+    "raw_path": "00-source/figures-raw/fig-01.png",
+    "asset_path": null
+   },
+   {
+    "id": "FIG-2",
+    "numerals": [
+     "101",
+     "220",
+     "222"
+    ],
+    "caption_quote": "FIG. **2** illustrates a representation of a block diagram of an example compute-in memory (CIM) macro, in accordance with some aspects of the present disclosure.",
+    "raw_path": "00-source/figures-raw/fig-02.png",
+    "asset_path": null
+   },
+   {
+    "id": "FIG-3",
+    "numerals": [
+     "220",
+     "340"
+    ],
+    "caption_quote": "FIG. **3** illustrates an exemplary column cell in the CIM macro, in accordance with some aspects of the present disclosure.",
+    "raw_path": "00-source/figures-raw/fig-03.png",
+    "asset_path": null
+   },
+   {
+    "id": "FIG-7-8",
+    "numerals": [
+     "220",
+     "830"
+    ],
+    "caption_quote": "FIGS. **7**-**8** illustrate an enlarged view of the column cell in the CIM macro, in accordance with some aspects of the present disclosure.",
+    "raw_path": "00-source/figures-raw/fig-07.png",
+    "asset_path": null
+   },
+   {
+    "id": "FIG-9",
+    "numerals": [
+     "830"
+    ],
+    "caption_quote": "FIG. **9** illustrates a scheme for handling exponent bits in a column cell in the CIM macro, in accordance with some aspects of the present disclosure.",
+    "raw_path": "00-source/figures-raw/fig-09.png",
+    "asset_path": null
+   },
+   {
+    "id": "FIG-26",
+    "numerals": [
+     "220"
+    ],
+    "caption_quote": "FIGS. **26**, **27**A, **27**B, **27**C illustrate exemplary logic circuits in a column cell in the CIM macro, in accordance with some aspects of the present disclosure.",
+    "raw_path": "00-source/figures-raw/fig-26.png",
+    "asset_path": null
+   },
+   {
+    "id": "FIG-28",
+    "numerals": [
+     "220",
+     "830",
+     "2860",
+     "2862",
+     "2864",
+     "2866"
+    ],
+    "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure.",
+    "raw_path": "00-source/figures-raw/fig-28.png",
+    "asset_path": null
+   },
+   {
+    "id": "FIG-28-29",
+    "numerals": [
+     "220",
+     "830",
+     "2860",
+     "2862",
+     "2864",
+     "2866"
+    ],
+    "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure.",
+    "raw_path": "00-source/figures-raw/fig-29.png",
+    "asset_path": null
+   },
+   {
+    "id": "FIG-32-33",
+    "numerals": [
+     "3200",
+     "3202"
+    ],
+    "caption_quote": "FIGS. **32**-**33** illustrate methods for utilizing resources of a hardware accelerator, in accordance with some aspects of the present disclosure.",
+    "raw_path": "00-source/figures-raw/fig-32.png",
+    "asset_path": null
+   },
+   {
+    "id": "FIG-43",
+    "numerals": [
+     "4303"
+    ],
+    "caption_quote": "FIG. **43** illustrates an exemplary double-bitcell design, in accordance with some aspects of the present disclosure.",
+    "raw_path": "00-source/figures-raw/fig-43.png",
+    "asset_path": null
+   },
+   {
+    "id": "FIG-44",
+    "numerals": [
+     "4400"
+    ],
+    "caption_quote": "FIG. **44** illustrates a timing diagram of a CIM macro for a write operation, in accordance with some aspects of the present disclosure.",
+    "raw_path": "00-source/figures-raw/fig-44.png",
+    "asset_path": null
+   },
+   {
+    "id": "FIG-60",
+    "numerals": [],
+    "caption_quote": "FIG. **60** illustrates a table describing schemes for handling weight values and activation values in various FP formats, in accordance with some aspects of the present disclosure.",
+    "raw_path": "00-source/figures-raw/fig-60.png",
+    "asset_path": null
+   }
+  ],
+  "drop_signal": {
+   "stage": "final",
+   "verdict": "go",
+   "reason": "안도감이 재료 안에 실물로 있음 — 배경(형식 변환 파이프라인의 면적·전력·지연과 누적 양자화 오차)이 명세서 문언으로 서술되고, 해법이 '0을 고르는 멀티플렉서'라는 하나의 그림으로 환원되며(FIG-28), 셀 폭이 최소공배수라는 산식으로 정해지는 대목은 일반 독자가 따라올 수 있는 구체다. 도면 12건 전건이 접지에 물려 있고 독립항 3개의 구성요소가 전부 접지되었다. 다만 성능 수치가 전무해 '얼마나 좋아졌는가'로는 쓸 수 없으므로, 서사는 구조적 차이(형식별 데이터패스 제거·LCM 사이징·이중 비트셀 중첩)로만 세워야 한다."
+  }
+ }
+}

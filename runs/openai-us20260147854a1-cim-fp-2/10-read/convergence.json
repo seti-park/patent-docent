@@ -1,0 +1,526 @@
+{
+  "canonical_selection": {
+    "content_blind": true,
+    "read_run": "read-a",
+    "rule": "declaration-order"
+  },
+  "checks": [
+    {
+      "check_id": "read.input-digest",
+      "checked": 6,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "read.schema",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "read.source-digest",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "read.verbatim",
+      "checked": 370,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "read.pointer-resolve",
+      "checked": 428,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "read.coverage",
+      "checked": 86,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "read.dependency-parse",
+      "checked": 17,
+      "ruleset": "reader-rules#dependency_citation",
+      "ruleset_size": 5,
+      "ruleset_version": "0",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "read.value-derivation",
+      "checked": 69,
+      "ruleset": "reader-rules#value_grammar",
+      "ruleset_size": 7,
+      "ruleset_version": "0",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "read.bibliography",
+      "checked": 16,
+      "ruleset": "reader-rules#bibliography",
+      "ruleset_size": 7,
+      "ruleset_version": "0",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "read.claim-inventory",
+      "checked": 20,
+      "ruleset": "reader-rules#claim_inventory",
+      "ruleset_size": 7,
+      "ruleset_version": "0",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "read.convergence",
+      "checked": 6,
+      "ruleset": "reader-rules#convergence",
+      "ruleset_size": 6,
+      "ruleset_version": "0",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "read.lane-log-shape",
+      "checked": 5,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    }
+  ],
+  "convergence_detail": {
+    "attempt": 1,
+    "axes": [
+      {
+        "id": "independent-count",
+        "jaccard": null,
+        "policy": "exact-match",
+        "status": "pass",
+        "threshold": null
+      },
+      {
+        "id": "element-set",
+        "jaccard": 1.0,
+        "policy": "escalation-trigger",
+        "status": "pass",
+        "threshold": 0.95
+      },
+      {
+        "id": "tree-edges",
+        "jaccard": 1.0,
+        "policy": "escalation-trigger",
+        "status": "pass",
+        "threshold": 0.95
+      },
+      {
+        "id": "dependent-count",
+        "jaccard": null,
+        "policy": "exact-match",
+        "status": "pass",
+        "threshold": null
+      },
+      {
+        "id": "dependent-set",
+        "jaccard": 1.0,
+        "policy": "exact-match",
+        "status": "pass",
+        "threshold": 1.0
+      },
+      {
+        "id": "addition-attachment",
+        "jaccard": 1.0,
+        "policy": "measure-only",
+        "status": "measured",
+        "threshold": null
+      }
+    ],
+    "dependent_count": [
+      17,
+      17
+    ],
+    "executed": true,
+    "independent_count": [
+      3,
+      3
+    ]
+  },
+  "convergence_report": {
+    "axes": [
+      {
+        "id": "independent-count",
+        "jaccard": null,
+        "policy": "exact-match",
+        "status": "pass",
+        "threshold": null
+      },
+      {
+        "id": "element-set",
+        "jaccard": 1.0,
+        "policy": "escalation-trigger",
+        "status": "pass",
+        "threshold": 0.95
+      },
+      {
+        "id": "tree-edges",
+        "jaccard": 1.0,
+        "policy": "escalation-trigger",
+        "status": "pass",
+        "threshold": 0.95
+      },
+      {
+        "id": "dependent-count",
+        "jaccard": null,
+        "policy": "exact-match",
+        "status": "pass",
+        "threshold": null
+      },
+      {
+        "id": "dependent-set",
+        "jaccard": 1.0,
+        "policy": "exact-match",
+        "status": "pass",
+        "threshold": 1.0
+      },
+      {
+        "id": "addition-attachment",
+        "jaccard": 1.0,
+        "policy": "measure-only",
+        "status": "measured",
+        "threshold": null
+      }
+    ],
+    "divergences": [],
+    "escalations": []
+  },
+  "fact_classification": {
+    "bibliographic_ids": [
+      "M117",
+      "M118",
+      "M119",
+      "M120"
+    ],
+    "derived": [],
+    "figure_sourced": [
+      {
+        "figure": "FIG-60",
+        "machine_verifiable": false,
+        "material_id": "M121"
+      }
+    ],
+    "quoted_span": {
+      "count": 34,
+      "material_ids": [
+        "M87",
+        "M88",
+        "M89",
+        "M90",
+        "M91",
+        "M92",
+        "M93",
+        "M94",
+        "M95",
+        "M96",
+        "M97",
+        "M98",
+        "M99",
+        "M100",
+        "M101",
+        "M102",
+        "M103",
+        "M104",
+        "M105",
+        "M106",
+        "M107",
+        "M108",
+        "M109",
+        "M110",
+        "M111",
+        "M112",
+        "M113",
+        "M114",
+        "M115",
+        "M116",
+        "M117",
+        "M118",
+        "M119",
+        "M120"
+      ]
+    }
+  },
+  "findings": [],
+  "grounding_exceptions": [],
+  "manual_verification_required": [
+    {
+      "figure": "FIG-60",
+      "material_id": "M121",
+      "numerals": [],
+      "reason": "figure-sourced"
+    }
+  ],
+  "numeric_inventory": {
+    "referenced": [
+      "M110",
+      "M111",
+      "M112"
+    ],
+    "skipped": [
+      {
+        "locator": "[0128]",
+        "reason": "figure-numeral",
+        "token": "101"
+      },
+      {
+        "locator": "[0146]",
+        "reason": "figure-numeral",
+        "token": "100"
+      },
+      {
+        "locator": "[0146]",
+        "reason": "figure-numeral",
+        "token": "110"
+      },
+      {
+        "locator": "[0146]",
+        "reason": "figure-numeral",
+        "token": "101"
+      },
+      {
+        "locator": "[0183]",
+        "reason": "figure-numeral",
+        "token": "101"
+      },
+      {
+        "locator": "[0137]",
+        "reason": "figure-numeral",
+        "token": "220"
+      },
+      {
+        "locator": "[0136]",
+        "reason": "figure-numeral",
+        "token": "222"
+      },
+      {
+        "locator": "[0136]",
+        "reason": "figure-numeral",
+        "token": "220"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "2862"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "2860"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "2864"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "2860"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "2862"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "2864"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "2866"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "110"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "830"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "2866"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "2860"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "2864"
+      },
+      {
+        "locator": "[0161]",
+        "reason": "figure-numeral",
+        "token": "220"
+      },
+      {
+        "locator": "[0140]",
+        "reason": "figure-numeral",
+        "token": "340"
+      },
+      {
+        "locator": "[0217]",
+        "reason": "figure-numeral",
+        "token": "4303"
+      },
+      {
+        "locator": "[0217]",
+        "reason": "figure-numeral",
+        "token": "4303"
+      },
+      {
+        "locator": "[0217]",
+        "reason": "figure-numeral",
+        "token": "4303"
+      },
+      {
+        "locator": "[0218]",
+        "reason": "figure-numeral",
+        "token": "4303"
+      },
+      {
+        "locator": "[0146]",
+        "reason": "figure-numeral",
+        "token": "100"
+      },
+      {
+        "locator": "[0146]",
+        "reason": "figure-numeral",
+        "token": "110"
+      },
+      {
+        "locator": "[0146]",
+        "reason": "figure-numeral",
+        "token": "101"
+      },
+      {
+        "locator": "[0188]",
+        "reason": "figure-numeral",
+        "token": "2866"
+      },
+      {
+        "locator": "[0189]",
+        "reason": "figure-numeral",
+        "token": "220"
+      },
+      {
+        "locator": "[0192]",
+        "reason": "figure-numeral",
+        "token": "3202"
+      },
+      {
+        "locator": "[0192]",
+        "reason": "figure-numeral",
+        "token": "100"
+      }
+    ],
+    "total": 34,
+    "unreferenced": [
+      "M87",
+      "M88",
+      "M89",
+      "M90",
+      "M91",
+      "M92",
+      "M93",
+      "M94",
+      "M95",
+      "M96",
+      "M97",
+      "M98",
+      "M99",
+      "M100",
+      "M101",
+      "M102",
+      "M103",
+      "M104",
+      "M105",
+      "M106",
+      "M107",
+      "M108",
+      "M109",
+      "M113",
+      "M114",
+      "M115",
+      "M116",
+      "M117",
+      "M118",
+      "M119",
+      "M120"
+    ]
+  },
+  "phase": "full",
+  "reader_version": "0.5.0",
+  "run_id": "openai-us20260147854a1-cim-fp-2",
+  "schema": "convergence/v0",
+  "screening_memos": [
+    {
+      "direction": "clear",
+      "note": "권리 관심이 한 자리에 뚜렷함 — 열 하나의 셀 안에서 반가산기 1개와 멀티플렉서 3개의 선택을 제어신호로 바꿔 끼우는 것만으로 활성값·가중치의 부동소수점 지수 폭(2~5비트)이 서로 달라도 같은 회로가 곱셈을 처리한다는 구조가 청구항 1에 그대로 서 있고, 종속항 3~9가 그 셀 안의 비트셀 공유 비트라인·동시 갱신으로 '계산하면서 다음 가중치를 미리 적재한다'는 그림까지 붙여 준다. 일반 독자에게 '숫자 형식을 바꿀 때마다 변환하지 않는다'는 안도감 있는 한 문장으로 착지시킬 재료가 청구항만으로 확보됨.",
+      "read_run": "read-a"
+    },
+    {
+      "direction": "clear",
+      "note": "독립항 3개가 같은 한 자리(컬럼 셀 안의 반가산기 + 멀티플렉서 3개 -> 전가산기)를 구조·방법·시스템으로 반복해 권리 관심이 한 구성에 뚜렷하게 모인다. 일반 독자에게는 '부동소수점 지수를 메모리 셀 안에서 그냥 더해 버려 도메인 변환을 없앤다'는 한 문장 서사가 서고, 종속항의 비트셀 공유 비트라인·동시 갱신과 지수 2~5비트 가변폭(최소공배수로 비트셀 수 산정)이 '왜 유연해지는가'의 구체 근거를 대므로 안도감으로 착지할 재료가 충분하다.",
+      "read_run": "read-b"
+    }
+  ],
+  "source_digest": "sha256:40f1905b78c990134f5b115a268ed8d0658438da8bbfd4f03970c4132cbd12d5",
+  "spec_version": 1,
+  "unclassified_dependents": [],
+  "vacuous_pass": []
+}
