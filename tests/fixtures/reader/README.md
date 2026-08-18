@@ -40,7 +40,15 @@ M1 검증기(결정론 검사 6종 + 동결 검사)가 **실제로 무엇을 반
   `any one of claims 4 to 6`(9). `reader-rules.yaml#dependency_citation.forms` 의 rank 1·3·4·5 를
   각각 때린다.
 - 취소 청구항 1건(`3. (canceled)`) — 인벤토리 면제 경로.
-- 도면 캡션 2건, `[0041]`~`[0050]` 문단 로케이터 10건.
+- 도면 캡션 2건, `[0041]`~`[0051]` 문단 로케이터 11건.
+- **`[0051]` 좌표 표현 문단**(2026-08-18 추가). FP 3항 표기 `FP8 (1-5-2)`·`FP6 (1-3-2)` ·
+  비트 슬라이스 `Act 0 <6:3>` · 아래첨자 인덱스 `C.sub.j−1` · 도면/표 번호 `FIG. 1`·`Table 2` 를
+  한 문단에 모았고, **M30 의 접지 인용으로 등재되어 있다**. 이 문단이 접지 안에 있는 것이
+  요점이다 — 봉투 배제(`reader-rules.yaml#numeric_harvest.exclusions` 의
+  `match: enclosing-pattern` 4종)가 꺼지면 기준선에 `1-5`·`1-3`·`0`·`<6`·`3`·`1`·`1`·`2`
+  여덟 건의 `[누락]` 이 생겨 **무변조 코퍼스가 즉시 깨진다**. 문서 서술이 아니라 기준선이
+  그 규칙을 붙잡는 자리다. 문단은 원천 **끝에** 붙였으므로 기존 `spec_refs[].span` 은
+  하나도 이동하지 않았고, `patent.source_digest` 만 재계산되었다.
 - 수치 7종: 스칼라(`0.08 mm`) · 범위(`0.05 to 0.10 mm`) · 부등호(`at least 12 mm`) ·
   공차(`50 ±5 %`) · 집합(`320, 340, 360 °C`) · 날짜(서지) · 식별자(서지).
   `value_type` 7분기를 전부 실측한다.
@@ -68,6 +76,7 @@ M1 검증기(결정론 검사 6종 + 동결 검사)가 **실제로 무엇을 반
 | 9 | ~~기준선의 `quoted` fact 좌표가 수확기의 좌표와 다르다~~ → **처분됨(2026-08-18)**. 재정 P-B 이후 `origin: quoted` fact 는 수확기의 산출이고 그 `source.quote` 는 **접지 인용문 전체**인데, 구 코퍼스의 M13~M18 은 사람이 고른 **발췌**를 들고 있어 7건 중 7건이 짝지어지지 않았다 | **접지를 넓혀** 닫았다(수확 범위를 넓히는 쪽이 아니다 — 접지되지 않은 문장의 수치는 원천 대조로 뒷받침되지 않는다). M32·M34 의 인용을 같은 문장의 수치 서술까지 넓히고, M30 에 `[0048]` 인용을 하나 더 달고, M13~M18 의 좌표·값을 수확 산출로 교체했다. `value.harvest-parity` 위반 26 → 1 |
 | 10 | **`value.harvest-parity` 가 항목 `status` 를 보지 않는다.** 대조 대상이 `kind == "fact"` 전량이라 `retracted`·`superseded` 항목까지 수확 산출과 짝지으려 든다. 그런데 수확기는 접지 인용과 서지면만 읽으므로 물러난 항목에 대응하는 산출을 낼 수 없고, append-only 규율은 그 항목을 `items[]` 에서 지우지 못하게 한다 — **결과적으로 수확 소유 fact 는 한 번 등재되면 영원히 철회·승계될 수 없다.** 스키마 `$comment (14)` 의 생애주기 규율과 정면으로 충돌한다 | 미해소(검증기 몫). 재현 표본 2건이 코퍼스 안에 있다 — `base` 의 **M24**(`retracted`, 청구항에서 읽은 수치라 접지 밖이다)가 기준선의 마지막 `value.harvest-parity` 위반 1건이고, `rev2` 의 **M14 → M46 승계**가 같은 형태다. 처방은 `_check_harvest_parity` 의 대조 집합을 `status == "active"` 로 좁히는 것이며, 그것이 재정 P-B 의 "명세가 담은 그 집합" 의 자연스러운 독해다(물러난 항목은 명세가 더는 주장하지 않는다) |
 | 11 | ~~**우선권 주장의 관할과 날짜를 아무도 보지 않는다.**~~ → **처분됨(2026-08-18)**. sol 독립 감수 P-2 ⓐ 가 실특허 런에서 실측했다 — 우선권 관할을 전부 `KR` 로 바꿔도 `read.bibliography` 는 `pass`·`checked=16` 이었다. 총괄 재현이 절반을 정정했으나(날짜를 전부 `1900-01-01` 로 바꾸면 `bib.earliest-priority` 가 운다) **두 날짜를 정합적으로 함께 위조하면 통과한다**는 잔여 구멍이 남았다 | 근접 대조 2종 신설로 닫혔다(`bib.priority-jurisdiction-in-source`·`bib.priority-year-in-source`, 창 폭은 `reader-rules.yaml#bibliography.priority_window` 가 소유). 코퍼스 표본 2건: `invalid/bibliography-priority-jurisdiction-out-of-window.json`(원천에 실재하는 `IP` 를 창 밖에 두어 **전역 대조가 아님**을 반증) · `invalid/bibliography-priority-year-coherent-forgery.json`(정합 위조 — `read.value-derivation` 파급 2건을 manifest 에 선언). 실특허 런의 감수 재현은 `tests/test_m16_bibliography.py` 가 맡는다 |
+| 12 | **좌표 표현이 수치로 읽혔다.** 통주 2 의 실특허 산출에서 `origin: quoted` 30건 중 **23건이 오파싱 아티팩트**였다 — FP 3항 표기 `FP8 (1-5-2)` 가 `range` 로 9건, 비트 슬라이스 `Act 0 <6:3>` 가 `inequality`+`scalar` 로 8건, 도면·표 번호가 4건, 아래첨자 인덱스가 2건. 게다가 `(1-5-2)` 의 **셋째 필드는 기록조차 없이 사라졌다**(경계 기각이 `continue` 하나였다) | **처분됨(2026-08-18)**. 봉투 패턴 배제 4종 신설(`match: enclosing-pattern` — 토큰이 아니라 **구간**을 먼저 표시한다) + 경계 기각의 `boundary-left`·`boundary-right` 기록. 코퍼스 쪽 표본 2벌 — 무변조 `base` 의 `[0051]` 접지(배제가 꺼지면 기준선이 깨진다) · `invalid/harvest-coordinate-artifact.json`(배제된 조각을 손으로 fact 로 올린 역방향 판) |
 
 ## 규율
 
