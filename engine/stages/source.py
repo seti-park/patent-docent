@@ -160,7 +160,7 @@ def _exhibit_block(contract: dict, figure_rows: list[dict], repo: str | None) ->
     }
 
 
-def _engine_pin(paths: RunPaths) -> tuple[str, str | None]:
+def _engine_pin(paths: RunPaths, contract: dict) -> tuple[str, str | None]:
     """런 결박 핀 `(커밋 40hex, worktree 또는 None)` 을 **러너가 스스로 확정한다**(재정 P-U1·P-8).
 
     재정 원문은 "런은 시작 시점의 git 커밋에 결박된다 … 예외 없음"이다. 손으로 넣어야 하는
@@ -178,6 +178,14 @@ def _engine_pin(paths: RunPaths) -> tuple[str, str | None]:
 
     기존 `run.yaml` 이 다른 커밋을 들고 있으면 덮어쓰지 않고 멈춘다 — **재개 런은 같은 커밋을
     쓴다**(재정 P-U1). 핀이 달라졌다면 그것은 재개가 아니라 새 런이다.
+
+    ★ 이 검사는 진입 검사(재정 P-U2 의 원천 변경 표시)보다 **먼저** 돈다. 순서는 재정
+    2026-08-19 Q3 이 ⓑ 로 확정했다 — 순서를 바꾸지 않고 **핀 불일치 halt 의 진단문이 그
+    귀결을 스스로 말하게 한다**. 귀결은 이렇다: 원천 변경과 리포 개정이 함께 오면(실무에서
+    흔하다) 여기서 먼저 넘어지므로 구 런에는 `superseded-by-source-change` 표시가 **아직
+    서지 않는다**. 그 사실을 사람이 알지 못하면 "표시가 없으니 원천은 그대로였다"로 읽는다.
+    `contract` 를 받는 이유도 그것이다 — 표시의 어휘는 계약이 들고(코드가 리터럴로 들면
+    두 벌이 되어 한 벌이 낡는다) 진단문은 그 값을 전사한다.
     """
     # 이 결박 기제 자신의 생성물은 더러움으로 세지 않는다 — worktree 루트와 이 런의 작업장.
     exclude = [gitpin.DEFAULT_WORKTREE_ROOT]
@@ -204,9 +212,37 @@ def _engine_pin(paths: RunPaths) -> tuple[str, str | None]:
         if pinned and pinned != commit:
             raise StageHaltError(
                 f"[halt] run.yaml 의 기존 핀과 현재 HEAD 가 다르다: 기존 {pinned} · HEAD {commit} — "
-                "재개 런은 같은 커밋을 쓴다(재정 P-U1). 커밋이 달라졌으면 그것은 새 런이다"
+                "재개 런은 같은 커밋을 쓴다(재정 P-U1). 커밋이 달라졌으면 그것은 새 런이다. "
+                + _pin_halt_supersede_note(contract, pinned)
             )
     return commit, worktree
+
+
+def _pin_halt_supersede_note(contract: dict, pinned: str) -> str:
+    """핀 불일치 halt 의 뒷문장 — **P-U2 표시가 아직 서지 않았다**(재정 2026-08-19 Q3 ⓑ).
+
+    이 문장이 없으면 halt 는 자기가 무엇을 남기지 **않았는지**를 말하지 않는다. 원천 변경은
+    실무에서 리포 개정과 함께 오고, 그때 이 halt 를 먼저 만난 사람은 구 런의 `run.yaml` 을
+    열어 보고 표시가 없는 것을 확인한 뒤 "원천은 바뀌지 않았다"고 읽는다 — 실제로는 원천
+    변경 감지 자체가 아직 돌지 않았을 뿐이다.
+    """
+    try:
+        marking = _marking_term(contract, "old_run", "status")
+    except StageError:
+        # 계약이 어휘를 선언하지 않았다면 그 사실을 적는다. 리터럴로 메우지 않는다 —
+        # 어휘의 정본은 계약이고, 여기서 지어내면 두 벌 중 하나가 낡는다.
+        marking = "(계약이 old_run.status 를 선언하지 않았다)"
+    return (
+        f"★ 이 halt 가 **원천 변경과 함께** 왔다면(구 런 작업장에 바뀐 원천을 재투입한 경우) "
+        f"구 런에는 아직 아무 표시도 서지 않았다 — 핀 검사(재정 P-U1)가 진입 검사보다 먼저 "
+        f"돌고, 원천 변경 표시(재정 P-U2 · run.yaml#status = {marking})는 그 진입 검사가 "
+        f"넘어질 때 선다. 표시의 부재는 '원천이 그대로였다'가 아니라 '아직 보지 않았다'는 "
+        f"뜻이다. 처방: 작업 트리를 이 런의 핀 커밋 {pinned} 에 세우고(같은 커밋의 격리 "
+        f"체크아웃을 그 커밋 위에서 다시 만들면 된다 — tools/run_worktree.py create 는 같은 "
+        f"커밋에 멱등이다) 같은 투입물로 다시 개시하면, 그때 진입 검사가 원천 변경을 감지해 "
+        f"구 런에 표시와 진단을 남긴다. 그 뒤에 새 런을 열고 supersedes_run_root 로 구 런을 "
+        f"가리키면 상호 링크가 닫힌다"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -501,7 +537,7 @@ def run(
     # ⓪ 런 결박(재정 P-U1 · P-8) — 다른 무엇보다 먼저다. 이 런의 법(계약·스키마·검증기·러너)이
     #    어느 커밋에서 고정되는지를 확정하지 못하면 그 뒤의 어떤 산출물도 "어떤 법 아래
     #    만들어졌는가"에 답할 수 없다. 확정한 값은 아래 ④에서 run.yaml 에 기입된다.
-    commit, worktree = _engine_pin(paths)
+    commit, worktree = _engine_pin(paths, contract)
 
     # ⓪' 승계 대상 확인(재정 P-U2). 봉인 **전에** 본다 — 링크가 설 수 없는 상태(표시 없음·
     #    이미 다른 런에 승계됨)라면 이 런은 열리기 전에 멈춰야 한다. 산출물을 만든 뒤에

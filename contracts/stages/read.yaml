@@ -131,6 +131,36 @@ lane:
     enforced_by: engine/stages/read.py   # _dispatch 의 거부 기록 + read.lane-log-shape 판정 2항
     falsified_by: tools/check_lane_binding.py   # 낡은 응답 주입 · 응답 사후 교체의 실행 반증
 
+  # ★ 레인 id 어휘 (재정 2026-08-19 Q7 ②).
+  #
+  #   구 판은 `retry-N` 의 N 이 **런 전역 재시도 예산**의 소진량이었다. 그래서 분해가 한 번
+  #   재시도하면 그 뒤의 접지·통합이 **첫 시도인데도** `retry-1/batch-0` 으로 발번되고
+  #   `batch-0` 은 아예 존재하지 않았다(통주 3 실측 — `ground-independent` 에 첫 시도 기록이
+  #   없었고, 레인이 그것이 의도인지 물어 왔다). 레인 로그의 증거력을 재정 P-12 로 세운
+  #   직후이므로 같은 로그의 다른 필드가 사실 아닌 것을 말하는 것을 두지 않는다.
+  #
+  #   어휘의 정본은 계약이고 코드는 그것을 따른다 — 러너가 발번 규칙을 스스로 정하면 로그를
+  #   읽는 사람이 무엇을 근거로 "재시도했다"를 읽어야 하는지가 코드에만 산다.
+  lane_id_vocabulary:
+    ruling: "재정 2026-08-19 Q7 ②"
+    form: "<read_run>/<task>[/retry-<n>]/batch-<k>"
+    terms:
+      batch: "팬아웃 분할의 순번(0부터). 재시도와 무관하다."
+      first_attempt: >-
+        접두 없는 batch-<k> = 그 레인의 **첫 시도**다. 재시도한 적이 없다는 뜻이며, 다른
+        레인이 재시도했더라도 이 좌표는 바뀌지 않는다.
+      retry_n: >-
+        retry-<n> 의 n = **그 레인 자신의 재시도 회차**(1부터). 런 전역 시도 횟수도, 재시도
+        예산의 소진량도 아니다.
+    separate_paths: "재시도는 별도 경로를 쓴다 — 같은 자리에 덮어쓰면 1차 응답이 사라진다."
+    budget_is_not_the_coordinate: >-
+      재시도 **예산**은 여전히 런 전역이다(failure[].action 의 retry(n) 하나를 분해 재시도와
+      정본 후속 재시도가 나눠 쓴다). convergence_detail.attempt 가 싣는 값도 그 전역 예산의
+      소진량이다. 카운터를 나눈 것은 **레인 id 하나**이며, 예산까지 레인별로 쪼개면 재시도
+      총량이 조용히 늘어난다.
+    implemented_by: engine/lanes/plan.py#lane_id_for
+    written_by: engine/stages/read.py#run   # 분해용·정본 후속용 회차를 각 실행 함수에 넘긴다
+
 # ★ 실행 형태(E 지시 — 구 `lane.instances: 2` 표기를 폐기하고 이 블록이 대신한다).
 #   폐기 근거: `instances: 2` 는 "스테이지 전체를 2회 돌린다"로 읽혀 접지·통합까지 2회로
 #   오도했다. 재정 P-4 가 접지 이후를 정본 1개로 확정했으므로 표기를 정정한다.

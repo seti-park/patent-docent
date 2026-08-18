@@ -658,7 +658,7 @@ def _execute_decompose(
     view: ReadView,
     profiles: dict,
     journal: LaneJournal,
-    attempt: int,
+    lane_attempt: int,
     defects: list[dict] | None,
 ) -> dict:
     """② 분해 1회. **두 실행이 도는 구간은 여기까지다**(재정 P-4 · E 지시).
@@ -667,12 +667,16 @@ def _execute_decompose(
     반복됐다. 재정 P-4 가 수렴을 분해 직후로 옮기고 접지 이후를 정본 1개로 확정했으므로
     실행 단위를 **분해 전용**과 **정본 후속** 둘로 가른다.
 
+    ★ `lane_attempt` = **이 레인 자신의 시도 회차**이며 런 전역 예산 카운터가 아니다
+    (재정 2026-08-19 Q7 ②). 이름을 `attempt` 에서 바꾼 이유가 그 구별이다 — 두 값이 같은
+    이름을 쓰던 동안 분해의 재시도가 그 뒤 레인의 좌표까지 밀어 올렸다.
+
     ★ 폐기: 조기 `drop_signal.verdict == "drop-proposed"` 면 접지 지출 전에 멈추던 분기.
     근거 = 재정 P-A(조기 drop 의 escalate 폐지). 조기 판단은 `screening_memo` 로 기록만
     되고 러너는 멈추지 않는다 — 확정 재정의 자리는 CP1 한 곳이다.
     """
     return _dispatch(
-        adapter, plan_decompose(read_run, view, profiles, attempt, defects), journal
+        adapter, plan_decompose(read_run, view, profiles, lane_attempt, defects), journal
     )[0].payload
 
 
@@ -684,7 +688,7 @@ def _execute_canonical_tail(
     view: ReadView,
     profiles: dict,
     journal: LaneJournal,
-    attempt: int,
+    lane_attempt: int,
     defects: list[dict] | None,
     rules: Rules,
     run_meta: dict,
@@ -698,9 +702,15 @@ def _execute_canonical_tail(
     `spec_refs[].quote` 를 스캔하므로 접지 뒤여야 하고, 통합 레인은 그 수확 목록을 받아
     `numeric_refs` 를 적으므로 통합 앞이어야 한다. 순서가 바뀌면 "고르는 주체가 서사가
     아니라 참조"라는 도출식이 성립하지 않는다.
+
+    ★ `lane_attempt` = **정본 후속 자신의 시도 회차**다(재정 2026-08-19 Q7 ②). 분해가 몇 번
+    재시도했든 이 구간의 첫 실행은 `retry-` 접두 없이 선다 — 레인 로그가 "이 레인이
+    재시도했다"를 말할 때 그것이 사실이어야 하기 때문이다.
     """
     claims = decompose.get("claims") or {}
-    grounding_requests = plan_grounding(read_run, claims, view, profiles, attempt, defects)
+    grounding_requests = plan_grounding(
+        read_run, claims, view, profiles, lane_attempt, defects
+    )
     groundings = [
         response.payload for response in _dispatch(adapter, grounding_requests, journal)
     ]
@@ -727,7 +737,7 @@ def _execute_canonical_tail(
         # 않으면 두 레인 사이에 아무도 책임지지 않는 구간이 남는다(실특허 스모크 적발).
         # 수확 목록을 함께 넘기는 이유는 재정 P-B — 수치를 다시 지어내지 않게 하기 위해서다.
         plan_synthesis(
-            read_run, claims, view, profiles, attempt, defects, groundings, harvested
+            read_run, claims, view, profiles, lane_attempt, defects, groundings, harvested
         ),
         journal,
     )[0].payload
@@ -1057,7 +1067,21 @@ def run(
 
     memos: list[dict] = []
     final_signal: dict | None = None
+    # ★ 두 카운터의 층이 다르다(재정 2026-08-19 Q7 ②).
+    #
+    #   `attempt` = **런 전역 재시도 예산**의 소진량이다. 분해 재시도와 정본 후속 재시도가
+    #   그 하나를 나눠 쓰고(`budget` 은 계약의 `retry(n)` 에서 온다), `convergence_detail.attempt`
+    #   가 싣는 것도 이 값이다. 예산을 레인별로 쪼개면 재시도 총량이 조용히 늘어나므로
+    #   **여기는 건드리지 않는다** — 재정이 고치라고 한 것은 예산이 아니라 좌표다.
+    #
+    #   `decompose_attempt` · `tail_attempt` = **각 레인 자신의 시도 회차**이며 레인 id 발번에만
+    #   쓴다. 구 판은 레인 id 도 `attempt` 로 매겨서, 분해가 한 번 재시도하면 그 뒤의 접지·통합이
+    #   **첫 시도인데도** `retry-1/batch-0` 으로 서고 `batch-0` 은 아예 존재하지 않았다(통주 3
+    #   실측 — 접지 레인이 "첫 시도 기록이 남지 않은 것이 의도인가"를 물어 왔다). 재정 P-12 로
+    #   레인 로그의 증거력을 세운 직후이므로 같은 로그의 다른 필드가 오도하는 것을 두지 않는다.
     attempt = 0
+    decompose_attempt = 0
+    tail_attempt = 0
     run_id = str(run_meta.get("run_id", ""))
 
     # ★ 원장 기입은 런이 **종결**될 때 한 번이다(재정 P-U4 의 "한 행" 문언 이행).
@@ -1080,7 +1104,7 @@ def run(
                     view=view,
                     profiles=profiles,
                     journal=journal,
-                    attempt=attempt,
+                    lane_attempt=decompose_attempt,
                     defects=early_defects,
                 )
                 memos.append(screening_memo(read_run, decomposes[read_run]))
@@ -1119,7 +1143,10 @@ def run(
             # 정했다(재정 P-3).
             if early_row.status == "fail" and attempt < budget:
                 early_defects = findings_of([early_row])
+                # 예산(런 전역)과 좌표(이 레인)를 함께 올린다 — 분해 구간에서는 두 값이
+                # 같은 걸음으로 가지만, 뜻이 다르므로 두 이름으로 센다(재정 Q7 ②).
                 attempt += 1
+                decompose_attempt += 1
                 continue
             break
 
@@ -1153,7 +1180,7 @@ def run(
                 view=view,
                 profiles=profiles,
                 journal=journal,
-                attempt=attempt,
+                lane_attempt=tail_attempt,
                 defects=tail_defects,
                 rules=rules,
                 run_meta=run_meta,
@@ -1201,7 +1228,9 @@ def run(
             # 재시도는 결함 목록을 레인에 되돌려 준다 — 그러지 않으면 같은 오류를 재생산한다.
             # 이 재시도는 **정본 후속**만 다시 돈다(분해는 이미 수렴 판정을 받았다).
             tail_defects = findings_of(failing)
+            # 예산은 분해와 공유하고(그래서 총량이 늘지 않는다) 좌표는 이 구간의 것만 센다.
             attempt += 1
+            tail_attempt += 1
 
         write_json(os.path.join(paths.lanes_dir, ID_MAP_BASENAME), id_maps)
 

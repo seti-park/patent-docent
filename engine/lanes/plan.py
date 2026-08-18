@@ -248,7 +248,16 @@ def lane_profiles(repo: str | None = None) -> dict[str, dict]:
 
 
 def lane_id_for(read_run: str, task: str, batch: int, attempt: int = 0) -> str:
-    """레인 좌표. 재시도는 별도 경로를 쓴다 — 같은 자리에 덮어쓰면 1차 응답이 사라진다."""
+    """레인 좌표. 재시도는 별도 경로를 쓴다 — 같은 자리에 덮어쓰면 1차 응답이 사라진다.
+
+    ★ `attempt` = **이 레인 자신의 재시도 회차**이며 런 전역 시도 횟수가 아니다
+    (재정 2026-08-19 Q7 ②). 어휘의 정본은 계약이다(`read.yaml#lane.lane_id_vocabulary`) —
+    접두 없는 `batch-N` 이 첫 시도이고 `retry-N` 의 N 이 그 레인의 재시도 회차다. 구 판은
+    러너가 **전역 예산 카운터**를 그대로 여기 넘겨서, 분해가 한 번 재시도하면 그 뒤의
+    접지·통합이 첫 시도인데도 `retry-1` 로 서고 `batch-0` 이 존재하지 않았다. 값을 고른
+    자리는 러너이므로(`engine/stages/read.py#run`) 이 함수는 그때도 옳았다 — 그럼에도 여기
+    적어 두는 이유는 다음 호출자가 같은 값을 다시 넘기지 않게 하기 위해서다.
+    """
     if attempt:
         return f"{read_run}/{task}/retry-{attempt}/batch-{batch}"
     return f"{read_run}/{task}/batch-{batch}"
@@ -396,6 +405,146 @@ def harvest_band_start(claims: dict) -> int:
     return synthesis_band_start(claims) + ID_BAND_WIDTH
 
 
+def _cell(value) -> str:
+    """마크다운 표 칸 1개로 접는다. 줄바꿈은 공백으로, `|` 는 이스케이프한다.
+
+    표를 깨는 문자를 지우지 않고 **이스케이프**하는 이유: 인용 좌표·라벨은 원천에서 온 값이고,
+    표기를 조용히 고치면 레인이 그 값으로 원문을 되짚을 때 어긋난다.
+    """
+    text = " ".join(str(value if value is not None else "").split())
+    return text.replace("|", "\\|")
+
+
+def _grounding_block(groundings: list[dict] | None) -> str:
+    """접지 산출의 **ID 와 좌표**를 통합 레인 지시에 싣는다(재정 2026-08-19 Q8 ①).
+
+    ★ 왜 이 블록이 생겼는가. `implication.derived_from` 은 **실재 항목 ID** 를 요구하는데,
+    구 판의 통합 요청서는 접지 산출을 `referenced_figures` 로만 — 즉 도면 id 목록으로만 —
+    실었다. 그래서 통주 3 의 통합 레인은 같은 실행의 `ground-*/response.json` 을 **직접 열어**
+    ID 를 확인해야 했고, 다른 실행은 열지 않았다. 요청서는 *"이 파일 하나로 레인이 작업할 수
+    있게"* 만들어진 것이며(`contract.py#render_request_md` 의 설계 근거 — 절차를 링크로만 주면
+    레인마다 열람 여부가 갈리고 두 독립 실행이 같은 절차를 따랐다는 보장이 사라진다), 그
+    원칙이 통합 단계에서 깨져 있었다.
+
+    ★ 인용 원문을 통째로 옮기지 않는다. 통합 레인에 필요한 것은 **어느 항목이 무엇에 붙어
+    있고 그 근거가 원천의 어디인가**이지 인용 본문이 아니다 — 본문까지 실으면 요청서가 접지
+    응답의 사본이 되고, 그러면 통합 레인이 접지 인용을 다시 타이핑할 수 있게 된다(그 순간
+    `read.verbatim` 의 관할 밖에서 원문이 두 벌이 된다).
+    """
+    rows: list[str] = []
+    for payload in groundings or ():
+        for item in (payload or {}).get("items") or ():
+            if not isinstance(item, dict) or item.get("kind") != "grounding":
+                continue
+            anchor = item.get("anchor_state") or {}
+            locators = [
+                str(ref.get("locator") or "")
+                for ref in item.get("spec_refs") or ()
+                if isinstance(ref, dict) and ref.get("locator")
+            ]
+            figures: list[str] = []
+            for ref in item.get("figure_refs") or ():
+                if not isinstance(ref, dict) or not ref.get("figure"):
+                    continue
+                numerals = ", ".join(str(value) for value in ref.get("numerals") or ())
+                figures.append(
+                    f"{ref.get('figure')}({numerals})" if numerals else str(ref.get("figure"))
+                )
+            rows.append(
+                f"| `{_cell(item.get('id'))}` | `{_cell(item.get('component'))}` | "
+                f"명세서 `{_cell(anchor.get('spec'))}` · 도면 `{_cell(anchor.get('figure'))}` | "
+                f"{_cell(' · '.join(locators)) or '-'} | {_cell(' · '.join(figures)) or '-'} |"
+            )
+
+    if not rows:
+        return (
+            "\n\n**접지 산출.** 이 실행의 접지 항목이 없다. `implication` 을 만들더라도"
+            "\n`derived_from` 에 접지 ID 를 적을 수 없으므로 **빈 배열**로 적는다 — 없다는 사실을"
+            "\n빈 배열로 적는 것과 필드를 빠뜨리는 것은 다르다. 없는 ID 를 지어내지 말고, 접지"
+            "\n산출을 찾으러 **다른 파일을 열지도 마라**(요청서 밖은 이 레인의 열람 범위가 아니다)."
+        )
+
+    return "\n".join(
+        [
+            "",
+            "",
+            "**★ 접지 산출 — 이 실행이 만든 접지 항목 전량(재정 2026-08-19 Q8 ①).**",
+            "",
+            "| 접지 ID | 대상 component | anchor_state | 명세서 좌표 | 도면(도면부호) |",
+            "|---|---|---|---|---|",
+            *rows,
+            "",
+            "`implication` 의 `derived_from` 에 쓸 수 있는 **접지 ID 는 이 표가 전부**다. 표에 없는",
+            "ID 를 적으면 `read.pointer-resolve` 가 유령 참조로 잡는다. **다른 파일을 열지 마라** —",
+            "같은 실행의 `ground-*/response.json` 도 포함이다. 이 요청서 하나로 작업할 수 있게",
+            "만들어져 있으며, 레인마다 무엇을 더 열었는지가 갈리는 순간 두 실행이 같은 절차를",
+            "따랐다는 보장이 사라진다.",
+            "",
+            "표의 ID 는 작업용 임시 번호이며 최종 번호는 조립기가 다시 매긴다 — 참조는 함께",
+            "고쳐 쓰이므로 보존된다.",
+        ]
+    )
+
+
+# ★ 원 스팬 발췌의 창 폭 — 값 스팬 좌우로 각각 이 글자 수만큼 뜬다.
+#
+#   근거: 값이 무엇의 수인지는 대개 값 바로 앞의 명사구가 정하고(`a number of exponent bits
+#   in the activation value comprises …`), 40자면 그 명사구가 들어온다. 동시에 한 행이
+#   ~120자를 넘지 않아 표가 읽히고, 수확 항목이 수십 건이어도 요청서가 접지 응답의 사본으로
+#   부풀지 않는다. 판정에 쓰이는 수치가 아니라 **표기 폭**이므로 계약이 아니라 여기 둔다.
+HARVEST_EXCERPT_MARGIN = 40
+HARVEST_EXCERPT_ELLIPSIS = "…"
+# 서지 갈래는 인용 스팬을 갖지 않는다(스키마가 `bibliographic` 에 `source` 를 금지한다).
+# 빈칸으로 두면 "발췌를 만들지 못했다"와 구별되지 않으므로 그 사실을 문언으로 적는다.
+BIBLIOGRAPHIC_EXCERPT = "(서지면 — 인용 스팬 없음)"
+
+
+def _harvest_origin(item: dict) -> tuple[str, str]:
+    """수확 항목 1건 → `(출처 좌표 칸, 원 스팬 발췌 칸)`.
+
+    ★ 왜 이 두 칸이 생겼는가(재정 2026-08-19 Q8 ① 파생 · 총괄 재량 처분 — 명시 재정 아님).
+    구 판의 수확 표는 라벨이 `numeric value at [0186]` 수준이라 **그 수가 무엇의 수인지**
+    확정할 수 없었고, 통주 3 의 통합 레인은 그래서 참조를 포기했다. 요청서 하나로 작업할 수
+    있어야 한다는 Q8 ① 의 원칙이 수확 표에서도 같은 모양으로 깨져 있었던 자리이며, 판정
+    기준은 건드리지 않는다 — 늘어난 것은 레인이 보는 좌표뿐이다.
+
+    갈래가 둘이라는 사실(`reader/lib/harvest.py`)이 그대로 반영된다.
+      · `origin: quoted` = `source.locator` + `source.quote[value_span]` 둘레의 창.
+      · `origin: bibliographic` = `bib_source.field` 하나뿐이며 **인용 스팬이 없다**.
+    """
+    source = item.get("source")
+    if isinstance(source, dict):
+        locator = str(source.get("locator") or "")
+        quote = str(source.get("quote") or "")
+        span = source.get("value_span") or {}
+        return (
+            f"`{_cell(locator)}`" if locator else "-",
+            _excerpt(quote, span.get("start"), span.get("end")),
+        )
+    bib = item.get("bib_source")
+    if isinstance(bib, dict) and bib.get("field"):
+        return f"`{_cell(bib.get('field'))}`(서지)", BIBLIOGRAPHIC_EXCERPT
+    # 갈래가 어느 쪽도 아니다 — 지어내지 않고 그 사실을 적는다.
+    return "-", "(출처 미상 — 수확 항목이 좌표를 들지 않았다)"
+
+
+def _excerpt(quote: str, start, end) -> str:
+    """값 스팬 둘레의 원문 창. 줄바꿈은 접고 잘린 쪽에만 잘림 표시를 붙인다."""
+    if not quote:
+        return "-"
+    if not isinstance(start, int) or not isinstance(end, int):
+        # 스팬 없이 인용만 있는 경우 — 앞머리를 창 폭만큼만 준다.
+        head = _cell(quote[: HARVEST_EXCERPT_MARGIN * 2])
+        tail = HARVEST_EXCERPT_ELLIPSIS if len(quote) > HARVEST_EXCERPT_MARGIN * 2 else ""
+        return f"{head}{tail}"
+    left = max(0, start - HARVEST_EXCERPT_MARGIN)
+    right = min(len(quote), end + HARVEST_EXCERPT_MARGIN)
+    body = _cell(quote[left:right])
+    prefix = HARVEST_EXCERPT_ELLIPSIS if left > 0 else ""
+    suffix = HARVEST_EXCERPT_ELLIPSIS if right < len(quote) else ""
+    return f"{prefix}{body}{suffix}"
+
+
 def _harvest_block(harvest: list[dict] | None) -> str:
     """수확된 수치 목록을 통합 레인 지시에 싣는다(재정 P-B).
 
@@ -418,15 +567,31 @@ def _harvest_block(harvest: list[dict] | None) -> str:
         "이미 전수 수확되어 있으므로, 네가 만들 수 있는 `fact` 는 산식(`derived`)과",
         "도면 판독(`figure-sourced`) 둘뿐이다.",
         "",
-        "| 참조 ID | 라벨 | 정규화 값 | 단위 |",
-        "|---|---|---|---|",
+        "| 참조 ID | 라벨 | 정규화 값 | 단위 | 출처 좌표 | 원 스팬 발췌 |",
+        "|---|---|---|---|---|---|",
     ]
     for item in harvest:
         unit = item.get("unit")
+        locator, excerpt = _harvest_origin(item)
         lines.append(
-            f"| `{item.get('id')}` | {item.get('label_en', '')} | "
-            f"`{item.get('value_normalized', '')}` | {unit if unit else '-'} |"
+            f"| `{item.get('id')}` | {_cell(item.get('label_en', ''))} | "
+            f"`{_cell(item.get('value_normalized', ''))}` | {_cell(unit) if unit else '-'} | "
+            f"{locator} | {excerpt} |"
         )
+    lines.append("")
+    lines.append(
+        "**발췌를 인용으로 쓰지 마라.** 원문 인용의 소유는 접지 레인이고 그 인용은 이미"
+    )
+    lines.append(
+        f"`spec_refs` 에 있다. 여기 실린 발췌는 값 스팬 좌우 {HARVEST_EXCERPT_MARGIN}자 창이며"
+    )
+    lines.append(
+        f"`{HARVEST_EXCERPT_ELLIPSIS}` 는 러너가 붙인 **잘림 표시**로 원문의 일부가 아니다."
+    )
+    lines.append(
+        f"서지 수확은 인용 스팬을 갖지 않으므로 발췌 자리에 `{BIBLIOGRAPHIC_EXCERPT}` 가 선다 —"
+    )
+    lines.append("빈칸이 아니다(없는 스팬을 빈칸으로 적으면 그것은 거짓말이다).")
     lines.append("")
     lines.append(
         "이 표의 ID 는 작업용 임시 번호이며 최종 번호는 조립기가 다시 매긴다 — 그래도 참조는"
@@ -588,6 +753,12 @@ def plan_synthesis(
 ) -> list[LaneRequest]:
     """D5 ④⑤ — 유기적 통합·포지셔닝·수치 사실·최종 drop 신호.
 
+    ★ **자기완결(재정 2026-08-19 Q8 ①).** 이 지시문은 통합 레인이 **다른 파일을 열지 않고**
+    작업할 수 있어야 한다. 그래서 접지 산출의 ID·좌표(`_grounding_block`)와 수확 표의 출처
+    좌표·원 스팬(`_harvest_block`)이 여기 실린다 — `derived_from`·`numeric_refs` 가 요구하는
+    것은 실재 항목 ID 이고, 그 ID 를 요청서가 주지 않으면 레인은 요청서 밖의
+    `ground-*/response.json` 을 여는 수밖에 없다(통주 3 실측).
+
     ★ **맹검 유지(재정 P-A).** 분해 레인의 `screening_memo` 를 이 지시문에 **싣지 않는다.**
     최종 서사 평가는 조기 판단을 모른 채 이루어져야 하며(앵커링 방지), 두 판단이 독립일 때만
     축적물(맹검 판단 · 최종 평가 · Owner 재정 3층)이 의미를 갖는다. 메모를 여기 실으면 그
@@ -604,7 +775,11 @@ def plan_synthesis(
         # 접지 레인이 쓴 대역 **다음**을 준다. 슬롯 수는 `plan_grounding` 과 같은 함수로
         # 다시 세므로(레인 산출을 참조하지 않는다) 두 계획이 어긋날 수 없다.
         + _band_block(synthesis_band_start(claims))
+        # 접지 산출은 **두 층**으로 실린다 — 도면 등재 목록(무엇을 `figures[]` 에 올려야
+        # 하는가)과 접지 항목 표(무엇을 `derived_from` 으로 가리킬 수 있는가). 앞엣것은
+        # 유령 참조를 막고 뒤엣것은 요청서 밖 열람을 없앤다(재정 2026-08-19 Q8 ①).
         + _figure_registry_block(referenced_figures(groundings))
+        + _grounding_block(groundings)
         + _harvest_block(harvest)
         + _defect_block(defects)
     )
