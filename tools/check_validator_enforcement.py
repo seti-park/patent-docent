@@ -18,7 +18,7 @@ M0.6 재감수의 판정 요지를 그대로 담고 있다 — "강제는 크게
 증거를 기계가 재생산 가능한 형태로 남긴다.
 
 무엇을 어떻게 보는가
-  1. **기준선** — 무변조 코퍼스(`base/`)가 검사 10종을 **전부 통과**한다. 통과하지 못하면
+  1. **기준선** — 무변조 코퍼스(`base/`)가 검사 **12종**(READ 10 + FREEZE 2)을 **전부 통과**한다. 통과하지 못하면
      아래 모든 판정이 무의미하다(과잉 제약이면 변조본도 "당연히" 실패한다).
   2. **변조본** — 각 변조본에 대해 **정확히 선언된 검사만** 실패한다. 실패해야 할 것이
      실패했는가와 **실패하지 말아야 할 것이 통과했는가**를 함께 본다. 후자가 없으면
@@ -83,7 +83,7 @@ ABSOLUTE_MIN_PER_CHECK = 1
 
 EPILOG = """\
 하는 일:
-  ① 무변조 코퍼스가 검사 10종을 전부 통과하는지 (기준선 — 과잉 제약의 반증)
+  ① 무변조 코퍼스가 검사 12종을 전부 통과하는지 (기준선 — 과잉 제약의 반증)
   ② 각 변조본에서 **정확히** 선언된 검사만 실패하는지 (관할의 증명)
      + manifest 의 expect_escalate 와 **정확히 같은 수렴 축만** 상신되는지 (재정 P-3)
   ③ 전 변조본이 read.schema 를 통과하는지 (스키마가 일을 대신하지 않았음)
@@ -395,7 +395,7 @@ def import_reader():
 
 
 def run_all(mod, CheckContext, rules, schema, *, spec, source_text, peer, prior, revision):
-    """READ 8행 + FREEZE 2행을 한 번에 낸다."""
+    """READ 10행 + FREEZE 2행을 한 번에 낸다(등재의 정본은 `CHECK_REGISTRY` 이며 순회는 동적이다)."""
     read_ctx = CheckContext(
         spec=spec, source_text=source_text, rules=rules, schema=schema, peer_spec=peer
     )
