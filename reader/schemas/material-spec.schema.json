@@ -401,7 +401,7 @@
           "items": { "$ref": "#/$defs/claim_id" }
         },
         "dependency_type": {
-          "$comment": "종속 형태 어휘 4종(재정 P-1). ★ 구 값 alternative-form 은 **폐기**되었고 unclassified 가 그 자리를 흡수한다. 폐기 근거: 파싱 규칙 5종이 그 값에 도달하지 못해 어휘가 아니라 함정이었고(선언하면 반드시 실패하는 값), Markush·조건부·수단항·카테고리 전환의 typed operator 신설이 N14 범위에서 제외되면서 그 4구조는 '틀린 형태' 가 아니라 **구조 미분류**가 되었다. unclassified 는 그 미분류의 표지이며 결함 신고가 아니다 — 전문은 text_verbatim 에 이미 보존되므로(재정 R1) 표지는 손실을 만들지 않는다. 대신 침묵하지도 않는다: 판정 대상에서 빠지되 판정 행에서 별도로 세고 CP1 미분류 목록에 전건 노출된다. ★ unclassified 는 회피 통로가 아니다 — 5종 어형으로 파싱이 되고 그 집합이 depends_on 과 일치하는데도 이 값을 선언하면 parse.unclassified-not-an-escape 가 실패시킨다.",
+          "$comment": "종속 형태 어휘 4종(재정 P-1). ★ 구 값 alternative-form 은 **폐기**되었고 unclassified 가 그 자리를 흡수한다. 폐기 근거: 파싱 규칙 5종이 그 값에 도달하지 못해 어휘가 아니라 함정이었고(선언하면 반드시 실패하는 값), Markush·조건부·수단항·카테고리 전환의 typed operator 신설이 N14 범위에서 제외되면서 그 4구조는 '틀린 형태' 가 아니라 **구조 미분류**가 되었다. unclassified 는 그 미분류의 표지이며 결함 신고가 아니다 — 전문은 text_verbatim 에 이미 보존되므로(재정 R1) 표지는 손실을 만들지 않는다. 대신 침묵하지도 않는다: 판정 대상에서 빠지되 판정 행에서 별도로 세고 CP1 미분류 목록에 전건 노출된다. ★ unclassified 는 회피 통로가 아니다 — 청구항 본문에 **구조 표지 어형이 하나도 없는데** 이 값을 선언하면 parse.unclassified-not-an-escape 가 실패시킨다. 표지 어형의 정본은 reader/reader-rules.yaml#dependency_citation.unclassified.structure_markers 다. ★ 판정 기준 정정(2026-08-18): 구 문언은 기준을 **인용 어형의 파싱 가능성**으로 적었으나 그것은 재정 P-1 원문('이 4구조를 **만나면** unclassified 표지')과 싸웠다 — 표지의 대상은 인용 어형이 아니라 **본문의 구조**이고, Markush 종속항은 대개 'of claim 1' 로 평범하게 인용하므로 구 기준에서는 **재정을 따른 레인이 반드시 실패**했다. 기준을 본문 구조로 옮겼다.",
           "enum": ["single", "multiple-and", "multiple-or", "unclassified"]
         },
         "text_verbatim": { "type": "string", "minLength": 1 },
