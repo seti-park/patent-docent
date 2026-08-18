@@ -159,7 +159,7 @@
       }
     },
     "numeric_inventory": {
-      "$comment": "전수 수치 수확의 인벤토리 (재정 P-B). 수치 사실은 접지 스팬 기반으로 **전수** 기계 수확되고, 중요분은 LLM 의 중요도 판단이 아니라 함의·포지셔닝 항목의 numeric_refs **역참조**로 도출된다. 그래서 이 블록은 total 과 referenced/unreferenced 를 함께 든다 — CP1 은 전량 카운트를 상시 표기하고(전체 N건 — 참조 M건 표시, 미참조 (N-M)건 접힘) 미참조분을 접어 두되 **숨기지 않는다**. skipped[] 는 정규식에 걸렸으나 값 문법으로 파싱되지 않아 수확하지 않은 토큰이며, 시끄럽게 실패하되 스테이지를 죽이지 않는다(수확은 검사가 아니다). ★ total == len(referenced) + len(unreferenced) 의 산술 일치는 스키마가 표현하지 않는다 — 검증기 몫이다.",
+      "$comment": "전수 수치 수확의 인벤토리 (재정 P-B). 수치 사실은 접지 스팬 기반으로 **전수** 기계 수확되고, 중요분은 LLM 의 중요도 판단이 아니라 함의·포지셔닝 항목의 numeric_refs **역참조**로 도출된다. 그래서 이 블록은 total 과 referenced/unreferenced 를 함께 든다 — CP1 은 **범위를 밝힌** 전량 카운트를 상시 표기하고(수확 정답지 N건(kind fact · origin in {quoted, bibliographic} · status active) — 참조 M건 표시, 미참조 (N-M)건 접힘) 미참조분을 접어 두되 **숨기지 않는다** — 범위를 적지 않은 카운트는 정답지 밖 역참조가 섞이는 순간 같은 문서 안의 두 수를 어긋나게 만든다(2026-08-18 통주 2 실측). ★ skipped[] 는 **세 갈래**다(2026-08-19 개정): ① 좌표 표현 봉투 배제(coordinate-triple · bit-slice · figure-or-table-number · subscript-index) ② 토큰 경계 기각(boundary-left · boundary-right) ③ 값 문법 파싱 실패. 구 문언은 ③만 적었고, 그래서 ①②가 **아무 기록 없이 사라지는** 상태를 계약이 정상으로 서술하고 있었다 — 실특허 통주에서 quoted 30건 중 23건이 ①의 오파싱이었다. 셋 다 시끄럽게 실패하되 스테이지를 죽이지 않는다(수확은 검사가 아니다). 배제 **구간** 수와 사라진 **수치** 수는 다르다 — 봉투 하나가 여럿을 막는다. ★ total == len(referenced) + len(unreferenced) 의 산술 일치는 스키마가 표현하지 않는다 — 검증기 몫이다.",
       "type": "object",
       "additionalProperties": false,
       "required": ["total", "referenced", "unreferenced", "skipped"],
