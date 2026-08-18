@@ -617,6 +617,10 @@ def _check_harvest_parity(
         if parity_key(actual[key], rules) != parity_key(expected[key], rules):
             _add_parity_finding(row, "변조", actual[key], expected[key])
 
+    # ★ `skipped` 는 파싱 실패분만이 아니다(2026-08-18 통주 2 처분). 이제 세 갈래가 함께 온다 —
+    #   좌표 표현 봉투 배제 · 토큰 경계 기각(`boundary-left`·`boundary-right`) · 값 문법 파싱
+    #   실패. 앞의 둘은 수확 **전** 단계에서 갈리므로 여기서 걸러 내지 않는다: 걸러 내면
+    #   CP1 §12.3 이 다시 절반만 세게 되고, 그 절반이 통주 2 에서 23건을 삼킨 자리다.
     row.extras["numeric_inventory"] = _numeric_inventory(
         ctx.spec, index, facts, skipped, rules
     )
