@@ -34,7 +34,7 @@
 | 축 | 예 | 어디에 | 언제 오르는가 |
 |---|---|---|---|
 | 계약 라인 | `material-spec/v0` | 인스턴스 `schema` 필드 | 하위호환 파괴. **단 `0.x` 미동결 기간은 예외** — 자유이며 기록만 남긴다(재정 N15) |
-| 구현 버전 | `reader_version: "0.6.0"` | 인스턴스 필드 + `reader/READER-VERSION` | 필드 추가·검사 강화 = minor · 버그 수정 = patch |
+| 구현 버전 | `reader_version: "0.7.0"` | 인스턴스 필드 + `reader/READER-VERSION` | 필드 추가·검사 강화 = minor · 버그 수정 = patch |
 | 인스턴스 버전 | `spec_version: 2` | 인스턴스 필드 | 동결 스탬프. 개정 시 +1 단조 증가 |
 
 ---
