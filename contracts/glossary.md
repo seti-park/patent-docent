@@ -34,7 +34,7 @@
 | 축 | 예 | 어디에 | 언제 오르는가 |
 |---|---|---|---|
 | 계약 라인 | `material-spec/v0` | 인스턴스 `schema` 필드 | 하위호환 파괴. **단 `0.x` 미동결 기간은 예외** — 자유이며 기록만 남긴다(재정 N15) |
-| 구현 버전 | `reader_version: "0.5.0"` | 인스턴스 필드 + `reader/READER-VERSION` | 필드 추가·검사 강화 = minor · 버그 수정 = patch |
+| 구현 버전 | `reader_version: "0.6.0"` | 인스턴스 필드 + `reader/READER-VERSION` | 필드 추가·검사 강화 = minor · 버그 수정 = patch |
 | 인스턴스 버전 | `spec_version: 2` | 인스턴스 필드 | 동결 스탬프. 개정 시 +1 단조 증가 |
 
 ---
@@ -55,7 +55,7 @@
 | `read.coverage` | `reader/lib/coverage.py` | 청구항 일부를 읽지 않고 넘어감 · 접지 1건이 여럿을 덮음 · **고아 `component`**(규칙 `coverage.no-orphan-component`) |
 | `read.dependency-parse` | `reader/lib/dependency_parse.py` | 다중 종속의 논리 형태를 잃거나 잘못 적음 |
 | `read.value-derivation` | `reader/lib/derivation.py` | 인용문 옆에 날조한 수치 · 정규화값 오기 · 파생 사슬로 원천 흐림 · 범위를 스칼라로 뭉갬 |
-| `read.bibliography` | `reader/lib/bibliography.py` | 서지 확장 6종이 원천 대조 없이 기입됨(발명자·출원인·분류 코드·우선권 번호의 자유 기입) · 최우선일이 우선권 목록과 어긋남(재정 P-2 ⓐ) |
+| `read.bibliography` | `reader/lib/bibliography.py` | 서지 확장 6종이 원천 대조 없이 기입됨(발명자·출원인·분류 코드·우선권 번호의 자유 기입) · **우선권 관할·연도가 그 번호 곁 원천 표기와 무관함**(근접 대조) · 최우선일이 우선권 목록과 어긋남(재정 P-2 ⓐ · 2026-08-18 sol 감수 부분 판정) |
 | `read.claim-inventory` | `reader/lib/inventory.py` | 원천 청구항이 통째로 누락됨 |
 | `read.convergence` | `reader/lib/convergence.py` | 독해가 재현되지 않음(문언·트리·종속 구조) |
 | `read.lane-log-shape` | `engine/stages/read.py` | 레인 로그가 계약 실행 형태와 다름 — 비정본 실행이 접지·통합을 돌았음이 **로그의 있음**으로 드러난다(재정 P-4·P-U3) |
@@ -87,6 +87,7 @@
 | `gate.no-score` · `critique.no-score` | M4·M8 | `contracts/lexicon/score-lint.yaml` |
 | `design.spec-digest` · `compose.spec-digest` | M5 | SPEC §7.3 (재정 N11) |
 | `design.anchors-adjudicated-only` · `critique.anchors-adjudicated-only` | M5·M8 | SPEC §1.7·§1.12 |
+| `probe.independence` · `probe.input-clean` · `probe.no-self-report` · `probe.target-coverage` · `probe.grader-separation` | M7 | SPEC §1.11 — **계기 5종.** ★ 2026-08-19 등재(누락 보수): SPEC §1.11이 이 다섯을 선언하는데 이 사전의 어느 절에도 없었다. 사전이 스스로 내건 갱신 규율("새 검사를 만들면 이 표에 등재한다")이 계기 계열에서만 지켜지지 않은 자리이며, 그 결과 §2.2 목록을 읽고 "M7에 무엇이 남았는가"를 세면 다섯이 빠졌다. **id 신설이 아니라 사전의 누락 보수다** — 이름은 SPEC이 이미 선언했고 여기 옮겨 적을 뿐이다. 정족수 판정 층(`engine/quorum.py`)은 구현되었으나 그것은 검사가 아니라 순수 함수이며 검사 id를 발행하지 않는다 |
 | `feedback.window` · `feedback.row-consistency` · `feedback.corrects-resolve` | M10 | SPEC §1.15 |
 
 ---

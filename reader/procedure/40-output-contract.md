@@ -85,7 +85,7 @@
 | 접지 실패를 누락으로 처리하기 | 예외 상태(`no-anchor-found`·`not-depicted`)로 신고한다. 감춘 예외는 은폐다 |
 | 파생의 파생 | `derivation.inputs[].ref`는 `origin: "quoted"`만 가리킨다(깊이 1) |
 | `alternative-form` 선언 | **폐기된 값**이다. 구조 미분류는 `unclassified`로 적는다(재정 P-1) |
-| 읽히는 종속항에 `unclassified` 선언 | 표지는 규칙이 못 읽는 구조를 위한 것이지 읽기 귀찮은 구조를 위한 것이 아니다. `parse.unclassified-not-an-escape`가 잡는다 |
+| 본문에 **구조 표지 어형이 하나도 없는** 종속항에 `unclassified` 선언 | 표지는 규칙이 못 읽는 구조를 위한 것이지 읽기 귀찮은 구조를 위한 것이 아니다. `parse.unclassified-not-an-escape`가 잡는다. ★ 판정 기준은 **인용 어형의 파싱 가능성이 아니라 본문의 구조 표지 유무**다(2026-08-18 정정) — `of claim 1`로 평범하게 인용하는 Markush 종속항의 선언은 **옳고, 통과한다**. 같은 디렉터리 `10-decompose.md` §2가 그 기준의 정본 서술이다 |
 | `origin: "quoted"`·`"bibliographic"` fact 만들기 | 원문 스팬 수치와 서지 수치는 **엔진이 전수 수확**한다. 레인이 만들면 `value.harvest-parity`가 수확기 재실행 결과와 대조해 실패시킨다(재정 P-B) |
 | 값 필드에 한글 | 값 언어는 EN 단일. 예외는 `drop_signal.reason`과 `grounding.search_note` **둘뿐**이다 |
 | 다른 실행(`read-a`↔`read-b`)의 산출 참조 | 독립성이 깨지면 수렴 검사가 아무것도 반증하지 못한다 |
