@@ -3,10 +3,82 @@
   "$id": "https://patent-docent.local/schemas/material-spec.schema.json",
   "title": "material-spec/v0",
   "type": "object",
-  "required": ["schema", "spec_version"],
+  "required": [
+    "schema",
+    "reader_version",
+    "spec_version",
+    "status",
+    "run_id",
+    "patent",
+    "claims",
+    "figures",
+    "items",
+    "provenance",
+    "extensions"
+  ],
   "properties": {
-    "schema": { "const": "material-spec/v0" },
-    "spec_version": { "type": "integer", "minimum": 0 }
+    "schema": {
+      "$comment": "[공유 코어] 계약 라인 식별자.",
+      "const": "material-spec/v0"
+    },
+    "reader_version": {
+      "$comment": "[공유 코어] reader_version — 층 분리 표지(재정 P-2 ⓑ).",
+      "type": "string"
+    },
+    "spec_version": {
+      "$comment": "[공유 코어] 개정 번호.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "$comment": "[공유 코어] status — 층 분리 표지(재정 P-2 ⓑ).",
+      "type": "string"
+    },
+    "run_id": {
+      "$comment": "[공유 코어] run_id — 층 분리 표지(재정 P-2 ⓑ).",
+      "type": "string"
+    },
+    "patent": {
+      "$comment": "[공유 코어] patent — 층 분리 표지(재정 P-2 ⓑ).",
+      "type": "string"
+    },
+    "claims": {
+      "$comment": "[공유 코어] claims — 층 분리 표지(재정 P-2 ⓑ).",
+      "type": "string"
+    },
+    "figures": {
+      "$comment": "[공유 코어] figures — 층 분리 표지(재정 P-2 ⓑ).",
+      "type": "string"
+    },
+    "items": {
+      "$comment": "[공유 코어] items — 층 분리 표지(재정 P-2 ⓑ).",
+      "type": "string"
+    },
+    "provenance": {
+      "$comment": "[공유 코어] provenance — 층 분리 표지(재정 P-2 ⓑ).",
+      "type": "string"
+    },
+    "extensions": {
+      "$comment": "프로젝트 확장 블록의 네임스페이스 맵(재정 P-2 ⓑ).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "docent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "drop_signal"
+          ],
+          "properties": {
+            "drop_signal": {
+              "$comment": "[확장:docent] 편집 판단.",
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
   },
   "additionalProperties": false
 }

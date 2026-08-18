@@ -1,15 +1,21 @@
 # XX0000000A1 — Stacked thermal module with an integrated fluid channel
 
 > **가공 원천이다.** 이 파일은 픽스처 전용으로 지어낸 특허이며, 실재 특허가 아니고 실재 특허를 인용하지도 않는다.
-> 번호 `XX0000000A1` 와 출원인 `Example Devices, Inc.` 는 예시 전용 더미다(`docs/SPEC.md` §2.7).
+> 번호 `XX0000000A1` · 출원인 `Example Devices, Inc.` · 발명자 2인 · 우선권 번호 · IPC/CPC 코드는
+> 전부 예시 전용 더미다(`docs/SPEC.md` §2.7).
 
 ## Bibliographic data
 
 Publication number: XX0000000A1
+Kind code: A1
 Applicant: Example Devices, Inc.
+Inventors: Dana R. Example; Jordan L. Fixture
+Priority claim: XX-2024-000101 (XX, filed 2024-03-11)
 Priority date: 2024-03-11
 Filing date: 2025-03-10
 Publication date: 2026-01-15
+IPC: H01L 23/473
+CPC: H01L 23/4735; F28F 3/12
 
 ## Claims
 

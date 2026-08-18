@@ -46,12 +46,16 @@ from reader.lib import (  # noqa: E402
     run_read_checks,
     to_convergence_payload,
 )
+from reader.lib.harvest import harvest_numeric_facts  # noqa: E402
 from reader.lib.normalize import NormalizeError  # noqa: E402
 from reader.lib.rules import DEFAULT_RULES_PATH  # noqa: E402
 from reader.lib.source_digest import digest_of  # noqa: E402
 
 RULES = Rules.load()
 SCHEMA = load_schema()
+with open(os.path.join(REPO, "reader", "READER-VERSION"), encoding="utf-8") as _handle:
+    # 골든이 판 번호를 리터럴로 들면 `reader_version` 상향 때마다 골든이 낡는다.
+    READER_VERSION = _handle.read().strip()
 
 # ---------------------------------------------------------------------------
 # 가공 원천·가공 인스턴스 (SPEC §2.7 의 더미를 이 파일 안에서 재구성한다)
@@ -59,6 +63,12 @@ SCHEMA = load_schema()
 # ---------------------------------------------------------------------------
 
 SOURCE = """# Example Devices — stacked module (fictional example)
+
+Applicant: Example Devices, Inc.
+Inventors: Dana Reyes; Kim Anders
+Priority: application XX2024-0000111 filed on 11 March 2024 (XX)
+Int. Cl.: H01L 23/473
+CPC: H01L 23/473
 
 ## Claims
 
@@ -104,12 +114,58 @@ E2_TEXT = (
 A1_TEXT = "wherein the fluid channel has a hydraulic diameter of 0.08 mm"
 A2_TEXT = "wherein the fluid channel has a flow path length of 12 mm"
 CAPTION = "FIG. 2 is a section view of the heat spreader."
-SPEC_QUOTE_M4 = "The heat spreader 210 is bonded to the first surface 112 of the substrate 110."
-SPEC_QUOTE_M8 = "the first surface 112 of the substrate 110"
-SPEC_QUOTE_M10 = "the hydraulic diameter is 0.08 mm, and the drawings do not mark this dimension"
-SPEC_QUOTE_M11 = "The folded flow path 214 doubles back within the footprint"
-FACT_QUOTE_M5 = "a hydraulic diameter of 0.08 mm"
-FACT_QUOTE_M12 = "the total flow path length is 12 mm"
+GROUND_QUOTE_E2 = "The heat spreader 210 is bonded to the first surface 112 of the substrate 110."
+GROUND_QUOTE_E1 = "the first surface 112 of the substrate 110"
+GROUND_QUOTE_A1 = "the hydraulic diameter is 0.08 mm, and the drawings do not mark this dimension"
+GROUND_QUOTE_A2 = (
+    "The folded flow path 214 doubles back within the footprint so that the total flow "
+    "path length is 12 mm"
+)
+SEARCH_NOTE = (
+    "FIG-2 전 도면부호(110·112·210·214)와 캡션을 확인했으나 수력직경 치수는 도면에 "
+    "표기되지 않음."
+)
+
+# ---------------------------------------------------------------------------
+# 항목 ID 이름표
+#
+# ★ 골든의 수치 사실은 **손으로 쓰지 않는다**(재정 P-B). `origin ∈ {quoted, bibliographic}`
+#   는 수확기(`reader/lib/harvest.py`)의 소유이므로 골든도 그 산출을 그대로 싣는다 —
+#   손으로 다듬으면 `value.harvest-parity` 가 즉시 실패하며, 그 실패는 검사의 결함이 아니라
+#   **골든이 규율을 어긴 것**이다. 그래서 ID 는 세 구간으로 나뉜다:
+#     M1~M10   레인 소유 골격(구성요소·접지·함의·포지셔닝)
+#     M11~M16  수확기 소유(원문 스팬 2 + 서지 4) — 순서는 수확기의 등장 순이다
+#     M17~M18  레인 소유 수치(`derived`·`figure-sourced`)
+#   아래 이름표는 그 구간의 문서화이며, 실제 배치는 `golden_spec()` 이 계산으로 확인한다.
+# ---------------------------------------------------------------------------
+
+M_E1 = "M1"                 # component — CL-1/e1
+M_E2 = "M2"                 # component — CL-1/e2
+M_A1 = "M3"                 # component — CL-5/a1
+M_A2 = "M4"                 # component — CL-7/a1
+M_GROUND_E1 = "M5"          # grounding — M1
+M_GROUND_E2 = "M6"          # grounding — M2
+M_GROUND_A1 = "M7"          # grounding — M3 (도면 미표기 = 접지 예외)
+M_GROUND_A2 = "M8"          # grounding — M4
+M_IMPLICATION = "M9"
+M_POSITIONING = "M10"
+M_DIAMETER = "M11"          # 수확 — 원문 스팬 `0.08 mm`
+M_LENGTH = "M12"            # 수확 — 원문 스팬 `12 mm`
+M_BIB_NUMBER = "M13"        # 수확 — patent.number
+M_BIB_PRIORITY = "M14"      # 수확 — patent.dates.priority
+M_BIB_FILING = "M15"        # 수확 — patent.dates.filing
+M_BIB_PUBLICATION = "M16"   # 수확 — patent.dates.publication
+M_DERIVED = "M17"           # 레인 소유 — 산식
+M_FIGURE_SOURCED = "M18"    # 레인 소유 — 도면 판독
+
+HARVESTED_IDS = [
+    M_DIAMETER,
+    M_LENGTH,
+    M_BIB_NUMBER,
+    M_BIB_PRIORITY,
+    M_BIB_FILING,
+    M_BIB_PUBLICATION,
+]
 
 
 def _source_span(quote: str) -> dict:
@@ -130,23 +186,40 @@ def _value_span(quote: str, value: str) -> dict:
     return {"start": start, "end": start + len(value)}
 
 
-def golden_spec() -> dict:
-    """전 검사를 통과해야 하는 가공 인스턴스."""
+def _base_spec() -> dict:
+    """수확 **전**의 골격 — 레인이 소유하는 항목만 든다.
+
+    수확기가 훑는 것은 `grounding.spec_refs[].quote` 이므로, 이 골격이 곧 수확의 입력이다.
+    """
     return {
         "schema": "material-spec/v0",
-        "reader_version": "0.4.0",
+        "reader_version": READER_VERSION,
         "spec_version": 1,
         "status": "frozen",
         "run_id": "example-xx0000000a1-stacked-module",
         "patent": {
             "number": "XX0000000A1",
             "title": "Stacked module with an integrated fluid channel (fictional example)",
+            "jurisdiction": "XX",
+            "kind_code": "A1",
             "assignee": "Example Devices, Inc.",
+            # ★ 목록형 서지(재정 P-2 ⓐ). 각 문자열은 원천의 **바이트 정확 부분문자열**이며
+            #   그 대조는 `read.bibliography` 가 한다 — 눈으로 옮겨 적으면 반드시 실패한다.
+            "applicants": ["Example Devices, Inc."],
+            "inventors": ["Dana Reyes", "Kim Anders"],
             "dates": {
                 "priority": "2024-03-11",
                 "filing": "2025-03-10",
                 "publication": "2026-01-15",
             },
+            "priority_claims": [
+                {
+                    "number": "XX2024-0000111",
+                    "date": "2024-03-11",
+                    "jurisdiction": "XX",
+                }
+            ],
+            "classifications": {"ipc": ["H01L 23/473"], "cpc": ["H01L 23/473"]},
             # 손으로 적지 않고 원천에서 계산한다 — 불변식 I1 의 기준점이다.
             "source_digest": digest_of(SOURCE),
             "source_path": "00-source/patent.md",
@@ -161,13 +234,13 @@ def golden_spec() -> dict:
                         {
                             "id": "CL-1/e1",
                             "text_verbatim": E1_TEXT,
-                            "material_id": "M1",
+                            "material_id": M_E1,
                             "children": [],
                         },
                         {
                             "id": "CL-1/e2",
                             "text_verbatim": E2_TEXT,
-                            "material_id": "M2",
+                            "material_id": M_E2,
                             "children": [],
                         },
                     ],
@@ -184,7 +257,7 @@ def golden_spec() -> dict:
                             "id": "CL-5/a1",
                             "attaches_to": "CL-1/e2",
                             "text_verbatim": A1_TEXT,
-                            "material_id": "M3",
+                            "material_id": M_A1,
                         }
                     ],
                 },
@@ -198,7 +271,7 @@ def golden_spec() -> dict:
                             "id": "CL-7/a1",
                             "attaches_to": "CL-1/e2",
                             "text_verbatim": A2_TEXT,
-                            "material_id": "M9",
+                            "material_id": M_A2,
                         }
                     ],
                 },
@@ -210,7 +283,7 @@ def golden_spec() -> dict:
                         "The interest is staked on placing the coolant path inside the "
                         "spreader body rather than in a separate part."
                     ),
-                    "material_id": "M6",
+                    "material_id": M_IMPLICATION,
                 }
             ],
         },
@@ -225,7 +298,7 @@ def golden_spec() -> dict:
         ],
         "items": [
             {
-                "id": "M1",
+                "id": M_E1,
                 "kind": "component",
                 "status": "active",
                 "superseded_by": None,
@@ -234,7 +307,7 @@ def golden_spec() -> dict:
                 "text_verbatim": E1_TEXT,
             },
             {
-                "id": "M2",
+                "id": M_E2,
                 "kind": "component",
                 "status": "active",
                 "superseded_by": None,
@@ -243,7 +316,7 @@ def golden_spec() -> dict:
                 "text_verbatim": E2_TEXT,
             },
             {
-                "id": "M3",
+                "id": M_A1,
                 "kind": "component",
                 "status": "active",
                 "superseded_by": None,
@@ -252,17 +325,44 @@ def golden_spec() -> dict:
                 "text_verbatim": A1_TEXT,
             },
             {
-                "id": "M4",
+                "id": M_A2,
+                "kind": "component",
+                "status": "active",
+                "superseded_by": None,
+                "claim_ref": "CL-7/a1",
+                "label_en": "flow path length limitation on the fluid channel",
+                "text_verbatim": A2_TEXT,
+            },
+            {
+                "id": M_GROUND_E1,
                 "kind": "grounding",
                 "status": "active",
                 "superseded_by": None,
-                "component": "M2",
+                "component": M_E1,
                 "anchor_state": {"spec": "found", "figure": "found"},
                 "spec_refs": [
                     {
                         "locator": "[0042]",
-                        "quote": SPEC_QUOTE_M4,
-                        "span": _source_span(SPEC_QUOTE_M4),
+                        "quote": GROUND_QUOTE_E1,
+                        "span": _source_span(GROUND_QUOTE_E1),
+                    }
+                ],
+                "figure_refs": [
+                    {"figure": "FIG-2", "numerals": ["110", "112"], "caption_quote": CAPTION}
+                ],
+            },
+            {
+                "id": M_GROUND_E2,
+                "kind": "grounding",
+                "status": "active",
+                "superseded_by": None,
+                "component": M_E2,
+                "anchor_state": {"spec": "found", "figure": "found"},
+                "spec_refs": [
+                    {
+                        "locator": "[0042]",
+                        "quote": GROUND_QUOTE_E2,
+                        "span": _source_span(GROUND_QUOTE_E2),
                     }
                 ],
                 "figure_refs": [
@@ -270,25 +370,30 @@ def golden_spec() -> dict:
                 ],
             },
             {
-                "id": "M5",
-                "kind": "fact",
+                "id": M_GROUND_A1,
+                "kind": "grounding",
                 "status": "active",
                 "superseded_by": None,
-                "label_en": "hydraulic diameter of the fluid channel",
-                "origin": "quoted",
-                "value_raw": "0.08 mm",
-                "value_normalized": "0.08",
-                "value_type": {"kind": "scalar", "approximate": False, "value": "0.08"},
-                "unit": "mm",
-                "machine_verifiable": True,
-                "source": {
-                    "locator": "claim 5",
-                    "quote": FACT_QUOTE_M5,
-                    "value_span": _value_span(FACT_QUOTE_M5, "0.08 mm"),
-                },
+                "component": M_A1,
+                "anchor_state": {"spec": "found", "figure": "not-depicted"},
+                "spec_refs": [{"locator": "[0043]", "quote": GROUND_QUOTE_A1}],
+                "figure_refs": [],
+                "search_note": SEARCH_NOTE,
             },
             {
-                "id": "M6",
+                "id": M_GROUND_A2,
+                "kind": "grounding",
+                "status": "active",
+                "superseded_by": None,
+                "component": M_A2,
+                "anchor_state": {"spec": "found", "figure": "found"},
+                "spec_refs": [{"locator": "[0044]", "quote": GROUND_QUOTE_A2}],
+                "figure_refs": [
+                    {"figure": "FIG-2", "numerals": ["214"], "caption_quote": CAPTION}
+                ],
+            },
+            {
+                "id": M_IMPLICATION,
                 "kind": "implication",
                 "status": "active",
                 "superseded_by": None,
@@ -297,14 +402,16 @@ def golden_spec() -> dict:
                     "cold plate rather than adding one."
                 ),
                 "basis": "spec",
-                "derived_from": ["M2", "M4"],
+                "derived_from": [M_E2, M_GROUND_E2],
+                # ★ 중요분은 LLM 의 중요도 판단이 아니라 이 역참조가 도출한다(재정 P-B).
+                "numeric_refs": [M_DIAMETER],
                 "evidence_quotes": [
                     "the channel is formed within the spreader so that a separate cold plate is not required"
                 ],
                 "confidence": "inferred",
             },
             {
-                "id": "M7",
+                "id": M_POSITIONING,
                 "kind": "positioning",
                 "status": "active",
                 "superseded_by": None,
@@ -320,136 +427,23 @@ def golden_spec() -> dict:
                     "The asserted delta is structural simplification, not a claimed "
                     "performance number."
                 ),
+                "numeric_refs": [M_LENGTH],
                 "quotes": [
                     "Conventional assemblies stack a cold plate on top of the module, which adds one more thermal interface.",
                     "the thermal interface count is reduced by one",
                 ],
             },
-            {
-                "id": "M8",
-                "kind": "grounding",
-                "status": "active",
-                "superseded_by": None,
-                "component": "M1",
-                "anchor_state": {"spec": "found", "figure": "found"},
-                "spec_refs": [
-                    {
-                        "locator": "[0042]",
-                        "quote": SPEC_QUOTE_M8,
-                        "span": _source_span(SPEC_QUOTE_M8),
-                    }
-                ],
-                "figure_refs": [
-                    {"figure": "FIG-2", "numerals": ["110", "112"], "caption_quote": CAPTION}
-                ],
-            },
-            {
-                "id": "M9",
-                "kind": "component",
-                "status": "active",
-                "superseded_by": None,
-                "claim_ref": "CL-7/a1",
-                "label_en": "flow path length limitation on the fluid channel",
-                "text_verbatim": A2_TEXT,
-            },
-            {
-                "id": "M10",
-                "kind": "grounding",
-                "status": "active",
-                "superseded_by": None,
-                "component": "M3",
-                "anchor_state": {"spec": "found", "figure": "not-depicted"},
-                "spec_refs": [{"locator": "[0043]", "quote": SPEC_QUOTE_M10}],
-                "figure_refs": [],
-                "search_note": (
-                    "FIG-2 전 도면부호(110·112·210·214)와 캡션을 확인했으나 수력직경 치수는 "
-                    "도면에 표기되지 않음."
-                ),
-            },
-            {
-                "id": "M11",
-                "kind": "grounding",
-                "status": "active",
-                "superseded_by": None,
-                "component": "M9",
-                "anchor_state": {"spec": "found", "figure": "found"},
-                "spec_refs": [{"locator": "[0044]", "quote": SPEC_QUOTE_M11}],
-                "figure_refs": [
-                    {"figure": "FIG-2", "numerals": ["214"], "caption_quote": CAPTION}
-                ],
-            },
-            {
-                "id": "M12",
-                "kind": "fact",
-                "status": "active",
-                "superseded_by": None,
-                "label_en": "total flow path length of the fluid channel",
-                "origin": "quoted",
-                "value_raw": "12 mm",
-                "value_normalized": "12",
-                "value_type": {"kind": "scalar", "approximate": False, "value": "12"},
-                "unit": "mm",
-                "machine_verifiable": True,
-                "source": {
-                    "locator": "[0044]",
-                    "quote": FACT_QUOTE_M12,
-                    "value_span": _value_span(FACT_QUOTE_M12, "12 mm"),
-                },
-            },
-            {
-                "id": "M13",
-                "kind": "fact",
-                "status": "active",
-                "superseded_by": None,
-                "label_en": "ratio of flow path length to hydraulic diameter",
-                "origin": "derived",
-                "value_raw": "150",
-                "value_normalized": "150",
-                "value_type": {"kind": "scalar", "approximate": False, "value": "150"},
-                "unit": None,
-                "machine_verifiable": True,
-                "derivation": {
-                    "formula": "length_mm / diameter_mm",
-                    "inputs": [
-                        {"name": "length_mm", "ref": "M12"},
-                        {"name": "diameter_mm", "ref": "M5"},
-                    ],
-                    "rounding": {"mode": "none", "digits": 0},
-                },
-            },
-            {
-                "id": "M14",
-                "kind": "fact",
-                "status": "active",
-                "superseded_by": None,
-                "label_en": "priority date",
-                "origin": "bibliographic",
-                "value_raw": "2024-03-11",
-                "value_normalized": "2024-03-11",
-                "value_type": {"kind": "date", "approximate": False, "value": "2024-03-11"},
-                "unit": None,
-                "machine_verifiable": True,
-                "bib_source": {"field": "patent.dates.priority"},
-            },
-            {
-                "id": "M15",
-                "kind": "fact",
-                "status": "active",
-                "superseded_by": None,
-                "label_en": "number of channel passes visible in the section view",
-                "origin": "figure-sourced",
-                "value_raw": "4",
-                "value_normalized": "4",
-                "value_type": {"kind": "scalar", "approximate": False, "value": "4"},
-                "unit": None,
-                "machine_verifiable": False,
-                "figure_source": {"figure": "FIG-2", "numerals": ["214"], "locator": "FIG. 2"},
-            },
         ],
-        "drop_signal": {
-            "stage": "final",
-            "verdict": "go",
-            "reason": "권리 관심이 한 구성에 뚜렷하고, 효과 주장이 명세서 문언으로 존재함.",
+        "extensions": {
+            # ★ `drop_signal` 은 최상위가 아니라 확장 블록에 산다(재정 P-2 ⓑ) — 사실이 아니라
+            #   **편집 판단**이므로 공유 코어에 있을 수 없다. historian 은 이 블록을 쓰지 않는다.
+            "docent": {
+                "drop_signal": {
+                    "stage": "final",
+                    "verdict": "go",
+                    "reason": "권리 관심이 한 구성에 뚜렷하고, 효과 주장이 명세서 문언으로 존재함.",
+                }
+            }
         },
         "provenance": {
             "read_runs": ["read-a-0f1c2d3", "read-b-9a8b7c6"],
@@ -457,6 +451,67 @@ def golden_spec() -> dict:
             "engine_commit": "0000000",
         },
     }
+
+
+def golden_spec() -> dict:
+    """전 검사를 통과해야 하는 가공 인스턴스.
+
+    ★ 수치 사실은 **수확기 산출을 그대로** 싣는다(재정 P-B). 손으로 쓴 부분 발췌를 실으면
+    `value.harvest-parity` 가 그 자리에서 실패하며 그것이 정상 동작이다 — 골든이 규율의
+    바깥에 서면 아래 전 실패 케이스가 '무엇 때문에 실패했는가'를 말할 수 없다.
+    """
+    spec = _base_spec()
+    harvested, _skipped = harvest_numeric_facts(
+        spec, rules=RULES, id_start=len(spec["items"]) + 1
+    )
+    spec["items"].extend(harvested)
+
+    # 레인 소유 수치 2종은 수확 대역 **뒤**에 온다(`origin` 소유권 — 재정 P-B).
+    spec["items"].append(
+        {
+            "id": M_DERIVED,
+            "kind": "fact",
+            "status": "active",
+            "superseded_by": None,
+            "label_en": "ratio of flow path length to hydraulic diameter",
+            "origin": "derived",
+            "value_raw": "150",
+            "value_normalized": "150",
+            "value_type": {"kind": "scalar", "approximate": False, "value": "150"},
+            "unit": None,
+            "machine_verifiable": True,
+            "derivation": {
+                "formula": "length_mm / diameter_mm",
+                "inputs": [
+                    {"name": "length_mm", "ref": M_LENGTH},
+                    {"name": "diameter_mm", "ref": M_DIAMETER},
+                ],
+                "rounding": {"mode": "none", "digits": 0},
+            },
+        }
+    )
+    spec["items"].append(
+        {
+            "id": M_FIGURE_SOURCED,
+            "kind": "fact",
+            "status": "active",
+            "superseded_by": None,
+            "label_en": "number of channel passes visible in the section view",
+            "origin": "figure-sourced",
+            "value_raw": "4",
+            "value_normalized": "4",
+            "value_type": {"kind": "scalar", "approximate": False, "value": "4"},
+            "unit": None,
+            "machine_verifiable": False,
+            "figure_source": {"figure": "FIG-2", "numerals": ["214"], "locator": "FIG. 2"},
+        }
+    )
+    return spec
+
+
+def new_item_id(spec: dict) -> str:
+    """이 명세에 항목 하나를 덧붙일 때 쓸 다음 ID(`lifecycle.id-contiguous` 준수)."""
+    return f"M{len(spec['items']) + 1}"
 
 
 def context(spec: dict, **kwargs) -> CheckContext:
@@ -491,6 +546,24 @@ def require_fail(row, rule: str | None = None) -> None:
         pytest.fail(f"{row.check_id}: 규칙 {rule} 기대, 실제 {rules_of(row)}")
 
 
+def _axis_rule(axis_id: str) -> dict:
+    """규칙 파일의 수렴 축 1건. 축이 사라지면 그 사실이 여기서 먼저 드러난다."""
+    for axis in RULES.convergence_axes:
+        if axis.get("id") == axis_id:
+            return axis
+    pytest.fail(f"reader-rules#convergence.axes 에 {axis_id} 축이 없다")
+    return {}  # pragma: no cover — pytest.fail 이 이미 종료한다
+
+
+def _axis_status(row, axis_id: str) -> str:
+    """판정 행 부속의 축별 status(`pass`·`fail`·`escalate`·`measured`)."""
+    for axis in row.extras.get("axes") or []:
+        if axis.get("id") == axis_id:
+            return str(axis.get("status"))
+    pytest.fail(f"{row.check_id} 의 axes 에 {axis_id} 가 없다: {row.extras.get('axes')}")
+    return ""  # pragma: no cover
+
+
 def require_pass(row) -> None:
     if row.status != "pass":
         detail = "; ".join(f"{f.rule}@{f.locus}: {f.message}" for f in row.findings)
@@ -505,7 +578,7 @@ def require_pass(row) -> None:
 
 def _fail_schema() -> CheckContext:
     spec = golden_spec()
-    item(spec, "M1")["kind"] = "widget"
+    item(spec, M_E1)["kind"] = "widget"
     return context(spec)
 
 
@@ -517,7 +590,7 @@ def _fail_source_digest() -> CheckContext:
 
 def _fail_verbatim() -> CheckContext:
     spec = golden_spec()
-    item(spec, "M4")["spec_refs"][0]["quote"] = SPEC_QUOTE_M4.replace("112", "122")
+    item(spec, M_GROUND_E2)["spec_refs"][0]["quote"] = GROUND_QUOTE_E2.replace("112", "122")
     return context(spec)
 
 
@@ -529,7 +602,7 @@ def _fail_pointer() -> CheckContext:
 
 def _fail_coverage() -> CheckContext:
     spec = golden_spec()
-    spec["items"] = [entry for entry in spec["items"] if entry["id"] != "M4"]
+    spec["items"] = [entry for entry in spec["items"] if entry["id"] != M_GROUND_E2]
     return context(spec)
 
 
@@ -542,7 +615,14 @@ def _fail_dependency_parse() -> CheckContext:
 
 def _fail_value_derivation() -> CheckContext:
     spec = golden_spec()
-    item(spec, "M5")["value_raw"] = "999 mm"
+    item(spec, M_DIAMETER)["value_raw"] = "999 mm"
+    return context(spec)
+
+
+def _fail_bibliography() -> CheckContext:
+    """서지 확장 필드를 원천에 없는 이름으로 바꾼 판(재정 P-2 ⓐ)."""
+    spec = golden_spec()
+    spec["patent"]["inventors"] = ["Ivan Nonexistent"]
     return context(spec)
 
 
@@ -557,30 +637,44 @@ def _fail_claim_inventory() -> CheckContext:
 
 
 def _fail_convergence() -> CheckContext:
+    """2회차가 다중 종속의 논리 형태를 다르게 읽은 판.
+
+    ★ 축을 고른 근거 = 재정 P-3. 판정 행을 `fail` 로 만드는 것은 **exact-match 축**뿐이며
+    `dependent-set` 이 그 셋 중 하나다(임계 1.0). 구 표본은 element 문언을 갈랐는데 그 축은
+    이제 상신 트리거이므로 행을 실패시키지 않는다 — 등재부의 실패 케이스로 쓸 수 없다.
+    """
+    peer = golden_spec()
+    peer["claims"]["dependents"][1]["depends_on"] = ["CL-1"]
+    peer["claims"]["dependents"][1]["dependency_type"] = "single"
+    return context(golden_spec(), peer_spec=peer)
+
+
+def _diverging_peer() -> dict:
+    """element 입도가 갈린 2회차(해석 여지 축의 표본 — 재정 P-3 의 상신 트리거)."""
     peer = golden_spec()
     elements = peer["claims"]["independent"][0]["elements"]
     elements[1] = {
         "id": "CL-1/e2",
         "text_verbatim": "a heat spreader thermally coupled to the first surface",
-        "material_id": "M2",
+        "material_id": M_E2,
         "children": [],
     }
     elements.append(
         {
             "id": "CL-1/e3",
             "text_verbatim": "the heat spreader defining a fluid channel.",
-            "material_id": "M9",
+            "material_id": M_A2,
             "children": [],
         }
     )
-    return context(golden_spec(), peer_spec=peer)
+    return peer
 
 
 def _fail_id_monotonic() -> CheckContext:
     prior = golden_spec()
     prior["items"].append(
         {
-            "id": "M16",
+            "id": new_item_id(prior),
             "kind": "component",
             "status": "active",
             "superseded_by": None,
@@ -595,7 +689,7 @@ def _fail_id_monotonic() -> CheckContext:
 def _fail_payload_immutable() -> CheckContext:
     prior = golden_spec()
     current = golden_spec()
-    item(current, "M1")["label_en"] = "quietly rewritten label under the same id"
+    item(current, M_E1)["label_en"] = "quietly rewritten label under the same id"
     return context(current, prior_spec=prior)
 
 
@@ -607,6 +701,7 @@ FAILING_CASE_BUILDERS = {
     "read.coverage": _fail_coverage,
     "read.dependency-parse": _fail_dependency_parse,
     "read.value-derivation": _fail_value_derivation,
+    "read.bibliography": _fail_bibliography,
     "read.claim-inventory": _fail_claim_inventory,
     "read.convergence": _fail_convergence,
     "freeze.id-monotonic": _fail_id_monotonic,
@@ -652,17 +747,81 @@ def test_coverage_flags_ungrounded_element() -> None:
     require_fail(CHECK_REGISTRY["read.coverage"](_fail_coverage()), "coverage.grounded")
 
 
-def test_convergence_jaccard_below_threshold_fails() -> None:
-    """0.95 미만 쌍이 pass 면 수렴 임계가 집행되지 않음."""
+def test_dependent_set_axis_requires_exact_match() -> None:
+    """종속항 서명축이 0.95 로 남으면 P-3 의 1.0 승격이 미집행 — 다중 종속의 논리 형태가 조용히 갈린다."""
+    axis = _axis_rule("dependent-set")
+    if axis.get("policy") != "exact-match" or float(axis.get("threshold")) != 1.0:
+        pytest.fail(f"dependent-set 축이 재정 P-3 과 다르다: {axis!r}")
     row = CHECK_REGISTRY["read.convergence"](_fail_convergence())
-    require_fail(row, "element-set")
+    require_fail(row, "dependent-set")
+    if _axis_status(row, "dependent-set") != "fail":
+        pytest.fail(f"exact-match 축이 fail 로 판정되지 않았다: {row.extras['axes']}")
+
+    # 대조군 — 서명이 같으면 통과한다(전부 거부하는 검사와 구별되어야 한다).
+    clean = run("read.convergence", golden_spec(), peer_spec=golden_spec())
+    require_pass(clean)
+    if _axis_status(clean, "dependent-set") != "pass":
+        pytest.fail(f"무변조에서 dependent-set 이 통과하지 않았다: {clean.extras['axes']}")
+
+
+def test_interpretive_axis_below_threshold_escalates_not_fails() -> None:
+    """해석 축 미달이 fail 이면 "실패가 아니라 상신"이 문서에만 남는다(재정 P-3)."""
+    for axis_id in ("element-set", "tree-edges"):
+        axis = _axis_rule(axis_id)
+        if axis.get("policy") != "escalation-trigger":
+            pytest.fail(f"{axis_id} 축의 정책이 상신 트리거가 아니다: {axis.get('policy')!r}")
+
+    row = run("read.convergence", golden_spec(), peer_spec=_diverging_peer())
+    # ① 판정 행은 실패가 아니다 — 결함 목록에 그 축이 오르지 않는다.
+    require_pass(row)
+    if "element-set" in rules_of(row):
+        pytest.fail(f"상신 축이 결함으로 등재되었다: {rules_of(row)}")
+    # ② 그러나 침묵하지도 않는다 — 상신 목록과 status 에 남는다.
+    escalated = {entry["axis"] for entry in row.extras["escalations"]}
+    if "element-set" not in escalated:
+        pytest.fail(f"상신 목록에 element-set 이 없다: {row.extras['escalations']}")
+    if _axis_status(row, "element-set") != "escalate":
+        pytest.fail(f"status 어휘가 escalate 가 아니다: {row.extras['axes']}")
+    # ③ 상신 서식 = 독해 프로파일(갈린 항목의 실물).
+    profile = row.extras["profile"]
+    diverged = {entry["axis"] for entry in profile["divergences"]}
+    if "element-set" not in diverged:
+        pytest.fail(f"프로파일에 갈린 항목이 실리지 않았다: {profile['divergences']}")
+
+    # 대조군 — 갈리지 않으면 상신도 없다.
+    clean = run("read.convergence", golden_spec(), peer_spec=golden_spec())
+    if clean.extras["escalations"]:
+        pytest.fail(f"무변조인데 상신이 생겼다: {clean.extras['escalations']}")
+
+
+def test_addition_attachment_axis_is_measure_only() -> None:
+    """측정 전용 축이 판정하면 부착 관례 입법 전에 법이 생긴다(재정 P-3)."""
+    axis = _axis_rule("addition-attachment")
+    if axis.get("policy") != "measure-only" or axis.get("threshold") is not None:
+        pytest.fail(f"addition-attachment 축이 재정 P-3 과 다르다: {axis!r}")
+
+    peer = golden_spec()
+    # 두 부가 한정의 부착 대상을 통째로 옮긴다 — 부착 집합이 완전히 갈린다.
+    for dependent in peer["claims"]["dependents"]:
+        dependent["additions"][0]["attaches_to"] = "CL-1/e1"
+    row = run("read.convergence", golden_spec(), peer_spec=peer)
+
+    require_pass(row)  # 판정하지 않는 축이므로 행을 실패시키지 않는다
+    if "addition-attachment" in {entry["axis"] for entry in row.extras["escalations"]}:
+        pytest.fail("측정 전용 축이 상신 목록에 올랐다 — 판정 제외가 아니라 상신이 되었다")
+    if _axis_status(row, "addition-attachment") != "measured":
+        pytest.fail(f"status 어휘가 measured 가 아니다: {row.extras['axes']}")
+    # 판정은 하지 않아도 **값은 잰다** — 그 값이 부착 관례 입법의 근거 자료다.
+    score = row.extras["jaccard"].get("addition-attachment")
+    if score is None or score >= 1.0:
+        pytest.fail(f"측정 전용 축의 값이 기록되지 않았다: {row.extras['jaccard']}")
 
 
 def test_material_id_append_only_rejects_renumber() -> None:
-    """개정본이 `M7` 을 다른 내용으로 재사용해도 통과하면 ID 규율 붕괴."""
+    """개정본이 포지셔닝 항목을 다른 내용으로 재사용해도 통과하면 ID 규율 붕괴."""
     prior = golden_spec()
     current = golden_spec()
-    reused = item(current, "M7")
+    reused = item(current, M_POSITIONING)
     reused["background_problem"] = "A different background problem under the same id."
     row = CHECK_REGISTRY["freeze.payload-immutable"](context(current, prior_spec=prior))
     require_fail(row, "lifecycle.payload-frozen")
@@ -689,14 +848,14 @@ def test_dependency_parse_matches_multiple_dependency_array() -> None:
 def test_value_span_mismatch_is_rejected() -> None:
     """인용문과 어긋난 `value_span` 이 통과하면 "실재하는 인용 + 날조된 수치"가 정답지에 들어감."""
     spec = golden_spec()
-    item(spec, "M5")["source"]["value_span"] = {"start": 0, "end": 7}
+    item(spec, M_DIAMETER)["source"]["value_span"] = {"start": 0, "end": 7}
     require_fail(run("read.value-derivation", spec), "value.quoted-span")
 
 
 def test_derived_value_recomputation_mismatch_is_rejected() -> None:
     """산식 재계산 불일치가 통과하면 파생 수치가 사실상 자유 기입이 됨."""
     spec = golden_spec()
-    derived = item(spec, "M13")
+    derived = item(spec, M_DERIVED)
     derived["value_normalized"] = "15"
     derived["value_raw"] = "15"
     derived["value_type"] = {"kind": "scalar", "approximate": False, "value": "15"}
@@ -709,8 +868,8 @@ def test_figure_sourced_fact_is_listed_for_manual_verification() -> None:
     require_pass(row)
     manual = row.extras["manual_verification_required"]
     ids = [entry["material_id"] for entry in manual]
-    if ids != ["M15"]:
-        pytest.fail(f"manual_verification_required 기대 ['M15'], 실제 {ids}")
+    if ids != [M_FIGURE_SOURCED]:
+        pytest.fail(f"manual_verification_required 기대 [{M_FIGURE_SOURCED!r}], 실제 {ids}")
     if manual[0]["reason"] != "figure-sourced" or manual[0]["figure"] != "FIG-2":
         pytest.fail(f"수집 항목의 사유·도면이 다르다: {manual[0]}")
 
@@ -725,7 +884,7 @@ def test_dependent_with_empty_additions_is_rejected() -> None:
 def test_hangul_in_en_field_is_rejected() -> None:
     """한국어 `label_en` 이 통과하면 EN 단일 정책이 문서로만 존재하고 historian 이 받는 값의 언어가 런마다 달라짐."""
     spec = golden_spec()
-    item(spec, "M1")["label_en"] = "제1 표면을 갖는 기판"
+    item(spec, M_E1)["label_en"] = "제1 표면을 갖는 기판"
     require_fail(run("read.schema", spec), "schema.validate")
     require_fail(run("read.value-derivation", spec), "value.en-only")
 
@@ -733,9 +892,9 @@ def test_hangul_in_en_field_is_rejected() -> None:
 def test_origin_mixed_attachment_is_rejected() -> None:
     """`quoted` 항목이 `derivation` 을 함께 갖는 것이 통과하면 provenance 가 두 갈래로 갈려 어느 쪽이 근거인지 판정 불가."""
     spec = golden_spec()
-    item(spec, "M5")["derivation"] = {
+    item(spec, M_DIAMETER)["derivation"] = {
         "formula": "a * 2",
-        "inputs": [{"name": "a", "ref": "M12"}],
+        "inputs": [{"name": "a", "ref": M_LENGTH}],
         "rounding": {"mode": "none", "digits": 0},
     }
     require_fail(run("read.schema", spec), "schema.validate")
@@ -746,7 +905,7 @@ def test_derived_fact_of_derived_fact_is_rejected() -> None:
     spec = golden_spec()
     spec["items"].append(
         {
-            "id": "M16",
+            "id": new_item_id(spec),
             "kind": "fact",
             "status": "active",
             "superseded_by": None,
@@ -759,7 +918,7 @@ def test_derived_fact_of_derived_fact_is_rejected() -> None:
             "machine_verifiable": True,
             "derivation": {
                 "formula": "ratio * 2",
-                "inputs": [{"name": "ratio", "ref": "M13"}],
+                "inputs": [{"name": "ratio", "ref": M_DERIVED}],
                 "rounding": {"mode": "none", "digits": 0},
             },
         }
@@ -822,7 +981,13 @@ def test_claim_inventory_rejects_zero_parsed_claims() -> None:
 
 
 def test_convergence_detects_same_elements_different_tree() -> None:
-    """element 집합만 보면 같은 문자열이 서로 다른 계층으로 조립되어도 수렴한 것으로 판정된다(재감수 M-07 구조 축)."""
+    """element 집합만 보면 같은 문자열이 서로 다른 계층으로 조립되어도 수렴한 것으로 판정된다(재감수 M-07 구조 축).
+
+    ★ 판정 층이 바뀌었다(재정 P-3). 트리 조직은 해석 여지가 있는 축이므로 미달이 `fail` 이
+    아니라 **상신**이다 — 그래서 이 테스트가 보는 것은 "실패했는가"가 아니라 **"트리 축만
+    잡혔는가"** 다. 구조 축의 독립성이라는 M-07 의 요지는 그대로이며, 그것이 사라지면 같은
+    문자열의 다른 계층이 아무 데서도 드러나지 않는다.
+    """
     peer = golden_spec()
     elements = peer["claims"]["independent"][0]["elements"]
     nested = elements.pop(1)
@@ -831,9 +996,13 @@ def test_convergence_detects_same_elements_different_tree() -> None:
     for dependent in peer["claims"]["dependents"]:
         dependent["additions"][0]["attaches_to"] = "CL-1/e1/e1"
     row = run("read.convergence", golden_spec(), peer_spec=peer)
-    require_fail(row, "tree-edges")
-    if "element-set" in rules_of(row):
-        pytest.fail("element 집합 축이 함께 실패했다 — 구조 축의 독립성을 시험하지 못한다")
+    axes = {entry["axis"] for entry in row.extras["escalations"]}
+    if "tree-edges" not in axes:
+        pytest.fail(f"트리 간선 축이 상신되지 않았다: {row.extras['escalations']}")
+    if "element-set" in axes:
+        pytest.fail("element 집합 축이 함께 상신됐다 — 구조 축의 독립성을 시험하지 못한다")
+    if _axis_status(row, "element-set") != "pass":
+        pytest.fail(f"element 집합은 갈리지 않았는데 status 가 pass 가 아니다: {row.extras['axes']}")
 
 
 def test_payload_change_under_same_id_is_rejected() -> None:
@@ -843,17 +1012,19 @@ def test_payload_change_under_same_id_is_rejected() -> None:
     # 상태 변경(active → retracted)은 payload 대상이 아니므로 통과해야 한다.
     prior = golden_spec()
     current = golden_spec()
-    item(current, "M5")["status"] = "retracted"
+    item(current, M_DIAMETER)["status"] = "retracted"
     require_pass(CHECK_REGISTRY["freeze.payload-immutable"](context(current, prior_spec=prior)))
 
 
 def test_supersession_chain_terminal_must_be_active() -> None:
     """2차 승계에서 종단을 보지 않으면 인용의 수정 지시가 죽은 항목을 지목한다."""
     spec = golden_spec()
+    first = int(new_item_id(spec)[1:])
+    head, middle, terminal = (f"M{first + step}" for step in range(3))
     chain = [
-        ("M16", "superseded", "M17"),
-        ("M17", "superseded", "M18"),
-        ("M18", "active", None),
+        (head, "superseded", middle),
+        (middle, "superseded", terminal),
+        (terminal, "active", None),
     ]
     for item_id, status, following in chain:
         spec["items"].append(
@@ -870,7 +1041,7 @@ def test_supersession_chain_terminal_must_be_active() -> None:
     require_pass(CHECK_REGISTRY["freeze.payload-immutable"](context(spec)))
 
     dead = copy.deepcopy(spec)
-    item(dead, "M18")["status"] = "retracted"
+    item(dead, terminal)["status"] = "retracted"
     require_fail(
         CHECK_REGISTRY["freeze.payload-immutable"](context(dead)),
         "supersession.terminal-active",
@@ -880,8 +1051,8 @@ def test_supersession_chain_terminal_must_be_active() -> None:
 def test_lifecycle_transition_is_one_way() -> None:
     """종단 상태에서 되돌아오는 전이가 통과하면 철회·교체 기록이 뒤집힐 수 있다."""
     prior = golden_spec()
-    item(prior, "M5")["status"] = "retracted"
-    current = golden_spec()  # M5 는 active
+    item(prior, M_DIAMETER)["status"] = "retracted"
+    current = golden_spec()  # 현행에서는 active 다
     require_fail(
         CHECK_REGISTRY["freeze.payload-immutable"](context(current, prior_spec=prior)),
         "lifecycle.one-way",
@@ -891,7 +1062,7 @@ def test_lifecycle_transition_is_one_way() -> None:
 def test_value_type_mismatch_with_value_raw_is_rejected() -> None:
     """범위를 스칼라로 뭉개 담아도 통과하면 게이트가 그 값에서 문자열 일치 여부밖에 판정하지 못한다."""
     spec = golden_spec()
-    fact = item(spec, "M5")
+    fact = item(spec, M_DIAMETER)
     fact["value_raw"] = "0.05-0.10 mm"
     fact["source"] = {
         "locator": "[0043]",
@@ -912,30 +1083,32 @@ def test_fabricated_value_raw_with_valid_quote_is_rejected() -> None:
     require_fail(row, "value.quoted-span")
     # verbatim 검사는 이 변조를 잡지 못한다 — 그래서 검사 6 이 따로 필요하다.
     spec = golden_spec()
-    item(spec, "M5")["value_raw"] = "999 mm"
+    item(spec, M_DIAMETER)["value_raw"] = "999 mm"
     require_pass(run("read.verbatim", spec))
 
 
 def test_self_referencing_derivation_input_is_rejected() -> None:
     """`derivation.inputs[].ref` 자기참조가 통과하면 원문 스팬까지의 거리가 정의되지 않는다(재감수 B-02 validator-scope)."""
     spec = golden_spec()
-    item(spec, "M13")["derivation"]["inputs"][0] = {"name": "length_mm", "ref": "M13"}
+    item(spec, M_DERIVED)["derivation"]["inputs"][0] = {"name": "length_mm", "ref": M_DERIVED}
     require_fail(run("read.pointer-resolve", spec), "pointer.no-self-reference")
 
 
 def test_reference_graph_cycle_is_rejected() -> None:
     """2항 순환이 통과하면 참조 그래프에 종단이 없어 해소가 무한 루프가 된다."""
     spec = golden_spec()
-    item(spec, "M6")["derived_from"] = ["M16"]
+    cycle_id = new_item_id(spec)
+    item(spec, M_IMPLICATION)["derived_from"] = [cycle_id]
     spec["items"].append(
         {
-            "id": "M16",
+            "id": cycle_id,
             "kind": "implication",
             "status": "active",
             "superseded_by": None,
             "statement_en": "An implication that points back at the first one.",
             "basis": "spec",
-            "derived_from": ["M6"],
+            "derived_from": [M_IMPLICATION],
+            "numeric_refs": [],
             "evidence_quotes": ["the thermal interface count is reduced by one"],
             "confidence": "inferred",
         }
@@ -1022,18 +1195,22 @@ def test_convergence_payload_carries_three_cp1_blocks() -> None:
         pytest.fail(f"checks 행 수가 다르다: {len(payload['checks'])}")
     classification = payload["fact_classification"]
     # 서지 복사는 원문 스팬과 같은 갈래로 계수하되 정체는 `bibliographic_ids` 로 드러난다(§1.4).
-    if classification["quoted_span"]["material_ids"] != ["M5", "M12", "M14"]:
+    if classification["quoted_span"]["material_ids"] != [
+        M_DIAMETER, M_LENGTH, M_BIB_NUMBER, M_BIB_PRIORITY, M_BIB_FILING, M_BIB_PUBLICATION
+    ]:
         pytest.fail(f"수치 3분류의 원문 스팬 갈래가 다르다: {classification['quoted_span']}")
-    if [entry["material_id"] for entry in classification["derived"]] != ["M13"]:
+    if [entry["material_id"] for entry in classification["derived"]] != [M_DERIVED]:
         pytest.fail(f"파생 갈래가 다르다: {classification['derived']}")
-    if [entry["material_id"] for entry in classification["figure_sourced"]] != ["M15"]:
+    if [entry["material_id"] for entry in classification["figure_sourced"]] != [M_FIGURE_SOURCED]:
         pytest.fail(f"도면 유래 갈래가 다르다: {classification['figure_sourced']}")
-    if classification["bibliographic_ids"] != ["M14"]:
+    if classification["bibliographic_ids"] != [
+        M_BIB_NUMBER, M_BIB_PRIORITY, M_BIB_FILING, M_BIB_PUBLICATION
+    ]:
         pytest.fail(f"서지 갈래가 다르다: {classification['bibliographic_ids']}")
-    if [entry["material_id"] for entry in payload["manual_verification_required"]] != ["M15"]:
+    if [entry["material_id"] for entry in payload["manual_verification_required"]] != [M_FIGURE_SOURCED]:
         pytest.fail("도면 유래 수치가 사람 검증 목록에 오르지 않았다")
     exceptions = payload["grounding_exceptions"]
-    if [entry["material_id"] for entry in exceptions] != ["M10"]:
+    if [entry["material_id"] for entry in exceptions] != [M_GROUND_A1]:
         pytest.fail(f"접지 예외 전량 노출이 어긋난다: {exceptions}")
     if exceptions[0]["figure"] != "not-depicted" or not exceptions[0]["search_note"]:
         pytest.fail(f"접지 예외 항목의 신고 내용이 비었다: {exceptions[0]}")
@@ -1086,11 +1263,11 @@ def test_coverage_counts_dependent_additions_as_required() -> None:
 def test_coverage_rejects_shared_component_and_reverse_mismatch() -> None:
     """1:1 과 역참조를 보지 않으면 접지 1건이 두 구성요소를 덮고도 통과한다(재감수 B-02)."""
     shared = golden_spec()
-    shared["claims"]["dependents"][1]["additions"][0]["material_id"] = "M3"
+    shared["claims"]["dependents"][1]["additions"][0]["material_id"] = M_A1
     require_fail(run("read.coverage", shared), "coverage.material-id-unique")
 
     reversed_spec = golden_spec()
-    item(reversed_spec, "M3")["claim_ref"] = "CL-1/e1"
+    item(reversed_spec, M_A1)["claim_ref"] = "CL-1/e1"
     require_fail(run("read.coverage", reversed_spec), "coverage.claim-ref-reverse")
 
 
@@ -1104,16 +1281,17 @@ def test_cross_claim_text_is_caught_by_inventory_not_verbatim() -> None:
 
     # 절 밖(설명부)의 문장을 청구항 전문에 넣으면 그때는 verbatim 이 잡는다.
     outside = golden_spec()
-    outside["claims"]["dependents"][0]["text_verbatim"] = SPEC_QUOTE_M4
+    outside["claims"]["dependents"][0]["text_verbatim"] = GROUND_QUOTE_E2
     require_fail(run("read.verbatim", outside), "verbatim.claim-section")
 
 
 def test_orphan_component_item_is_rejected() -> None:
     """커버리지는 청구항 쪽에서 세므로, 청구항이 통째로 빠지면 셀 대상도 함께 빠져 통과한다 — 남는 흔적이 고아 성분 항목이다."""
     spec = golden_spec()
+    orphan_id = new_item_id(spec)
     spec["items"].append(
         {
-            "id": "M16",
+            "id": orphan_id,
             "kind": "component",
             "status": "active",
             "superseded_by": None,
@@ -1126,22 +1304,26 @@ def test_orphan_component_item_is_rejected() -> None:
 
     # 물러난 항목은 대상이 아니다 — 개정의 자취를 고아로 잡으면 append-only 규율과 충돌한다.
     retired = copy.deepcopy(spec)
-    item(retired, "M16")["status"] = "retracted"
+    item(retired, orphan_id)["status"] = "retracted"
     require_pass(run("read.coverage", retired))
 
 
 def test_standalone_retracted_item_is_not_a_chain_violation() -> None:
     """단독 철회 항목을 사슬 위반으로 읽으면 정상 개정본이 통과하지 못한다(retracted = 대체물 없음)."""
     spec = golden_spec()
-    item(spec, "M5")["status"] = "retracted"  # superseded_by 는 null 그대로
+    item(spec, M_DIAMETER)["status"] = "retracted"  # superseded_by 는 null 그대로
     require_pass(CHECK_REGISTRY["freeze.payload-immutable"](context(spec)))
     definition = RULES.item_lifecycle["supersession_chain"].get("chain_definition")
     if not definition:
         pytest.fail("규칙 파일에 chain_definition 이 없다 — 사슬의 출발점 정의가 문언에 없다")
 
 
-def test_reference_cycle_edges_cover_all_four_link_kinds() -> None:
-    """간선 4종 중 하나라도 빠지면 그 링크로 만든 순환은 영원히 보이지 않는다."""
+def test_reference_cycle_edges_cover_all_five_link_kinds() -> None:
+    """간선 5종 중 하나라도 빠지면 그 링크로 만든 순환은 영원히 보이지 않는다.
+
+    ★ 5번째가 `numeric_refs[]` 다(재정 P-B). 역참조가 그래프의 간선이 아니면 함의 A 가
+    수치 B 를, B 가 다시 A 를 가리키는 순환이 해소 검사를 통과한다.
+    """
     from reader.lib.pointers import GRAPH_FIELDS
 
     expected = {
@@ -1149,6 +1331,7 @@ def test_reference_cycle_edges_cover_all_four_link_kinds() -> None:
         "derived_from[]",
         "superseded_by",
         "grounding.component",
+        "numeric_refs[]",
     }
     if set(GRAPH_FIELDS) != expected:
         pytest.fail(f"간선 집합이 계약과 다르다: {sorted(GRAPH_FIELDS)}")
@@ -1164,7 +1347,7 @@ def test_dependency_parse_rejects_unparsable_citation() -> None:
 def test_bibliographic_date_fact_passes_value_grammar() -> None:
     """서지 날짜(§2.7 M14 형태)가 파싱되지 않으면 M1 DoD 1행("예시 인스턴스가 전 검사 통과")이 성립하지 않는다."""
     spec = golden_spec()
-    fact = item(spec, "M14")
+    fact = item(spec, M_BIB_PRIORITY)
     if fact["origin"] != "bibliographic" or fact["value_type"]["kind"] != "date":
         pytest.fail(f"골든의 서지 사실이 §2.7 M14 형태가 아니다: {fact}")
     require_pass(run("read.value-derivation", spec))
@@ -1179,26 +1362,13 @@ def test_bibliographic_date_fact_passes_value_grammar() -> None:
 def test_bibliographic_patent_number_requires_identifier_kind() -> None:
     """공개번호가 `scalar` 로 통과하면 서지 식별자가 정답지에 '수치'로 한 건 늘어난다."""
     spec = golden_spec()
-    spec["items"].append(
-        {
-            "id": "M16",
-            "kind": "fact",
-            "status": "active",
-            "superseded_by": None,
-            "label_en": "publication number",
-            "origin": "bibliographic",
-            "value_raw": "XX0000000A1",
-            "value_normalized": "XX0000000A1",
-            "value_type": {"kind": "identifier", "approximate": False, "value": "XX0000000A1"},
-            "unit": None,
-            "machine_verifiable": True,
-            "bib_source": {"field": "patent.number"},
-        }
-    )
+    number = item(spec, M_BIB_NUMBER)
+    if number["origin"] != "bibliographic" or number["bib_source"]["field"] != "patent.number":
+        pytest.fail(f"수확본의 서지 식별자가 기대 형태가 아니다: {number}")
     require_pass(run("read.value-derivation", spec))
 
     wrong = copy.deepcopy(spec)
-    item(wrong, "M16")["value_type"] = {"kind": "scalar", "approximate": False, "value": "0"}
+    item(wrong, M_BIB_NUMBER)["value_type"] = {"kind": "scalar", "approximate": False, "value": "0"}
     require_fail(run("read.value-derivation", wrong), "value.origin-kind-binding")
 
 
@@ -1342,9 +1512,10 @@ def test_date_kind_is_tried_before_range() -> None:
 def test_derived_input_cannot_be_a_date() -> None:
     """날짜·식별자가 산식 입력으로 통과하면 "원문 스팬에서 왔다"가 "수다"로 둔갑한다."""
     spec = golden_spec()
+    date_id = new_item_id(spec)
     spec["items"].append(
         {
-            "id": "M16",
+            "id": date_id,
             "kind": "fact",
             "status": "active",
             "superseded_by": None,
@@ -1362,7 +1533,7 @@ def test_derived_input_cannot_be_a_date() -> None:
             },
         }
     )
-    item(spec, "M13")["derivation"]["inputs"][0] = {"name": "length_mm", "ref": "M16"}
+    item(spec, M_DERIVED)["derivation"]["inputs"][0] = {"name": "length_mm", "ref": date_id}
     require_fail(run("read.value-derivation", spec), "value.input-not-arithmetic")
 
 
@@ -1373,22 +1544,22 @@ def test_spec_ref_span_is_byte_offset() -> None:
     source = prefix + SOURCE
     spec = golden_spec()
     spec["patent"]["source_digest"] = digest_of(source)
-    quote = SPEC_QUOTE_M4
+    quote = GROUND_QUOTE_E2
     byte_start = source.encode("utf-8").index(quote.encode("utf-8"))
     char_start = source.index(quote)
     if byte_start == char_start:
         pytest.fail("표본 원천이 바이트≠문자를 만들지 못했다 — 이 테스트가 공허하다")
 
-    item(spec, "M4")["spec_refs"][0]["span"] = {
+    item(spec, M_GROUND_E2)["spec_refs"][0]["span"] = {
         "start": byte_start,
         "end": byte_start + len(quote.encode("utf-8")),
     }
-    item(spec, "M8")["spec_refs"][0]["span"] = None
-    item(spec, "M8")["spec_refs"][0].pop("span")
+    item(spec, M_GROUND_E1)["spec_refs"][0]["span"] = None
+    item(spec, M_GROUND_E1)["spec_refs"][0].pop("span")
     require_pass(run("read.verbatim", spec, source_text=source))
 
     wrong = copy.deepcopy(spec)
-    item(wrong, "M4")["spec_refs"][0]["span"] = {
+    item(wrong, M_GROUND_E2)["spec_refs"][0]["span"] = {
         "start": char_start,
         "end": char_start + len(quote),
     }
@@ -1398,7 +1569,7 @@ def test_spec_ref_span_is_byte_offset() -> None:
 def test_value_span_is_character_offset() -> None:
     """`value_span` 을 바이트로 읽으면 인용문에 한글·기호가 섞인 순간 정상 수치가 날조로 판정된다."""
     spec = golden_spec()
-    fact = item(spec, "M5")
+    fact = item(spec, M_DIAMETER)
     quote = "치수 표기 — a hydraulic diameter of 0.08 mm"
     fact["source"] = {
         "locator": "[0043]",
@@ -1412,7 +1583,7 @@ def test_value_span_is_character_offset() -> None:
     byte_based = copy.deepcopy(spec)
     quote_bytes = quote.encode("utf-8")
     start = quote_bytes.index(b"0.08 mm")
-    item(byte_based, "M5")["source"]["value_span"] = {"start": start, "end": start + 7}
+    item(byte_based, M_DIAMETER)["source"]["value_span"] = {"start": start, "end": start + 7}
     row = run("read.value-derivation", byte_based)
     # 바이트 오프셋으로 적힌 value_span 은 범위 밖으로 나가거나(span-bounds) 다른 바이트를
     # 집는다(quoted-span). 둘 중 무엇이든 **거부**되는 것이 요점이다.
@@ -1426,7 +1597,7 @@ def test_span_cutting_a_character_boundary_is_rejected() -> None:
     source = prefix + SOURCE
     spec = golden_spec()
     spec["patent"]["source_digest"] = digest_of(source)
-    item(spec, "M4")["spec_refs"][0]["span"] = {"start": 3, "end": 9}  # '한' 의 중간
+    item(spec, M_GROUND_E2)["spec_refs"][0]["span"] = {"start": 3, "end": 9}  # '한' 의 중간
     require_fail(run("read.verbatim", spec, source_text=source), "verbatim.span-boundary")
 
 
@@ -1462,29 +1633,18 @@ def test_item_ids_must_be_contiguous() -> None:
     """결번이 통과하면 추가 전용 규율이 "번호가 건너뛰어도 통과"로 남고 삭제와 미생성이 구별되지 않는다."""
     require_pass(run("freeze.id-monotonic", golden_spec()))
     gapped = golden_spec()
-    gapped["items"] = [entry for entry in gapped["items"] if entry["id"] != "M7"]
+    gapped["items"] = [entry for entry in gapped["items"] if entry["id"] != M_GROUND_A1]
     require_fail(run("freeze.id-monotonic", gapped), "lifecycle.id-contiguous")
 
 
 def test_bibliographic_copy_mismatch_is_rejected() -> None:
     """서지 복사가 `patent` 블록과 달라도 통과하면 결정론 복사가 자유 기입이 된다."""
     spec = golden_spec()
-    spec["items"].append(
-        {
-            "id": "M16",
-            "kind": "fact",
-            "status": "active",
-            "superseded_by": None,
-            "label_en": "publication year",
-            "origin": "bibliographic",
-            "value_raw": "1999",
-            "value_normalized": "1999",
-            "value_type": {"kind": "scalar", "approximate": False, "value": "1999"},
-            "unit": None,
-            "machine_verifiable": True,
-            "bib_source": {"field": "patent.dates.publication"},
-        }
-    )
+    # 수확본의 서지 사실을 `patent` 블록과 어긋나게 고쳐 쓴다 — 필드는 그대로 두고 값만 바꾼다.
+    forged = item(spec, M_BIB_PUBLICATION)
+    forged["value_raw"] = "1999-01-01"
+    forged["value_normalized"] = "1999-01-01"
+    forged["value_type"] = {"kind": "date", "approximate": False, "value": "1999-01-01"}
     require_fail(run("read.value-derivation", spec), "value.bibliographic")
 
 
@@ -1503,10 +1663,194 @@ def test_formula_evaluator_refuses_non_arithmetic_input() -> None:
 def test_rounding_modes_are_applied_before_comparison() -> None:
     """반올림이 대조 전에 적용되지 않으면 `rounding` 선언이 장식이 된다."""
     spec = golden_spec()
-    derived = item(spec, "M13")
+    derived = item(spec, M_DERIVED)
     derived["derivation"]["formula"] = "length_mm / diameter_mm / 7"
     derived["derivation"]["rounding"] = {"mode": "decimal-places", "digits": 2}
     derived["value_raw"] = "21.43"
     derived["value_normalized"] = "21.43"
     derived["value_type"] = {"kind": "scalar", "approximate": False, "value": "21.43"}
     require_pass(run("read.value-derivation", spec))
+
+
+# ---------------------------------------------------------------------------
+# 재정 반증 (2026-08-18 P 계열)
+#
+# 각 테스트는 변조본을 **실제로 만들고** 검사가 그것을 잡는지 본다. 변조본이 실패하는 것만
+# 보이면 과잉 제약과 구별되지 않으므로, 같은 테스트 안에 **무변조 대조군**을 함께 둔다.
+# ---------------------------------------------------------------------------
+
+# 구조 표지가 있는 종속항 전문(Markush). 표지 목록의 정본 =
+# `reader-rules.yaml#dependency_citation.unclassified.structure_markers`.
+MARKUSH_CLAIM = (
+    "The stacked module of claim 1, wherein the heat spreader is formed of a material "
+    "selected from the group consisting of copper, aluminum, and a copper alloy."
+)
+
+
+def _unclassified_spec(text: str, *, depends_on=("CL-1", "CL-5")) -> dict:
+    """CL-7 을 `unclassified` 로 선언한 판. 전문과 `depends_on` 을 시험이 정한다."""
+    spec = golden_spec()
+    dependent = spec["claims"]["dependents"][1]
+    dependent["dependency_type"] = "unclassified"
+    dependent["text_verbatim"] = text
+    dependent["depends_on"] = list(depends_on)
+    return spec
+
+
+def test_unclassified_dependent_is_excluded_from_parse_verdict() -> None:
+    """미분류 표지가 판정 대상에 남으면 P-1 이 이름뿐 — 규칙의 공백이 실제 결함과 같은 모양으로 계상된다."""
+    # 대조군 ① 무변조 — 두 종속항이 모두 판정 대상이고 미분류 목록은 비어 있다.
+    clean = run("read.dependency-parse", golden_spec())
+    require_pass(clean)
+    if clean.checked != 2 or clean.extras["unclassified"]:
+        pytest.fail(f"무변조 기대 checked=2 · 미분류 없음, 실제 {clean.checked} / {clean.extras}")
+
+    # 대조군 ② 같은 전문·같은 `depends_on` 인데 표지가 아니면 **실패한다**.
+    #   (전문은 claim 1 만 인용하는데 depends_on 은 두 건 — 판정 대상이면 반드시 걸린다.)
+    judged = _unclassified_spec(MARKUSH_CLAIM)
+    judged["claims"]["dependents"][1]["dependency_type"] = "single"
+    require_fail(run("read.dependency-parse", judged), "parse.set-equals")
+
+    # 본체 — 표지를 붙이면 그 종속항은 판정에서 빠지고, 그 사실이 목록으로 드러난다.
+    row = run("read.dependency-parse", _unclassified_spec(MARKUSH_CLAIM))
+    require_pass(row)
+    if row.checked != 1:
+        pytest.fail(f"미분류가 checked 에서 빠지지 않았다: checked={row.checked}")
+    if row.extras["unclassified"] != ["CL-7"]:
+        pytest.fail(f"미분류 목록이 비었거나 다르다: {row.extras['unclassified']}")
+
+
+def test_unclassified_declared_on_parseable_claim_is_rejected() -> None:
+    """미분류가 회피 통로가 되면 침묵 통과가 부활한다 — 판정 기준은 본문의 **구조 표지 유무**다(재정 P-1)."""
+    # ⓐ 구조 표지가 있는 청구항의 선언은 **통과**한다.
+    #    (재정이 명한 사용을 벌하면 그 규칙은 재정을 뒤집는 것이다.)
+    allowed = run("read.dependency-parse", _unclassified_spec(MARKUSH_CLAIM))
+    if "parse.unclassified-not-an-escape" in rules_of(allowed):
+        pytest.fail(f"구조 표지가 있는 선언이 거부됐다: {rules_of(allowed)}")
+
+    # ⓑ 표지가 하나도 없는 청구항의 선언은 **실패**한다.
+    plain = _unclassified_spec(CLAIM_7, depends_on=("CL-1", "CL-5"))
+    require_fail(run("read.dependency-parse", plain), "parse.unclassified-not-an-escape")
+
+    # 두 방향을 다 보지 않으면 가드가 절반만 증명된다 — 표본이 실제로 갈리는지 확인한다.
+    if not RULES.structure_markers_in(MARKUSH_CLAIM):
+        pytest.fail("표지 표본에서 구조 표지를 찾지 못했다 — ⓐ 가 공허하다")
+    if RULES.structure_markers_in(CLAIM_7):
+        pytest.fail("무표지 표본에 구조 표지가 있다 — ⓑ 가 공허하다")
+
+
+def test_bibliography_rejects_fabricated_inventor() -> None:
+    """서지 확장이 원천 대조 없이 통과하면 "결정론 복사"가 자유 기입이 된다(재정 P-2 ⓐ)."""
+    require_pass(run("read.bibliography", golden_spec()))  # 대조군 — 정직한 복사는 통과한다
+
+    spec = golden_spec()
+    spec["patent"]["inventors"] = ["Dana Reyes", "Ivan Nonexistent"]
+    row = run("read.bibliography", spec)
+    require_fail(row, "bib.inventors-in-source")
+    if "patent.inventors[1]" not in {finding.locus for finding in row.findings}:
+        pytest.fail(f"어느 발명자가 날조인지 좌표가 없다: {[f.locus for f in row.findings]}")
+
+    # 한 글자만 달라도 잡힌다 — 눈으로 옮겨 적는 경로를 막는 것이 이 검사의 목적이다.
+    typo = golden_spec()
+    typo["patent"]["applicants"] = ["Example Devices Inc."]  # 원천은 `Devices, Inc.`
+    require_fail(run("read.bibliography", typo), "bib.applicants-in-source")
+
+
+def test_bibliography_rejects_wrong_earliest_priority() -> None:
+    """최우선일이 우선권 목록과 어긋나도 통과하면 C18 요건이 문서로만 존재한다(재정 P-2 ⓐ)."""
+    spec = golden_spec()
+    spec["patent"]["priority_claims"].append(
+        # 같은 번호의 더 이른 주장 — 번호는 원천에 실재하므로 부분문자열 대조는 통과한다.
+        {"number": "XX2024-0000111", "date": "2023-11-02", "jurisdiction": "XX"}
+    )
+    row = run("read.bibliography", spec)
+    require_fail(row, "bib.earliest-priority")
+
+    # 대조군 — 최우선일을 목록의 최소 날짜로 맞추면 통과한다(과잉 제약 배제).
+    fixed = copy.deepcopy(spec)
+    fixed["patent"]["dates"]["priority"] = "2023-11-02"
+    require_pass(run("read.bibliography", fixed))
+
+
+def test_harvest_parity_detects_planted_number() -> None:
+    """심은 수치가 통과하면 전수 수확이 공허해진다 — 정답지가 다시 자유 기입이 된다(재정 P-B)."""
+    clean = run("read.value-derivation", golden_spec())
+    require_pass(clean)  # 대조군 — 수확기 산출 그대로면 통과한다
+
+    spec = golden_spec()
+    quote = "a hydraulic diameter of 0.08 mm"
+    spec["items"].append(
+        {
+            # 실재하는 인용문 옆에 수확기가 낸 적 없는 좌표로 값을 하나 심는다.
+            "id": new_item_id(spec),
+            "kind": "fact",
+            "status": "active",
+            "superseded_by": None,
+            "label_en": "planted hydraulic diameter",
+            "origin": "quoted",
+            "value_raw": "0.08 mm",
+            "value_normalized": "0.08",
+            "value_type": {"kind": "scalar", "approximate": False, "value": "0.08"},
+            "unit": "mm",
+            "machine_verifiable": True,
+            "source": {
+                "locator": "claim 5",
+                "quote": quote,
+                "value_span": _value_span(quote, "0.08 mm"),
+            },
+        }
+    )
+    row = run("read.value-derivation", spec)
+    require_fail(row, "value.harvest-parity")
+    if not [f for f in row.findings if f.rule == "value.harvest-parity" and "[추가]" in f.message]:
+        pytest.fail(f"심은 값이 '추가'로 분류되지 않았다: {[f.message[:60] for f in row.findings]}")
+
+    # 좌표는 그대로 두고 값만 바꾼 판 = **변조**. 갈래가 갈려야 국소 수정 지시가 선다(D8).
+    forged = golden_spec()
+    item(forged, M_DIAMETER)["value_raw"] = "0.09 mm"
+    forged_row = run("read.value-derivation", forged)
+    require_fail(forged_row, "value.harvest-parity")
+    if not [
+        f for f in forged_row.findings
+        if f.rule == "value.harvest-parity" and "[변조]" in f.message
+    ]:
+        pytest.fail(f"변조가 '변조'로 분류되지 않았다: {[f.message[:60] for f in forged_row.findings]}")
+
+
+def test_harvest_parity_detects_dropped_number() -> None:
+    """수확 누락이 통과하면 "전수"가 이름뿐이 된다 — 빠진 사실은 어느 검사도 결함으로 보지 않는다(재정 P-B)."""
+    spec = golden_spec()
+    # 수확된 값 하나를 통째로 들어낸다. 그 값을 참조하던 자리도 함께 정리해, 남는 결함이
+    # **누락 하나**가 되도록 한다(다른 규칙에 업혀 통과하는 것을 막는다).
+    spec["items"] = [entry for entry in spec["items"] if entry["id"] not in (M_LENGTH, M_DERIVED)]
+    item(spec, M_POSITIONING)["numeric_refs"] = []
+    row = run("read.value-derivation", spec)
+    require_fail(row, "value.harvest-parity")
+    dropped = [
+        finding for finding in row.findings
+        if finding.rule == "value.harvest-parity" and "[누락]" in finding.message
+    ]
+    if len(dropped) != 1:
+        pytest.fail(f"누락 1건 기대, 실제 {[f.message[:80] for f in row.findings]}")
+    if "12 mm" not in dropped[0].expected:
+        pytest.fail(f"무엇이 빠졌는지 기대값에 실리지 않았다: {dropped[0].expected!r}")
+
+    # 대조군 — 같은 항목을 그대로 둔 판은 통과한다.
+    require_pass(run("read.value-derivation", golden_spec()))
+
+
+def test_numeric_refs_must_resolve_to_fact_items() -> None:
+    """역참조가 해소되지 않으면 중요분 도출이 무의미해진다 — 고르는 일 전체가 이 참조 하나에 걸려 있다(재정 P-B)."""
+    require_pass(run("read.pointer-resolve", golden_spec()))  # 대조군
+
+    dangling = golden_spec()
+    item(dangling, M_IMPLICATION)["numeric_refs"] = ["M999"]
+    require_fail(run("read.pointer-resolve", dangling), "pointer.resolve")
+
+    # 해소는 되지만 **fact 가 아닌** 항목을 가리키는 판. 존재만 보면 이것이 통과한다.
+    wrong_kind = golden_spec()
+    item(wrong_kind, M_POSITIONING)["numeric_refs"] = [M_E1]
+    row = run("read.pointer-resolve", wrong_kind)
+    require_fail(row, "pointer.kind")
+    if f"{M_POSITIONING}.numeric_refs[0]" not in {finding.locus for finding in row.findings}:
+        pytest.fail(f"역참조의 좌표가 결함에 실리지 않았다: {[f.locus for f in row.findings]}")

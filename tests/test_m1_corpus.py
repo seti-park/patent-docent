@@ -109,6 +109,12 @@ def test_requirements_table_cites_only_evidence_that_exists():
 
     M0.6 재감수가 벌한 "강제의 범위를 실제보다 넓게 말한 것"과 같은 층의 결함이다 —
     이번에는 강제가 아니라 **증거**의 범위였다.
+
+    ★ 인용에는 두 종류가 있다(2026-08-18). 하나는 **증거**로 지목한 이름이고, 다른 하나는
+    개명 이력을 밝히려고 적은 **구 이름**(`구 \\`test_...\\`` 서식)이다. 둘을 같은 규칙으로
+    보면 개명 이력을 적는 순간 표가 자기 자신을 위반하게 되므로, 방향을 반대로 건다 —
+    증거는 **실재해야** 하고 구 이름은 **실재하지 않아야** 한다. 후자가 남아 있으면 개명이
+    끝나지 않았거나 표의 서술이 사실과 다른 것이다.
     """
     spec = open(os.path.join(REPO, "docs", "SPEC.md"), encoding="utf-8").read()
     start = spec.find("##### M1 요구사항표")
@@ -118,7 +124,8 @@ def test_requirements_table_cites_only_evidence_that_exists():
 
     import json
 
-    cited_tests = sorted(set(re.findall(r"`(test_[a-z0-9_]+)`", block)))
+    retired = set(re.findall(r"구 `(test_[a-z0-9_]+)`", block))
+    cited_tests = sorted(set(re.findall(r"`(test_[a-z0-9_]+)`", block)) - retired)
     assert cited_tests, "요구사항표가 반증 테스트를 하나도 지목하지 않는다"
     # `pytest --collect-only` 를 서브프로세스로 부르면 스위트 전체를 두 번 수집하게 되어
     # 실행 시간이 배로 늘고 스위트가 커질수록 나빠진다. 테스트 소스에서 정의를 직접 찾는다.
@@ -128,6 +135,12 @@ def test_requirements_table_cites_only_evidence_that_exists():
         defined |= set(re.findall(r"^def (test_[a-z0-9_]+)\(", source, re.MULTILINE))
     missing = [name for name in cited_tests if name not in defined]
     assert not missing, f"요구사항표가 지목한 테스트가 실재하지 않는다: {missing}"
+
+    survivors = sorted(name for name in retired if name in defined)
+    assert not survivors, (
+        f"표가 개명되었다고 적은 이름이 아직 살아 있다: {survivors} — "
+        "개명이 끝나지 않았거나 표의 서술이 사실과 다르다"
+    )
 
     cited_cases = sorted(set(re.findall(r"`(invalid/[a-z0-9.\-]+\.json)`", block)))
     manifest = json.load(
@@ -145,8 +158,17 @@ def test_stage_contracts_declare_every_check_the_stage_runs():
     `checks_before_exit`에 넣지 않았는데 스테이지는 그것을 실행하고 있었다. 양방향 다
     결함이다 — 선언 없이 도는 검사는 근거가 없고, 돌지 않는 선언은 약속만 있다.
 
-    `read`만 본다. `source`·`freeze`는 검사 id가 `reader/lib` 레지스트리 밖(엔진 소관)이라
-    같은 방식으로 대조할 대상이 없다 — 그 사실 자체가 남은 공백이며 `D-20260818-03`에 적혀 있다.
+    ★ 대조는 **두 축**이다(2026-08-18 · 재정 P-C·P-4). 이유는 층의 사실이다 — `reader/`는
+    이식 단위라 런 작업장(`runs/`)을 보지 못하므로, 파일 지문(`read.input-digest`)과 레인
+    왕복 기록(`read.lane-log-shape`)을 보는 검사는 **엔진 소관**이고 `READ_CHECK_IDS`에
+    있을 수 없다. 한쪽 축을 느슨하게 만들어 통과시키지 않는다:
+
+      축 1 (이식 단위) `implemented_by`가 `reader/lib/**`인 검사 ⟺ `READ_CHECK_IDS` **양방향 엄격**
+      축 2 (엔진 소관) `implemented_by`가 `engine/**`인 검사 — 그 파일이 실재하고 그 안에
+                       검사 id 문자열이 있는가(좌표가 유령이면 실패한다)
+
+    `source`·`freeze`는 검사 id가 두 축 어느 쪽으로도 전량 분류되어 있지 않아 같은 방식으로
+    대조할 대상이 없다 — 그 사실 자체가 남은 공백이며 `D-20260818-03`에 적혀 있다.
     """
     import yaml
 
@@ -156,14 +178,39 @@ def test_stage_contracts_declare_every_check_the_stage_runs():
     contract = yaml.safe_load(
         open(os.path.join(REPO, "contracts", "stages", "read.yaml"), encoding="utf-8")
     )
-    declared = [entry["id"] for entry in contract["checks_before_exit"]]
+    declared = (contract.get("checks_on_entry") or []) + contract["checks_before_exit"]
+
+    nameless = [entry["id"] for entry in declared if not entry.get("implemented_by")]
+    assert not nameless, f"구현 좌표(implemented_by)가 없는 선언: {nameless}"
+
+    portable, engine_side, unknown = [], [], []
+    for entry in declared:
+        where = str(entry["implemented_by"])
+        if where.startswith("reader/lib/"):
+            portable.append(entry["id"])
+        elif where.startswith("engine/"):
+            engine_side.append((entry["id"], where))
+        else:
+            unknown.append((entry["id"], where))
+    # 두 축 어디에도 속하지 않는 층이 생겼는데 시험이 모르는 상태가 가장 위험하다.
+    assert not unknown, f"두 축 어디에도 속하지 않는 구현 좌표: {unknown}"
+
+    # -- 축 1 — 이식 단위 검사는 양방향 엄격 대조 --------------------------
     executed = list(run_checks.READ_CHECK_IDS)
-
-    undeclared = [check for check in executed if check not in declared]
+    undeclared = [check for check in executed if check not in portable]
     assert not undeclared, f"스테이지가 실행하는데 계약이 선언하지 않은 검사: {undeclared}"
-
-    unexecuted = [check for check in declared if check not in executed]
+    unexecuted = [check for check in portable if check not in executed]
     assert not unexecuted, f"계약이 선언했는데 스테이지가 실행하지 않는 검사: {unexecuted}"
+
+    # -- 축 2 — 엔진 소관 검사는 좌표의 실재를 본다 ------------------------
+    assert engine_side, "엔진 소관 검사가 하나도 없다 — 두 축 대조의 전제가 사라졌다"
+    for check_id, where in engine_side:
+        path = os.path.join(REPO, *where.split("/"))
+        assert os.path.isfile(path), f"{check_id}: 구현 좌표가 실재하지 않는다 — {where}"
+        source = open(path, encoding="utf-8").read()
+        assert check_id in source, (
+            f"{check_id}: {where} 안에 그 검사 id 문자열이 없다 — 좌표가 유령이다"
+        )
 
 
 def test_spec_json_examples_validate_against_their_contracts():

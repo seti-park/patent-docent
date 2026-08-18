@@ -318,3 +318,149 @@ def test_scope_contract_mutations_actually_change_the_manifest(tmp_path) -> None
             unchanged.append(mutation_id)
     if unchanged:
         pytest.fail("manifest 를 바꾸지 못한 변형: " + ", ".join(unchanged))
+
+
+# ---------------------------------------------------------------------------
+# 재정 반증 — 스키마 신설분 (재정 P-1 · P-2 · P-B)
+#
+# 위 시험들은 `tests/fixtures/schema-enforcement/` 의 표본을 돈다. 아래는 그 코퍼스에 아직
+# 표본이 없는 신설 제약을 **인스턴스를 코드에서 만들어** 시험한다 — 픽스처 트리는 다른
+# 레인의 작업 구역이므로 여기서 늘리지 않는다. 표본이 코퍼스에 들어오면 이 자리는
+# 중복이 되며, 그때 지우는 것이 옳다.
+#
+# 방향은 언제나 둘이다: 변조본이 **거부**되고 무변조가 **통과**한다. 한쪽만 보이면
+# 과잉 제약과 구별되지 않는다.
+# ---------------------------------------------------------------------------
+
+MATERIAL_SPEC_SCHEMA = os.path.join(REPO, "reader", "schemas", "material-spec.schema.json")
+MINIMAL_INSTANCE = os.path.join(
+    REPO, cse.FIXTURE_ROOT, "accept", "material-spec.minimal.json"
+)
+
+
+def _material_validator() -> Draft202012Validator:
+    with open(MATERIAL_SPEC_SCHEMA, encoding="utf-8") as handle:
+        return Draft202012Validator(json.load(handle))
+
+
+def _minimal_instance() -> dict:
+    with open(MINIMAL_INSTANCE, encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def _item(instance: dict, kind: str) -> dict:
+    for entry in instance["items"]:
+        if entry.get("kind") == kind:
+            return entry
+    pytest.fail(f"최소 인스턴스에 kind={kind} 항목이 없다 — 이 시험이 공허해진다")
+    return {}  # pragma: no cover
+
+
+def _reject(validator: Draft202012Validator, instance: dict, what: str) -> None:
+    if validator.is_valid(instance):
+        pytest.fail(f"스키마가 통과시켰다 — {what}")
+
+
+def test_schema_baseline_instance_is_valid() -> None:
+    """대조군이 통과하지 않으면 아래 음성 시험이 전부 '엉뚱한 이유로' 초록이 된다."""
+    validator = _material_validator()
+    errors = sorted(validator.iter_errors(_minimal_instance()), key=str)
+    if errors:
+        pytest.fail(f"최소 인스턴스가 스키마를 통과하지 못한다: {errors[0].message}")
+
+
+def test_schema_confines_project_judgment_to_the_extension_block() -> None:
+    """`drop_signal` 이 공유 코어로 되돌아가면 이식 상대에게 docent 의 편집 판단을 강요한다(재정 P-2 ⓑ)."""
+    validator = _material_validator()
+
+    top_level = _minimal_instance()
+    top_level["drop_signal"] = top_level["extensions"]["docent"]["drop_signal"]
+    _reject(validator, top_level, "최상위 `drop_signal`(구 스키마로의 회귀)")
+
+    unknown_namespace = _minimal_instance()
+    unknown_namespace["extensions"]["marketer"] = {"tweet": "a project that is not on the list"}
+    _reject(validator, unknown_namespace, "등재되지 않은 확장 네임스페이스")
+
+    empty_block = _minimal_instance()
+    empty_block["extensions"]["docent"] = {}
+    _reject(validator, empty_block, "빈 docent 블록(블록의 존재가 곧 판단의 선언이다)")
+
+    # 대조군 — 네임스페이스는 전부 **선택**이다. historian 은 docent 블록 없이 같은 재료를 읽는다.
+    without_docent = _minimal_instance()
+    without_docent["extensions"] = {}
+    errors = sorted(validator.iter_errors(without_docent), key=str)
+    if errors:
+        pytest.fail(
+            f"docent 블록 없는 인스턴스가 거부됐다 — 네임스페이스는 선택이어야 한다: "
+            f"{errors[0].message}"
+        )
+
+
+def test_schema_requires_the_bibliographic_list_fields() -> None:
+    """서지 6필드가 선택이면 `assignee` 단수 하나로 뭉개던 구조로 되돌아간다(재정 P-2 ⓐ)."""
+    validator = _material_validator()
+
+    for field in (
+        "jurisdiction", "kind_code", "applicants", "inventors",
+        "priority_claims", "classifications",
+    ):
+        instance = _minimal_instance()
+        instance["patent"].pop(field, None)
+        _reject(validator, instance, f"`patent.{field}` 누락")
+
+    # 형태도 닫는다 — 관할 2자·공보 종별 1자+1숫자.
+    bad_jurisdiction = _minimal_instance()
+    bad_jurisdiction["patent"]["jurisdiction"] = "United States"
+    _reject(validator, bad_jurisdiction, "관할이 2자 코드가 아닌 판")
+
+    # 우선권 원소는 3필드 전부 필수다 — 날짜가 없으면 최우선일을 산정할 수 없다.
+    partial_priority = _minimal_instance()
+    if not partial_priority["patent"]["priority_claims"]:
+        pytest.fail("최소 인스턴스에 우선권 주장이 없다 — 이 시험이 공허해진다")
+    partial_priority["patent"]["priority_claims"][0].pop("date", None)
+    _reject(validator, partial_priority, "날짜 없는 우선권 주장")
+
+    # `ipc`·`cpc` 는 키 자체가 필수다("분류 없음"과 "안 봤음"을 구별한다).
+    missing_scheme = _minimal_instance()
+    missing_scheme["patent"]["classifications"].pop("cpc", None)
+    _reject(validator, missing_scheme, "`classifications.cpc` 키 누락")
+
+
+def test_schema_requires_numeric_refs_on_implication_and_positioning() -> None:
+    """역참조 필드가 선택이면 중요분 도출식이 서는 자리 자체가 없다(재정 P-B)."""
+    validator = _material_validator()
+
+    missing = _minimal_instance()
+    _item(missing, "implication").pop("numeric_refs", None)
+    _reject(validator, missing, "`numeric_refs` 없는 함의 항목")
+
+    bad_id = _minimal_instance()
+    _item(bad_id, "implication")["numeric_refs"] = ["CL-1/e1"]
+    _reject(validator, bad_id, "항목 ID 문법이 아닌 역참조")
+
+    duplicated = _minimal_instance()
+    _item(duplicated, "implication")["numeric_refs"] = ["M5", "M5"]
+    _reject(validator, duplicated, "중복 역참조")
+
+    # 대조군 — 빈 배열은 정직한 값이다("근거로 삼은 수치가 없다"와 "필드를 빠뜨렸다"는 다르다).
+    empty = _minimal_instance()
+    _item(empty, "implication")["numeric_refs"] = []
+    errors = sorted(validator.iter_errors(empty), key=str)
+    if errors:
+        pytest.fail(f"빈 `numeric_refs` 가 거부됐다: {errors[0].message}")
+
+
+def test_schema_retires_the_alternative_form_dependency_type() -> None:
+    """폐기된 어휘가 열거에 남아 있으면 `unclassified` 가 그 자리를 흡수했다는 재정이 이름뿐이다(재정 P-1)."""
+    validator = _material_validator()
+
+    retired = _minimal_instance()
+    retired["claims"]["dependents"][0]["dependency_type"] = "alternative-form"
+    _reject(validator, retired, "폐기된 `alternative-form`")
+
+    # 대조군 — 그 자리를 흡수한 `unclassified` 는 통과한다.
+    replacement = _minimal_instance()
+    replacement["claims"]["dependents"][0]["dependency_type"] = "unclassified"
+    errors = sorted(validator.iter_errors(replacement), key=str)
+    if errors:
+        pytest.fail(f"`unclassified` 가 거부됐다: {errors[0].message}")

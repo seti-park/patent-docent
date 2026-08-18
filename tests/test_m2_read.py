@@ -40,6 +40,7 @@ from engine.lanes.file_adapter import FileLaneAdapter  # noqa: E402
 from engine.lanes.plan import (  # noqa: E402
     MAX_FANOUT,
     batched,
+    harvest_band_start,
     highest_item_number,
     lane_id_for,
     lane_profiles,
@@ -52,7 +53,13 @@ from engine.lanes.replay_adapter import ReplayLaneAdapter  # noqa: E402
 from engine.paths import RunPaths, format_parameter  # noqa: E402
 from engine.read_view import ReadView  # noqa: E402
 from engine.render.material_spec_md import render  # noqa: E402
-from engine.stages import StageError, load_json, load_yaml, read_text  # noqa: E402
+from engine.stages import (  # noqa: E402
+    StageEnvironmentError,
+    StageError,
+    load_json,
+    load_yaml,
+    read_text,
+)
 from engine.stages import freeze as freeze_stage  # noqa: E402
 from engine.stages import read as read_stage  # noqa: E402
 from engine.stages import source as source_stage  # noqa: E402
@@ -71,6 +78,29 @@ CORPUS_SPEC = os.path.join(SHARED_CORPUS, "material-spec.json")
 
 RUN_ID = "example-xx1111111a1-rotary-feeder"
 
+# 조립본의 최종 ID 배치 — 레인 투입 순서가 그대로 번호가 된다
+# (분해 → 접지 → **수확** → 통합, `engine/stages/read.py#lane_payloads`).
+#
+#   M1~M3    분해 — 구성요소 3
+#   M4~M6    접지 — 독립항 2 · 종속항 1
+#   M7~M12   **수확** — 원문 스팬 2 + 서지 4 (재정 P-B)
+#   M13~M17  통합 — 파생 · 도면 유래 · 함의 · 포지셔닝 · 도면 노트
+#
+# 이 배치는 `test_assembled_item_layout_follows_lane_order` 가 실물로 확인한다 — 상수만 두면
+# 배치가 바뀌었을 때 아래 시험들이 엉뚱한 항목을 가리키며 통과할 수 있다.
+DERIVED_FACT_ID = "M13"
+FIGURE_FACT_ID = "M14"
+
+# 수확 6건의 좌표(원문 스팬 2 + 서지 4). 순서는 수확기의 등장 순이다.
+HARVESTED_LABELS = (
+    "12 rpm",
+    "25 cm3",
+    "patent.number",
+    "patent.dates.priority",
+    "patent.dates.filing",
+    "patent.dates.publication",
+)
+
 # ---------------------------------------------------------------------------
 # 가공 원천 — 실재 특허가 아니며 실재 특허를 인용하지 않는다.
 # ---------------------------------------------------------------------------
@@ -78,6 +108,10 @@ RUN_ID = "example-xx1111111a1-rotary-feeder"
 SOURCE = """# Rotary Feeder Assembly — worked example (fictional)
 
 Applicant: Example Powders, Inc.
+Inventors: Mira Solberg; Tomas Weill
+Priority: application XX2024-0000222 filed on 2 May 2024 (XX)
+Int. Cl.: B65G 65/48
+CPC: B65G 65/48
 
 ## Claims
 
@@ -120,8 +154,7 @@ SPEC_QUOTE_M5 = "The rotary valve 220 is seated below the outlet aperture 112"
 SPEC_QUOTE_M6 = (
     "Each pocket 224 has a nominal volume of 25 cm3, and the drawings do not mark this volume"
 )
-FACT_QUOTE_M7 = "a nominal volume of 25 cm3"
-FACT_QUOTE_M8 = "the valve turns at 12 rpm"
+SPEC_QUOTE_SPEED = "the valve turns at 12 rpm"
 EVIDENCE_M11 = (
     "the pockets carry the powder without shearing it, so the screw is removed from the "
     "metering path"
@@ -146,7 +179,19 @@ def _value_span(quote: str, value: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def decompose_payload(*, verdict: str = "go", element_two: str = E2_TEXT) -> dict:
+def decompose_payload(
+    *,
+    direction: str = "clear",
+    element_two: str = E2_TEXT,
+    note: str | None = None,
+    dependency_type: str = "single",
+) -> dict:
+    """분해 레인 1회분.
+
+    ★ `drop_signal`(stage: early)이 사라지고 `screening_memo` 가 그 자리에 섰다(재정 P-A).
+    조기 판단은 상신하지 않고 기록만 하며 러너를 세우지 않는다 — 확정 재정의 자리는 CP1
+    한 곳이다. 메모는 `read-a`·`read-b` 가 **각자** 쓴다(재정 P-U4).
+    """
     return {
         "claims": {
             "independent": [
@@ -174,7 +219,7 @@ def decompose_payload(*, verdict: str = "go", element_two: str = E2_TEXT) -> dic
                 {
                     "id": "CL-3",
                     "depends_on": ["CL-1"],
-                    "dependency_type": "single",
+                    "dependency_type": dependency_type,
                     "text_verbatim": CLAIM_3,
                     "additions": [
                         {
@@ -226,13 +271,13 @@ def decompose_payload(*, verdict: str = "go", element_two: str = E2_TEXT) -> dic
                 "text_verbatim": A1_TEXT,
             },
         ],
-        "drop_signal": {
-            "stage": "early",
-            "verdict": verdict,
-            "reason": (
+        "screening_memo": {
+            "direction": direction,
+            "reason": note
+            or (
                 "권리 관심이 한 구성(포켓 계량)에 뚜렷함."
-                if verdict == "go"
-                else "청구항이 통상적 계량 구조의 나열이라 일반 독자에게 줄 안도감이 없음."
+                if direction == "clear"
+                else "청구항이 통상적 계량 구조의 나열이라 일반 독자에게 줄 안도감이 적음."
             ),
         },
     }
@@ -260,7 +305,12 @@ def ground_independent_payload() -> dict:
                 "superseded_by": None,
                 "component": "M2",
                 "anchor_state": {"spec": "found", "figure": "found"},
-                "spec_refs": [{"locator": "[0012]", "quote": SPEC_QUOTE_M5}],
+                # ★ 두 번째 인용은 수확의 입력이다(재정 P-B) — 수확기는 원천 파일이 아니라
+                #   접지 스팬을 훑으므로, 접지되지 않은 문단의 수치는 정답지에 오르지 않는다.
+                "spec_refs": [
+                    {"locator": "[0012]", "quote": SPEC_QUOTE_M5},
+                    {"locator": "[0014]", "quote": SPEC_QUOTE_SPEED},
+                ],
                 "figure_refs": [
                     {"figure": "FIG-1", "numerals": ["220", "224"], "caption_quote": CAPTION}
                 ],
@@ -287,45 +337,32 @@ def ground_dependent_payload() -> dict:
     }
 
 
+def harvest_ref(offset: int) -> str:
+    """수확 대역의 `offset` 번째 임시 ID.
+
+    통합 레인이 `numeric_refs` 와 산식 입력을 **참조 ID로** 적을 수 있는 유일한 좌표다
+    (재정 P-B). 대역의 시작은 계약 계산(`harvest_band_start`)이 정하고, 대역 안의 순서는
+    수확기의 **등장 순** — 접지 항목 순서 → 그 항목의 `spec_refs` 순서 → 서지 4필드다.
+    이 픽스처에서는 `[0014]`(속도)가 `[0013]`(용적)보다 앞선다: 속도 인용이 실린 접지
+    항목(M5)이 용적 인용이 실린 항목(M6)보다 앞에 있기 때문이다.
+    """
+    return f"M{harvest_band_start(decompose_payload()['claims']) + offset}"
+
+
+HARVEST_SPEED = harvest_ref(0)    # `12 rpm` — M5 의 [0014] 인용
+HARVEST_VOLUME = harvest_ref(1)   # `25 cm3` — M6 의 [0013] 인용
+
+
 def synthesis_payload(*, verdict: str = "go") -> dict:
+    """통합 레인 1회분.
+
+    ★ `origin ∈ {quoted, bibliographic}` 인 fact 는 **여기 없다**(재정 P-B). 원문 스팬 수치와
+    서지 수치는 접지 직후 전수 기계 수확되므로 레인의 소유가 아니며, 레인이 만들 수 있는
+    fact 는 산식(`derived`)과 도면 판독(`figure-sourced`) 둘뿐이다. 레인이 하는 일은 수치를
+    옮겨 적는 것이 아니라 **어느 수치를 근거로 삼았는지 참조 ID 로 밝히는 것**이다.
+    """
     return {
         "items": [
-            {
-                "id": "M7",
-                "kind": "fact",
-                "status": "active",
-                "superseded_by": None,
-                "label_en": "nominal volume of one pocket",
-                "origin": "quoted",
-                "value_raw": "25 cm3",
-                "value_normalized": "25",
-                "value_type": {"kind": "scalar", "approximate": False, "value": "25"},
-                "unit": "cm3",
-                "machine_verifiable": True,
-                "source": {
-                    "locator": "claim 3",
-                    "quote": FACT_QUOTE_M7,
-                    "value_span": _value_span(FACT_QUOTE_M7, "25 cm3"),
-                },
-            },
-            {
-                "id": "M8",
-                "kind": "fact",
-                "status": "active",
-                "superseded_by": None,
-                "label_en": "rotary valve speed in the illustrated arrangement",
-                "origin": "quoted",
-                "value_raw": "12 rpm",
-                "value_normalized": "12",
-                "value_type": {"kind": "scalar", "approximate": False, "value": "12"},
-                "unit": "rpm",
-                "machine_verifiable": True,
-                "source": {
-                    "locator": "[0014]",
-                    "quote": FACT_QUOTE_M8,
-                    "value_span": _value_span(FACT_QUOTE_M8, "12 rpm"),
-                },
-            },
             {
                 "id": "M9",
                 "kind": "fact",
@@ -341,8 +378,8 @@ def synthesis_payload(*, verdict: str = "go") -> dict:
                 "derivation": {
                     "formula": "pocket_volume_cm3 * speed_rpm",
                     "inputs": [
-                        {"name": "pocket_volume_cm3", "ref": "M7"},
-                        {"name": "speed_rpm", "ref": "M8"},
+                        {"name": "pocket_volume_cm3", "ref": HARVEST_VOLUME},
+                        {"name": "speed_rpm", "ref": HARVEST_SPEED},
                     ],
                     "rounding": {"mode": "none", "digits": 0},
                 },
@@ -376,6 +413,7 @@ def synthesis_payload(*, verdict: str = "go") -> dict:
                 ),
                 "basis": "spec",
                 "derived_from": ["M2", "M5"],
+                "numeric_refs": [HARVEST_VOLUME],
                 "evidence_quotes": [EVIDENCE_M11],
                 "confidence": "inferred",
             },
@@ -396,6 +434,7 @@ def synthesis_payload(*, verdict: str = "go") -> dict:
                     "The asserted delta is a structural change of the metering element, not "
                     "a claimed performance number."
                 ),
+                "numeric_refs": [HARVEST_SPEED],
                 "quotes": [BACKGROUND_QUOTE, "the screw is removed from the metering path"],
             },
             {
@@ -432,9 +471,20 @@ def synthesis_payload(*, verdict: str = "go") -> dict:
     }
 
 
-def payload_set(*, early_verdict: str = "go", element_two: str = E2_TEXT) -> dict:
+def payload_set(
+    *,
+    direction: str = "clear",
+    element_two: str = E2_TEXT,
+    note: str | None = None,
+    dependency_type: str = "single",
+) -> dict:
     return {
-        "decompose": decompose_payload(verdict=early_verdict, element_two=element_two),
+        "decompose": decompose_payload(
+            direction=direction,
+            element_two=element_two,
+            note=note,
+            dependency_type=dependency_type,
+        ),
         "ground-independent": ground_independent_payload(),
         "ground-dependent": ground_dependent_payload(),
         "synthesize": synthesis_payload(),
@@ -449,8 +499,18 @@ def payload_set(*, early_verdict: str = "go", element_two: str = E2_TEXT) -> dic
 PATENT_META = {
     "number": "XX1111111A1",
     "title": "Rotary feeder assembly with pocket metering (fictional example)",
+    # ★ 서지 확장 6필드(재정 P-2 ⓐ). 목록형 값은 전부 원천 서지면의 **바이트 정확
+    #   부분문자열**이며, 그 대조는 `read.bibliography` 가 한다.
+    "jurisdiction": "XX",
+    "kind_code": "A1",
     "assignee": "Example Powders, Inc.",
+    "applicants": ["Example Powders, Inc."],
+    "inventors": ["Mira Solberg", "Tomas Weill"],
     "dates": {"priority": "2024-05-02", "filing": "2025-04-30", "publication": "2026-02-11"},
+    "priority_claims": [
+        {"number": "XX2024-0000222", "date": "2024-05-02", "jurisdiction": "XX"}
+    ],
+    "classifications": {"ipc": ["B65G 65/48"], "cpc": ["B65G 65/48"]},
 }
 
 
@@ -579,8 +639,8 @@ def approval_envelope(
         },
         "decided_at": "2026-08-18T04:00:00Z",
         "recorded_by": "orchestrator",
-        "manual_verification_ack": ["M10"] if manual_ack is None else manual_ack,
-        "derived_fact_ack": ["M9"] if derived_ack is None else derived_ack,
+        "manual_verification_ack": [FIGURE_FACT_ID] if manual_ack is None else manual_ack,
+        "derived_fact_ack": [DERIVED_FACT_ID] if derived_ack is None else derived_ack,
         "numeric_whitelist_printed": [],
     }
     if decision == "rejected":
@@ -628,21 +688,36 @@ def test_source_report_precedes_read(tmp_path) -> None:
 
 
 def test_source_report_records_recompute_basis(tmp_path) -> None:
-    """도면별 행과 산정 근거가 없으면 재정 후 원천을 다시 읽어야 한다(재감수 M-04)."""
+    """도면별 행과 산정 근거가 없으면 재정 후 원천을 다시 읽어야 한다(재감수 M-04).
+
+    ★ 개명(재정 P-5): `provisional_resolutions` → `resolutions`. 산정식이 **정식 승인**되어
+    세 논점이 더는 잠정이 아니므로 이름에서 '잠정'이 빠졌고, 그 대신 재정 좌표
+    (`adjudicated_in`)와 채택률 관찰 지표(`observation_metric`)가 함께 실린다. `[가설]` 태그는
+    유지된다 — 재정이 명시로 그렇게 정했다(산정식은 승인됐고 수치의 타당성은 관찰 대상이다).
+    """
     root, _ = run_source(tmp_path)
     report = load_json(RunPaths(root).source_report)
     exhibit = report["exhibit_candidates"]
     missing = [
         key
-        for key in ("tag", "unit", "formula", "rationale", "provisional_resolutions", "floor")
+        for key in (
+            "tag", "unit", "formula", "rationale", "adjudicated_in", "resolutions",
+            "observation_metric", "floor",
+        )
         if not exhibit.get(key)
     ]
     if missing:
         pytest.fail(f"exhibit_candidates 에 산정 근거가 빠졌다: {missing}")
+    if "provisional_resolutions" in exhibit:
+        pytest.fail("폐기된 키 `provisional_resolutions` 가 남아 있다(재정 P-5 개명)")
     if exhibit["tag"] != "[가설]":
         pytest.fail(f"산정식 태그 기대 [가설], 실제 {exhibit['tag']}")
-    if len(exhibit["provisional_resolutions"]) != 3:
-        pytest.fail(f"미결 3논점 기대 3건, 실제 {len(exhibit['provisional_resolutions'])}건")
+    if len(exhibit["resolutions"]) != 3:
+        pytest.fail(f"처분 3논점 기대 3건, 실제 {len(exhibit['resolutions'])}건")
+    if "ruling-20260818-03-P1-P11.md#P-5" not in str(exhibit["adjudicated_in"]):
+        pytest.fail(f"재정 좌표가 원장을 가리키지 않는다: {exhibit['adjudicated_in']!r}")
+    if exhibit["observation_metric"].get("id") != "exhibit-adoption-ratio":
+        pytest.fail(f"채택률 관찰 지표가 실리지 않았다: {exhibit['observation_metric']}")
     for row in report["figures"]:
         for key in ("filename", "bytes", "sha256", "counted_as"):
             if key not in row:
@@ -1022,14 +1097,27 @@ def _remap_ids(payloads: dict, table: dict) -> dict:
 
 
 def banded_payload_set() -> dict:
-    """레인이 1000 폭 대역을 받아 쓴 판. 기본 픽스처는 `M1..M13` 연속이라 재번호를 시험하지 못한다."""
+    """레인이 1000 폭 대역을 받아 쓴 판. 기본 픽스처는 연속 번호라 재번호를 시험하지 못한다."""
     payloads = payload_set()
     table = {
         item["id"]: f"M{int(item['id'][1:]) + offset}"
         for task, offset in BAND_OFFSETS.items()
         for item in payloads[task]["items"]
     }
-    return _remap_ids(payloads, table)
+    remapped = _remap_ids(payloads, table)
+    # ★ 수확 대역은 레인 대역 **뒤**에 계산되므로(재정 P-B · `harvest_band_start`), 레인
+    #   대역이 옮겨가면 수확 대역도 함께 옮겨간다. 통합 레인의 참조를 그대로 두면 그 참조는
+    #   유령이 되고, 이 시험은 재번호가 아니라 유령 참조를 보게 된다.
+    shifted = {
+        HARVEST_SPEED: f"M{harvest_band_start(remapped['decompose']['claims'])}",
+        HARVEST_VOLUME: f"M{harvest_band_start(remapped['decompose']['claims']) + 1}",
+    }
+    for item in remapped["synthesize"]["items"]:
+        if isinstance(item.get("numeric_refs"), list):
+            item["numeric_refs"] = [shifted.get(ref, ref) for ref in item["numeric_refs"]]
+        for entry in (item.get("derivation") or {}).get("inputs") or []:
+            entry["ref"] = shifted.get(entry.get("ref"), entry.get("ref"))
+    return remapped
 
 
 def assemble_from(payloads: dict) -> dict:
@@ -1352,13 +1440,23 @@ def test_read_passes_every_deterministic_check(tmp_path) -> None:
     if failing:
         pytest.fail(f"실패한 검사: {failing} — {fail_rows(outcome['rows'])}")
     # 행 수를 리터럴로 적지 않는다 — 검사가 늘면 이 시험이 그 사실을 따라간다.
+    #
+    # ★ 구성이 셋으로 늘었다. 앞은 **진입 지문 검사**(재정 P-C — 환경이 서 있는가), 가운데는
+    #   이식 단위의 결정론 검사 전종, 뒤는 **레인 로그 형태**(재정 P-4·P-U3 — 정본 1개만
+    #   접지를 돌았는가). 세 층은 보는 대상이 다르므로 한 층만 세면 나머지가 조용히 빠진다.
     produced = [row.check_id for row in outcome["rows"]]
-    if produced != list(READ_CHECK_IDS):
-        pytest.fail(f"검사 행 기대 {list(READ_CHECK_IDS)}, 실제 {produced}")
+    expected = ["read.input-digest", *READ_CHECK_IDS, "read.lane-log-shape"]
+    if produced != expected:
+        pytest.fail(f"검사 행 기대 {expected}, 실제 {produced}")
 
 
-def test_read_rejects_source_digest_mismatch(tmp_path) -> None:
-    """원천이 바뀐 채 진행되면 모든 verbatim 검사의 기준점이 붕괴한다."""
+def test_entry_digest_mismatch_is_environment_error(tmp_path) -> None:
+    """지문 불일치가 재시도되면 환경 오류가 품질 결함으로 오분류된다(재정 P-C).
+
+    ★ 판정 층이 바뀌었다. 구 구현은 원천 변조를 `read.source-digest` **판정 행**으로 보고
+    `halt` 했다 — 그러면 그것이 재료의 품질 문제로 읽히고 재시도·수정 루프의 대상이 된다.
+    재정 P-C 는 이것을 **환경 오류**로 못 박았다: 즉시 중단이며 판정 행조차 돌려주지 않는다.
+    """
     root, _ = run_source(tmp_path)
     paths = RunPaths(root)
     with open(paths.patent_md, "a", encoding="utf-8") as handle:
@@ -1366,53 +1464,134 @@ def test_read_rejects_source_digest_mismatch(tmp_path) -> None:
     lanes_root = write_lane_responses(
         root, payloads_by_run={"read-a": payload_set(), "read-b": payload_set()}
     )
-    outcome = read_stage.run(
-        run_root=root, adapter=ReplayLaneAdapter(lanes_root), rules=RULES
-    )
-    if outcome["status"] != "halt":
-        pytest.fail(f"status 기대 halt, 실제 {outcome['status']}")
+    with pytest.raises(StageEnvironmentError) as excinfo:
+        read_stage.run(run_root=root, adapter=ReplayLaneAdapter(lanes_root), rules=RULES)
+
+    diagnosis = str(excinfo.value)
+    # 진단이 "어긋났다"만 말하면 사람이 다시 찾아야 한다 — **어긋난 자리의 경로**와
+    # 기대·실측이 함께 실린다(재정 P-C 의 "즉시 중단 + 진단").
+    for needle in ("00-source/patent.sha256", "run.yaml#patent.source_sha256", "실측", "기대"):
+        if needle not in diagnosis:
+            pytest.fail(f"진단에 {needle} 이 없다: {diagnosis}")
+    if "환경 오류" not in diagnosis:
+        pytest.fail(f"진단이 환경 오류임을 밝히지 않는다: {diagnosis}")
     if os.path.exists(paths.material_spec_json):
         pytest.fail("다이제스트 불일치인데 재료 명세가 쓰였다")
 
+    # 대조군 — 변조하지 않은 런은 같은 자리를 통과한다(과잉 제약 배제).
+    clean_root, clean_outcome, _ = run_read(tmp_path.joinpath("clean"))
+    if clean_outcome["status"] != "ok":
+        pytest.fail(f"무변조 런이 진입 검사에서 걸렸다: {clean_outcome['status']}")
+    _ = clean_root
+
 
 def test_drop_signal_emitted_at_both_stages(tmp_path) -> None:
-    """1단만 나와도 통과하면 D4 2단 신호가 실효 없다."""
+    """1단만 나와도 통과하면 D4 2단 신호가 실효 없다.
+
+    ★ 1단의 **형태**가 바뀌었다(재정 P-A). 조기 신호는 상신하는 `drop_signal` 이 아니라
+    상신 없는 **맹검 스크리닝 메모**이며, 확정 재정의 자리는 CP1 한 곳이다. 2단 구조 자체는
+    남는다 — 사라진 것은 조기 단계의 **구속력**이지 관찰이 아니다.
+    """
     root, _, _ = run_read(tmp_path)
     text = read_text(RunPaths(root).drop_signal_md)
-    for needle in ("`early`", "`final`", "청구항 분해 직후", "포지셔닝 확정 후"):
+    for needle in (
+        "맹검 스크리닝 메모",
+        "상신 없음 · 진행 계속",
+        "포지셔닝 확정 후",
+        "`read-a`",
+        "`read-b`",
+    ):
         if needle not in text:
             pytest.fail(f"drop-signal.md 에 {needle} 이 없다")
 
 
-def test_early_drop_signal_halts_before_grounding(tmp_path) -> None:
-    """조기 신호가 접지 지출 뒤에 멈추면 하류 산출물이 Owner 판단을 오염시킨다(D4)."""
+def test_screening_memos_recorded_for_both_runs(tmp_path) -> None:
+    """메모가 1건이면 두 관찰의 일치/불일치 신호가 소멸한다(재정 P-A · P-U4).
+
+    ★ 폐기된 것을 함께 시험한다 — 조기 `drop-proposed` 로 접지 전에 멈추던 경로다. 재정 P-A 가
+    그 escalate 를 폐지했으므로, 우려 방향의 메모가 나와도 러너는 **멈추지 않고 끝까지 간다.**
+    """
     root, _ = run_source(tmp_path)
     payloads = {
-        "read-a": payload_set(early_verdict="drop-proposed"),
-        "read-b": payload_set(early_verdict="drop-proposed"),
+        # 두 실행이 서로 다른 방향을 적은 판 — 갈림 자체가 신호다(재정 P-U4).
+        "read-a": payload_set(direction="clear"),
+        "read-b": payload_set(direction="concern", note="계량 구조가 통상적이라 훅이 약함."),
     }
     lanes_root = write_lane_responses(root, payloads_by_run=payloads)
     adapter = ReplayLaneAdapter(lanes_root)
     outcome = read_stage.run(run_root=root, adapter=adapter, rules=RULES)
-    if outcome["status"] != "escalate":
-        pytest.fail(f"status 기대 escalate, 실제 {outcome['status']}")
-    if outcome["reason_label"] != "안도감 부적합":
-        pytest.fail(f"사유 기대 '안도감 부적합', 실제 {outcome['reason_label']!r}")
+
+    # ① 우려 메모가 런을 세우지 않는다(재정 P-A — 확정 재정의 자리는 CP1 하나다).
+    if outcome["status"] != "ok":
+        pytest.fail(f"메모가 런을 세웠다: {outcome['status']} — {fail_rows(outcome['rows'])}")
     tasks = adapter.tasks_dispatched()
-    spent = [task for task in tasks if task.startswith("ground") or task == "synthesize"]
-    if spent:
-        pytest.fail(f"조기 drop 인데 하류 레인이 돌았다: {spent}")
-    text = read_text(RunPaths(root).drop_signal_md)
-    if "미산출" not in text:
-        pytest.fail("drop-signal.md 가 최종 신호 미산출 사실을 적지 않았다")
+    if "synthesize" not in tasks:
+        pytest.fail(f"우려 메모에 접지·통합이 멈췄다: {tasks}")
+
+    # ② 두 건이 **각자** 기록된다.
+    memos = outcome["convergence"]["screening_memos"]
+    by_run = {memo["read_run"]: memo for memo in memos}
+    if sorted(by_run) != ["read-a", "read-b"]:
+        pytest.fail(f"메모 2건 기대(read-a·read-b), 실제 {memos}")
+    if by_run["read-a"]["direction"] != "clear" or by_run["read-b"]["direction"] != "concern":
+        pytest.fail(f"두 관찰의 방향이 보존되지 않았다: {memos}")
+    if not by_run["read-b"]["note"]:
+        pytest.fail("근거 요지가 비었다 — 방향만 남으면 판단 기록이 아니다")
+
+    # ③ 섀도 원장(런 밖·계약면 밖)에 한 행으로 축적된다(재정 P-U4).
+    ledger = os.path.join(REPO, "ledgers", "shadow", "screening.jsonl")
+    if not os.path.exists(ledger):
+        pytest.fail(f"섀도 원장이 없다: {ledger}")
+    rows = [json.loads(line) for line in read_text(ledger).splitlines() if line.strip()]
+    ours = [row for row in rows if row.get("run_id") == RUN_ID]
+    if not ours or len(ours[-1]["memos"]) != 2:
+        pytest.fail(f"원장 행에 메모 2건이 실리지 않았다: {ours[-1:] or '(행 없음)'}")
+
+    # ④ CP1 판독본에 **둘 다 병기**된다 — 한 건으로 합치면 신호가 소멸한다.
+    rendered = read_text(RunPaths(root).material_spec_md)
+    section = rendered.split("## 11. ★ 맹검 스크리닝 메모")[1].split("## 12.")[0]
+    for needle in ("read-a", "read-b", "clear", "concern"):
+        if needle not in section:
+            pytest.fail(f"CP1 메모 절에 {needle} 이 없다")
+
+
+def test_screening_memo_is_withheld_from_synthesis_prompt(tmp_path) -> None:
+    """메모가 통합 레인에 새면 앵커링 방지가 실패한다 — 두 판단의 독립성이 조용히 사라진다(재정 P-A)."""
+    marker = "이 문장이 통합 레인에 새면 앵커링 방지가 무너진다."
+    root, _ = run_source(tmp_path)
+    payloads = {
+        "read-a": payload_set(direction="concern", note=marker),
+        "read-b": payload_set(direction="concern", note=marker),
+    }
+    lanes_root = write_lane_responses(root, payloads_by_run=payloads)
+    adapter = ReplayLaneAdapter(lanes_root)
+    outcome = read_stage.run(run_root=root, adapter=adapter, rules=RULES)
+    if outcome["status"] != "ok":
+        pytest.fail(f"status 기대 ok, 실제 {outcome['status']} — {fail_rows(outcome['rows'])}")
+
+    synthesis_requests = [
+        request for request in adapter.dispatched if request.task == "synthesize"
+    ]
+    if not synthesis_requests:
+        pytest.fail("통합 요청이 없다 — 이 시험이 공허해진다")
+    for request in synthesis_requests:
+        haystack = request.instructions + json.dumps(request.slices, ensure_ascii=False)
+        if marker in haystack or "screening_memo" in haystack:
+            pytest.fail(f"{request.lane_id} 지시문에 맹검 메모가 실렸다")
+
+    # 대조군 — 메모는 **어딘가에는** 남아야 한다(비공개가 폐기가 되면 축적물이 사라진다).
+    if marker not in json.dumps(outcome["convergence"]["screening_memos"], ensure_ascii=False):
+        pytest.fail("메모가 보고서에서도 사라졌다 — 비공개가 아니라 폐기다")
 
 
 def test_convergence_failure_escalates_after_one_retry(tmp_path) -> None:
     """무한 재시도되면 불안정 신호가 은폐된다(수렴 미달 = 절차 신호)."""
     root, _ = run_source(tmp_path)
     payloads = {
+        # ★ 갈라놓는 축은 `dependent-set`(exact-match · 임계 1.0)이다. element 문언을 가르던
+        #   구 표본은 재정 P-3 이후 **상신 트리거**라 판정 행을 실패시키지 않는다.
         "read-a": payload_set(),
-        "read-b": payload_set(element_two=E2_TEXT_VARIANT),
+        "read-b": payload_set(dependency_type="multiple-or"),
     }
     lanes_root = write_lane_responses(root, payloads_by_run=payloads)
     adapter = ReplayLaneAdapter(lanes_root)
@@ -1439,7 +1618,7 @@ def test_retry_returns_defects_to_the_lane(tmp_path) -> None:
     root, _ = run_source(tmp_path)
     payloads = {
         "read-a": payload_set(),
-        "read-b": payload_set(element_two=E2_TEXT_VARIANT),
+        "read-b": payload_set(dependency_type="multiple-or"),
     }
     lanes_root = write_lane_responses(root, payloads_by_run=payloads)
     adapter = ReplayLaneAdapter(lanes_root)
@@ -1470,10 +1649,23 @@ def test_convergence_json_validates_against_contract(tmp_path) -> None:
     )
     if errors:
         pytest.fail(f"convergence/v0 위반 {len(errors)}건: {errors[0].message}")
-    if payload["manual_verification_required"][0]["material_id"] != "M10":
+    if payload["manual_verification_required"][0]["material_id"] != FIGURE_FACT_ID:
         pytest.fail("도면 유래 수치가 사람 검증 목록에 오르지 않았다")
     if payload["grounding_exceptions"][0]["material_id"] != "M6":
         pytest.fail("접지 예외가 목록에 오르지 않았다")
+    # 신설 6키(재정 P-1·P-3·P-4·P-A·P-B·P-U4)가 실제로 채워지는지 본다 — 계약을 만족하는
+    # 빈 껍데기는 계약을 만족하되 아무것도 보고하지 않는다.
+    if payload["phase"] != "full":
+        pytest.fail(f"phase 기대 full, 실제 {payload['phase']!r}")
+    selection = payload["canonical_selection"]
+    if selection["rule"] != "declaration-order" or selection["content_blind"] is not True:
+        pytest.fail(f"정본 지정 규칙이 계약과 다르다: {selection}")
+    if not payload["convergence_report"]["axes"]:
+        pytest.fail("독해 프로파일의 축이 비었다")
+    if payload["numeric_inventory"]["total"] != len(HARVESTED_LABELS):
+        pytest.fail(f"전수 수확 카운트가 다르다: {payload['numeric_inventory']}")
+    if len(payload["screening_memos"]) != 2:
+        pytest.fail(f"맹검 메모 2건 기대, 실제 {payload['screening_memos']}")
     _ = outcome
 
 
@@ -1534,7 +1726,9 @@ def test_cp1_surface_separates_three_numeric_classes(tmp_path) -> None:
         if needle not in rendered:
             pytest.fail(f"수치 3분류 절이 없다: {needle}")
     derived_section = rendered.split("### 6.2 파생 수치")[1].split("### 6.3")[0]
-    for needle in ("pocket_volume_cm3 * speed_rpm", "M7", "M8", FACT_QUOTE_M7):
+    # 산식과 **입력 항목의 원천 스팬**이 나란히 실려야 한다 — 수확본을 입력으로 쓰므로
+    # 그 스팬은 접지 인용 전문이다(재정 P-B).
+    for needle in ("pocket_volume_cm3 * speed_rpm", "M7", "M8", SPEC_QUOTE_M6):
         if needle not in derived_section:
             pytest.fail(f"파생 수치 절에 {needle} 이 없다(산식·원천 스팬 병기 요건)")
     figure_section = rendered.split("### 6.3 도면 유래 수치")[1].split("## 7.")[0]
@@ -1552,7 +1746,7 @@ def test_cp1_surface_exposes_grounding_exceptions(tmp_path) -> None:
     if SEARCH_NOTE not in section:
         pytest.fail("search_note(KR)가 예외와 함께 실리지 않았다")
     manual_section = rendered.split("## 7. ★ 사람 검증 필요 목록")[1].split("## 8.")[0]
-    if "M10" not in manual_section:
+    if FIGURE_FACT_ID not in manual_section:
         pytest.fail("도면 유래 수치가 사람 검증 절에 노출되지 않았다")
 
 
@@ -1623,20 +1817,27 @@ def test_freeze_stamps_monotonic_spec_version(tmp_path) -> None:
 
 
 def test_freeze_rejects_stale_target_digest(tmp_path) -> None:
-    """승인 후 재료가 조용히 바뀌어도 통과하면 해시 결속이 장식이다(재정 R8)."""
+    """승인 후 재료가 조용히 바뀌어도 통과하면 해시 결속이 장식이다(재정 R8).
+
+    ★ 판정 자리가 앞으로 옮겨졌다(재정 P-C). 같은 불일치를 **진입 지문 검사**가 먼저 잡고
+    환경 오류로 즉시 중단한다 — 승인 시점 대상과 현재 재료가 다른 것은 재료의 품질 문제가
+    아니라 환경이 서 있지 않은 것이기 때문이다.
+    """
     root, _, _ = run_read(tmp_path)
     approval_envelope(root, digest="sha256:" + "0" * 64)
+    with pytest.raises(StageEnvironmentError) as excinfo:
+        freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
+    diagnosis = str(excinfo.value)
+    if "target.digest" not in diagnosis:
+        pytest.fail(f"진단이 어느 결속이 끊겼는지 밝히지 않는다: {diagnosis}")
+    if os.path.exists(RunPaths(root).frozen_spec(1)):
+        pytest.fail("해시가 어긋났는데 동결본이 쓰였다")
+
+    # 대조군 — 실제 해시를 적은 봉투는 같은 자리를 통과한다.
+    approval_envelope(root)
     outcome = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
-    if outcome["status"] != "halt":
-        pytest.fail(f"status 기대 halt, 실제 {outcome['status']}")
-    rules_hit = [
-        finding.rule
-        for row in outcome["rows"]
-        for finding in row.findings
-        if finding.rule == "approval.target-digest"
-    ]
-    if not rules_hit:
-        pytest.fail("대상 해시 불일치가 결함으로 나오지 않았다")
+    if outcome["status"] != "ok":
+        pytest.fail(f"정상 봉투가 거부됐다: {fail_rows(outcome['rows'])}")
 
 
 # --- 봉투 신원(재감수 B-02) -------------------------------------------------
@@ -1747,7 +1948,7 @@ def test_derived_fact_ack_must_match_derived_set(tmp_path) -> None:
         pytest.fail(f"status 기대 halt, 실제 {missing['status']}")
 
     # ② 유령 — 실재하지 않는 파생 항목
-    approval_envelope(root, derived_ack=["M9", "M99"])
+    approval_envelope(root, derived_ack=[DERIVED_FACT_ID, "M99"])
     phantom = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
     phantom_rules = [
         finding.rule for row in phantom["rows"] for finding in row.findings
@@ -1756,7 +1957,7 @@ def test_derived_fact_ack_must_match_derived_set(tmp_path) -> None:
         pytest.fail(f"유령 ID 가 통과했다: {phantom_rules}")
 
     # ③ 정확히 일치 — 통과
-    approval_envelope(root, derived_ack=["M9"])
+    approval_envelope(root, derived_ack=[DERIVED_FACT_ID])
     exact = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
     if exact["status"] != "ok":
         pytest.fail(f"정확히 일치인데 실패했다: {fail_rows(exact['rows'])}")
@@ -1771,7 +1972,7 @@ def test_manual_verification_ack_must_match_figure_sourced_set(tmp_path) -> None
     if missing["status"] != "halt":
         pytest.fail(f"빈 manual_verification_ack 가 통과했다: {missing['status']}")
 
-    approval_envelope(root, manual_ack=["M10", "M77"])
+    approval_envelope(root, manual_ack=[FIGURE_FACT_ID, "M77"])
     phantom = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
     phantom_rules = [
         finding.rule for row in phantom["rows"] for finding in row.findings
@@ -1779,23 +1980,52 @@ def test_manual_verification_ack_must_match_figure_sourced_set(tmp_path) -> None
     if "approval.ack-no-phantom" not in phantom_rules:
         pytest.fail(f"유령 ID 가 통과했다: {phantom_rules}")
 
-    approval_envelope(root, manual_ack=["M10"])
+    approval_envelope(root, manual_ack=[FIGURE_FACT_ID])
     exact = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
     if exact["status"] != "ok":
         pytest.fail(f"정확히 일치인데 실패했다: {fail_rows(exact['rows'])}")
 
 
-def test_freeze_render_parity_detects_missing_item(tmp_path) -> None:
-    """판독본이 항목을 빠뜨려도 동결되면 CP1 표면의 불완전이 영구화한다."""
+def test_render_parity_checks_en_values_not_ids(tmp_path) -> None:
+    """ID 존재만 보면 판독본이 값을 잃어도 통과한다 — 그것이 구 구현의 결함이었다(재정 P-U5).
+
+    두 방향을 다 본다. ⓐ **값**을 지우면 잡힌다 ⓑ 값은 그대로 두고 **ID 표기만** 바꾸면
+    잡히지 않는다. ⓑ 가 없으면 이 검사가 값을 보는지 ID 를 보는지 구별되지 않는다.
+    """
     root, _, _ = run_read(tmp_path)
     paths = RunPaths(root)
-    rendered = read_text(paths.material_spec_md)
+    original = read_text(paths.material_spec_md)
+
+    # ⓐ EN 값 하나를 요약으로 대체한다 — 판독본은 KR 틀 + EN 값이므로 이것이 값의 손실이다.
+    victim = "A section through the hopper and the rotary valve, with the pockets"
+    if victim not in original:
+        pytest.fail("표본 값이 판독본에 없다 — 이 시험이 공허해진다")
     with open(paths.material_spec_md, "w", encoding="utf-8") as handle:
-        handle.write(rendered.replace("M13", "(삭제됨)"))
+        handle.write(original.replace(victim, "(도면 설명 요약)"))
     approval_envelope(root)
     outcome = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
     if outcome["status"] != "reject-upstream":
         pytest.fail(f"status 기대 reject-upstream, 실제 {outcome['status']}")
+    hit = [
+        finding for finding in
+        [f for row in outcome["rows"] for f in row.findings]
+        if finding.rule == "freeze.render-parity"
+    ]
+    if not hit:
+        pytest.fail(f"값 손실이 render-parity 로 잡히지 않았다: {fail_rows(outcome['rows'])}")
+    if victim not in hit[0].expected:
+        pytest.fail(f"어느 값이 사라졌는지 결함에 실리지 않았다: {hit[0].expected!r}")
+
+    # ⓑ 값은 그대로 두고 ID 표기만 바꾼 판 — 이것은 값의 손실이 아니므로 통과해야 한다.
+    with open(paths.material_spec_md, "w", encoding="utf-8") as handle:
+        handle.write(original.replace(f"`{FIGURE_FACT_ID}`", "`(항목)`"))
+    approval_envelope(root)
+    relaxed = freeze_stage.run(run_root=root, spec_version=1, rules=RULES)
+    if relaxed["status"] != "ok":
+        pytest.fail(
+            "ID 표기만 바꾼 판이 거부됐다 — 검사가 아직 ID 를 보고 있다: "
+            f"{fail_rows(relaxed['rows'])}"
+        )
 
 
 def test_freeze_rejects_unapproved_envelope(tmp_path) -> None:
@@ -1917,3 +2147,372 @@ def test_shared_fixture_corpus_runs_end_to_end() -> None:
     missing = [item["id"] for item in spec.get("items") or [] if item["id"] not in rendered]
     if missing:
         pytest.fail(f"공유 코퍼스 판독본에 없는 항목: {missing}")
+
+
+# ===========================================================================
+# 8. 재정 반증 (2026-08-18 P 계열)
+#
+# 각 테스트는 변조·변주를 실제로 만들고 러너가 그것을 잡는지 본다. 변조본만 실패시키면
+# 과잉 제약과 구별되지 않으므로 무변조 대조군을 같은 테스트 안에 둔다.
+# ===========================================================================
+
+
+def test_assembled_item_layout_follows_lane_order(tmp_path) -> None:
+    """레인 순서가 곧 항목 번호다 — 그것이 흔들리면 이 파일의 ID 상수 전부가 엉뚱한 항목을 가리킨다."""
+    _, outcome, _ = run_read(tmp_path)
+    kinds = [(item["id"], item["kind"], item.get("origin")) for item in outcome["spec"]["items"]]
+    expected = [
+        ("M1", "component", None), ("M2", "component", None), ("M3", "component", None),
+        ("M4", "grounding", None), ("M5", "grounding", None), ("M6", "grounding", None),
+        ("M7", "fact", "quoted"), ("M8", "fact", "quoted"),
+        ("M9", "fact", "bibliographic"), ("M10", "fact", "bibliographic"),
+        ("M11", "fact", "bibliographic"), ("M12", "fact", "bibliographic"),
+        (DERIVED_FACT_ID, "fact", "derived"), (FIGURE_FACT_ID, "fact", "figure-sourced"),
+        ("M15", "implication", None), ("M16", "positioning", None),
+        ("M17", "figure_note", None),
+    ]
+    if kinds != expected:
+        pytest.fail(f"항목 배치가 다르다:\n기대 {expected}\n실제 {kinds}")
+
+
+def test_convergence_runs_before_grounding(tmp_path) -> None:
+    """조기 수렴이 뒤로 밀리면 접지 지출이 낭비된다 — 수렴 미달인 런이 접지를 다 돌고 나서 멈춘다(재정 P-4)."""
+    root, _ = run_source(tmp_path)
+    payloads = {
+        "read-a": payload_set(),
+        "read-b": payload_set(dependency_type="multiple-or"),  # exact-match 축을 가른다
+    }
+    lanes_root = write_lane_responses(root, payloads_by_run=payloads)
+    adapter = ReplayLaneAdapter(lanes_root)
+    outcome = read_stage.run(run_root=root, adapter=adapter, rules=RULES)
+
+    if outcome["status"] != "escalate":
+        pytest.fail(f"status 기대 escalate, 실제 {outcome['status']}")
+    spent = [task for task in adapter.tasks_dispatched() if task.startswith("ground")]
+    if spent:
+        pytest.fail(f"수렴 미달인데 접지 레인이 돌았다: {spent}")
+    # 조기 판정서는 그 자리에서 산출된다 — 없으면 P-U3 의 진입 조건이 결속할 대상이 없다.
+    early = load_json(RunPaths(root).convergence_early_json)
+    if early["phase"] != "early":
+        pytest.fail(f"조기 판정서의 phase 가 early 가 아니다: {early['phase']!r}")
+    for key in ("fact_classification", "numeric_inventory"):
+        block = early[key]
+        occupied = block.get("total") or block.get("quoted_span", {}).get("material_ids")
+        if occupied:
+            pytest.fail(f"분해 직후인데 {key} 가 채워져 있다: {block}")
+
+    # 대조군 — 두 분해가 수렴하면 접지가 돈다(수렴 검사가 접지를 막기만 하는 것이 아니다).
+    clean_root, clean_outcome, clean_adapter = run_read(tmp_path.joinpath("clean"))
+    if clean_outcome["status"] != "ok":
+        pytest.fail(f"무변조 런이 escalate 됐다: {clean_outcome['status']}")
+    if "ground-independent" not in clean_adapter.tasks_dispatched():
+        pytest.fail("수렴 통과인데 접지가 돌지 않았다")
+    _ = clean_root
+
+
+def test_canonical_selection_is_content_blind(tmp_path) -> None:
+    """정본 지정이 품질 비교를 하면 판정자 부재 원칙이 붕괴한다(재정 P-4).
+
+    두 실행의 산출을 **서로 바꿔** 넣어도 정본은 언제나 `read_runs[0]` 이어야 한다.
+    내용을 보고 고르는 코드가 있으면 이 대칭이 깨진다.
+    """
+    picks = []
+    for index, (first, second) in enumerate((("read-a", "read-b"), ("read-b", "read-a"))):
+        root, _ = run_source(tmp_path.joinpath(f"case-{index}"))
+        # 한쪽 산출을 일부러 '빈약하게' 만든다 — 품질 비교가 있다면 이쪽이 탈락할 것이다.
+        payloads = {
+            first: payload_set(direction="concern", note="훅이 약함."),
+            second: payload_set(direction="clear"),
+        }
+        lanes_root = write_lane_responses(root, payloads_by_run=payloads)
+        outcome = read_stage.run(
+            run_root=root,
+            adapter=ReplayLaneAdapter(lanes_root),
+            rules=RULES,
+            read_runs=(first, second),
+        )
+        if outcome["status"] != "ok":
+            pytest.fail(f"status 기대 ok, 실제 {outcome['status']} — {fail_rows(outcome['rows'])}")
+        selection = outcome["convergence"]["canonical_selection"]
+        if selection["read_run"] != first:
+            pytest.fail(f"정본이 선언 순서를 따르지 않았다: {selection} (선언 {first} 우선)")
+        if selection["rule"] != "declaration-order" or selection["content_blind"] is not True:
+            pytest.fail(f"정본 지정이 내용맹·결정론으로 신고되지 않았다: {selection}")
+        picks.append(selection["read_run"])
+    if picks != ["read-a", "read-b"]:
+        pytest.fail(f"두 배치에서 같은 실행이 뽑혔다 — 내용으로 고른 것이다: {picks}")
+
+
+def test_non_canonical_run_has_no_grounding_lane(tmp_path) -> None:
+    """비정본 실행이 접지를 돌면 "정본 1개" 가 미집행이다 — 그 사실은 로그에 **없음으로** 증명된다(재정 P-4·P-U3)."""
+    root, outcome, adapter = run_read(tmp_path)
+    if outcome["status"] != "ok":
+        pytest.fail(f"status 기대 ok, 실제 {outcome['status']} — {fail_rows(outcome['rows'])}")
+
+    log = load_json(RunPaths(root).lane_log)
+    tasks_by_run: dict[str, set] = {}
+    for row in log:
+        tasks_by_run.setdefault(row["read_run"], set()).add(row["task"])
+    if tasks_by_run.get("read-b") != {"decompose"}:
+        pytest.fail(f"비정본 실행이 분해 밖의 레인을 돌았다: {sorted(tasks_by_run.get('read-b', []))}")
+    for task in ("ground-independent", "ground-dependent", "synthesize"):
+        if task not in tasks_by_run.get("read-a", set()):
+            pytest.fail(f"정본 실행이 {task} 를 돌지 않았다: {sorted(tasks_by_run.get('read-a', []))}")
+
+    # 그 부재를 **검사가 본다**. 로그만 그렇고 검사가 없으면 다음 개정에서 조용히 되돌아간다.
+    shape = [row for row in outcome["rows"] if row.check_id == "read.lane-log-shape"]
+    if not shape or shape[0].status != "pass":
+        pytest.fail(f"레인 로그 형태 검사가 없거나 실패했다: {shape}")
+
+    # 변조 — 비정본 실행에 접지 레인 기록을 심으면 검사가 잡는다.
+    journal = read_stage.LaneJournal()
+    journal.rows = [
+        {"read_run": "read-a", "task": "decompose"},
+        {"read_run": "read-b", "task": "decompose"},
+        {"read_run": "read-b", "task": "ground-independent"},
+        {"read_run": "read-a", "task": "synthesize"},
+    ]
+    row = read_stage.check_lane_log_shape(
+        journal, read_runs=("read-a", "read-b"), canonical="read-a"
+    )
+    if row.status != "fail":
+        pytest.fail("비정본 실행의 접지 기록이 통과했다 — 부재의 증명이 성립하지 않는다")
+    if "lane-log.non-canonical-tail" not in [finding.rule for finding in row.findings]:
+        pytest.fail(f"결함 규칙이 다르다: {[f.rule for f in row.findings]}")
+    _ = adapter
+
+
+def test_cp1_surface_shows_total_numeric_count(tmp_path) -> None:
+    """전량 카운트가 없으면 "미참조 접힘"이 은폐가 된다(재정 P-B)."""
+    root, outcome, _ = run_read(tmp_path)
+    rendered = read_text(RunPaths(root).material_spec_md)
+    inventory = outcome["convergence"]["numeric_inventory"]
+    total = inventory["total"]
+    referenced = inventory["referenced"]
+    unreferenced = inventory["unreferenced"]
+
+    if total != len(HARVESTED_LABELS):
+        pytest.fail(f"전수 수확 카운트가 다르다: {total} != {len(HARVESTED_LABELS)}")
+    if len(referenced) + len(unreferenced) != total:
+        pytest.fail(f"참조·미참조의 합이 전량과 다르다: {inventory}")
+    # 중요분은 LLM 판단이 아니라 **역참조**로 도출된다 — 통합 레인이 실제로 적은 두 건이다.
+    if sorted(referenced) != sorted(["M7", "M8"]):
+        pytest.fail(f"역참조로 도출된 중요분이 다르다: {referenced}")
+
+    headline = f"**전체 {total}건 — 참조 {len(referenced)}건 표시, 미참조 {len(unreferenced)}건 접힘**"
+    if headline not in rendered:
+        pytest.fail(f"전량 카운트 상시 표기가 없다: {headline!r}")
+    section = rendered.split("## 12. ★ 수치 인벤토리")[1].split("## 13.")[0]
+    if "<details>" not in section:
+        pytest.fail("미참조분이 접히지 않았다")
+    for item_id in unreferenced:
+        if item_id not in section:
+            pytest.fail(f"미참조 수치 {item_id} 이 표면에서 통째로 빠졌다 — 접힘이 아니라 은폐다")
+
+
+def _write_continue_envelope(root: str, *, digest: str | None = None) -> str:
+    """Owner '계속' 봉투(재정 P-U3). 대상은 **조기 수렴 판정서 자체**다."""
+    paths = RunPaths(root)
+    if digest is None:
+        with open(paths.convergence_early_json, "rb") as handle:
+            digest = "sha256:" + hashlib.sha256(handle.read()).hexdigest()
+    frontmatter = {
+        "schema": "approval-envelope/v0",
+        "checkpoint": "convergence_continue",
+        "run_id": RUN_ID,
+        "target": {"path": "10-read/convergence-early.json", "digest": digest},
+        "decision": "approved",
+        "owner_quote": "독해 프로파일을 봤다. 이 갈림은 받아들이고 계속 간다.",
+        "quote_provenance": {
+            "channel": "session-transcript",
+            "located_at": "2026-08-18 세션 · 수렴 상신 응답",
+        },
+        "decided_at": "2026-08-18T05:00:00Z",
+        "recorded_by": "orchestrator",
+    }
+    body = yaml.safe_dump(frontmatter, allow_unicode=True, sort_keys=False)
+    with open(paths.convergence_continue_md, "w", encoding="utf-8") as handle:
+        handle.write(f"---\n{body}---\n\n# 수렴 계속 — 독해 프로파일 확인\n")
+    return paths.convergence_continue_md
+
+
+def test_grounding_requires_convergence_verdict_or_envelope(tmp_path) -> None:
+    """접지 진입이 판정서에 결속되지 않으면 "앞으로 옮겼다"가 실행 순서의 관습으로만 남는다(재정 P-U3).
+
+    표본은 **상신 축**(element-set)이 갈린 판이다 — 판정 행은 실패가 아니지만(재정 P-3)
+    접지는 열리지 않는다. 그 둘이 다른 층이라는 것이 이 게이트의 요지다.
+    """
+    root, _ = run_source(tmp_path)
+    payloads = {
+        "read-a": payload_set(),
+        "read-b": payload_set(element_two=E2_TEXT_VARIANT),
+    }
+    lanes_root = write_lane_responses(root, payloads_by_run=payloads)
+
+    # ① 판정서만 있고 봉투가 없으면 접지가 열리지 않는다.
+    blocked_adapter = ReplayLaneAdapter(lanes_root)
+    blocked = read_stage.run(run_root=root, adapter=blocked_adapter, rules=RULES)
+    if blocked["status"] != "escalate":
+        pytest.fail(f"상신 축 미달인데 status 가 {blocked['status']} 다")
+    if blocked["reason_label"] != "독해 프로파일 상신":
+        pytest.fail(f"사유 라벨이 다르다: {blocked['reason_label']!r}")
+    if [row.check_id for row in blocked["rows"] if row.status == "fail"]:
+        pytest.fail("상신 축 미달이 판정 행 fail 로 나왔다 — 층이 섞였다(재정 P-3)")
+    if [task for task in blocked_adapter.tasks_dispatched() if task.startswith("ground")]:
+        pytest.fail("판정서만 있고 봉투가 없는데 접지가 돌았다")
+
+    # ② 다른 판정서에 결속된 봉투는 열지 못한다 — 결속이 없으면 '계속'은 무관한 종이다.
+    _write_continue_envelope(root, digest="sha256:" + "0" * 64)
+    stale_adapter = ReplayLaneAdapter(lanes_root)
+    stale = read_stage.run(run_root=root, adapter=stale_adapter, rules=RULES)
+    if stale["status"] != "escalate":
+        pytest.fail(f"엉뚱한 판정서에 결속된 봉투가 접지를 열었다: {stale['status']}")
+    if "결속" not in str(stale.get("gate_note", "")):
+        pytest.fail(f"게이트가 결속 실패를 밝히지 않는다: {stale.get('gate_note')!r}")
+
+    # ③ 이 판정서에 결속된 봉투가 있으면 접지가 열린다(과잉 제약 배제).
+    _write_continue_envelope(root)
+    opened_adapter = ReplayLaneAdapter(lanes_root)
+    opened = read_stage.run(run_root=root, adapter=opened_adapter, rules=RULES)
+    if "ground-independent" not in opened_adapter.tasks_dispatched():
+        pytest.fail(f"유효한 계속 봉투인데 접지가 돌지 않았다: {opened['status']}")
+
+
+def test_source_change_requires_new_run(tmp_path) -> None:
+    """원천 변경이 덮어쓰기로 처리되면 바이트 오프셋이 조용히 어긋난다 — 처분은 새 런이다(재정 P-U2)."""
+    root, _ = run_source(tmp_path)
+
+    # ① 원문이 바뀐 투입물로 같은 런 작업장에 다시 봉인하려 하면 **환경 오류**다.
+    changed = SOURCE.replace("12 rpm", "18 rpm")
+    patent_path, figures = make_source_inputs(
+        tmp_path.joinpath("changed"), figure_count=6, source_text=changed
+    )
+    with pytest.raises(StageEnvironmentError) as excinfo:
+        source_stage.run(
+            run_root=root,
+            source_patent_path=patent_path,
+            figures_dir=figures,
+            run_id=RUN_ID,
+            patent_meta=copy.deepcopy(PATENT_META),
+        )
+    if "00-source/patent.md" not in str(excinfo.value):
+        pytest.fail(f"진단이 어느 파일이 바뀌었는지 밝히지 않는다: {excinfo.value}")
+
+    # ② 도면 세트만 바뀌어도 같은 처분이다 — 원천은 원문 + **도면 세트 전체**다.
+    same_text, more_figures = make_source_inputs(
+        tmp_path.joinpath("more-figures"), figure_count=7, source_text=SOURCE
+    )
+    with pytest.raises(StageEnvironmentError) as excinfo:
+        source_stage.run(
+            run_root=root,
+            source_patent_path=same_text,
+            figures_dir=more_figures,
+            run_id=RUN_ID,
+            patent_meta=copy.deepcopy(PATENT_META),
+        )
+    if "매니페스트" not in str(excinfo.value):
+        pytest.fail(f"도면 세트 변경이 매니페스트 지문으로 판정되지 않았다: {excinfo.value}")
+
+    # ③ 대조군 — 같은 투입물이면 지문 대조는 통과한다(그 뒤 '두 번 쓰지 않는다'가 막는다).
+    same_path, same_figures = make_source_inputs(
+        tmp_path.joinpath("identical"), figure_count=6, source_text=SOURCE
+    )
+    with pytest.raises(StageError) as excinfo:
+        source_stage.run(
+            run_root=root,
+            source_patent_path=same_path,
+            figures_dir=same_figures,
+            run_id=RUN_ID,
+            patent_meta=copy.deepcopy(PATENT_META),
+        )
+    if isinstance(excinfo.value, StageEnvironmentError):
+        pytest.fail(f"같은 투입물인데 지문 불일치로 판정됐다: {excinfo.value}")
+
+    # ④ 생산 경로에 재봉인(지문 재계산) 함수를 두지 않는다 — 그 자리는 테스트 하네스다.
+    import inspect  # noqa: PLC0415
+
+    source_code = inspect.getsource(source_stage)
+    for forbidden in ("def reseal", "def rewrite_digest", "def force_source"):
+        if forbidden in source_code:
+            pytest.fail(f"생산 경로에 재봉인 자리가 있다: {forbidden}")
+
+
+def test_run_is_pinned_to_engine_commit(tmp_path) -> None:
+    """커밋 핀이 없으면 "런의 법이 무엇이었나"를 되짚을 수 없다(재정 P-U1 · P-8)."""
+    import subprocess  # noqa: PLC0415
+
+    def git(*args, cwd) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["git", *args], cwd=str(cwd), capture_output=True, text=True, check=False
+        )
+
+    # 소형 리포 하나를 세운다 — 본 리포의 HEAD 에 기대면 시험이 작업 상태에 좌우된다.
+    fake = tmp_path / "law"
+    fake.mkdir()
+    git("init", "-q", cwd=fake)
+    git("config", "user.email", "t@example.com", cwd=fake)
+    git("config", "user.name", "t", cwd=fake)
+    (fake / "contracts").mkdir()
+    (fake / "contracts" / "pipeline.yaml").write_text("schema: pipeline/v0\n", encoding="utf-8")
+    git("add", "contracts/pipeline.yaml", cwd=fake)
+    git("commit", "-q", "-m", "law v1", cwd=fake)
+
+    tool = os.path.join(REPO, "tools", "run_worktree.py")
+    created = subprocess.run(
+        [sys.executable, tool, "create", RUN_ID, "--repo", str(fake), "--root", str(tmp_path / "wt")],
+        capture_output=True, text=True, check=False,
+    )
+    if created.returncode != 0:
+        pytest.fail(f"create 종료 코드 {created.returncode} (기대 0) — {created.stderr}")
+    payload = json.loads(created.stdout)
+    commit = payload["commit"]
+    if len(commit) != 40 or not all(char in "0123456789abcdef" for char in commit):
+        pytest.fail(f"커밋 핀이 40hex 가 아니다: {commit!r}")
+    if not os.path.isdir(payload["worktree"]):
+        pytest.fail(f"격리 체크아웃이 만들어지지 않았다: {payload['worktree']}")
+
+    # 핀을 든 run.yaml 은 만료되지 않았다고 통지한다(종료 코드 0).
+    run_yaml = tmp_path / "run.yaml"
+    run_yaml.write_text(
+        yaml.safe_dump(
+            {"schema": "run/v0", "run_id": RUN_ID, "engine": {"commit": commit, "worktree": payload["worktree"]}},
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+    fresh = subprocess.run(
+        [sys.executable, tool, "expiry", str(run_yaml), "--repo", str(fake)],
+        capture_output=True, text=True, check=False,
+    )
+    if fresh.returncode != 0:
+        pytest.fail(f"동일 커밋인데 expiry 가 {fresh.returncode} 를 냈다 — {fresh.stdout}{fresh.stderr}")
+
+    # 법이 개정되면 **만료를 통지한다**(종료 코드 3) — 재검을 막지 않고 알려 줄 뿐이다.
+    (fake / "contracts" / "pipeline.yaml").write_text(
+        "schema: pipeline/v0\nchanged: true\n", encoding="utf-8"
+    )
+    git("add", "contracts/pipeline.yaml", cwd=fake)
+    git("commit", "-q", "-m", "law v2", cwd=fake)
+    expired = subprocess.run(
+        [sys.executable, tool, "expiry", str(run_yaml), "--repo", str(fake)],
+        capture_output=True, text=True, check=False,
+    )
+    if expired.returncode != 3:
+        pytest.fail(f"개정 후 expiry 종료 코드 {expired.returncode} (기대 3) — {expired.stdout}")
+    notice = json.loads(expired.stdout)
+    if notice["expired"] is not True or notice["commits_since"] < 1:
+        pytest.fail(f"만료 통지의 내용이 비었다: {notice}")
+    if notice["pinned"] != commit:
+        pytest.fail(f"통지가 핀을 잘못 읽었다: {notice['pinned']} != {commit}")
+
+    # 핀이 40hex 가 아니면 **판정하지 않고 입력 오류**를 낸다(지어낸 기준으로 판정하지 않는다).
+    run_yaml.write_text(
+        yaml.safe_dump({"schema": "run/v0", "run_id": RUN_ID, "engine": {"commit": ""}}),
+        encoding="utf-8",
+    )
+    unpinned = subprocess.run(
+        [sys.executable, tool, "expiry", str(run_yaml), "--repo", str(fake)],
+        capture_output=True, text=True, check=False,
+    )
+    if unpinned.returncode != 2:
+        pytest.fail(f"핀 없는 run.yaml 의 종료 코드 {unpinned.returncode} (기대 2)")

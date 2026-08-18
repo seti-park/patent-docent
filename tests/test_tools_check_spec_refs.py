@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -122,13 +123,122 @@ def test_glob_rows_are_checked_by_match_count() -> None:
         pytest.fail(f"`예정` 글로브 결함 메시지에 표 갱신 지시가 없다: {planned[0]['message']!r}")
 
 
-def test_all_seven_checks_are_reported() -> None:
+def test_all_eight_checks_are_reported() -> None:
+    """K8(공유 코어·확장 블록 경계, 재정 P-2 ⓑ)까지 보고되지 않으면 신설 검사가 조용히 빠진다."""
     proc = run_tool(["--repo", str(FIXTURES / "ok"), "--json"])
     payload = json.loads(proc.stdout)
     got = [check["id"] for check in payload["checks"]]
-    want = ["K1", "K2", "K3", "K4", "K5", "K6", "K7"]
+    want = ["K1", "K2", "K3", "K4", "K5", "K6", "K7", "K8"]
     if got != want:
         pytest.fail(f"CHECK LIST MISMATCH: got={got} want={want}")
+
+
+# ---------------------------------------------------------------------------
+# K8 — 공유 코어 / 프로젝트 확장 블록의 경계 (재정 P-2 ⓑ)
+#
+# 경계 원칙을 **문서 선언이 아니라 기계 집행**으로 두라는 것이 재정의 명시 지시다. 아래는
+# 그 집행의 반증이며, 변조본만 보이면 과잉 제약과 구별되지 않으므로 무변조 대조군을 함께 둔다.
+# ---------------------------------------------------------------------------
+
+SCHEMA_REL = ("reader", "schemas", "material-spec.schema.json")
+
+
+def _fixture_copy(tmp_path: Path, mutate=None) -> str:
+    """`ok` 픽스처의 사본을 만들고 스키마만 변형한다."""
+    target = tmp_path / "repo"
+    shutil.copytree(FIXTURES / "ok", target)
+    schema_path = target.joinpath(*SCHEMA_REL)
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    if mutate is not None:
+        mutate(schema)
+        schema_path.write_text(
+            json.dumps(schema, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+    return str(target)
+
+
+def _plant_project_key_in_core(schema: dict) -> None:
+    """공유 코어 subtree(`patent`) 안에 프로젝트 전용 키를 심는다."""
+    core = schema["properties"]["patent"]
+    core["properties"] = {
+        "drop_signal": {"$comment": "[공유 코어] 편집 판단을 코어에 숨긴 판.", "type": "object"}
+    }
+
+
+def _drop_signal_back_to_top_level(schema: dict) -> None:
+    """`drop_signal` 을 최상위 필수로 되돌린다(구 스키마로의 회귀)."""
+    schema["required"].append("drop_signal")
+    schema["properties"]["drop_signal"] = {
+        "$comment": "[공유 코어] 최상위로 되돌린 판.",
+        "type": "object",
+    }
+
+
+def _unknown_namespace(schema: dict) -> None:
+    """화이트리스트 밖 네임스페이스를 확장 블록에 추가한다."""
+    schema["properties"]["extensions"]["properties"]["marketer"] = {
+        "type": "object",
+        "additionalProperties": False,
+        "required": [],
+        "properties": {
+            "tweet": {"$comment": "[확장:marketer] 등재되지 않은 네임스페이스.", "type": "object"}
+        },
+    }
+
+
+def _strip_core_marker(schema: dict) -> None:
+    """공유 코어 property 의 `[공유 코어]` 표지를 지운다."""
+    schema["properties"]["items"]["$comment"] = "층 표지를 지운 판."
+
+
+def _require_a_namespace(schema: dict) -> None:
+    """네임스페이스를 필수로 만든다 — historian 이 docent 의 판단을 강요당하는 판."""
+    schema["properties"]["extensions"]["required"] = ["docent"]
+
+
+K8_MUTATIONS = [
+    ("project-key-in-core", _plant_project_key_in_core,
+     "편집 판단이 공유 코어 subtree 안에 숨어도 통과한다"),
+    ("drop-signal-at-top-level", _drop_signal_back_to_top_level,
+     "구 스키마로 되돌아가 이식 상대에게 docent 의 판단을 다시 강요한다"),
+    ("unknown-namespace", _unknown_namespace,
+     "등재되지 않은 프로젝트가 공유 계약에 자기 블록을 붙일 수 있게 된다"),
+    ("core-marker-missing", _strip_core_marker,
+     "층 표지가 없어도 통과해 어느 키가 공유분인지 기계가 답할 수 없게 된다"),
+    ("namespace-required", _require_a_namespace,
+     "네임스페이스가 필수가 되어 historian 이 docent 블록 없이는 같은 재료를 읽지 못한다"),
+]
+
+
+def test_core_extension_boundary_rejects_project_key_in_core(tmp_path) -> None:
+    """경계 원칙이 문서 선언에 그치면 P-2 ⓑ 가 미집행이다 — K8 이 그 집행의 자리다."""
+    # 대조군 — 무변형 사본은 통과한다(전부 거부하는 검사와 구별되어야 한다).
+    baseline = run_tool(["--repo", _fixture_copy(tmp_path / "clean")])
+    if baseline.returncode != 0:
+        pytest.fail(
+            f"무변형 사본이 통과하지 못했다: exit={baseline.returncode}\n{baseline.stdout[-600:]}"
+        )
+
+    for index, (mutation_id, mutate, what_goes_vacuous) in enumerate(K8_MUTATIONS):
+        repo = _fixture_copy(tmp_path / f"case-{index}", mutate)
+        proc = run_tool(["--repo", repo, "--json"])
+        if proc.returncode != 1:
+            pytest.fail(
+                f"{mutation_id}: exit 기대 1, 실제 {proc.returncode} — {what_goes_vacuous}\n"
+                f"{proc.stdout[-600:]}"
+            )
+        payload = json.loads(proc.stdout)
+        failing = {check["id"] for check in payload["checks"] if check["status"] == "FAIL"}
+        if failing != {"K8"}:
+            pytest.fail(
+                f"{mutation_id}: 실패 검사 기대 {{'K8'}}, 실제 {sorted(failing)} — "
+                f"{what_goes_vacuous}"
+            )
+        messages = " ".join(
+            finding["message"] for finding in payload["findings"] if finding["check"] == "K8"
+        )
+        if "P-2" not in messages:
+            pytest.fail(f"{mutation_id}: K8 판정 문언에 근거(재정 P-2)가 없다 — {messages[:200]}")
 
 
 def test_verbose_prints_target_section_titles() -> None:

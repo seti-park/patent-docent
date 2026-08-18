@@ -1,14 +1,20 @@
 {
   "schema": "material-spec/v0",
-  "reader_version": "0.3.0",
+  "reader_version": "0.5.0",
   "spec_version": 1,
   "status": "frozen",
   "run_id": "example-xx0000000a1-cable-guide",
   "patent": {
     "number": "XX0000000A1",
     "title": "Cable feedthrough assembly with a wiper collar (fictional example)",
+    "jurisdiction": "XX",
+    "kind_code": "A1",
     "assignee": "Example Devices, Inc.",
+    "applicants": ["Example Devices, Inc."],
+    "inventors": ["Morgan V. Example", "Sasha B. Fixture"],
     "dates": { "priority": "2024-05-02", "filing": "2025-04-28", "publication": "2026-02-11" },
+    "priority_claims": [{ "number": "XX-2024-000502", "date": "2024-05-02", "jurisdiction": "XX" }],
+    "classifications": { "ipc": ["H02G 3/22"], "cpc": ["H02G 3/22", "F16L 5/02"] },
     "source_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
     "source_path": "00-source/patent.md"
   },
@@ -180,6 +186,7 @@
       "statement_en": "Standing the collar proud of the mouth points at scraping the cable clean outside the wall rather than sealing the opening tighter: the design attacks contamination by moving the wiping surface, not by gripping harder.",
       "basis": "spec",
       "derived_from": ["M2", "M5"],
+      "numeric_refs": [],
       "evidence_quotes": [
         "material carried on the cable is displaced outside the wall rather than within the enclosure"
       ],
@@ -193,6 +200,7 @@
       "background_problem": "Conventional feedthroughs rely on a compression seal that grips the cable, so grit clinging to the cable is dragged past the seal and into the enclosure whenever the cable is drawn through.",
       "asserted_effect": "The specification states in words that the sleeve is meant to be replaced in service, which puts the wear on a part that can be swapped instead of on the enclosure.",
       "delta": "The asserted delta is a change of failure site (a replaceable sleeve takes the wear), not a claimed performance figure.",
+      "numeric_refs": [],
       "quotes": [
         "Conventional feedthroughs rely on a compression seal that grips the cable, so grit clinging to the cable is dragged past the seal and into the enclosure whenever the cable is drawn through.",
         "the sleeve is intended to be replaced in service"
@@ -206,16 +214,76 @@
       "figure": "FIG-3",
       "what_it_shows_en": "The exploded view separates the sleeve from the groove at the mouth, so the reader can see that the wearing part comes out toward the operator rather than into the enclosure.",
       "numerals": ["124", "140", "142"]
+    },
+    {
+      "id": "M10",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "publication number of the application",
+      "origin": "bibliographic",
+      "value_raw": "XX0000000A1",
+      "value_normalized": "XX0000000A1",
+      "value_type": { "kind": "identifier", "approximate": false, "value": "XX0000000A1" },
+      "unit": null,
+      "machine_verifiable": true,
+      "bib_source": { "field": "patent.number" }
+    },
+    {
+      "id": "M11",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "priority date of the application",
+      "origin": "bibliographic",
+      "value_raw": "2024-05-02",
+      "value_normalized": "2024-05-02",
+      "value_type": { "kind": "date", "approximate": false, "value": "2024-05-02" },
+      "unit": null,
+      "machine_verifiable": true,
+      "bib_source": { "field": "patent.dates.priority" }
+    },
+    {
+      "id": "M12",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "filing date of the application",
+      "origin": "bibliographic",
+      "value_raw": "2025-04-28",
+      "value_normalized": "2025-04-28",
+      "value_type": { "kind": "date", "approximate": false, "value": "2025-04-28" },
+      "unit": null,
+      "machine_verifiable": true,
+      "bib_source": { "field": "patent.dates.filing" }
+    },
+    {
+      "id": "M13",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "publication date of the application",
+      "origin": "bibliographic",
+      "value_raw": "2026-02-11",
+      "value_normalized": "2026-02-11",
+      "value_type": { "kind": "date", "approximate": false, "value": "2026-02-11" },
+      "unit": null,
+      "machine_verifiable": true,
+      "bib_source": { "field": "patent.dates.publication" }
     }
   ],
-  "drop_signal": {
-    "stage": "final",
-    "verdict": "go",
-    "reason": "권리 관심이 '칼라의 위치'라는 한 구성에 뚜렷하고, 효과 주장이 명세서 문언으로 존재해 안도감 착지가 물증으로 가능함."
-  },
   "provenance": {
     "read_runs": ["read-a-0000001", "read-b-0000002"],
     "produced_at": "2026-02-20T00:00:00Z",
     "engine_commit": "0000000"
+  },
+  "extensions": {
+    "docent": {
+      "drop_signal": {
+        "stage": "final",
+        "verdict": "go",
+        "reason": "권리 관심이 '칼라의 위치'라는 한 구성에 뚜렷하고, 효과 주장이 명세서 문언으로 존재해 안도감 착지가 물증으로 가능함."
+      }
+    }
   }
 }

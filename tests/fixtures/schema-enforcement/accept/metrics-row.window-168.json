@@ -10,8 +10,10 @@
   "snapshot": {
     "window_h": 168,
     "taken_at": "2026-02-11T20:00:00Z",
-    "within_window": true,
-    "offset_h": 32
+    "within_window": false,
+    "offset_h": 32,
+    "collection_state": "collected",
+    "non_standard_window": true
   },
   "hook": {
     "impressions": 12000,

@@ -11,7 +11,9 @@
     "window_h": 72,
     "taken_at": "2026-02-07T15:00:00Z",
     "within_window": true,
-    "offset_h": 3
+    "offset_h": 3,
+    "collection_state": "collected",
+    "non_standard_window": false
   },
   "hook": {
     "impressions": 12000,

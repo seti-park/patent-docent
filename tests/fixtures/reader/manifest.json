@@ -1,5 +1,5 @@
 {
-  "$comment": "M1 검증기 반증 코퍼스. 정답을 아는 가공 특허 1벌(base/)과 거기서 한 곳만 바꾼 무효 변조본(invalid/)으로 이루어지며, 각 변조본마다 '어느 검사가 실패해야 하는가'를 이 원장이 적는다. ★ 이 코퍼스는 선언적이다 — 코드에 의존하지 않고, 검증기가 무엇을 실제로 반증하는지를 데이터로 증명한다. ★ 러너 계약: 각 케이스는 base 의 4자리(source·spec·peer·revision) 중 role 이 지목한 한 자리를 대체하고 나머지 셋은 base 를 그대로 쓴 뒤, 검사 11종을 전부 돌린다(read.source-digest 포함). expect_fail 에 적힌 검사만 실패하고 나머지는 전부 통과해야 한다 — '실패해야 할 것이 실패했다' 와 '실패하지 말아야 할 것이 통과했다' 를 함께 봐야 검사의 관할이 증명되기 때문이다. ★ 전 변조본은 스키마(reader/schemas/material-spec.schema.json)를 통과한다. 스키마가 잡는 결함은 이 코퍼스의 대상이 아니다(그 몫은 tests/fixtures/schema-enforcement/). 이 코퍼스가 증명하는 것은 '스키마를 통과한 뒤에도 검증기가 잡는다' 는 사실이며, 그래서 read.schema 는 expect_fail 에 한 번도 등장하지 않는다 — 검사 id 10종 중 유일하게 배정 0건인 항목이고, 그것은 누락이 아니라 이 코퍼스의 정의다. ★ 한 변조본은 한 곳만 바꾼다. 두 결함을 한 파일에 넣으면 무엇이 실패를 유발했는지 증명되지 않기 때문이다. 다만 한 곳의 변조가 구조상 여러 검사에 걸리는 판이 있으며(예: 청구항을 지우면 그 청구항의 부가 한정을 가리키던 포인터와 커버리지가 함께 무너진다), 그런 판은 expect_fail 에 전부 적고 mutation 에 파급 경로를 적었다. 근거 = docs/SPEC.md §2.3~§2.7 + reader/reader-rules.yaml + M0.6 재감수 B-02·B-04·M-07·M-08·M-09.",
+  "$comment": "M1 검증기 반증 코퍼스. 정답을 아는 가공 특허 1벌(base/)과 거기서 한 곳만 바꾼 무효 변조본(invalid/)으로 이루어지며, 각 변조본마다 '어느 검사가 실패해야 하는가'를 이 원장이 적는다. ★ 이 코퍼스는 선언적이다 — 코드에 의존하지 않고, 검증기가 무엇을 실제로 반증하는지를 데이터로 증명한다. ★ 러너 계약: 각 케이스는 base 의 4자리(source·spec·peer·revision) 중 role 이 지목한 한 자리를 대체하고 나머지 셋은 base 를 그대로 쓴 뒤, 검사 12종을 전부 돌린다(read.source-digest·read.bibliography 포함). expect_fail 에 적힌 검사만 실패하고 나머지는 전부 통과해야 한다 — '실패해야 할 것이 실패했다' 와 '실패하지 말아야 할 것이 통과했다' 를 함께 봐야 검사의 관할이 증명되기 때문이다. ★ 전 변조본은 스키마(reader/schemas/material-spec.schema.json)를 통과한다. 스키마가 잡는 결함은 이 코퍼스의 대상이 아니다(그 몫은 tests/fixtures/schema-enforcement/). 이 코퍼스가 증명하는 것은 '스키마를 통과한 뒤에도 검증기가 잡는다' 는 사실이며, 그래서 read.schema 는 expect_fail 에 한 번도 등장하지 않는다 — 배정 0건이 **설계인** 유일한 검사이며, 그것은 누락이 아니라 이 코퍼스의 정의다(floors.exempt_checks 가 그 하나만 담는 이유다). ★ 신설 검사 read.bibliography(재정 P-2 ⓐ)도 한때 배정 0건이었으나 2026-08-18 에 변조본 2건으로 채웠다 — bibliography-fabricated-inventor(원천 대조 갈래 bib.inventors-in-source)와 bibliography-earliest-priority-mismatch(자기 정합 갈래 bib.earliest-priority)가 그 검사의 두 갈래를 각각 때린다. 면제 확대로 0건을 덮는 것은 공허 통과의 문을 여는 일이며 재정 사항이다. ★ 한 변조본은 한 곳만 바꾼다. 두 결함을 한 파일에 넣으면 무엇이 실패를 유발했는지 증명되지 않기 때문이다. 다만 한 곳의 변조가 구조상 여러 검사에 걸리는 판이 있으며(예: 청구항을 지우면 그 청구항의 부가 한정을 가리키던 포인터와 커버리지가 함께 무너진다), 그런 판은 expect_fail 에 전부 적고 mutation 에 파급 경로를 적었다. 근거 = docs/SPEC.md §2.3~§2.7 + reader/reader-rules.yaml + M0.6 재감수 B-02·B-04·M-07·M-08·M-09. ★ 이행 기록(2026-08-18 · reader_version 0.4.0 → 0.5.0, 재정 P-1·P-2·P-B): ① 최상위 drop_signal 이 extensions.docent.drop_signal 로 옮겨졌다(층 분리 — P-2 ⓑ) ② patent 에 서지 6종이 필수로 늘었다(P-2 ⓐ) ③ implication·positioning 에 numeric_refs 가 필수로 생겼다(P-B) ④ dependency_type 어휘에서 alternative-form 이 폐기되고 unclassified 가 신설되었다(P-1). ★ 이행이 **원천을 고쳤다**는 사실을 여기 적는다: read.bibliography 는 inventors·applicants·classifications·priority_claims[].number 를 원천 서지면의 **바이트 정확 부분문자열**로 대조하는데, 구 base/patent.md 의 서지면에는 발명자·분류·우선권 번호를 담은 행이 없었다. 값을 지어내면 검사는 통과하되 그 통과가 아무것도 뜻하지 않으므로, 원천 서지면에 5행(Kind code · Inventors · Priority claim · IPC · CPC)을 더했다. 그 결과 ⓐ base/patent.md 와 invalid/inventory-source-extra-claim.md 가 **+223 바이트** 길어졌고 ⓑ 삽입 지점이 Description 앞이므로 spec_refs[].span 의 바이트 오프셋 전량이 같은 폭으로 이동했으며 ⓒ patent.source_digest 가 재계산되었다. 세 변경은 전부 **상수 이동**이므로 각 변조본이 심은 한 곳은 그대로 보존된다 — 이행은 결함을 옮길 뿐 만들지 않는다. ★★ 수확 정렬(2026-08-18 · 재정 P-B 의 수확 소유권): origin: quoted fact 는 이제 **수확기의 산출**이고 수확기는 자기가 훑은 **접지 인용 전문**을 source.quote 로 낸다. 구 코퍼스의 M13~M18 은 사람이 고른 **발췌**를 들고 있어 7건 중 7건이 짝지어지지 않았다(누락 3 + 추가 7). 처방은 두 갈래였고 — 수확 범위를 넓히거나, **접지를 넓히거나** — 후자를 골랐다. 접지되지 않은 문장의 수치는 원천 대조로 뒷받침되지 않으므로 수확 범위를 넓히는 것은 검사를 무르게 만드는 일이기 때문이다. 실제 조치: ⓐ M32(folded flow path 의 접지) 인용을 같은 문장의 길이 서술까지 넓혀 '12 mm' 가 접지 안에 들어왔다 ⓑ M34(ceramic layer 한정의 접지) 인용을 같은 문장의 두께 서술까지 넓혔다 ⓒ M30(유로를 자기 몸체에 낸 스프레더의 접지)에 [0048] 인용을 하나 더 달아 냉매 충전율이 접지 안에 들어왔다 ⓓ M13~M18 의 source·value_normalized·value_type·unit 을 수확 산출로 교체했다(라벨·ID·상태는 픽스처의 것을 지켰다 — parity 키에 들어가지 않으므로 정보를 버릴 이유가 없다). ★ numeric_refs: 정렬과 함께 M43(implication)을 신설해 numeric_refs: ['M13'] 로 **실참조 1건**을 세웠다. 그 함의는 0.08 mm 라는 수치에 실제로 근거하며([0043] 인용), 그래야 역참조 무결 규칙이 통과 방향에서도 대상을 갖는다. 반증 방향은 invalid/pointer-numeric-ref-dangling.json 이 맡는다. 나머지 함의·포지셔닝(M25·M26·M27)은 여전히 빈 배열이다 — 그것들은 수치에 근거하지 않으며(M27 은 delta 문언에서 그 사실을 명시한다) 없는 참조를 지어 넣는 것은 검사를 시험하는 것이 아니라 위조하는 것이다. ★ 정렬 후 남은 기준선 위반 1건을 여기 적는다: M24(retracted, 청구항에서 읽은 수치)가 value.harvest-parity 에 [추가] 로 걸린다. 이것은 코퍼스의 결함이 아니라 **검사가 항목 status 를 보지 않는 데서 오는 것**이다 — 수확기는 접지 인용과 서지면만 읽으므로 물러난 항목에 대응하는 산출을 낼 수 없고, append-only 규율은 그 항목을 지우지 못하게 하므로, 현행 대조는 수확 소유 fact 의 철회·승계를 **영구히 불가능하게 만든다**(스키마 $comment (14) 의 생애주기 규율과 충돌한다). 재현 표본은 base 의 M24 와 rev2 의 M14 → M46 승계 2건이며, 처방은 대조 집합을 status == \"active\" 로 좁히는 것이다(README 구멍 표 10행 · 총괄 상신). ★ peer-read.json 은 이 정렬에서 손대지 않았다: peer 는 read.convergence 의 입력일 뿐이고 그 검사는 청구항 구조(element 집합·트리 간선·종속 서명)만 비교하므로 peer 의 fact 인벤토리를 보는 검사가 없다. 반면 peer 에 항목을 더하면 invalid/convergence-dependent-dropped.json 의 근거('빠지는 두 항목이 peer 의 마지막 두 id 다')가 거짓이 된다 — 검사받지 않는 정합을 위해 검사받는 근거를 깨뜨리지 않는다.",
   "version": "1",
   "base": {
     "source": "base/patent.md",
@@ -8,7 +8,7 @@
     "revision": "base/material-spec.rev2.json"
   },
   "floors": {
-    "min_cases": 36,
+    "min_cases": 39,
     "per_check_min": 1,
     "exempt_checks": [
       "read.schema"
@@ -20,13 +20,16 @@
       "file": "invalid/verbatim-quote-one-char.json",
       "role": "spec",
       "expect_fail": [
-        "read.verbatim"
+        "read.verbatim",
+        "read.value-derivation"
       ],
       "mutation": "M30(component M2 의 접지).spec_refs[0].quote 의 도면부호 112 → 122. 한 글자만 바뀌어 원천 부분문자열이 아니게 된다.",
-      "basis": "docs/SPEC.md §2.7 '틀린 변형과 대조' — 한 글자 부호 오기는 6종 중 하나만 잡는다. 나머지 검사는 구조를 건드리지 않았으므로 전부 통과해야 한다.",
+      "basis": "docs/SPEC.md §2.7 '틀린 변형과 대조' — 한 글자 부호 오기는 원천 대조를 깨뜨린다. ★ 파급 1건을 여기 선언한다(2026-08-18 · 재정 P-B): 이 변조가 건드리는 것은 **접지 인용문**(M30.spec_refs[0].quote)이고, P-B 이후 접지 인용문은 곧 수치 정답지의 원천이다 — reader/lib/harvest.py 가 훑는 것이 정확히 그 문자열이기 때문이다. 112 를 122 로 바꾸면 그 인용문 안에 **원천에 없던 새 수치 토큰 하나가 생기고**, 수확기는 그것을 거두는데 명세에는 대응 항목이 없으므로 value.harvest-parity 가 [누락] 1건을 낸다(실측 locus harvest:[0042][53,56) — 122). 회피가 아니라 사실이다: 접지 인용문을 고치면서 수치 정답지를 건드리지 않는 판은 없다. ★ 이 선언의 범위를 좁게 적는다 — 파급은 **접지 인용문을 건드리는 변조본에만** 온다. 같은 read.verbatim 계열이라도 invalid/verbatim-fabricated-evidence.json 은 implication.evidence_quotes 를 고치는데 그것은 접지 인용이 아니므로 수확 산출이 한 글자도 바뀌지 않으며, 실측으로도 그 판의 parity 결함 집합은 기준선의 것과 **완전히 동일**했다(변조가 더한 것 0건). 그러므로 그 판의 expect_fail 은 넓히지 않는다.",
       "traces": [
         "SPEC §2.6 검사 1",
-        "SPEC §2.7 틀린 변형과 대조"
+        "SPEC §2.7 틀린 변형과 대조",
+        "재정 2026-08-18 P-B",
+        "reader-rules.yaml#numeric_harvest"
       ]
     },
     {
@@ -46,13 +49,13 @@
       "file": "invalid/pointer-attaches-to-dangling.json",
       "role": "spec",
       "expect_fail": [
-        "read.pointer-resolve",
-        "read.convergence"
+        "read.pointer-resolve"
       ],
       "mutation": "CL-9/a1.attaches_to 를 'CL-1/e2' → 'CL-1/e7'(실재하지 않는 element). element_id 문법은 지켜 스키마는 통과한다.",
-      "basis": "유령 링크. ★ 수렴 축 addition-attachment(reader-rules.yaml#convergence.axes)는 '부가 한정 문언 ↔ 부착된 element 문언' 쌍을 비교하므로, 부착 대상이 해소되지 않는 순간 그 축도 함께 무너진다 — 파급이 불가피한 두 번째 검사다.",
+      "basis": "유령 링크. ★ 기대 축소 기록(2026-08-18 · 재정 P-3): 이 케이스의 expect_fail 에는 read.convergence 가 함께 있었고 그 근거는 '수렴 축 addition-attachment 는 부가 한정 문언 ↔ 부착된 element 문언 쌍을 비교하므로 부착 대상이 해소되지 않으면 그 축도 무너진다' 였다. 축이 무너진다는 관찰 자체는 지금도 사실이다(실측 Jaccard 0.714). 바뀐 것은 **그 축의 지위**다 — 재정 P-3 이 addition-attachment 를 **판정 제외·측정 전용**(policy: measure-only)으로 내렸다. 부착 관례가 입법되지 않은 상태에서 부착이 갈린 것을 결함으로 셀 근거가 없기 때문이며, 그래서 축은 값을 재되 판정하지 않는다. 판정하지 않는 축이 검사를 실패시킬 수는 없으므로 read.convergence 를 기대에서 뺐다. ★ 이것은 기대를 통과시키려고 지운 것이 아니다 — 포인터 결함은 그대로 read.pointer-resolve 가 잡고, 수렴 쪽에서 사라진 것은 '실패' 이지 '측정' 이 아니다(그 값은 판정 행의 axes[addition-attachment].jaccard 에 남아 CP1 에 오른다).",
       "traces": [
         "SPEC §2.6 검사 2",
+        "재정 2026-08-18 P-3",
         "reader-rules.yaml#convergence.axes.addition-attachment"
       ]
     },
@@ -105,7 +108,7 @@
       "expect_fail": [
         "read.coverage"
       ],
-      "mutation": "items 의 마지막 항목 M40(component M12 = CL-9/a1 의 접지)를 삭제. ★ 마지막 id 를 지우므로 항목 ID 연속성(M1..Mn)은 깨지지 않는다 — 커버리지 축만 단독으로 반증된다.",
+      "mutation": "items 에서 M40(component M12 = CL-9/a1 의 접지)을 삭제. ★ 2026-08-18 이행 전에는 M40 이 마지막 id 여서 '지워도 ID 연속성이 깨지지 않는다' 가 이 선택의 근거였다. 서지 fact 2건(M41·M42)이 뒤에 붙으면서 그 성질은 사라졌고 삭제는 이제 결번을 만든다 — 그럼에도 축은 섞이지 않는다: 항목 ID 연속성은 lifecycle.id-contiguous 의 관할이고 그 규칙은 **개정본 자리(revision)에만** 걸리는데 이 판은 spec 자리 변조본이기 때문이다. 커버리지 축만 단독으로 반증된다.",
       "basis": "D5 ③ 전 구성요소 접지. 종속항 부가 한정도 필수 대상이며 권고 개념은 없다(재정 R3).",
       "traces": [
         "SPEC §2.6 검사 3",
@@ -118,7 +121,7 @@
       "expect_fail": [
         "read.coverage"
       ],
-      "mutation": "items 끝에 component 항목 M41 을 하나 추가한다(claim_ref='CL-1/e1', 원문 인용은 실재 문자열). 어떤 element·addition 의 material_id 도 M41 을 가리키지 않으므로 M41 은 **활성 고아**가 된다. 기존 항목은 하나도 건드리지 않고 ID 연속성(M1..M41)도 유지되므로, 다른 축은 전부 통과한다.",
+      "mutation": "items 끝에 component 항목 M44 를 하나 추가한다(claim_ref='CL-1/e1', 원문 인용은 실재 문자열). 어떤 element·addition 의 material_id 도 M44 를 가리키지 않으므로 M44 는 **활성 고아**가 된다. 기존 항목은 하나도 건드리지 않고 ID 연속성(M1..M44)도 유지되므로, 다른 축은 전부 통과한다. (id 가 2026-08-18 이행에서 M41 → M43 → M44 로 밀린 것은 기준선이 서지 fact 2건을 M41·M42 로, 역참조 시험용 함의를 M43 으로 가져갔기 때문이다 — append-only 규율상 새 항목은 언제나 최대 id 뒤에 선다.)",
       "basis": "★ coverage.no-orphan-component(2026-08-18 신설)의 **단독 시험 표본**. 이 코퍼스가 참조 구현으로 '커버리지는 청구항 쪽에서만 세므로 청구항이 통째로 빠지면 남은 성분 항목을 보지 못한다'를 실측 보고했고(재감수 M-07 의 논지 재현), 그 처분으로 신설된 규칙이다. 신설 규칙에 시험이 없으면 그 신설은 공허하므로 이 판을 둔다. ★ 다른 판들과의 분리: coverage-material-id-shared 는 고아를 만들되 1:1·역참조까지 함께 어기고, inventory-dependent-claim-deleted 는 인벤토리·포인터·수렴을 함께 무너뜨린다 — 둘 다 어느 세부 규칙이 울렸는지 가리지 못한다. 이 판은 고아 하나만 만들며, element·addition 12건의 접지·1:1·역참조는 성립한 채로 남는다. 서사: 성분 항목을 새 id 로 다시 등재하면서 element 의 material_id 를 옮기지도, 옛 항목을 retracted 로 표시하지도 않은 READ 다 — 물러난 항목(retracted·superseded)은 규칙의 대상이 아니므로 정상 개정과 구별된다.",
       "traces": [
         "SPEC §2.6 검사 3 보조 규정 ②",
@@ -196,17 +199,18 @@
       ]
     },
     {
-      "file": "invalid/dependency-type-alternative-form.json",
+      "file": "invalid/dependency-type-unclassified-escape.json",
       "role": "spec",
       "expect_fail": [
         "read.dependency-parse",
         "read.convergence"
       ],
-      "mutation": "CL-2.dependency_type 을 'single' → 'alternative-form'. 스키마는 이 값에 길이 제약을 두지 않으므로 통과한다.",
-      "basis": "★ 도달 불능 enum(reader-rules.yaml#dependency_citation.unreachable_values). 현행 파싱 규칙 5종은 이 값에 도달하지 못하므로 이것을 선언한 종속항은 반드시 실패해야 한다 — '조용히 통과시키지 않는 것이 현재의 정직한 처리'라는 문언이 이 픽스처의 근거다.",
+      "mutation": "CL-2.dependency_type 을 'single' → 'unclassified'. 그 청구항 본문('The stacked thermal module of claim 1, wherein the fluid channel has a hydraulic diameter of 0.08 mm.')에는 **구조 표지 어형이 하나도 없다** — Markush('selected from the group consisting of')도, 조건부(if·when·in response to·provided that)도, 수단항('means for')도, 카테고리 전환 어형도 없는 평범한 장치 종속항이다. 스키마는 unclassified 에 길이 제약을 두지 않으므로 통과한다.",
+      "basis": "★ 회피 통로의 봉쇄 — parse.unclassified-not-an-escape(reader-rules.yaml#dependency_citation.rules). unclassified 는 parse.set-equals·parse.type-agrees·parse.no-silent-pass 세 판정의 **면제**를 주므로, 그 면제가 무조건이면 어려운 종속항 전부를 미분류로 적어 검사를 통과하는 경로가 열린다. 미분류는 규칙이 못 읽는 구조를 위한 것이지 읽기 귀찮은 구조를 위한 것이 아니다. ★ 판정 기준 정정(2026-08-18 총괄): 이 픽스처는 처음에 구 기준('5종 어형으로 파싱이 되고 그 집합이 depends_on 과 일치하는데도 unclassified 를 선언하면 실패')에 맞춰 지어졌다. 구 기준은 재정 P-1 원문('Markush·조건부·수단항·카테고리 전환 — 이 4구조를 **만나면** unclassified 표지')과 싸웠다 — 표지의 대상은 청구항 **본문의 구조**인데 구 가드는 **인용 어형**을 보았고, 그 결과 'of claim 1' 로 정상 인용하는 Markush 종속항은 재정을 따르는 순간 반드시 실패했다. 새 기준은 '본문에 구조 표지 어형이 하나도 없으면 실패' 다. 이 판의 변조는 **두 기준 모두에서 실패한다** — 인용은 rank 5 로 정상 파싱되고 집합도 일치하며(구 기준), 본문에 구조 표지가 하나도 없다(새 기준). 기준이 바뀌어도 살아남는 표본이라 교체하지 않고 문언만 새 기준으로 다시 썼다. ★ 파급: 수렴의 dependent-set 서명이 (문언, depends_on, type)이고 peer 는 CL-2 를 single 로 적으므로 6건 중 1건이 어긋난다. ★ 폐기 기록(2026-08-18): 이 자리의 구 픽스처는 invalid/dependency-type-alternative-form.json 이었다. 재정 P-1 이 그 값을 enum 에서 **폐기**하면서 전제가 무너졌다 — 이제 스키마가 먼저 거부하므로 그 판은 '스키마를 통과한 뒤에도 검증기가 잡는다' 를 증명할 수 없고, 이 코퍼스의 정의에서 벗어난다. 구 판을 남겨 두는 것은 read.dependency-parse 의 관할을 증명하지 않는 케이스를 관할 증명으로 계상하는 일이므로 폐기하고 이 판으로 교체했다.",
       "traces": [
-        "재감수 M-06",
-        "reader-rules.yaml#dependency_citation.unreachable_values"
+        "재정 2026-08-18 P-1",
+        "reader-rules.yaml#dependency_citation.rules.parse.unclassified-not-an-escape",
+        "reader-rules.yaml#dependency_citation.unclassified.structure_markers"
       ]
     },
     {
@@ -352,11 +356,13 @@
       "role": "spec",
       "expect_fail": [
         "read.claim-inventory",
-        "read.pointer-resolve",
-        "read.convergence"
+        "read.pointer-resolve"
+      ],
+      "expect_escalate": [
+        "tree-edges"
       ],
       "mutation": "claims.independent[1].id 를 'CL-7' → 'CL-6' 으로 변경. 원천이 종속항으로 적은 청구항 6 이 independent[] 에 등재되고, 원천의 독립항 7 은 미등재가 된다.",
-      "basis": "inventory.type-agrees — '독립/종속 분류가 원천과 어긋나면 트리의 뿌리 자체가 틀린다'. 파급 둘 다 불가피하다. ① applicant_interest[1].claim='CL-7' 이 해소 불능이 된다(검사 2 의 포인터 대상) — 청구항 id 를 고치면서 그 참조자를 함께 고치는 것은 한 곳 원칙에 어긋난다. ② 이 변조는 **id 충돌**을 만든다(dependents 에 이미 CL-6 이 있다). 청구항을 id 로 색인하는 자료구조에서 두 청구항이 한 키로 접히므로, 수렴의 tree-edges 축이 최상위 element 의 부모 문언을 다른 청구항 것으로 해소해 어긋난다. 수렴 축은 설계상 id 가 아니라 문언으로 비교하지만(reader-rules#convergence.id_free_comparison_why), 부모 문언을 찾는 경로가 id 를 지나므로 충돌은 그 앞단에서 발생한다. 종속항을 independent[] 에 등재하면서 id 충돌을 피하는 한 곳 변조는 존재하지 않는다 — 등재 대상이 되는 번호는 정의상 이미 dependents 에 있다.",
+      "basis": "inventory.type-agrees — '독립/종속 분류가 원천과 어긋나면 트리의 뿌리 자체가 틀린다'. 파급 둘 다 불가피하다. ① applicant_interest[1].claim='CL-7' 이 해소 불능이 된다(검사 2 의 포인터 대상) — 청구항 id 를 고치면서 그 참조자를 함께 고치는 것은 한 곳 원칙에 어긋난다. ② 이 변조는 **id 충돌**을 만든다(dependents 에 이미 CL-6 이 있다). 청구항을 id 로 색인하는 자료구조에서 두 청구항이 한 키로 접히므로, 수렴의 tree-edges 축이 최상위 element 의 부모 문언을 다른 청구항 것으로 해소해 어긋난다. 수렴 축은 설계상 id 가 아니라 문언으로 비교하지만(reader-rules#convergence.id_free_comparison_why), 부모 문언을 찾는 경로가 id 를 지나므로 충돌은 그 앞단에서 발생한다. 종속항을 independent[] 에 등재하면서 id 충돌을 피하는 한 곳 변조는 존재하지 않는다 — 등재 대상이 되는 번호는 정의상 이미 dependents 에 있다. ★ 기대 축소 기록(2026-08-18 · 재정 P-3): 위 ②의 파급은 지금도 실재하지만 **판정이 아니라 상신**이 되었다. tree-edges 는 이제 policy: escalation-trigger 이고 실측 Jaccard 는 0.5(임계 0.95)이므로 판정 행은 status: pass 에 escalations: [{axis: tree-edges, jaccard: 0.5}] 를 담는다 — 해석 여지가 있는 축의 미달은 실패가 아니라 Owner 상신이라는 것이 P-3 의 문언이다. 그래서 read.convergence 를 expect_fail 에서 빼고 그 자리를 expect_escalate 로 옮겼다. 파급을 **지운 것이 아니라 층위를 바꿔 적은 것**이며, 두 검사(claim-inventory·pointer-resolve)의 실패는 그대로다.",
       "traces": [
         "재감수 M-07",
         "reader-rules.yaml#claim_inventory.rules.inventory.type-agrees",
@@ -380,26 +386,31 @@
     {
       "file": "invalid/convergence-element-split.json",
       "role": "peer",
-      "expect_fail": [
-        "read.convergence"
+      "expect_fail": [],
+      "expect_escalate": [
+        "element-set",
+        "tree-edges"
       ],
       "mutation": "peer 의 CL-1/e2 를 둘(머리 조각 + 꼬리 조각 CL-1/e3)로 쪼갠 판. 쪼갠 조각의 component·grounding 도 함께 추가해 커버리지는 성립시킨다 — 그래야 수렴 축만 남는다.",
-      "basis": "SPEC §2.7 — '두 번째 READ 가 e2 를 쪼개면 집합이 달라져 Jaccard 가 임계 미달'. element-set 축(임계 0.95)과 tree-edges 축이 함께 어긋난다.",
+      "basis": "SPEC §2.7 — '두 번째 READ 가 e2 를 쪼개면 집합이 달라져 Jaccard 가 임계 미달'. 실측 = element-set 0.625 · tree-edges 0.3(임계 0.95 · addition-attachment 는 0.5 로 측정만 된다). ★★ 이 케이스의 지위가 재정 P-3 으로 바뀌었고, 그 바뀜이 **코퍼스 계약의 구멍을 드러낸다**(README 구멍 표 8행). 두 축은 이제 policy: escalation-trigger 이므로 미달이 실패가 아니라 **Owner 상신**이다 — 판정 행은 status: pass 에 escalations 2건을 담는다. 즉 이 변조본이 증명해야 할 것은 '검사가 실패하는가' 가 아니라 '**상신 트리거가 뜨는가**' 로 바뀌었다. 그런데 러너 계약(expect_fail)에는 그 상태를 적을 자리가 없고 빈 배열도 허용하지 않는다. 그래서 ⓐ 새 필드 expect_escalate 에 **실측된 상신 축을 데이터로 선언**해 두고 ⓑ expect_fail 은 구 선언을 그대로 남겨 **도구가 불일치로 울리게** 둔다. 통과하도록 기대를 지우면 이 판은 아무것도 증명하지 않는 파일이 되고, 지워진 사실은 아무 데도 남지 않는다 — 울리는 불일치가 그 자리를 대신 지킨다. 닫는 길은 픽스처가 아니라 도구다: tools/check_validator_enforcement.py 가 expect_escalate 를 읽어 판정 행의 extras.axes[].status == \"escalate\" 와 대조하면 이 케이스는 정상 일치가 된다(총괄 상신 대상 — 그 파일은 이 레인의 쓰기 범위 밖이다). ★★★ 기대 정정(2026-08-18 총괄): 구 expect_fail=[\"read.convergence\"] 를 **빈 배열로 비운다**. 그 선언은 '도구가 상신을 표현하지 못하니 불일치로 울려 두자'는 잠정이었고, 그 잠정의 근거가 사라졌다 — tools/check_validator_enforcement.py 가 expect_escalate 를 읽어 판정 행의 extras.escalations 및 extras.axes[].status == \"escalate\" 와 **집합 동등으로 교차 대조**한다(반증 시험 8건으로 확인). 따라서 이 판이 증명하는 것은 이제 데이터로 선언되어 있고, 빈 expect_fail 은 계약상 합법이다(expect_escalate 가 비어 있지 않을 때만 허용되며, 둘 다 비면 도구가 입력 오류로 거부한다). ★ 기대를 지워 통과시킨 것이 아니다 — 지운 자리를 expect_escalate 가 **더 정확하게** 채웠다: 구 선언은 '수렴 검사가 실패한다'까지만 말했고, 새 선언은 **어느 축이 상신되는가**까지 말한다.",
       "traces": [
         "SPEC §2.6 검사 4",
+        "재정 2026-08-18 P-3",
         "reader-rules.yaml#convergence.axes.element-set"
       ]
     },
     {
       "file": "invalid/convergence-element-reparented.json",
       "role": "peer",
-      "expect_fail": [
-        "read.convergence"
+      "expect_fail": [],
+      "expect_escalate": [
+        "tree-edges"
       ],
       "mutation": "peer 에서 CL-1/e2 의 자식 둘(inlet port·folded flow path)을 최상위 element 로 끌어올린 판. element text 집합은 완전히 동일하고 부모-자식 관계만 다르다.",
-      "basis": "★ M0.6 재감수 M-07 의 구조 축 — '집합 비교이므로 같은 문자열 집합이 서로 다른 계층으로 조립되어도 수렴한 것으로 판정됐다'. 신설 tree-edges 축만이 이 판을 잡는다. element ids 와 claim_ref·attaches_to 를 함께 옮긴 것은 peer 자체를 무결하게 유지하기 위한 부수 편집이며(그래야 커버리지·포인터가 통과한다) 결함은 하나다.",
+      "basis": "★ M0.6 재감수 M-07 의 구조 축 — '집합 비교이므로 같은 문자열 집합이 서로 다른 계층으로 조립되어도 수렴한 것으로 판정됐다'. 신설 tree-edges 축만이 이 판을 본다(실측 element-set 1.0 · tree-edges 0.5). element ids 와 claim_ref·attaches_to 를 함께 옮긴 것은 peer 자체를 무결하게 유지하기 위한 부수 편집이며(그래야 커버리지·포인터가 통과한다) 결함은 하나다. ★★ 재정 P-3 이후의 지위는 invalid/convergence-element-split.json 과 같다 — tree-edges 는 escalation-trigger 이므로 이 판은 **실패가 아니라 상신**을 유발하고(escalations 1건), 그 상태를 적을 자리가 러너 계약에 없다. expect_escalate 에 실측을 데이터로 남기고 expect_fail 은 구 선언을 유지해 도구가 울리게 둔다. 두 판이 함께 서 있는 것이 중요하다: element-split 은 축 둘이, 이 판은 축 하나가 상신되므로, 도구가 expect_escalate 를 읽게 되는 날 **'어느 축이 떴는가' 까지** 대조된다(구멍 표 8행). ★★★ 기대 정정(2026-08-18 총괄): 구 expect_fail=[\"read.convergence\"] 를 **빈 배열로 비운다**. 그 선언은 '도구가 상신을 표현하지 못하니 불일치로 울려 두자'는 잠정이었고, 그 잠정의 근거가 사라졌다 — tools/check_validator_enforcement.py 가 expect_escalate 를 읽어 판정 행의 extras.escalations 및 extras.axes[].status == \"escalate\" 와 **집합 동등으로 교차 대조**한다(반증 시험 8건으로 확인). 따라서 이 판이 증명하는 것은 이제 데이터로 선언되어 있고, 빈 expect_fail 은 계약상 합법이다(expect_escalate 가 비어 있지 않을 때만 허용되며, 둘 다 비면 도구가 입력 오류로 거부한다). ★ 기대를 지워 통과시킨 것이 아니다 — 지운 자리를 expect_escalate 가 **더 정확하게** 채웠다: 구 선언은 '수렴 검사가 실패한다'까지만 말했고, 새 선언은 **어느 축이 상신되는가**까지 말한다.",
       "traces": [
         "재감수 M-07",
+        "재정 2026-08-18 P-3",
         "reader-rules.yaml#convergence.axes.tree-edges"
       ]
     },
@@ -462,7 +473,7 @@
       "expect_fail": [
         "freeze.payload-immutable"
       ],
-      "mutation": "개정본의 승계 사슬 M23 → M41 → M42 에서 M41.superseded_by 를 'M42' → 'M23' 으로 바꿔 M23 → M41 → M23 순환을 만든다.",
+      "mutation": "개정본의 승계 사슬 M23 → M44 → M45 에서 M44.superseded_by 를 'M45' → 'M23' 으로 바꿔 M23 → M44 → M23 순환을 만든다. (사슬의 id 가 M41·M42 였다가 M43·M44 로 밀린 것은 2026-08-18 이행에서 기준선이 서지 fact 2건을 M41·M42 로 가져갔기 때문이다 — append-only 규율상 개정본의 신규 항목은 기준선의 최대 id 뒤에 선다.)",
       "basis": "supersession_chain.new_rule — 사슬은 비순환이어야 한다. 순환이면 '사슬을 끝까지 따라간 종단' 자체가 존재하지 않아 [M23] 을 인용한 문장의 수정 지시가 영원히 해소되지 않는다.",
       "traces": [
         "재감수 M-08",
@@ -476,7 +487,7 @@
       "expect_fail": [
         "freeze.payload-immutable"
       ],
-      "mutation": "개정본의 승계 사슬 M23 → M41 → M42 에서 종단 M42 의 status 를 'active' → 'retracted' 로 바꾼다.",
+      "mutation": "개정본의 승계 사슬 M23 → M44 → M45 에서 종단 M45 의 status 를 'active' → 'retracted' 로 바꾼다. (id 재번호의 근거는 invalid/freeze-supersession-cycle.json 의 mutation 과 같다.)",
       "basis": "supersession_chain.new_rule — 사슬 종단의 status 는 active 여야 한다. 종단이 철회되면 승계는 '더 나은 항목으로의 교체' 가 아니라 근거의 소멸이며, 그 사실이 인용한 문장에 전달되어야 한다.",
       "traces": [
         "재감수 M-08",
@@ -497,6 +508,48 @@
         "재감수 M-07",
         "reader-rules.yaml#claim_inventory.rules.inventory.registered-superset",
         "SPEC §2.2 불변식 I1"
+      ]
+    },
+    {
+      "file": "invalid/pointer-numeric-ref-dangling.json",
+      "role": "spec",
+      "expect_fail": [
+        "read.pointer-resolve"
+      ],
+      "mutation": "M25(implication).numeric_refs 를 [] → ['M99'] 로. 항목 ID 문법(^M[0-9]+$)은 지켰으므로 스키마는 통과하고, M99 는 실재하지 않으므로 역참조가 해소되지 않는다.",
+      "basis": "★ 재정 P-B 가 신설한 간선 numeric_refs[] 의 참조 무결 표본. P-B 는 '중요분 = 함의·포지셔닝이 참조하는 수치'라는 **역참조 도출식**을 세웠고, 그 참조가 해소되지 않으면 도출 자체가 성립하지 않는다 — 수확은 전수이므로 무엇이 중요한가를 정하는 일 **전체**가 이 한 참조에 걸려 있다. 스키마는 원소의 문법만 보고 대상의 실재는 보지 못하므로(제약 16) read.pointer-resolve 가 유일한 집행자다. ★ 다른 축과 섞이지 않는 이유: M99 는 어디에도 없으므로 순환을 만들지 않고, numeric_refs 는 커버리지·수렴·수확 어느 계산에도 들어가지 않는다. ★ 한계를 여기 적는다 — 이 판은 역참조의 **반증**만 시험한다. 해소되는 정상 참조가 기준선에 하나도 없어서(전 함의·포지셔닝이 빈 배열이다) 통과 방향은 여전히 대상 0건이며, 그 자리를 채우려면 '수치를 실제로 근거로 삼는 함의'를 기준선에 새로 세워야 한다. 그것은 이행이 아니라 재료의 신설이므로 재정·총괄 판단 대상으로 남긴다(README 구멍 표 9행).",
+      "traces": [
+        "재정 2026-08-18 P-B",
+        "reader-rules.yaml 참조 무결 · pointers.py GRAPH_FIELDS",
+        "스키마 $comment (16)"
+      ]
+    },
+    {
+      "file": "invalid/bibliography-fabricated-inventor.json",
+      "role": "spec",
+      "expect_fail": [
+        "read.bibliography"
+      ],
+      "mutation": "patent.inventors[0] 을 'Dana R. Example' → 'Taylor N. Phantom' 으로 교체. 스키마는 문자열이기만 하면 통과시키므로(minLength 1 · uniqueItems) 이 판은 스키마를 지난다.",
+      "basis": "★ 서지 확장(재정 P-2 ⓐ)이 신설한 read.bibliography 의 **첫 반증 표본**이다. 재정 문언은 '전부 서지면에서 결정론 복사'인데, 대조가 없으면 그 문장은 자유 기입과 구별되지 않는다 — 발명자 이름은 지어내기 가장 쉬운 자리이고(사람 이름은 그럴듯하기만 하면 된다) 스키마가 볼 수 있는 성질이 하나도 없다. bib.inventors-in-source 가 원천의 바이트 정확 부분문자열을 요구하는 유일한 집행자다. ★ 다른 축과 섞이지 않는 이유: inventors 는 patent 블록 안에서 닫히고 어느 항목도 이 값을 참조하지 않으므로 포인터·커버리지·수확 어느 쪽에도 닿지 않는다. 원천은 손대지 않았으므로 read.source-digest·read.verbatim 도 통과한다(원천을 건드리는 판의 파급은 invalid/inventory-source-extra-claim.md 가 보여 준다).",
+      "traces": [
+        "재정 2026-08-18 P-2 ⓐ",
+        "reader-rules.yaml#bibliography.rules.bib.inventors-in-source",
+        "스키마 $comment (15)"
+      ]
+    },
+    {
+      "file": "invalid/bibliography-earliest-priority-mismatch.json",
+      "role": "spec",
+      "expect_fail": [
+        "read.bibliography"
+      ],
+      "mutation": "patent.priority_claims[0].date 를 '2024-03-11' → '2023-11-20' 으로 앞당긴다. dates.priority 는 '2024-03-11' 그대로이므로 최우선일이 목록의 최소 날짜와 어긋난다. 날짜 형태는 지켰으므로 스키마는 통과한다.",
+      "basis": "★ C18(최우선일의 정확성)의 유일한 기계 판정인 bib.earliest-priority 의 반증 표본. 재정 P-2 ⓐ 가 우선권을 목록형으로 만든 이유가 바로 이것이다 — 목록이 없으면 '최우선일이 맞는가'는 검증조차 성립하지 않는다. ★ 변조 방식의 선택 근거: '더 이른 우선권 주장을 하나 **추가**' 하는 판이 서사적으로는 더 자연스럽지만(레인이 두 번째 주장을 최우선일 산정에 접지 않은 경우), 그 판은 새 번호가 원천 서지면에 없으므로 bib.priority-number-in-source 까지 함께 울린다. 두 결함을 한 파일에 넣지 않기 위해 **기존 항목의 날짜 한 곳만** 바꿨다. 날짜는 정규화 값이라 원천 부분문자열 대조 대상이 아니므로(bibliography.dates_excluded_why) 이 한 곳은 다른 어느 규칙도 건드리지 않는다.",
+      "traces": [
+        "재정 2026-08-18 P-2 ⓐ",
+        "reader-rules.yaml#bibliography.rules.bib.earliest-priority",
+        "스키마 $comment (15)"
       ]
     },
     {

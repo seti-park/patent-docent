@@ -1,19 +1,44 @@
 {
   "schema": "material-spec/v0",
-  "reader_version": "0.4.0",
+  "reader_version": "0.5.0",
   "spec_version": 1,
   "status": "draft",
   "run_id": "example-xx0000000a1-stacked-thermal-module",
   "patent": {
     "number": "XX0000000A1",
     "title": "Stacked thermal module with an integrated fluid channel (fictional example)",
+    "jurisdiction": "XX",
+    "kind_code": "A1",
     "assignee": "Example Devices, Inc.",
+    "applicants": [
+      "Example Devices, Inc."
+    ],
+    "inventors": [
+      "Dana R. Example",
+      "Jordan L. Fixture"
+    ],
     "dates": {
       "priority": "2024-03-11",
       "filing": "2025-03-10",
       "publication": "2026-01-15"
     },
-    "source_digest": "sha256:fd14b238eaeafa1601d27fc52a2f54e850aef1c9ab1e8747e28e1d2c21a9cbb5",
+    "priority_claims": [
+      {
+        "number": "XX-2024-000101",
+        "date": "2024-03-11",
+        "jurisdiction": "XX"
+      }
+    ],
+    "classifications": {
+      "ipc": [
+        "H01L 23/473"
+      ],
+      "cpc": [
+        "H01L 23/4735",
+        "F28F 3/12"
+      ]
+    },
+    "source_digest": "sha256:9426c24769e87831ae1cf90d12f873e4c5828e5912b63d1260d78cb5d09fdd9d",
     "source_path": "00-source/patent.md"
   },
   "claims": {
@@ -523,6 +548,7 @@
         "M18",
         "M29"
       ],
+      "numeric_refs": [],
       "evidence_quotes": [
         "the channel is formed within the spreader so that a separate cold plate is not required"
       ],
@@ -540,6 +566,7 @@
         "M24",
         "M25"
       ],
+      "numeric_refs": [],
       "evidence_quotes": [
         "The sealing step closes the folded flow path 214 after the spreader has been bonded, and no separate lid is used."
       ],
@@ -553,6 +580,7 @@
       "background_problem": "Conventional assemblies put a cold plate on top of the module, which adds one more thermal interface.",
       "asserted_effect": "The specification states in words that the thermal interface count is reduced by one.",
       "delta": "The asserted delta is structural simplification - a part is removed - rather than a claimed performance number.",
+      "numeric_refs": [],
       "quotes": [
         "Conventional assemblies stack a cold plate on top of the module, which adds one more thermal interface.",
         "the thermal interface count is reduced by one"
@@ -686,8 +714,8 @@
           "locator": "[0042]",
           "quote": "the first surface 112 of the substrate 110",
           "span": {
-            "start": 2009,
-            "end": 2051
+            "start": 2232,
+            "end": 2274
           }
         }
       ],
@@ -717,8 +745,8 @@
           "locator": "[0042]",
           "quote": "The heat spreader 210 is bonded to the first surface 112 of the substrate 110.",
           "span": {
-            "start": 1974,
-            "end": 2052
+            "start": 2197,
+            "end": 2275
           }
         }
       ],
@@ -747,8 +775,8 @@
           "locator": "[0046]",
           "quote": "The inlet port 212 sits at one corner of the spreader",
           "span": {
-            "start": 2627,
-            "end": 2680
+            "start": 2850,
+            "end": 2903
           }
         }
       ],
@@ -777,8 +805,8 @@
           "locator": "[0044]",
           "quote": "The folded flow path 214 doubles back within the footprint",
           "span": {
-            "start": 2352,
-            "end": 2410
+            "start": 2575,
+            "end": 2633
           }
         }
       ],
@@ -807,8 +835,8 @@
           "locator": "[0043]",
           "quote": "the hydraulic diameter is 0.08 mm, and the drawings do not mark this dimension",
           "span": {
-            "start": 2264,
-            "end": 2342
+            "start": 2487,
+            "end": 2565
           }
         }
       ],
@@ -830,8 +858,8 @@
           "locator": "[0045]",
           "quote": "The substrate 110 carries a ceramic layer 116",
           "span": {
-            "start": 2537,
-            "end": 2582
+            "start": 2760,
+            "end": 2805
           }
         }
       ],
@@ -861,8 +889,8 @@
           "locator": "[0044]",
           "quote": "In a preferred arrangement the total flow path length is at least 12 mm.",
           "span": {
-            "start": 2456,
-            "end": 2528
+            "start": 2679,
+            "end": 2751
           }
         }
       ],
@@ -891,8 +919,8 @@
           "locator": "[0047]",
           "quote": "During assembly the bonding temperature is selected from",
           "span": {
-            "start": 2741,
-            "end": 2797
+            "start": 2964,
+            "end": 3020
           }
         }
       ],
@@ -922,8 +950,8 @@
           "locator": "[0049]",
           "quote": "The sealing step closes the folded flow path 214 after the spreader has been bonded",
           "span": {
-            "start": 2958,
-            "end": 3041
+            "start": 3181,
+            "end": 3264
           }
         }
       ],
@@ -952,8 +980,8 @@
           "locator": "[0047]",
           "quote": "the bonding temperature is selected from 320, 340, 360 °C according to the alloy of the heat spreader 210",
           "span": {
-            "start": 2757,
-            "end": 2863
+            "start": 2980,
+            "end": 3086
           }
         }
       ],
@@ -982,8 +1010,8 @@
           "locator": "[0050]",
           "quote": "The heat spreader 210 comprises a copper alloy",
           "span": {
-            "start": 3080,
-            "end": 3126
+            "start": 3303,
+            "end": 3349
           }
         }
       ],
@@ -998,16 +1026,20 @@
       ]
     }
   ],
-  "drop_signal": {
-    "stage": "final",
-    "verdict": "go",
-    "reason": "권리 관심이 한 구성(스프레더 몸체 안의 유로)에 뚜렷하고 효과 주장이 명세서 문언으로 존재해, 도슨트가 물증으로 착지할 자리가 있음."
-  },
   "provenance": {
     "read_runs": [
       "read-b-9a8b7c6"
     ],
     "produced_at": "2026-02-01T02:30:00Z",
     "engine_commit": "0000000"
+  },
+  "extensions": {
+    "docent": {
+      "drop_signal": {
+        "stage": "final",
+        "verdict": "go",
+        "reason": "권리 관심이 한 구성(스프레더 몸체 안의 유로)에 뚜렷하고 효과 주장이 명세서 문언으로 존재해, 도슨트가 물증으로 착지할 자리가 있음."
+      }
+    }
   }
 }
