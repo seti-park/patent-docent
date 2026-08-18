@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://patent-docent.local/contracts/schemas/convergence.schema.json",
   "title": "convergence/v0",
-  "$comment": "READ 스테이지의 결정론 검사 보고서 `10-read/convergence.json` 의 계약. 근거 = docs/SPEC.md §1.4·§2.6 + Owner 재정 2026-08-17 R1·R3 · 2026-08-18 N5·N9 · N14. ★ 이 파일이 사는 곳이 contracts/ 인 이유(재정 N8 ① 경계 규칙): 보고서 서식은 **파이프라인 산출물의 형식**이지 재료 명세 계약이 아니다 — historian 은 재료 명세를 받지 이 보고서를 받지 않는다. 검사 자체(reader/lib)는 이식 단위에 있고 그 결과를 담는 봉투만 여기 있다. ★ 서식 승격(M1): 구 SPEC §2.6 예시는 checks 를 검사 이름 키의 객체로 그렸으나, 재정 N5 가 '모든 검사 행은 검사 ID·규칙 목록 버전·대상 수·위반 수·상태를 보고한다'는 정량 서식을 명령했다. 따라서 checks 는 `verdict-check-row/v0` 행의 **배열**이며 각 행이 자기 check_id 를 들고 다닌다. 공허 2종(empty-ruleset·empty-target)은 그 서식의 파생값으로 자동 날인되므로, '검사가 아무것도 세지 않고 통과하는' 구멍이 이 보고서에서 눈에 보인다 — M0.5 재감수 B-02 가 지적한 종류의 결함이다. ★ vacuous_pass[] 는 손으로 채우는 필드가 아니라 checks[] 중 vacuous != \"none\" 인 행의 check_id 목록으로 **파생**된다(verdict-check-row $comment (5) 와 같은 규율). ★ 이 보고서의 세 목록(fact_classification · manual_verification_required · grounding_exceptions)은 검사 결과의 요약이 아니라 **CP1 표면의 입력**이다(SPEC §1.5) — Owner 가 '기계가 무엇을 보증했고 무엇을 보증하지 못했는가'를 항목 단위로 구별해 보게 하는 것이 목적이며, 비어 있어도 필드를 생략하지 않는다(누락과 '없음'의 구별).",
+  "$comment": "READ 스테이지의 결정론 검사 보고서의 계약. 인스턴스는 둘이며 같은 계약을 쓴다 — 조기 수렴 판정서 `10-read/convergence-early.json`(phase: \"early\", 재정 P-4)과 최종 보고서 `10-read/convergence.json`(phase: \"full\"). 근거 = docs/SPEC.md §1.4·§2.6 + Owner 재정 2026-08-17 R1·R3 · 2026-08-18 N5·N9 · N14 · P-1·P-3·P-4·P-A·P-B·P-U4. ★ 이 파일이 사는 곳이 contracts/ 인 이유(재정 N8 ① 경계 규칙): 보고서 서식은 **파이프라인 산출물의 형식**이지 재료 명세 계약이 아니다 — historian 은 재료 명세를 받지 이 보고서를 받지 않는다. 검사 자체(reader/lib)는 이식 단위에 있고 그 결과를 담는 봉투만 여기 있다. ★ 서식 승격(M1): 구 SPEC §2.6 예시는 checks 를 검사 이름 키의 객체로 그렸으나, 재정 N5 가 '모든 검사 행은 검사 ID·규칙 목록 버전·대상 수·위반 수·상태를 보고한다'는 정량 서식을 명령했다. 따라서 checks 는 `verdict-check-row/v0` 행의 **배열**이며 각 행이 자기 check_id 를 들고 다닌다. 공허 2종(empty-ruleset·empty-target)은 그 서식의 파생값으로 자동 날인되므로, '검사가 아무것도 세지 않고 통과하는' 구멍이 이 보고서에서 눈에 보인다 — M0.5 재감수 B-02 가 지적한 종류의 결함이다. ★ vacuous_pass[] 는 손으로 채우는 필드가 아니라 checks[] 중 vacuous != \"none\" 인 행의 check_id 목록으로 **파생**된다(verdict-check-row $comment (5) 와 같은 규율). ★ 이 보고서의 세 목록(fact_classification · manual_verification_required · grounding_exceptions)은 검사 결과의 요약이 아니라 **CP1 표면의 입력**이다(SPEC §1.5) — Owner 가 '기계가 무엇을 보증했고 무엇을 보증하지 못했는가'를 항목 단위로 구별해 보게 하는 것이 목적이며, 비어 있어도 필드를 생략하지 않는다(누락과 '없음'의 구별). ★ M1.5 신설 6키(phase · canonical_selection · convergence_report · unclassified_dependents · numeric_inventory · screening_memos)는 전부 **필수**다(계약 라인은 올리지 않는다 — 0.x 미동결 규율 N15). 신설 근거는 각각 (재정 P-4)(수렴을 분해 직후로 옮기고 정본을 내용맹 지정) · (재정 P-3)(축별 정책 차등과 독해 프로파일 서식) · (재정 P-1)(미분류 종속 구조의 목록 노출) · (재정 P-B)(전수 수치 수확의 인벤토리) · (재정 P-A·P-U4)(맹검 스크리닝 메모 2건 병기)이며, 여섯 모두 CP1 표면의 입력이라는 점에서 위 세 목록과 성질이 같다. ★ phase 로 두 인스턴스를 가르되 **필드 집합은 가르지 않는다** — 조기 판정서도 같은 키를 전부 들고 있고, 아직 존재하지 않는 것은 '빈 값'으로 적는다. 필드를 생략해 두 서식을 만들면 '누락과 없음의 구별'이 phase 경계에서만 무너진다. 그 빈 값 요건은 아래 allOf 의 phase 분기가 기계로 강제한다.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,7 +17,13 @@
     "convergence_detail",
     "fact_classification",
     "manual_verification_required",
-    "grounding_exceptions"
+    "grounding_exceptions",
+    "phase",
+    "canonical_selection",
+    "convergence_report",
+    "unclassified_dependents",
+    "numeric_inventory",
+    "screening_memos"
   ],
   "properties": {
     "schema": { "const": "convergence/v0" },
@@ -77,9 +83,178 @@
           "search_note": { "type": "string", "minLength": 1 }
         }
       }
+    },
+    "phase": {
+      "$comment": "이 보고서가 어느 지점의 것인가 (재정 P-4). early = 분해 직후의 조기 수렴 판정서(두 분해 산출만으로 6축을 계산한다 — 접지·수확·통합은 아직 일어나지 않았다). full = 정본 1개가 전 단계를 마친 뒤의 최종 보고서. 조기 판정서가 접지 스테이지의 **선언 입력**이라는 결속은 계약 contracts/stages/read.yaml#phase_gates 가 진다(재정 P-U3).",
+      "enum": ["early", "full"]
+    },
+    "canonical_selection": {
+      "$comment": "정본 지정의 기록 (재정 P-4). 수렴 통과는 두 독해가 동치라는 선언이므로 정본 선택에는 판정자가 없고, 남는 요구는 재현성뿐이다 — 그래서 규칙은 선언 순서(read_runs[0])이고 내용은 보지 않는다. rule 과 content_blind 를 const 로 못 박는 이유: 이 두 값이 변수가 되는 순간 '어느 쪽이 더 나은가'를 묻는 자리가 생기고, 그것이 재정 P-4 가 금지한 품질 비교다. 값이 아니라 **선택의 근거**를 계약에 새긴다.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["read_run", "rule", "content_blind"],
+      "properties": {
+        "read_run": {
+          "$comment": "정본으로 지정된 실행 식별자(예 read-a). provenance.read_runs[0] 과 같아야 하며, 그 대조는 스키마 밖이다(러너의 출구 검사 몫).",
+          "type": "string",
+          "minLength": 1
+        },
+        "rule": { "const": "declaration-order" },
+        "content_blind": { "const": true }
+      }
+    },
+    "convergence_report": {
+      "$comment": "수렴의 **독해 프로파일** (재정 P-3). 프레임이 계약의 일부다 — 이 블록은 '결함 후보 목록'이 아니라 두 독해가 어떻게 갈렸는가의 기술이며, 갈림 자체가 실패를 뜻하지 않는다. 세 층으로 읽는다: axes[] = 축별 값과 정책, escalations[] = 상신 축(escalation-trigger)의 미달분 — 판정 행을 fail 로 만들지 않고 Owner 상신으로 간다, divergences[] = 실제로 갈린 항목(양쪽 차집합). 축 → 정책의 대응(구조 사실 3축 = exact-match / 해석 2축 = escalation-trigger / addition-attachment = measure-only)의 **정본은 reader/reader-rules.yaml#convergence** 이고 이 스키마는 어휘만 연다 — 대응표를 두 곳에 적으면 재정으로 정책이 바뀔 때 한쪽만 늙는다. ★ threshold 가 없는데 policy 가 exact-match·escalation-trigger 인 경우는 여전히 결함(convergence.threshold-missing)이며 그 판정은 검사기 몫이다. measure-only 는 threshold 없음이 정상이다.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["axes", "escalations", "divergences"],
+      "properties": {
+        "axes": {
+          "$comment": "축 행의 형태는 convergence_detail.axes[] 와 같은 것이며 정의를 한 곳에만 둔다(두 벌로 적으면 한쪽만 늙는다).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/convergence_detail/properties/axes/items" }
+        },
+        "escalations": {
+          "$comment": "상신 축의 미달 기록 (재정 P-3 — '미달 = 실패가 아니라 Owner 상신'). 이 배열이 비지 않은 보고서는 실패한 보고서가 아니라 **상신을 동반한 보고서**다.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["axis", "jaccard", "threshold"],
+            "properties": {
+              "axis": { "$ref": "#/$defs/axis_id" },
+              "jaccard": { "type": "number", "minimum": 0, "maximum": 1 },
+              "threshold": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          }
+        },
+        "divergences": {
+          "$comment": "갈린 항목의 실물. 양쪽 차집합을 방향별로 적는다 — '얼마나 갈렸는가'(jaccard)만으로는 Owner 가 무엇을 볼지 정할 수 없기 때문이다. 각 방향의 상한 건수와 문자열 절단 폭은 reader/lib/convergence.py 가 정하며 스키마는 형태만 본다.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["axis", "only_in_canonical", "only_in_peer"],
+            "properties": {
+              "axis": { "$ref": "#/$defs/axis_id" },
+              "only_in_canonical": { "type": "array", "items": { "type": "string" } },
+              "only_in_peer": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "unclassified_dependents": {
+      "$comment": "구조 미분류 종속항 전건 (재정 P-1). Markush·조건부·수단항·카테고리 전환은 typed operator 입법을 N14 범위에서 제외했고, 대신 표지·목록·계수 셋으로 침묵을 막는다 — 이 배열이 그 '목록'이며 CP1 표면이 전건을 렌더한다. ★ 이 목록의 항목은 **결함이 아니다**. 판정(parse.set-equals·parse.type-agrees)의 대상에서 빠졌다는 사실을 드러내는 자리이며, 판정 행의 checked 에서도 빠진다. text_verbatim 을 함께 싣는 이유는 사람이 그 자리에서 구조를 읽어야 하기 때문이다 — ID 만 있으면 목록이 '무엇이 미분류인지'를 말하지 못한다.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim", "dependency_type", "text_verbatim"],
+        "properties": {
+          "claim": { "type": "string", "pattern": "^CL-[0-9]+$" },
+          "dependency_type": { "const": "unclassified" },
+          "text_verbatim": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "numeric_inventory": {
+      "$comment": "전수 수치 수확의 인벤토리 (재정 P-B). 수치 사실은 접지 스팬 기반으로 **전수** 기계 수확되고, 중요분은 LLM 의 중요도 판단이 아니라 함의·포지셔닝 항목의 numeric_refs **역참조**로 도출된다. 그래서 이 블록은 total 과 referenced/unreferenced 를 함께 든다 — CP1 은 전량 카운트를 상시 표기하고(전체 N건 — 참조 M건 표시, 미참조 (N-M)건 접힘) 미참조분을 접어 두되 **숨기지 않는다**. skipped[] 는 정규식에 걸렸으나 값 문법으로 파싱되지 않아 수확하지 않은 토큰이며, 시끄럽게 실패하되 스테이지를 죽이지 않는다(수확은 검사가 아니다). ★ total == len(referenced) + len(unreferenced) 의 산술 일치는 스키마가 표현하지 않는다 — 검증기 몫이다.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "referenced", "unreferenced", "skipped"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "referenced": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^M[0-9]+$" },
+          "uniqueItems": true
+        },
+        "unreferenced": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^M[0-9]+$" },
+          "uniqueItems": true
+        },
+        "skipped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["locator", "token", "reason"],
+            "properties": {
+              "locator": { "type": "string", "minLength": 1 },
+              "token": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "screening_memos": {
+      "$comment": "맹검 스크리닝 메모 (재정 P-A·P-U4). 분해 직후 각 실행이 서사 우려를 **기록만** 한다 — 상신하지 않고 진행을 멈추지 않으며, 최종 서사 평가 레인(synthesize)에는 비공개다(앵커링 방지). read-a·read-b 가 **각자** 쓰고 CP1 에 **둘 다 병기**되는 이유는 두 독립 관찰의 일치/불일치 자체가 신호이기 때문이다 — 한 건으로 합치면 그 신호가 소멸한다. 그래서 maxItems 는 2 이고, 조기 판정서에는 통상 2건이 실린다. ★ 섀도 원장(ledgers/shadow/screening.jsonl)은 이 보고서와 별개의 런 밖 원장이며 재료 명세 계약면 밖이다(재정 P-U4) — 여기 실리는 것은 CP1 표면용 사본이다.",
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["read_run", "direction", "note"],
+        "properties": {
+          "read_run": { "type": "string", "minLength": 1 },
+          "direction": { "enum": ["concern", "clear"] },
+          "note": { "type": "string", "minLength": 1 }
+        }
+      }
     }
   },
+  "allOf": [
+    {
+      "$comment": "phase == \"early\" 의 빈 값 강제 (재정 P-4). 조기 판정서는 분해 두 산출만으로 만들어지므로 접지·수확·통합의 산물이 존재할 수 없다 — fact_classification(수치 3분류) · manual_verification_required(figure-sourced) · grounding_exceptions(anchor_state 예외) · numeric_inventory(전수 수확)는 전부 그 뒤 단계의 것이다. 이 분기를 문서 서술로 두지 않고 스키마로 집행하는 이유: 조기 판정서에 그 넷이 채워져 있다면 그것은 '조기'가 아니라 순서가 무너졌다는 뜻이고, 순서가 무너진 사실이 산출물에 남아야 한다(재정 P-4 는 실행 순서 자체를 옮겼다 — 관습이 아니라 기계가 지킨다).",
+      "if": {
+        "required": ["phase"],
+        "properties": { "phase": { "const": "early" } }
+      },
+      "then": {
+        "properties": {
+          "manual_verification_required": { "maxItems": 0 },
+          "grounding_exceptions": { "maxItems": 0 },
+          "fact_classification": {
+            "properties": {
+              "quoted_span": {
+                "properties": {
+                  "count": { "const": 0 },
+                  "material_ids": { "maxItems": 0 }
+                }
+              },
+              "bibliographic_ids": { "maxItems": 0 },
+              "derived": { "maxItems": 0 },
+              "figure_sourced": { "maxItems": 0 }
+            }
+          },
+          "numeric_inventory": {
+            "properties": {
+              "total": { "const": 0 },
+              "referenced": { "maxItems": 0 },
+              "unreferenced": { "maxItems": 0 },
+              "skipped": { "maxItems": 0 }
+            }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
+    "axis_id": {
+      "$comment": "수렴 6축의 이름. convergence_detail.axes[].id 와 convergence_report 의 두 목록이 같은 어휘를 쓴다.",
+      "enum": [
+        "independent-count",
+        "element-set",
+        "tree-edges",
+        "dependent-count",
+        "dependent-set",
+        "addition-attachment"
+      ]
+    },
     "check_row": {
       "type": "object",
       "additionalProperties": false,
@@ -146,7 +321,7 @@
       }
     },
     "convergence_detail": {
-      "$comment": "read.convergence 의 축별 실측치. 판정 행은 pass/fail 만 말하므로 '얼마나 가까웠는가'는 여기 남는다. 재정 대기 항목이기도 하다 — reader-rules.yaml#convergence.open_question 이 신설 4축의 임계 0.95 에 실측 근거가 없음을 밝히고 있고, 첫 런의 이 블록이 그 재정의 근거 자료가 된다. peer 가 없어 검사를 돌리지 못한 경우 executed: false 이며 axes 는 빈 배열이다(그 사실이 checks[] 에서 vacuous: \"empty-target\" 으로도 드러난다).",
+      "$comment": "read.convergence 의 축별 실측치. 판정 행은 pass/fail 만 말하므로 '얼마나 가까웠는가'는 여기 남는다. ★ 임계 문제의 절반은 재정 P-3 이 **정책 차등**으로 처분했다(구조 사실 3축은 완전 일치, 해석 2축은 0.95 상신 트리거, addition-attachment 는 판정 제외). 남은 미결은 addition-attachment 의 부착 관례 입법과 두 상신 축의 임계 실측이며, 그 미결의 정본 서술은 reader-rules.yaml#convergence.open_question 이다 — 첫 런의 이 블록이 그 재정의 근거 자료가 된다. peer 가 없어 검사를 돌리지 못한 경우 executed: false 이며 axes 는 빈 배열이다(그 사실이 checks[] 에서 vacuous: \"empty-target\" 으로도 드러난다).",
       "type": "object",
       "additionalProperties": false,
       "required": ["executed", "attempt", "independent_count", "dependent_count", "axes"],
@@ -166,25 +341,27 @@
           "maxItems": 2
         },
         "axes": {
+          "$comment": "축 행의 **정본 형태**다. convergence_report.axes[] 가 이 자리를 $ref 로 가리킨다.",
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "status"],
+            "required": ["id", "policy", "status"],
             "properties": {
-              "id": {
-                "enum": [
-                  "independent-count",
-                  "element-set",
-                  "tree-edges",
-                  "dependent-count",
-                  "dependent-set",
-                  "addition-attachment"
-                ]
+              "id": { "$ref": "#/$defs/axis_id" },
+              "policy": {
+                "$comment": "축의 판정 정책 (재정 P-3). exact-match = 결정론적으로 유일해야 하는 구조 사실이며 미달은 판정 행 fail(법). escalation-trigger = 해석 여지가 있는 축이며 미달은 fail 이 아니라 escalations[] 등재 → Owner 상신(계기). measure-only = 판정 제외·측정 전용이며 값만 기록한다(관찰). 종전 6축은 전부 같은 무게의 pass/fail 이었고 P-3 이 그것을 셋으로 갈랐다 — 그래서 이 키는 선택이 아니라 **필수**다. 정책 없는 축 행은 '어느 층의 보고인가'를 말하지 않는다. 축 → 정책의 대응표 정본은 reader/reader-rules.yaml#convergence 다.",
+                "enum": ["exact-match", "escalation-trigger", "measure-only"]
               },
-              "jaccard": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+              "jaccard": {
+                "$comment": "축에 따라 값이 없을 수 있다(개수 축은 집합 유사도를 재지 않는다). 존재하면서 null 이면 '재지 않았다'는 뜻이며, 키 부재와 구별한다.",
+                "type": ["number", "null"], "minimum": 0, "maximum": 1
+              },
               "threshold": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
-              "status": { "enum": ["pass", "fail"] }
+              "status": {
+                "$comment": "판정 상태 4종 (재정 P-3 으로 2종에서 확장). pass·fail 은 종전 그대로이고, escalate = 상신 축의 미달(실패가 아니라 상신), measured = 측정 전용 축의 기록(아무 판정도 하지 않았다)이다. ★ status 와 policy 의 대응(measure-only ⇒ measured 등)을 스키마 조건으로 묶지 않는다 — 이 파일의 선례(fact_classification.derived[].inputs[].origin 의 $comment)와 같은 이유다: 서식은 통과한 런만 담는 것이 아니며, 대응이 깨진 산출을 만난 런은 그 사실을 보고서에 적을 수 있어야 한다. 대응의 집행은 검사기 몫이다.",
+                "enum": ["pass", "fail", "escalate", "measured"]
+              }
             }
           }
         }

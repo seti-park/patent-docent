@@ -2,13 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://patent-docent.local/contracts/schemas/approval-envelope.schema.json",
   "title": "approval-envelope/v0",
-  "$comment": "체크포인트 승인 봉투. 근거 = 헌장 D6·D15 + Owner 재정 2026-08-17 R8 + 2026-08-18 N9 + M0.5 재감수 M-03·B-07 집행. 봉투 실물은 md 파일(15-frozen/approval-v<N>.md, 70-ship/checkpoint2.md)이며 그 YAML 프런트매터가 이 스키마의 대상이다. ★ 규율: (1) target.digest 가 실제 파일 해시와 다르면 봉투는 자동 실효되고 스테이지는 halt 한다 — 승인 후 대상이 바뀌면 승인이 사라진다. (2) owner_quote 는 Owner 가 실제로 타이핑한 원문이어야 한다. 시스템 요약 인용은 무효다. (3) 결정 유형은 이진뿐이며 조건부 승인 제도는 없다. 수정 지시는 rejected + directives[] 이고, 수정본은 새 버전으로 diff 와 함께 재상정한다. (4) ★ 무인 실행 플래그(--yes 류)를 설치하지 않는다. 러너에 해당 플래그를 만들지 않으며, 체크포인트 무응답은 무기한 대기다 — 시간 초과 자동 진행은 없다. (5) ★ 위조 방어는 규약 기반이며 암호학적 보증이 없다. 대필 주체가 인용을 날조할 수 있다는 잔여 리스크를 명시 수용한다. (6) manual_verification_ack[] 는 figure-sourced 사실의 사람 검증 확인 목록이며(재정 R1), CP1 봉투도 이 목록을 그대로 전재할 수 있다. (7) ★ 이진 결정의 기계 집행(재감수 M-03a): approved 봉투에는 directives 필드가 존재할 수 없고(조건부 승인 제도 부재의 스키마 표현), rejected 봉투에는 directives 가 1건 이상 있어야 한다. (8) drop_decision 은 CP1 전용 선택 필드다. 재료의 drop_signal.verdict == \"drop-proposed\" 일 때 이 필드가 필수라는 조건은 재료 명세와 봉투를 함께 읽어야 판정되므로 스키마 밖이며 엔진 검사 freeze.approval-valid 의 몫이다. (9) derived_fact_ack[] 는 파생 수치(origin == \"derived\")의 항목 단위 승인 목록이다(재정 2026-08-18 N9 — CP1 표면에서 수치 3분류를 항목 단위로 승인). 해당 항목이 없으면 빈 배열로 적는다 — 필드 생략은 누락과 '없음'을 구별하지 못한다.",
+  "$comment": "체크포인트 승인 봉투. 근거 = 헌장 D6·D15 + Owner 재정 2026-08-17 R8 + 2026-08-18 N9 + M0.5 재감수 M-03·B-07 집행. 봉투 실물은 md 파일(15-frozen/approval-v<N>.md, 70-ship/checkpoint2.md)이며 그 YAML 프런트매터가 이 스키마의 대상이다. ★ 규율: (1) target.digest 가 실제 파일 해시와 다르면 봉투는 자동 실효되고 스테이지는 halt 한다 — 승인 후 대상이 바뀌면 승인이 사라진다. (2) owner_quote 는 Owner 가 실제로 타이핑한 원문이어야 한다. 시스템 요약 인용은 무효다. (3) 결정 유형은 이진뿐이며 조건부 승인 제도는 없다. 수정 지시는 rejected + directives[] 이고, 수정본은 새 버전으로 diff 와 함께 재상정한다. (4) ★ 무인 실행 플래그(--yes 류)를 설치하지 않는다. 러너에 해당 플래그를 만들지 않으며, 체크포인트 무응답은 무기한 대기다 — 시간 초과 자동 진행은 없다. (5) ★ 위조 방어는 규약 기반이며 암호학적 보증이 없다. 대필 주체가 인용을 날조할 수 있다는 잔여 리스크를 명시 수용한다. (6) manual_verification_ack[] 는 figure-sourced 사실의 사람 검증 확인 목록이며(재정 R1), CP1 봉투도 이 목록을 그대로 전재할 수 있다. (7) ★ 이진 결정의 기계 집행(재감수 M-03a): approved 봉투에는 directives 필드가 존재할 수 없고(조건부 승인 제도 부재의 스키마 표현), rejected 봉투에는 directives 가 1건 이상 있어야 한다. (8) drop_decision 은 CP1 전용 선택 필드다. 재료의 drop_signal.verdict == \"drop-proposed\" 일 때 이 필드가 필수라는 조건은 재료 명세와 봉투를 함께 읽어야 판정되므로 스키마 밖이며 엔진 검사 freeze.approval-valid 의 몫이다. (9) derived_fact_ack[] 는 파생 수치(origin == \"derived\")의 항목 단위 승인 목록이다(재정 2026-08-18 N9 — CP1 표면에서 수치 3분류를 항목 단위로 승인). 해당 항목이 없으면 빈 배열로 적는다 — 필드 생략은 누락과 '없음'을 구별하지 못한다. (10) ★ 계속 봉투(checkpoint == \"convergence_continue\", 재정 P-U3)는 **재료가 아니라 판정서에 결속된다**. 다른 두 체크포인트가 승인하는 것은 산출물(재료 명세·출하물)이지만, 이 봉투가 승인하는 것은 '수렴이 미달인 채로 접지로 나아간다'는 진행 결정이며 그 결정의 근거 문서는 조기 수렴 판정서다. 그래서 target.path 는 10-read/convergence-early.json 에 고정되고 target.digest 는 그 파일의 해시다 — 판정서가 바뀌면(재분해·재시도) 봉투가 자동 실효되고, 승인된 적 없는 판정 위에서 접지가 도는 경로가 닫힌다. 이 봉투는 CP1·CP2 같은 Owner 체크포인트가 아니라 **스테이지 진입 게이트의 예외 통로**이므로 출하·재료 전용 필드(selected_variant·manual_verification_ack 등)를 요구하지 않는다.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "checkpoint", "run_id", "target", "decision", "owner_quote", "quote_provenance", "decided_at", "recorded_by"],
   "properties": {
     "schema": { "const": "approval-envelope/v0" },
-    "checkpoint": { "enum": ["material_approval", "ship_approval"] },
+    "checkpoint": {
+      "$comment": "convergence_continue 는 Owner 체크포인트가 아니라 접지 진입 게이트의 '계속' 통로다 (재정 P-U3). 규율 (10) 참조.",
+      "enum": ["material_approval", "ship_approval", "convergence_continue"]
+    },
     "run_id": { "type": "string", "minLength": 1 },
     "target": {
       "$comment": "대상 버전 해시 결속. digest 불일치 = 봉투 자동 실효.",
@@ -109,6 +112,23 @@
       },
       "then": {
         "required": ["manual_verification_ack", "derived_fact_ack", "numeric_whitelist_printed"]
+      }
+    },
+    {
+      "$comment": "계속 봉투의 대상 결속 (재정 P-U3). 승인 결정일 때 target.path 를 조기 수렴 판정서로 못 박는다 — 이 봉투가 무엇에 대한 승인인가가 값으로 정해져야 하며, 임의 경로를 허용하면 '계속'이 판정서와 무관한 종이가 된다. digest 결속은 규율 (1)이 이미 전 봉투에 걸고 있으므로 여기서는 경로만 고정한다. 판정서 존재 ∧ (통과 ∨ 이 봉투)라는 진입 조건 자체는 contracts/stages/read.yaml#phase_gates 가 진다.",
+      "if": {
+        "required": ["checkpoint", "decision"],
+        "properties": {
+          "checkpoint": { "const": "convergence_continue" },
+          "decision": { "const": "approved" }
+        }
+      },
+      "then": {
+        "properties": {
+          "target": {
+            "properties": { "path": { "const": "10-read/convergence-early.json" } }
+          }
+        }
       }
     },
     {

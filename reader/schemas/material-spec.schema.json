@@ -2,22 +2,159 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://patent-docent.local/reader/schemas/material-spec.schema.json",
   "title": "material-spec/v0",
-  "$comment": "재료 명세 스키마 정본(D14 프로젝트 간 계약). 개정 근거 = Owner 재정 2026-08-17 R1·R2·R3 + 2026-08-18 N9(파생 수치 깊이 1) + M0.5 재감수 B-02·M-01·M-02 집행. 계약 라인은 v0 유지(미동결 상태의 개정이므로 라인 승격 없음), reader_version = 0.4.0. ★ 라인 미승격의 근거는 이제 총괄 재량이 아니라 재정이다 — Owner 재정 2026-08-18 N15: \"0.x = 미동결 — 강화·파괴 변경 자유(변경 기록만 필수), 계약 보증 없음. v1.0.0 동결 사건 = historian 첫 이식 직전\". M0.6 재감수 M-14(미재정 예외 창설)는 이 재정으로 해소되었다. 값 언어는 EN 단일(R2)이며, 예외로 drop_signal.reason 과 grounding.search_note 만 KR이다. EN 집행은 $defs/en_text 가 담당하며(한글 자모·음절 거부), 원문 인용 필드(text_verbatim·quote·caption_quote·evidence_quotes[]·positioning.quotes[])와 KR 규정 필드(drop_signal.reason·grounding.search_note)에는 적용하지 않는다. ★ 스키마로 표현하지 않고 검증기 코드에 맡기는 제약: (1) derivation.formula 재계산 결과가 rounding 적용 후 value_normalized 와 문자열 일치 (2) origin=quoted 일 때 value_raw == source.quote[source.value_span.start:end] 바이트 동일 (3) dependents[].text_verbatim 에서 인용 청구항 번호를 결정론 파싱해 depends_on 배열·dependency_type 과 대조(read.dependency-parse) (4) 참조 무결성 전반(claim_ref·material_id·component·attaches_to·derived_from·figure·superseded_by·derivation.inputs[].ref 의 해소와 kind 제약) (5) 정규화 일관성(value_normalized == normalize(value_raw), 단위 일치) (6) 항목 ID 연속성(M1..Mn 빠짐 없음, append-only) (7) superseded_by 의 non-null 조건이 status == \"superseded\" 와 일치 (8) 항목 간 참조 그래프에 **자기참조가 없고 순환이 없다**. 간선은 derivation.inputs[].ref · **implication.derived_from[]** · superseded_by · grounding.component 의 합집합이다 — 구 문언은 derivation.inputs 만 적어 implication 이 서로를 근거로 삼는 2항 순환(M_a.derived_from=[M_b], M_b.derived_from=[M_a])을 금지하는 문언이 어디에도 없었다(M1 코퍼스 레인 적발). 근거가 원을 그리면 그 서술은 원천에 닿지 않으며, 그것은 derivation 사슬이 원을 그리는 것과 정확히 같은 결함이다 (9) ★ 파생의 파생 금지 — derivation.inputs[].ref 가 가리키는 fact 의 origin 은 \"quoted\" 여야 한다. 재정 2026-08-18 N9 의 문언은 \"파생 수치의 원천은 원문 스팬만(깊이 1)\" 이며, origin 4갈래 중 원문 스팬을 들고 있는 것은 quoted 하나다(figure-sourced 는 도면 판독, bibliographic 은 서지 필드 복사이므로 원문 스팬이 아니다). 구 문언 \"origin 이 derived 가 아니면 됨\" 은 그 둘까지 입력으로 허용해 재정보다 넓었다(M0.6 재감수 M-01 보수). 스팬을 직접 지정하는 입력 형태({name, locator, quote, value_span})는 그 자체가 원문 스팬이므로 그대로 허용된다. 스키마는 참조를 해소하지 못하므로 이 검사는 전량 검증기 몫이다 (10) element·addition 의 material_id 는 component 항목과 1:1 이며(두 element 가 같은 component 항목을 공유할 수 없다), component.claim_ref 는 자기를 가리킨 element·addition 의 id 와 역방향으로 일치한다 (11) 하류 산출물은 참조 spec_version·spec_digest 를 기록하고 게이트가 정합을 검사한다 — 불일치 = 자동 무효(재정 2026-08-18 N11) (12) ★ value_type 이 value_raw 의 결정론 파싱 결과와 같고 value_normalized 가 value_type 의 렌더와 같다 — 규칙 정본 = reader/reader-rules.yaml#value_grammar, 검사 = read.value-derivation (M0 M14 · 재감수 M-09 처분, 재정 N14 ① 편입) (13) ★ 원천 청구항 인벤토리 대조 — patent.md 의 청구항 구간을 파싱한 목록과 claims 등재분이 양방향으로 일치하고, 각 청구항의 text_verbatim 이 **자기 구간 안의** 부분문자열이다. 규칙 정본 = reader/reader-rules.yaml#claim_inventory, 검사 = read.claim-inventory (M0 M12 · 재감수 M-07 처분) (14) ★ 동결 항목 payload 의 불변성 — 개정본에서 기존 ID 의 정본 payload(status·superseded_by 를 제외한 전 필드) 해시가 바뀌면 거부하고, 상태 전이는 단방향이며(active → retracted|superseded, 종단에서 복귀 없음), superseded_by 사슬은 비순환이고 종단이 active 다. 규칙 정본 = reader/reader-rules.yaml#item_lifecycle, 검사 = freeze.payload-immutable (M0 M13 · 재감수 M-08 처분). ★ 이 (14)가 구 규칙 \"superseded_by 는 status: active 항목을 가리킨다\"를 **폐기**한다 — 2차 승계(A→B→C)에서 B 가 superseded 가 되는 순간 A 의 링크를 고쳐야 했고 그것은 동결본을 고치는 일이었다(SPEC §9.27). ★ dependency_type 불변식의 역방향(len(depends_on)==1 ⟹ \"single\")은 alternative-form 이 단일 종속일 수 있어 스키마에 넣지 않았다 — 검증기·재정 확인 대상이며, 현행 파싱 규칙 5종은 alternative-form 에 도달하지 못한다(reader-rules.yaml#dependency_citation.unreachable_values 가 그 사실을 데이터로 드러낸다).",
+  "$comment": "재료 명세 스키마 정본(D14 프로젝트 간 계약). 개정 근거 = Owner 재정 2026-08-17 R1·R2·R3 + 2026-08-18 N9(파생 수치 깊이 1) + 2026-08-18 P-1(종속 형태 어휘)·P-2(서지 확장 + 층 분리)·P-B(수치 역참조) + M0.5 재감수 B-02·M-01·M-02 집행. 계약 라인은 v0 유지(미동결 상태의 개정이므로 라인 승격 없음), reader_version = 0.5.0. ★ 라인 미승격의 근거는 이제 총괄 재량이 아니라 재정이다 — Owner 재정 2026-08-18 N15: \"0.x = 미동결 — 강화·파괴 변경 자유(변경 기록만 필수), 계약 보증 없음. v1.0.0 동결 사건 = historian 첫 이식 직전\". M0.6 재감수 M-14(미재정 예외 창설)는 이 재정으로 해소되었다. 값 언어는 EN 단일(R2)이며, 예외로 extensions.docent.drop_signal.reason 과 grounding.search_note 만 KR이다(drop_signal 의 자리가 2026-08-18 개정에서 최상위에서 확장 블록으로 옮겨졌다 — 재정 P-2 ⓑ). EN 집행은 $defs/en_text 가 담당하며(한글 자모·음절 거부), 원문 인용 필드(text_verbatim·quote·caption_quote·evidence_quotes[]·positioning.quotes[])와 KR 규정 필드(extensions.docent.drop_signal.reason·grounding.search_note)에는 적용하지 않는다. ★ 스키마로 표현하지 않고 검증기 코드에 맡기는 제약: (1) derivation.formula 재계산 결과가 rounding 적용 후 value_normalized 와 문자열 일치 (2) origin=quoted 일 때 value_raw == source.quote[source.value_span.start:end] 바이트 동일 (3) dependents[].text_verbatim 에서 인용 청구항 번호를 결정론 파싱해 depends_on 배열·dependency_type 과 대조(read.dependency-parse) (4) 참조 무결성 전반(claim_ref·material_id·component·attaches_to·derived_from·figure·superseded_by·derivation.inputs[].ref 의 해소와 kind 제약) (5) 정규화 일관성(value_normalized == normalize(value_raw), 단위 일치) (6) 항목 ID 연속성(M1..Mn 빠짐 없음, append-only) (7) superseded_by 의 non-null 조건이 status == \"superseded\" 와 일치 (8) 항목 간 참조 그래프에 **자기참조가 없고 순환이 없다**. 간선은 derivation.inputs[].ref · **implication.derived_from[]** · superseded_by · grounding.component 의 합집합이다 — 구 문언은 derivation.inputs 만 적어 implication 이 서로를 근거로 삼는 2항 순환(M_a.derived_from=[M_b], M_b.derived_from=[M_a])을 금지하는 문언이 어디에도 없었다(M1 코퍼스 레인 적발). 근거가 원을 그리면 그 서술은 원천에 닿지 않으며, 그것은 derivation 사슬이 원을 그리는 것과 정확히 같은 결함이다 (9) ★ 파생의 파생 금지 — derivation.inputs[].ref 가 가리키는 fact 의 origin 은 \"quoted\" 여야 한다. 재정 2026-08-18 N9 의 문언은 \"파생 수치의 원천은 원문 스팬만(깊이 1)\" 이며, origin 4갈래 중 원문 스팬을 들고 있는 것은 quoted 하나다(figure-sourced 는 도면 판독, bibliographic 은 서지 필드 복사이므로 원문 스팬이 아니다). 구 문언 \"origin 이 derived 가 아니면 됨\" 은 그 둘까지 입력으로 허용해 재정보다 넓었다(M0.6 재감수 M-01 보수). 스팬을 직접 지정하는 입력 형태({name, locator, quote, value_span})는 그 자체가 원문 스팬이므로 그대로 허용된다. 스키마는 참조를 해소하지 못하므로 이 검사는 전량 검증기 몫이다 (10) element·addition 의 material_id 는 component 항목과 1:1 이며(두 element 가 같은 component 항목을 공유할 수 없다), component.claim_ref 는 자기를 가리킨 element·addition 의 id 와 역방향으로 일치한다 (11) 하류 산출물은 참조 spec_version·spec_digest 를 기록하고 게이트가 정합을 검사한다 — 불일치 = 자동 무효(재정 2026-08-18 N11) (12) ★ value_type 이 value_raw 의 결정론 파싱 결과와 같고 value_normalized 가 value_type 의 렌더와 같다 — 규칙 정본 = reader/reader-rules.yaml#value_grammar, 검사 = read.value-derivation (M0 M14 · 재감수 M-09 처분, 재정 N14 ① 편입) (13) ★ 원천 청구항 인벤토리 대조 — patent.md 의 청구항 구간을 파싱한 목록과 claims 등재분이 양방향으로 일치하고, 각 청구항의 text_verbatim 이 **자기 구간 안의** 부분문자열이다. 규칙 정본 = reader/reader-rules.yaml#claim_inventory, 검사 = read.claim-inventory (M0 M12 · 재감수 M-07 처분) (14) ★ 동결 항목 payload 의 불변성 — 개정본에서 기존 ID 의 정본 payload(status·superseded_by 를 제외한 전 필드) 해시가 바뀌면 거부하고, 상태 전이는 단방향이며(active → retracted|superseded, 종단에서 복귀 없음), superseded_by 사슬은 비순환이고 종단이 active 다. 규칙 정본 = reader/reader-rules.yaml#item_lifecycle, 검사 = freeze.payload-immutable (M0 M13 · 재감수 M-08 처분). ★ 이 (14)가 구 규칙 \"superseded_by 는 status: active 항목을 가리킨다\"를 **폐기**한다 — 2차 승계(A→B→C)에서 B 가 superseded 가 되는 순간 A 의 링크를 고쳐야 했고 그것은 동결본을 고치는 일이었다(SPEC §9.27). ★ dependency_type 불변식의 역방향(len(depends_on)==1 ⟹ \"single\")은 unclassified 가 단일 종속일 수 있어 스키마에 넣지 않았다 — 검증기·재정 확인 대상이다. unclassified 종속항은 parse.set-equals·parse.type-agrees 의 판정 대상에서 빠지고 판정 행에서 별도로 세어 CP1 미분류 목록에 전건 노출된다(규칙 정본 = reader-rules.yaml#dependency_citation.unclassified, 재정 P-1). (15) ★ 서지 확장 필드의 원천 대조 — jurisdiction 이 patent.number 의 접두이고 kind_code 가 접미이며, inventors[]·applicants[]·classifications.ipc[]·classifications.cpc[]·priority_claims[].number 가 원천 서지면의 **바이트 정확 부분문자열**이고, priority_claims 가 비어 있지 않으면 dates.priority == min(priority_claims[].date) 다. 스키마는 형태(패턴·타입)만 잡을 뿐 원천을 열어보지 못하므로 대조는 전량 검사 read.bibliography 의 몫이다 — 재정 P-2 ⓐ 의 문언 \"전부 서지면에서 결정론 복사\" 는 대조 없이는 자유 기입과 구별되지 않는다. 날짜는 정규화 값이므로 부분문자열 대조 대상에서 뺀다(원천 표기가 무엇이든 ISO 형태로 저장되기 때문이다). (16) ★ numeric_refs 의 참조 무결 — implication·positioning 의 numeric_refs[] 원소는 실재하는 항목을 가리켜야 하고 그 kind 는 \"fact\" 여야 한다. 검사 = read.pointer-resolve, 근거 = 재정 P-B(중요분은 LLM 중요도 판단이 아니라 역참조로 도출된다 — 참조가 해소되지 않으면 그 도출 자체가 성립하지 않는다). (17) ★ 수확 소유권과 전수성 — origin ∈ {quoted, bibliographic} 인 fact 는 접지 스팬 전수 기계 수확기(reader/lib/harvest.py)의 산출이며, 명세가 담은 그 집합이 같은 명세로 수확기를 다시 돌려 얻은 집합과 정확히 일치해야 한다(누락·추가·변조 전부 실패). 스키마에는 \"누가 이 항목을 만들었는가\" 를 적는 자리가 없으므로 이 검사는 read.value-derivation#value.harvest-parity 가 전담한다 — 재정 P-B. ★★ 이번 개정(reader_version 0.5.0 · 2026-08-18)이 바꾼 것 4건 — 무엇을 왜 (재정 N15 의 기록 의무: 0.x 의 자유는 **기록 없는 자유가 아니다**): ① **층 분리** — 최상위 required 를 공유 코어 10키 + extensions 로 재편하고 drop_signal 을 extensions.docent.drop_signal 로 옮겼다. 이유: drop 은 사실이 아니라 **편집 판단**이고 그 판단은 docent 고유의 것이다. 이식 상대(historian)는 같은 재료를 읽으면서 그 판단을 하지 않는데, 구 스키마는 그것을 **최상위 필수**로 요구해 상대에게 docent 의 판단을 강요했다. 경계 원칙(\"공유 필수 필드는 프로젝트 간 동일 의미 — 프로젝트 고유 판단은 확장 블록에만\")을 문서 선언이 아니라 **기계 집행**으로 두라는 지시에 따라, 공유 코어 최상위 property 의 $comment 는 \"[공유 코어]\" 로, 확장 네임스페이스 하위 property 의 $comment 는 \"[확장:<ns>]\" 로 시작하며 tools/check_spec_refs.py 의 K8 이 이 표지를 대조한다 (재정 P-2 ⓑ). ② **서지 구조 확장** — patent 에 jurisdiction·kind_code·inventors·applicants·priority_claims·classifications 6종을 **필수**로 신설했다. 이유: 발명자·출원인·우선권은 본래 **목록**인데 담을 자리가 없어 assignee 단수 하나로 뭉개졌고, C18 이 요구하는 **최우선일의 정확성**은 우선권 목록 없이는 검증 자체가 불가능했다. 관계 그래프(N13 유보)와 달리 이 여섯은 **단일 문서 안에서 닫히는 사실**이라 상대 문서가 필요 없다 — 그것이 N13 은 유보하고 이것은 지금 넣는 이유다 (재정 P-2 ⓐ). ③ **수치 역참조** — implication·positioning 에 numeric_refs 를 필수 신설했다. 이유: 수확이 전수가 되면 \"어느 수치가 중요한가\" 를 고르는 일이 남는데, 그 일을 LLM 의 중요도 판단에 맡기지 않고 **함의·포지셔닝이 실제로 근거로 삼았는가** 라는 역참조로 옮긴다. 고르는 주체가 서사가 아니라 참조가 된다 (재정 P-B). ④ **종속 형태 어휘** — enum 에서 alternative-form 을 폐기하고 unclassified 를 넣었다. 이유: Markush·조건부·수단항·카테고리 전환의 typed operator 신설이 N14 범위에서 **제외**되었고(입법은 실물 축적 시 건별 재정), 그 4구조는 이제 '틀린 형태' 가 아니라 **구조 미분류**로 표지된다. 구 값은 파싱 규칙 5종으로 도달 불능인 채 '선언하면 반드시 실패' 로만 존재했으니 어휘가 아니라 함정이었다 — 폐기가 손실을 만들지 않는 이유는 전문이 이미 text_verbatim 에 보존되기 때문이다(재정 R1) (재정 P-1).",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "reader_version", "spec_version", "status", "run_id", "patent", "claims", "figures", "items", "drop_signal", "provenance"],
+  "required": ["schema", "reader_version", "spec_version", "status", "run_id", "patent", "claims", "figures", "items", "provenance", "extensions"],
   "properties": {
-    "schema": { "const": "material-spec/v0" },
-    "reader_version": { "type": "string", "pattern": "^[0-9]+[.][0-9]+[.][0-9]+$" },
-    "spec_version": { "type": "integer", "minimum": 1 },
-    "status": { "enum": ["draft", "frozen", "revised"] },
-    "run_id": { "type": "string", "minLength": 1 },
-    "patent": { "$ref": "#/$defs/patent" },
-    "claims": { "$ref": "#/$defs/claims" },
-    "figures": { "type": "array", "items": { "$ref": "#/$defs/figure" } },
-    "items": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/item" } },
-    "drop_signal": { "$ref": "#/$defs/drop_signal" },
-    "provenance": { "$ref": "#/$defs/provenance" }
+    "schema": {
+      "$comment": "[공유 코어] 계약 라인 식별자. 0.x 미동결 구간의 개정이므로 라인은 v0 그대로다 — 승격 사건은 historian 첫 이식 직전이다(재정 N15).",
+      "const": "material-spec/v0"
+    },
+    "reader_version": {
+      "$comment": "[공유 코어] 이식 단위의 판. 현재 판 = \"0.5.0\"(정본 = reader/READER-VERSION — 스키마는 그 값을 형태로만 제약한다). 라인(schema)과 판(reader_version)은 따로 움직인다: 0.x 구간의 파괴 변경은 판만 올리고 라인은 두지 않는다(재정 N15).",
+      "type": "string",
+      "pattern": "^[0-9]+[.][0-9]+[.][0-9]+$"
+    },
+    "spec_version": {
+      "$comment": "[공유 코어] 재료 명세의 개정 번호. 재요리는 이 번호를 +1 한 개정본을 만든다 — 동결본을 제자리에서 고치는 경로는 없다(D6 규율 ②).",
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "$comment": "[공유 코어] 명세 자체의 생애 상태. 항목 단위 상태($defs/item_common.status)와 다른 층위이며 섞어 읽지 마라.",
+      "enum": ["draft", "frozen", "revised"]
+    },
+    "run_id": {
+      "$comment": "[공유 코어] 이 명세를 산출한 런의 식별자. patent.assignee 가 단수로 남는 근거이기도 하다(런 ID 가 그 한 이름에서 유래한다).",
+      "type": "string",
+      "minLength": 1
+    },
+    "patent": {
+      "$comment": "[공유 코어] 서지면 사실 블록. 2026-08-18 개정에서 6종이 필수로 늘었다(재정 P-2 ⓐ): 관할·공보 종별·발명자·출원인·우선권 주장·분류 코드. 신설분은 전부 **목록형 또는 코드형**이며 서사가 아니다 — 발명자·출원인·우선권은 본래 여럿인데 구 스키마에 담을 자리가 없어 assignee 단수 하나로 뭉개졌고, C18 이 요구하는 최우선일의 정확성은 우선권 목록 없이는 검증조차 성립하지 않았다. N13(관계 그래프)이 유보된 것과 이 여섯이 지금 들어오는 것의 차이는 하나다 — **이 여섯은 단일 문서 안에서 닫히므로 상대 문서가 필요 없다.** ★ 스키마는 형태만 잡는다: 접두·접미 일치와 원천 부분문자열 대조, 최우선일 산정은 검사 read.bibliography 의 몫이다(파일 최상위 $comment 제약 15). ★ 공유 코어 property 는 참조를 거치지 않고 제자리에서 읽히도록 인라인으로 둔다 — 경계 검사(K8)가 코어 subtree 를 그 자리에서 훑기 때문이다(재정 P-2 ⓑ).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["number", "title", "jurisdiction", "kind_code", "assignee", "applicants", "inventors", "dates", "priority_claims", "classifications", "source_digest", "source_path"],
+      "properties": {
+        "number": { "type": "string" },
+        "title": { "type": "string" },
+        "jurisdiction": {
+          "$comment": "관할 2자 코드(예 \"US\"). number 의 접두와 일치해야 하며 그 대조는 bib.jurisdiction-prefix 가 본다 — 스키마가 아는 것은 형태뿐이다.",
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+        "kind_code": {
+          "$comment": "공보 종별 코드(예 \"A1\"). number 의 접미와 일치해야 하며 그 대조는 bib.kind-code-suffix 가 본다. 종별이 서지면에 따로 있는데도 number 문자열 안에만 묻혀 있으면 \"이것이 공개공보인가 등록공보인가\" 를 기계가 답할 수 없다.",
+          "type": "string",
+          "pattern": "^[A-Z][0-9]$"
+        },
+        "assignee": {
+          "$comment": "양수인 단수. applicants 목록이 생긴 뒤에도 단수로 남긴 이유는 run_id 가 이 한 이름에서 유래하기 때문이다 — 목록이 필요한 자리는 applicants 다.",
+          "type": "string"
+        },
+        "applicants": {
+          "$comment": "출원인 목록. 최소 1건이다 — 출원인 없는 공보는 없으므로 빈 배열은 \"없음\" 이 아니라 **미기입**이고, 그 둘을 구별하지 못하는 표현을 허용하지 않는다. 각 문자열은 원천 서지면의 바이트 정확 부분문자열이어야 한다(bib.applicants-in-source).",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "inventors": {
+          "$comment": "발명자 목록. applicants 와 달리 minItems 0 이다 — 발명자가 서지면에 드러나지 않는 공보 형태가 실재하므로 빈 배열이 정직한 값일 수 있다. 각 문자열은 원천의 바이트 정확 부분문자열이어야 한다(bib.inventors-in-source).",
+          "type": "array",
+          "minItems": 0,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "dates": {
+          "$comment": "필드 구성은 불변이다(priority·filing·publication 필수). 다만 priority 의 **정확성**은 이제 혼자 서지 않는다 — priority_claims 가 비어 있지 않으면 priority 는 그 목록의 최소 날짜와 같아야 하고, 그 판정은 bib.earliest-priority 가 한다(C18). 세 날짜는 정규화 값이므로 원천 부분문자열 대조 대상이 아니다.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["priority", "filing", "publication"],
+          "properties": {
+            "priority": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+            "filing": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+            "publication": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+          }
+        },
+        "priority_claims": {
+          "$comment": "우선권 주장 목록. minItems 0 이다 — 우선권 주장이 없는 출원이 실재하며 그때 빈 배열이 정직한 값이다. 원소 3필드는 전부 필수다: 번호만 있고 날짜가 없으면 최우선일을 산정할 수 없고, 관할이 없으면 같은 번호 체계의 다른 관할과 구별되지 않는다. number 는 원천의 바이트 정확 부분문자열이어야 하며(bib.priority-number-in-source), date 는 정규화 값이므로 대조에서 뺀다.",
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["number", "date", "jurisdiction"],
+            "properties": {
+              "number": { "type": "string", "minLength": 1 },
+              "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+              "jurisdiction": { "type": "string", "pattern": "^[A-Z]{2}$" }
+            }
+          }
+        },
+        "classifications": {
+          "$comment": "분류 코드. ipc·cpc 둘 다 **필수 키**이며 각각은 minItems 0 이다 — 키를 선택으로 두면 \"분류가 없다\" 와 \"분류를 안 봤다\" 가 같은 모양이 되고, 그 구별을 잃는 것이 이 스키마가 반복해서 막아온 결함 형태다. 각 코드는 원천의 바이트 정확 부분문자열이어야 한다(bib.classification-in-source).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ipc", "cpc"],
+          "properties": {
+            "ipc": {
+              "type": "array",
+              "minItems": 0,
+              "uniqueItems": true,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "cpc": {
+              "type": "array",
+              "minItems": 0,
+              "uniqueItems": true,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "source_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "source_path": { "type": "string" }
+      }
+    },
+    "claims": {
+      "$comment": "[공유 코어] 청구항 구조. 두 프로젝트가 같은 의미로 읽는다 — 독립항 element 트리·종속항 depends_on·부가 한정은 문서가 스스로 말하는 사실이지 편집 판단이 아니다.",
+      "$ref": "#/$defs/claims"
+    },
+    "figures": {
+      "$comment": "[공유 코어] 도면 인벤토리. 전량 등재이며 선택은 하류(DESIGN)의 일이다 — 선택이 생성보다 앞서면 선택되지 않은 것이 존재조차 하지 않게 된다(D12).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/figure" }
+    },
+    "items": {
+      "$comment": "[공유 코어] 재료 항목 전량. 6종(component·grounding·fact·implication·positioning·figure_note) 중 어느 것도 프로젝트 고유 판단이 아니다 — 무엇을 쓸지 고르는 일만 프로젝트의 몫이고, 그 선택은 여기 적히지 않는다.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "provenance": {
+      "$comment": "[공유 코어] 산출 내력. read_runs 배열은 두 분해 실행을 전부 담고, 정본 지정은 declaration-order(read_runs[0]) 로 내용맹 결정된다(재정 P-4 — 판정자가 없으므로 규칙이 고른다).",
+      "$ref": "#/$defs/provenance"
+    },
+    "extensions": {
+      "$comment": "프로젝트 확장 블록의 네임스페이스 맵(재정 P-2 ⓑ). 층 분리의 요지는 한 줄이다 — **공유 필수 필드는 프로젝트 간 동일 의미이고, 프로젝트 고유 판단은 이 블록 안에만 산다.** 네임스페이스는 전부 **선택**이므로 required 는 비어 있다: historian 은 docent 블록을 기입하지 않으면서도 같은 재료를 그대로 읽는다. additionalProperties:false 로 미등재 네임스페이스를 막고, 네임스페이스 이름의 화이트리스트({docent, historian})와 각 property 의 \"[확장:<ns>]\" 표지는 tools/check_spec_refs.py 의 K8 이 대조한다 — 이 원칙을 문서 선언이 아니라 기계 집행으로 두라는 것이 재정의 명시 지시다. ★ 확장 전용 구조의 정의($defs/drop_signal 등)는 $defs 정의 풀에 그대로 두되 **참조 경로는 이 블록 안에서만 열린다** — 공유 코어 property 의 어느 subtree 에서도 그 정의에 도달하지 못한다.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "docent": {
+          "$comment": "docent(단일 특허·대중·무료 X 스레드) 전용 판단 블록. 지금은 drop_signal 하나이며, 이 블록을 기입한 이상 그 하나는 필수다(블록의 존재가 곧 \"이 프로젝트의 판단을 적었다\" 는 선언이므로 비어 있는 선언을 허용하지 않는다).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["drop_signal"],
+          "properties": {
+            "drop_signal": {
+              "$comment": "[확장:docent] 이 특허를 스레드로 만들지 말자는 제안. **사실이 아니라 편집 판단**이므로 공유 코어에 있을 수 없다 — 구 스키마는 이것을 최상위 필수로 두어 이식 상대에게 docent 의 판단을 강요했고, 그 결함의 처분이 이 이동이다(재정 P-2 ⓑ). 조기 단계(stage: early)의 것은 상신하지 않는 **맹검 관찰 기록**이고 확정 재정은 CP1 에 통합된다(재정 P-A).",
+              "$ref": "#/$defs/drop_signal"
+            }
+          }
+        }
+      }
+    }
   },
   "$defs": {
     "en_text": {
@@ -239,28 +376,6 @@
         "figure": { "enum": ["found", "not-depicted"] }
       }
     },
-    "patent": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["number", "title", "assignee", "dates", "source_digest", "source_path"],
-      "properties": {
-        "number": { "type": "string" },
-        "title": { "type": "string" },
-        "assignee": { "type": "string" },
-        "dates": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["priority", "filing", "publication"],
-          "properties": {
-            "priority": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
-            "filing": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
-            "publication": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
-          }
-        },
-        "source_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-        "source_path": { "type": "string" }
-      }
-    },
     "element": {
       "type": "object",
       "additionalProperties": false,
@@ -273,7 +388,7 @@
       }
     },
     "dependent": {
-      "$comment": "S1·S2·S3(재정 R1): depends_on 배열 승격 + 원문 전문 저장 + 논리 형태 표기. dependency_type == \"single\" ⟹ len(depends_on) == 1, 다중 종속 ⟹ len ≥ 2 만 스키마가 집행한다.",
+      "$comment": "S1·S2·S3(재정 R1): depends_on 배열 승격 + 원문 전문 저장 + 논리 형태 표기. dependency_type == \"single\" ⟹ len(depends_on) == 1, 다중 종속(multiple-and·multiple-or) ⟹ len ≥ 2 만 스키마가 집행한다. unclassified 에는 길이 제약을 두지 않는다 — 미분류는 형태를 모른다는 표지이므로 길이를 단정할 근거가 없다.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "depends_on", "dependency_type", "text_verbatim", "additions"],
@@ -285,7 +400,10 @@
           "uniqueItems": true,
           "items": { "$ref": "#/$defs/claim_id" }
         },
-        "dependency_type": { "enum": ["single", "multiple-and", "multiple-or", "alternative-form"] },
+        "dependency_type": {
+          "$comment": "종속 형태 어휘 4종(재정 P-1). ★ 구 값 alternative-form 은 **폐기**되었고 unclassified 가 그 자리를 흡수한다. 폐기 근거: 파싱 규칙 5종이 그 값에 도달하지 못해 어휘가 아니라 함정이었고(선언하면 반드시 실패하는 값), Markush·조건부·수단항·카테고리 전환의 typed operator 신설이 N14 범위에서 제외되면서 그 4구조는 '틀린 형태' 가 아니라 **구조 미분류**가 되었다. unclassified 는 그 미분류의 표지이며 결함 신고가 아니다 — 전문은 text_verbatim 에 이미 보존되므로(재정 R1) 표지는 손실을 만들지 않는다. 대신 침묵하지도 않는다: 판정 대상에서 빠지되 판정 행에서 별도로 세고 CP1 미분류 목록에 전건 노출된다. ★ unclassified 는 회피 통로가 아니다 — 5종 어형으로 파싱이 되고 그 집합이 depends_on 과 일치하는데도 이 값을 선언하면 parse.unclassified-not-an-escape 가 실패시킨다.",
+          "enum": ["single", "multiple-and", "multiple-or", "unclassified"]
+        },
         "text_verbatim": { "type": "string", "minLength": 1 },
         "additions": {
           "$comment": "B-02 집행: 종속항은 반드시 1개 이상의 부가 한정으로 분해된다. 빈 배열은 전문이 있는 종속항을 접지 대상에서 통째로 빼내는 경로였다(재감수 B-02).",
@@ -499,29 +617,45 @@
       ]
     },
     "implication_item": {
+      "$comment": "★ numeric_refs 필수 신설(재정 P-B). derived_from 이 \"어느 항목에서 나왔는가\" 라면 numeric_refs 는 \"어느 **수치**를 근거로 삼았는가\" 다 — 둘을 한 배열로 합치지 않는 이유는, 중요한 수치를 고르는 일 전체가 이 역참조 하나에 걸려 있기 때문이다. 수확이 전수가 된 뒤(reader/lib/harvest.py) 중요분은 LLM 의 중요도 판단이 아니라 **함의·포지셔닝이 실제로 참조했는가**로 도출되고, CP1 은 그 참조분을 펼치고 미참조분을 접는다. 그러므로 이 배열이 다른 배열에 섞이면 도출식 자체가 사라진다.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "kind", "status", "superseded_by", "statement_en", "basis", "derived_from", "evidence_quotes", "confidence"],
+      "required": ["id", "kind", "status", "superseded_by", "statement_en", "basis", "derived_from", "numeric_refs", "evidence_quotes", "confidence"],
       "properties": {
         "id": {}, "status": {}, "superseded_by": {},
         "kind": { "const": "implication" },
         "statement_en": { "$ref": "#/$defs/en_text" },
         "basis": { "enum": ["claim", "spec", "background", "effects"] },
         "derived_from": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/item_id" } },
+        "numeric_refs": {
+          "$comment": "이 함의가 근거로 삼은 수치 항목의 ID 목록. minItems 0 이다 — 수치를 쓰지 않는 함의가 정상적으로 존재하므로 빈 배열이 정직한 값이고, 없는 참조를 지어내게 만드는 하한을 두지 않는다. 대상 실재와 kind == \"fact\" 제약은 read.pointer-resolve 가 집행한다(재정 P-B).",
+          "type": "array",
+          "minItems": 0,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/item_id" }
+        },
         "evidence_quotes": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
         "confidence": { "enum": ["stated", "inferred"] }
       }
     },
     "positioning_item": {
+      "$comment": "★ numeric_refs 필수 신설(재정 P-B — implication_item 과 같은 근거). 포지셔닝은 \"무엇이 얼마나 나아졌는가\" 를 말하는 자리이므로 수치를 근거로 삼는 빈도가 가장 높고, 그 근거가 ID 로 적히지 않으면 delta 의 숫자가 어디서 왔는지 되짚을 자리가 없다.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "kind", "status", "superseded_by", "background_problem", "asserted_effect", "delta", "quotes"],
+      "required": ["id", "kind", "status", "superseded_by", "background_problem", "asserted_effect", "delta", "numeric_refs", "quotes"],
       "properties": {
         "id": {}, "status": {}, "superseded_by": {},
         "kind": { "const": "positioning" },
         "background_problem": { "$ref": "#/$defs/en_text" },
         "asserted_effect": { "$ref": "#/$defs/en_text" },
         "delta": { "$ref": "#/$defs/en_text" },
+        "numeric_refs": {
+          "$comment": "이 포지셔닝이 근거로 삼은 수치 항목의 ID 목록. 규격·근거는 implication_item.numeric_refs 와 동일하다(minItems 0 · uniqueItems · kind == \"fact\" 는 read.pointer-resolve 집행).",
+          "type": "array",
+          "minItems": 0,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/item_id" }
+        },
         "quotes": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
       }
     },
@@ -553,7 +687,7 @@
       ]
     },
     "drop_signal": {
-      "$comment": "reason 은 KR(재정 R2: drop 제안 사유는 KR).",
+      "$comment": "reason 은 KR(재정 R2: drop 제안 사유는 KR). ★ 이 정의는 정의 풀에 있을 뿐이며 **참조 경로는 extensions.docent.drop_signal 하나뿐이다** — 공유 코어의 어느 property subtree 에서도 여기에 도달하지 못한다(재정 P-2 ⓑ 의 층 분리). stage: early 는 상신 없는 맹검 관찰 기록이고 stage: final 의 확정 재정은 CP1 에 통합된다(재정 P-A).",
       "type": "object",
       "additionalProperties": false,
       "required": ["stage", "verdict", "reason"],

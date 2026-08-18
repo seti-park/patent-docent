@@ -1,7 +1,11 @@
 # 스테이지 I/O 계약 — `source`
 #
 # 정본 서술 = docs/SPEC.md §1.3. 이 파일은 그 서술의 기계 판독본이며, 어긋나면 SPEC 이 이긴다.
-# 서식 = SPEC §1.2 고정 서식 + `schema` 키(K3 양방향 대조 대상이 되기 위한 계약 라인 선언).
+# 서식 = SPEC §1.2 고정 서식 + `schema` 키(K3 양방향 대조 대상이 되기 위한 계약 라인 선언)
+# + 서식 확장 3 `checks_on_entry`(재정 P-C).
+#
+# ★ 공통 규칙 — 런은 시작 시점 git 커밋에 결박된다(재정 P-U1). 계약·스키마·검증기·러너가
+#   함께 고정되므로, 런 도중 리포가 개정되어도 이 런의 법은 run.yaml#engine.commit 하나다.
 
 schema: stage-contract/v0
 id: source
@@ -10,6 +14,21 @@ lane:
   kind: tool          # 비-LLM. 다이제스트 계산·구조 검사만 한다.
   model: null
   effort: null
+
+# ★ 진입 지문 검사(재정 P-C). source 는 파이프라인의 첫 스테이지이므로 대조할 상류 지문이
+#   없다 — 대신 **외부 투입물의 존재·해시를 기록**하고, 같은 런 작업장에 이미 00-source/ 가
+#   있으면 그 지문과 대조해 원천 변경을 감지한다(재정 P-U2).
+checks_on_entry:
+  - id: source.input-digest
+    criterion: >-
+      Owner 투입물(원문 파일 + 도면 원본) 전건이 실재하고, 각 파일의 SHA-256 을 산출해
+      기록한다. 런 작업장에 기존 00-source/ 가 있으면 patent.md 지문과 도면 세트 매니페스트
+      지문을 대조한다 — 어긋나면 덮어쓰지 않는다(아래 source_change_policy).
+    implemented_by: engine/stages/__init__.py
+    on_mismatch: environment-error
+    note: >-
+      불일치는 품질 결함이 아니라 환경 오류다 — 재시도·수정 루프가 아니라 즉시 중단+진단
+      (재정 P-C). 원천이 바뀐 경우의 처분은 부분 복구가 아니라 **새 런**이다(재정 P-U2).
 
 inputs:
   - "Owner 투입물(특허 식별자 또는 원문 파일)"
@@ -50,6 +69,13 @@ checks_before_exit:
       하류에서 파서 문제로 다시 넘어지지 않는다.
   - id: source.figures-manifest
     criterion: "figures-raw/ 파일 수 ≥ 1 이고 파일명이 도면 번호로 정렬 가능"
+  - id: source.figures-manifest-digest
+    criterion: >-
+      도면 세트 **매니페스트 지문**을 산출해 source-report.json#figures_manifest_digest 에
+      적는다 — `sha256("\n".join(f"{filename}\t{sha256}" for 정렬된 도면))`.
+      원천은 patent.md 만이 아니라 **도면 세트 전체**이며(재정 P-U2), 세트의 변경은 파일
+      하나의 지문으로는 드러나지 않는다. 하류 read.input-digest 가 이 값을 대조한다.
+    introduced_by: "재정 2026-08-18 P-U2"
   - id: source.run-id
     criterion: "run.yaml 의 run_id 가 `^[a-z0-9]+-[a-z0-9]+-[a-z0-9-]+$` 이고 디렉터리명과 일치(SPEC §7.1)"
   - id: source.exhibit-candidates
@@ -58,11 +84,15 @@ checks_before_exit:
       트윗 하한의 정본 = contracts/format-parameters.yaml#tweet_count.min (재정 N12).
 
 # ---------------------------------------------------------------------------
-# 전시물 후보 산정식 — ★ 잠정. 재정 밖이다.
+# 전시물 후보 산정식 — ★ 재정 2026-08-18 P-5 로 정식 승인됨.
 # ---------------------------------------------------------------------------
-# 재정 N12 가 정한 것은 **조기 보고와 부족 시 escalate** 이며 후보 수를 어떻게 세는지는
-# 정하지 않았다(M0.6 재감수 M-04 가 SPEC 의 무단 확정을 지적해 잠정 처리로 되돌렸다).
-# 아래는 총괄이 잠정 정의한 규칙이며 태그가 그 사실을 드러낸다.
+# 구 상태: 재정 N12 가 정한 것은 **조기 보고와 부족 시 escalate** 뿐이었고 후보 수의 산정식은
+# 총괄 잠정 규칙이었다(M0.6 재감수 M-04 가 SPEC 의 무단 확정을 지적해 잠정으로 되돌렸다).
+# 재정 P-5 가 그 산정식을 **정식 승인**했으므로 `provisional_resolutions` 를 `resolutions` 로
+# 개명하고, "첫 런 개시 전 Owner 재정 대상"이라고 적던 `open` 필드는 **폐기**한다(근거: P-5).
+# ★ `tag: "[가설]"` 은 그대로 **유지**한다 — 재정 P-5 가 명시적으로 유지를 지시했다.
+# 산정식이 승인된 것과 그 산정식이 실물에서 옳은가가 별개이기 때문이며, 그 물음은 아래
+# observation_metric(채택률)이 배치 리뷰에서 관찰한다.
 exhibit_candidates:
   tag: "[가설]"
   unit: source-figure-file
@@ -70,23 +100,38 @@ exhibit_candidates:
   rationale: >-
     이 시점에 존재하는 것은 원천 도면뿐이다 — 자작 자산(개념 다이어그램·수치 카드)은
     figures.prepare 이후에야 생긴다. 셀 수 있는 것만 센다.
-  # 미결 3논점(SPEC §1.3 `[OPEN]`). 재정 전까지 아래 잠정 처리로 읽는다.
-  provisional_resolutions:
+  adjudicated_in: docs/decisions/ruling-20260818-03-P1-P11.md#P-5
+  resolutions:            # provisional_resolutions 를 개명 — 이제 잠정이 아니다
     - question: "서브도면(FIG. 3A·3B)을 1로 세는가 각각으로 세는가"
-      provisional: "파일 단위로 센다 — 한 파일에 3A·3B 가 함께 있으면 1, 파일이 나뉘어 있으면 2."
+      ruling: "파일 단위로 센다."
       rationale: "가리킬 수 있는 것만 후보다. 파일이 곧 전시 가능한 자산의 최소 단위다."
     - question: "같은 구조의 다른 각도(단면도·사시도)가 전시 스톱 둘을 지지하는가"
-      provisional: "각각 센다."
+      ruling: "각각 센다."
       rationale: "같은 구조인지 아닌지는 도면을 읽어야 알 수 있고, 이 시점은 읽기 전이다."
     - question: "흐름도·타이밍도를 후보에서 빼는가"
-      provisional: "빼지 않는다."
+      ruling: "빼지 않는다 — 흐름도 포함."
       rationale: "종류 판별은 판단이며, 판단을 조기 보고에 넣으면 조기 보고가 아니게 된다."
+  observation_metric:
+    id: exhibit-adoption-ratio
+    definition: "source 후보 수 vs DESIGN 채택 수"
+    reviewed_at: 배치 리뷰
   recompute_requirement: >-
     ★ source-report.json 은 **도면별 행**(파일명·바이트·이 규칙 적용 결과)을 함께 적는다.
-    재정이 내려오면 원천을 다시 읽지 않고 소급 재계산할 수 있어야 하기 때문이다.
-  open: >-
-    첫 런 개시 전 Owner 재정 대상. 세 물음 전부 source.exhibit-candidates 의 통과 여부를
-    바꾸고, 그 검사는 런을 중단시키는 관문이므로 재량으로 확정할 자리가 아니다.
+    재정이 내려와도 원천을 다시 읽지 않고 소급 재계산할 수 있어야 하기 때문이다
+    (재정 P-5 가 이 요건을 그대로 요구한다).
+
+# ---------------------------------------------------------------------------
+# 원천 변경 시 복구 정책 (재정 P-U2)
+# ---------------------------------------------------------------------------
+source_change_policy:
+  ruling: 재정 2026-08-18 P-U2
+  detection_scope: [00-source/patent.md, "00-source/figures-raw/ 매니페스트 지문"]
+  on_change: new-run                # 항상 새 런. 부분 복구·우회 스위치 없음
+  old_run_marking: superseded-by-source-change
+  cross_link: "구 런 ↔ 신 런 상호 링크를 run.yaml 에 보존한다"
+  why: "바이트 오프셋 특성상 부분 재사용은 정확성 위반이다"
+  diagnostics: "진단 보고에 변경 내용(파일·규모)을 명시한다"
+  reseal_tooling: "생산 경로에 지문 재계산 자리를 두지 않는다. 재봉인 도구는 테스트 하네스에만 산다."
 
 failure:
   - condition: "원천 텍스트 취득 실패·문자 깨짐"
@@ -99,8 +144,15 @@ failure:
     action: escalate
     reason_label: "형식 전제 미충족"
     note: >-
-      재정 N12. D4 의 drop 제안(reason_label = "안도감 부적합")과 **사유를 구별해 적는다** —
-      둘은 같은 escalate 이지만 판단의 종류가 다르다. 하나는 형식 전제이고 다른 하나는 서사다.
+      재정 N12. D4 의 drop 판단(reason_label = "안도감 부적합")과 **사유를 구별해 적는다** —
+      둘 다 Owner 에게 가지만 판단의 종류가 다르다. 하나는 형식 전제이고 다른 하나는 서사다.
+      ★ drop 의 처분 자리는 재정 P-A 이후 CP1 한 곳이며, 이 행과 섞이지 않는다.
+  - condition: "원천 변경 감지(checks_on_entry: source.input-digest)"
+    action: halt
+    reason_label: "환경 오류"
+    note: >-
+      재정 P-U2 · P-C. 기존 00-source/ 를 덮어쓰지 않고 중단한다. 처분은 새 런이며,
+      구 런은 status: superseded-by-source-change 로 표시하고 상호 링크를 보존한다.
   - condition: "run_id 형식 위반"
     action: halt
     note: "디렉토리 재생성 필요"

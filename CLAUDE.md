@@ -37,7 +37,7 @@
 
   | 시점 | 규율 |
   |---|---|
-  | **지금 (`reader_version` 0.x, `material-spec/v0` 미동결)** | 필수 필드 추가·의미 변경·검사 강화 전부 **자유**. 라인 승격 없이 minor 상향으로 적고, **무엇을 왜 바꿨는지 기록**한다(스키마 `$comment` + `SPEC.md` §6.3 이력 + 커밋). 계약 보증이 없으므로 상대 리포 상신도 불요하다 |
+  | **지금 (`reader_version` 0.5.0, `material-spec/v0` 미동결)** | 필수 필드 추가·의미 변경·검사 강화 전부 **자유**. 라인 승격 없이 minor 상향으로 적고, **무엇을 왜 바꿨는지 기록**한다(스키마 `$comment` + `SPEC.md` §6.3 이력 + 커밋). 계약 보증이 없으므로 상대 리포 상신도 불요하다 |
   | **동결 사건** | **historian 첫 이식 직전**에 `reader_version`을 `1.0.0`으로, 계약 라인을 `material-spec/v1`으로 올린다. 이식 = 계약 상대의 탄생이며, 그 순간이 자유의 종료 시점이다 |
   | **동결 이후** | 하위호환을 깨는 변경(필드 삭제·의미 변경·필수 필드 추가·enum 삭제·ID 문법 변경·**검사 판정 기준 강화**)은 **major 증가 + 상대 리포 상신**을 동반한다 |
 
@@ -79,13 +79,24 @@
 | 화행 술어·결함 카탈로그·점수 린트 | `contracts/lexicon/` (등재는 재정으로만) |
 | 게이트 판정 행 서식 | `contracts/schemas/verdict-check-row.schema.json` |
 | 두 장부 | `ledgers/anchors/`(앵커) · `ledgers/regression/`(회귀) |
+| 섀도 원장 | `ledgers/shadow/screening.jsonl` — 맹검 스크리닝 메모. **재료 명세 계약면 밖**이며 런 디렉터리가 아니라 리포 루트에 누적된다(재정 P-U4). 두 장부와 층이 다르다: 앵커·회귀는 생성계의 사료이고 이것은 **스크리닝 판단의 사료**다 |
+| 런 결박 도구 | `tools/run_worktree.py` — `create`(커밋 핀 + 격리 체크아웃) · `expiry`(만료 통지, 종료 코드 0/3/2). 재정 P-U1·P-8 |
 | 계약 파일 현황(무엇이 실물인가) | `docs/SPEC.md` §6.7 — 검사기 `tools/check_spec_refs.py`가 대조 |
 
 ## 6. 구현 상태
 
-현재 = **M1(READ 모듈) — 구현 완료, 그러나 ★미종결** — 헌장 v1.2 · 스펙 v0.4 · 계약 실파일 14종 · **결정론 검사 11종의 실구현**(`reader/lib/` — 검사 id 목록의 정본은 `contracts/glossary.md` §2.1이고, `CHECK_REGISTRY` ↔ 사전 대조를 테스트가 집행한다) · **READ 실행 경로**(`engine/stages/`·`engine/lanes/`·CP1 KR 표면 렌더) · 합성 픽스처 코퍼스. 재정 N14가 M0.6 재감수의 생존 지적 중 M1 관할분을 M1 요구사항표로 편입했고, 그 처분은 `docs/decisions/D-20260818-02-m1-read.md`다.
+현재 = **M1.5(재정 P 계열 이행 + 통주)** — 헌장 **v1.3** · 스펙 **v0.5** · `reader_version` **0.5.0** · 계약 실파일 14종(신설 없음, 개정 다수) · **결정론 검사 12종의 실구현**(`reader/lib/` 10종 + `freeze` 2종 — 검사 id 목록의 정본은 `contracts/glossary.md` §2.1이고, `CHECK_REGISTRY` ↔ 사전 대조를 테스트가 집행한다) + **엔진 소관 검사 5종**(진입 지문 3 · 레인 로그 형태 · 도면 매니페스트 지문) · **READ 실행 경로**(`engine/stages/`·`engine/lanes/`·CP1 판독본 렌더) · 합성 픽스처 코퍼스 39건.
 
-**★ M1은 종결되지 않았다.** 재정 N14 ②가 정한 종결 요건은 "sol 재감수에서 구현으로 해소되었음을 실증"인데, 재감수 판정은 **FAIL**(BLOCKER 4 / MAJOR 5)이었다. BLOCKER 2건은 닫혔고(조립 재번호 · 승인 봉투 신원) **2건이 열려 있다** — 종속 구조 typed operator(입법 = 재정 사항)와 **스모크의 통주 미실행**. 처분표 = `docs/decisions/D-20260818-03-m1-audit.md`, 감수 원문 = `docs/lessons/2026-08-18-sol-audit-m1-full.md`. **다음 라운드의 첫 일은 M3 착수가 아니라 그 둘을 닫는 것이다.**
+**M1.5가 바꾼 것의 무게 중심 넷**(재정 원문 = `docs/decisions/ruling-20260818-03-P1-P11.md`).
+
+| # | 바뀐 것 | 실무에 미치는 뜻 |
+|---|---|---|
+| ① | **재료 명세가 두 층으로 갈렸다**(공유 코어 10키 / `extensions.<ns>`) | 프로젝트 고유 판단(`drop_signal` 등)은 확장 블록에만 산다. 경계는 문서 선언이 아니라 `tools/check_spec_refs.py`의 **K8**이 집행한다(재정 P-2 ⓑ) |
+| ② | **수렴 판정이 세 층으로 갈렸다** | `exact-match`(법 — 미달 = fail) / `escalation-trigger`(계기 — 미달 = **상신**, fail 아님) / `measure-only`(관찰 — **판정 제외**). 미달을 전부 실패로 읽지 마라(재정 P-3) |
+| ③ | **수치가 서사의 선택에서 기계의 전수 수확으로 옮겨졌다** | `origin: quoted`·`bibliographic`은 **엔진 수확기 소유**이며 레인이 만들면 `value.harvest-parity`가 잡는다. 고르는 일은 `numeric_refs` **역참조**가 한다(재정 P-B) |
+| ④ | **런이 시작 시점 git 커밋에 결박된다** | `tools/run_worktree.py`가 그 커밋의 격리 체크아웃을 만들고 `run.yaml#engine.commit`이 핀을 든다. 런 중 리포 개정은 **다음 런부터**(행위시법). 예외 없음(재정 P-U1·P-8) |
+
+**★ M1의 종결 판정은 재감수가 한다.** 재정 **P-11**이 그 범위를 고정했다 — 요구사항표 전 항목 + 재정 반영 대조의 항목별 표이며, **범위 밖 신규 지적은 종결을 막지 않되 전량 원장에 등재**되어 다음 발주의 입력이 된다(단 신규 BLOCKER급은 Owner 상신). 직전 판정은 FAIL이었고(처분표 = `docs/decisions/D-20260818-03-m1-audit.md`, 감수 원문 = `docs/lessons/2026-08-18-sol-audit-m1-full.md`), 그 BLOCKER 4건 중 B-03은 재정 P-1이 **범위에서 제외**해 닫았고 B-04(통주 미실행)는 **실행으로** 닫는다. 이번 라운드의 처분 기록 = `docs/decisions/D-20260818-04-m1-close.md`.
 
 **"구현되었다"의 경계를 흐리지 마라.** 무엇이 실물이고 무엇이 예정인지의 정본은 **`docs/SPEC.md` §6.7 계약 파일 현황표**와 **`contracts/glossary.md` §2.2(계약에만 있고 아직 구현이 없는 검사)**다. 검사 id를 보고 "검사가 있다"고 말하기 전에 그 두 곳을 확인하라 — M0.6 재감수가 FAIL을 낸 이유가 "강제의 범위를 실제보다 넓게 말한 것"이었다.
 

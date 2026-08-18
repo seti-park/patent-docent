@@ -14,7 +14,7 @@
 
 | 계약 라인 | 선언 파일 | 무엇의 계약인가 |
 |---|---|---|
-| `material-spec/v0` | `reader/schemas/material-spec.schema.json` | **재료 명세 — 프로젝트 간 계약(D14).** 유일하게 리포 밖(historian)과 공유된다 |
+| `material-spec/v0` | `reader/schemas/material-spec.schema.json` | **재료 명세 — 프로젝트 간 계약(D14).** 유일하게 리포 밖(historian)과 공유된다. **두 층으로 갈린다**(재정 P-2 ⓑ) — 공유 코어 10키(사실면: 서지·청구항·도면·항목·내력)와 프로젝트 확장 블록(`extensions.<ns>`, 편집 판단). 라인은 `v0` 그대로다(`0.x` 미동결이므로 승격 사건이 아니다) |
 | `reader-rules/v0` | `reader/reader-rules.yaml` | 독해층 규칙 — 청구항 인벤토리 파싱·종속 인용 어형·항목 생애주기·수치 문법·수렴 축 |
 | `stage-contract/v0` | `contracts/stages/*.yaml` | 스테이지 I/O 계약(서식 = `docs/SPEC.md` §1.2) |
 | `convergence/v0` | `contracts/schemas/convergence.schema.json` | READ 결정론 검사 보고서 |
@@ -34,7 +34,7 @@
 | 축 | 예 | 어디에 | 언제 오르는가 |
 |---|---|---|---|
 | 계약 라인 | `material-spec/v0` | 인스턴스 `schema` 필드 | 하위호환 파괴. **단 `0.x` 미동결 기간은 예외** — 자유이며 기록만 남긴다(재정 N15) |
-| 구현 버전 | `reader_version: "0.4.0"` | 인스턴스 필드 + `reader/READER-VERSION` | 필드 추가·검사 강화 = minor · 버그 수정 = patch |
+| 구현 버전 | `reader_version: "0.5.0"` | 인스턴스 필드 + `reader/READER-VERSION` | 필드 추가·검사 강화 = minor · 버그 수정 = patch |
 | 인스턴스 버전 | `spec_version: 2` | 인스턴스 필드 | 동결 스탬프. 개정 시 +1 단조 증가 |
 
 ---
@@ -47,6 +47,7 @@
 
 | 검사 id | 구현 | 무엇을 반증하는가 |
 |---|---|---|
+| `read.input-digest` | `engine/stages/__init__.py` | 선언 입력의 지문이 어긋난 채로 스테이지가 진행됨 — 불일치는 품질 결함이 아니라 **환경 오류**다(재정 P-C) |
 | `read.schema` | `reader/lib/schema_check.py` | 인스턴스가 계약 스키마 밖 |
 | `read.source-digest` | `reader/lib/source_digest.py` | **전제 검사** — `sha256(원천) != patent.source_digest`. 불변식 I1이 깨지면 아래 verbatim 계열이 전부 무효다(SPEC §2.2) |
 | `read.verbatim` | `reader/lib/verbatim.py` | 원문을 다듬어 인용하거나 없는 문장을 지어냄 |
@@ -54,19 +55,24 @@
 | `read.coverage` | `reader/lib/coverage.py` | 청구항 일부를 읽지 않고 넘어감 · 접지 1건이 여럿을 덮음 · **고아 `component`**(규칙 `coverage.no-orphan-component`) |
 | `read.dependency-parse` | `reader/lib/dependency_parse.py` | 다중 종속의 논리 형태를 잃거나 잘못 적음 |
 | `read.value-derivation` | `reader/lib/derivation.py` | 인용문 옆에 날조한 수치 · 정규화값 오기 · 파생 사슬로 원천 흐림 · 범위를 스칼라로 뭉갬 |
+| `read.bibliography` | `reader/lib/bibliography.py` | 서지 확장 6종이 원천 대조 없이 기입됨(발명자·출원인·분류 코드·우선권 번호의 자유 기입) · 최우선일이 우선권 목록과 어긋남(재정 P-2 ⓐ) |
 | `read.claim-inventory` | `reader/lib/inventory.py` | 원천 청구항이 통째로 누락됨 |
 | `read.convergence` | `reader/lib/convergence.py` | 독해가 재현되지 않음(문언·트리·종속 구조) |
+| `read.lane-log-shape` | `engine/stages/read.py` | 레인 로그가 계약 실행 형태와 다름 — 비정본 실행이 접지·통합을 돌았음이 **로그의 있음**으로 드러난다(재정 P-4·P-U3) |
 | `freeze.id-monotonic` | `reader/lib/freeze_integrity.py` | 개정이 항목 ID를 지우거나 재번호 |
 | `freeze.payload-immutable` | `reader/lib/freeze_integrity.py` | 개정이 기존 항목의 **내용**을 조용히 바꿈 |
+| `source.input-digest` | `engine/stages/__init__.py` | 외부 투입물이 지문 기록 없이 런에 들어옴(재정 P-C) |
 | `source.digest-recorded` | `engine/stages/source.py` | 다이제스트가 원천과 다름 |
 | `source.claims-section` | `engine/stages/source.py` | 청구항 구간을 찾을 수 없음 |
 | `source.figures-manifest` | `engine/stages/source.py` | 도면 부재·정렬 불능 |
+| `source.figures-manifest-digest` | `engine/stages/source.py` | 도면 **세트 전체**의 지문이 없어 도면 교체를 감지할 수 없음 — 원천 변경은 항상 새 런이다(재정 P-U2) |
 | `source.run-id` | `engine/stages/source.py` | 런 ID 문법 위반·디렉터리 불일치 |
 | `source.exhibit-candidates` | `engine/stages/source.py` | 형식 전제 미충족(도면 부재 또는 후보 < 트윗 하한) |
+| `freeze.input-digest` | `engine/stages/__init__.py` | 동결 대상이 진입 시점에 선언된 것과 다름(재정 P-C) |
 | `freeze.approval-valid` | `engine/stages/freeze.py` | 봉투 부재·실효·ack 집합 불일치 |
 | `freeze.digest-match` | `engine/stages/freeze.py` | 원천 다이제스트 불일치 |
 | `freeze.readonly` | `engine/stages/freeze.py` | 동결본이 쓰기 가능 |
-| `freeze.render-parity` | `engine/stages/freeze.py` | KR 판독본이 항목을 빠뜨림 |
+| `freeze.render-parity` | `engine/stages/freeze.py` | **CP1 판독본이 항목의 EN 값을 빠뜨림** — 검사 대상은 항목 ID 의 존재가 아니라 **값의 바이트 존재**다(재정 P-U5). ID 만 보면 값이 요약·번역으로 바뀌어도 통과한다 |
 
 ### 2.2 계약에만 있고 아직 구현이 없는 것
 
@@ -76,6 +82,7 @@
 |---|---|---|
 | `run.publish-preconditions` | M4 | `contracts/run-kinds.yaml` · SPEC §4.4 |
 | `format.*` · `citation.*` · `numeric.exhaustive` · `annotation.*` | M4 | `contracts/l0-format.yaml` |
+| `numeric.unreviewed-use` | M4 | `contracts/l0-format.yaml` §7 · SPEC §4.4.4 — **거부권 없는 자문 플래그**다(재정 P-B). 전수 수확이 넓힌 정답지의 대가를 받는 짝 규칙이며, 미참조(미검토) 수치를 본문이 처음 인용하면 CP2 봉투에 플래그가 붙는다 |
 | `gate.no-rewrite` · `gate.final-eyes` | M4·M6 | SPEC §4.7·§1.10 |
 | `gate.no-score` · `critique.no-score` | M4·M8 | `contracts/lexicon/score-lint.yaml` |
 | `design.spec-digest` · `compose.spec-digest` | M5 | SPEC §7.3 (재정 N11) |
@@ -114,11 +121,14 @@
 | 수치 타입 | `scalar` · `range` · `inequality` · `tolerance` · `set` (+ `approximate` 불리언, 직교) | material-spec 스키마 `$defs/value_type` |
 | 부등호 방향 | `at-least` · `at-most` · `greater-than` · `less-than` | 동상 |
 | 접지 상태 | spec: `found` · `no-anchor-found` / figure: `found` · `not-depicted` | material-spec 스키마 |
-| 종속 형태 | `single` · `multiple-and` · `multiple-or` · `alternative-form`(**현행 파싱 규칙으로 도달 불능**) | `reader/reader-rules.yaml#dependency_citation` |
+| 종속 형태 | `single` · `multiple-and` · `multiple-or` · `unclassified`(**도달 가능** — Markush·조건부·수단항·카테고리 전환의 구조 미분류 표지) | `reader/reader-rules.yaml#dependency_citation` |
 | drop 단계·판정 | stage: `early` · `final` / verdict: `go` · `drop-proposed` | material-spec 스키마 |
 | 실패 조치 | `retry(n)` · `escalate` · `halt` · `reject-upstream` | SPEC §1.2 C6 |
-| escalate 사유 | `형식 전제 미충족`(source) · `안도감 부적합`(read/D4) | 재정 N12 |
+| escalate 사유 | `형식 전제 미충족`(source) · `안도감 부적합`(read/D4) · `독해 프로파일 상신`(read/수렴 상신 축 미달 — 재정 P-3) · `환경 오류`(진입 지문 불일치 — 재정 P-C, 조치는 `halt`) | 재정 N12 · P-3 · P-C |
 | 검사 상태 | `pass` · `fail` | `verdict-check-row/v0` |
+| 수렴 축 정책 | `exact-match`(구조 사실 — 미달 = **법**, 판정 행 fail) · `escalation-trigger`(해석 여지 — 미달 = **상신**, fail 아님) · `measure-only`(**판정 제외**, 값만 기록) | `reader/reader-rules.yaml#convergence` · `convergence/v0` (재정 P-3) |
+| 수렴 축 상태 | `pass` · `fail` · `escalate` · `measured` | `convergence/v0` — **검사 상태 2종과 다른 축이다**(판정 행의 pass/fail 과 혼동 금지, 재정 P-3) |
+| 지표 수집 상태 | `collected` · `not-collected`(= **미수집**) | `metrics-row/v0` — 결측·공허 어휘와 구별한다(재정 P-7) |
 | 공허 종류 | `none` · `empty-ruleset` · `empty-target` | `verdict-check-row/v0` (**파생값 — 신고값이 아니다**) |
 | 승인 결정 | `approved` · `rejected` (**조건부 승인 제도 없음**) | `approval-envelope/v0` |
 | 런 종류 | `rehearsal` · `publish` | `run-kinds/v0` |
@@ -138,9 +148,18 @@
 | `00-source/source-report.json` | `source` | 조기 보고(재정 N12) — 도면 수·전시물 후보 수·산정 근거 |
 | `10-read/material-spec.json` | `read` | 작업본(`status: draft`) |
 | `10-read/material-spec.md` | `read` | `.json`의 **결정론 렌더**. CP1 주 표면 |
-| `10-read/convergence.json` | `read` | 검사 보고서(`convergence/v0`) |
+| `10-read/convergence-early.json` | `read` | **조기 수렴 판정서**(`convergence/v0`, `phase: "early"`). 분해 직후 산출이며 접지 스테이지의 **선언 입력**이다(재정 P-4·P-U3) |
+| `10-read/convergence-continue.md` | 오케스트레이터 | Owner **'계속' 봉투**(`approval-envelope/v0`). 재료가 아니라 **판정서 자체**에 결속된다 — `target.digest` == 판정서 파일의 SHA-256. **작업 레인은 쓰지 않는다**(재정 P-U3) |
+| `10-read/convergence.json` | `read` | 검사 보고서(`convergence/v0`, `phase: "full"`) |
+| `10-read/lanes/` | `read` | 레인 왕복 기록(지시·응답). `read.lane-log-shape` 가 이 형태를 판정한다 |
 | `15-frozen/material-spec.v<N>.json` | `freeze` | **동결본.** 0444. 하류가 읽는 유일한 재료 |
 | `15-frozen/approval-v<N>.md` | 오케스트레이터 | 승인 봉투. **작업 레인은 쓰지 않는다**(SPEC §1.2 C3) |
+
+**런 밖의 원장 하나**(위 표와 층이 다르므로 따로 적는다).
+
+| 경로 | 기록 스테이지 | 정본 관계 |
+|---|---|---|
+| `ledgers/shadow/screening.jsonl` | `read` | 맹검 스크리닝 메모의 **섀도 원장** — 런 디렉터리가 아니라 리포 루트에 누적된다. **재료 명세 계약면 밖**이며(재정 P-U4) 어떤 스키마 인스턴스에도 실리지 않는다. 한 행 = 메모 2건 + 최종 평가 + Owner 재정 |
 
 ---
 
@@ -158,3 +177,7 @@
 | `superseded_by`가 `active`를 가리켜야 하는가 | **아니다(M1에서 교체됨).** 사슬을 따라간 **종단**이 `active`면 된다. 구 규칙은 2차 승계에서 동결본 수정을 강요했다(SPEC §9.27) |
 | 값 언어 | **EN 단일.** 예외 2곳뿐 — `drop_signal.reason`·`grounding.search_note`(KR) |
 | `derivation.inputs[].ref`가 무엇을 가리킬 수 있는가 | **`origin: "quoted"`인 `fact`만**(깊이 1). 원문 스팬을 들고 있는 origin은 그것 하나다(재정 N9, 재감수 M-01) |
+| `drop_signal`이 최상위에 있는가 | **아니다(재정 P-2 ⓑ에서 이사했다).** 자리는 `extensions.docent.drop_signal` — drop은 사실이 아니라 **docent의 편집 판단**이고, 공유 코어는 두 프로젝트가 같은 의미로 읽는 사실면이다. historian은 이 블록을 기입하지 않는다. 경계는 `tools/check_spec_refs.py` K8이 집행한다 |
+| `numeric_refs`가 무엇을 가리키는가 | **`kind: "fact"` 항목**(`M<n>`)이다. `implication`·`positioning`이 근거로 삼은 수치를 역참조하며, **중요분은 이 역참조로 도출된다** — LLM의 중요도 판단이 아니다(재정 P-B). 참조 무결은 `read.pointer-resolve`가 본다 |
+| 원문 수치 `fact`를 누가 만드는가 | **엔진의 수확기**(`reader/lib/harvest.py`)다. 레인이 아니다 — `origin: "quoted"`·`bibliographic`은 접지 스팬에서 **전수 기계 수확**되고, 레인이 쓸 수 있는 것은 `derived`·`figure-sourced`뿐이다(재정 P-B) |
+| CP1 판독본을 뭐라고 부르는가 | **"CP1 판독본(KR 틀 · EN 값)"**(재정 P-U5). 구 명칭 "KR 인간 판독본"은 폐기했다 — 장 제목·안내·라벨만 KR이고 인용·해설·함의의 EN 값은 그대로 실린다(파생 번역 금지) |

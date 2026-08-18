@@ -11,7 +11,7 @@
 ```json
 { "id": "M6", "kind": "implication", "status": "active", "superseded_by": null,
   "statement_en": "Forming the channel inside the spreader body points at removing a cold plate rather than adding one.",
-  "basis": "spec", "derived_from": ["M2", "M4"],
+  "basis": "spec", "derived_from": ["M2", "M4"], "numeric_refs": ["M31"],
   "evidence_quotes": ["the channel is formed within the spreader so that a separate cold plate is not required"],
   "confidence": "inferred" }
 ```
@@ -19,20 +19,36 @@
 - `basis` ∈ `claim` · `spec` · `background` · `effects` — **어디에서 왔는가**.
 - `confidence` ∈ `stated`(문언으로 그렇게 적혀 있다) · `inferred`(우리가 이었다). 이 둘을 섞지 마라. 명세서가 말하지 않은 것을 `stated`로 적는 것이 가장 값비싼 거짓말이다.
 - `derived_from`은 실재하는 항목 ID여야 하고, `evidence_quotes[]`는 원천의 바이트 정확 부분문자열이어야 한다.
+- **`numeric_refs`(필수, 빈 배열 허용)** — 이 함의가 **근거로 삼은 수치 항목의 ID 목록**이다. 수치를 새로 만들지 않고, 요청 지시에 실린 **수확 목록**에서 골라 참조 ID로 적는다(재정 P-B). 근거 수치가 없는 함의면 빈 배열이다.
 
 ## 2. 포지셔닝 (`kind: "positioning"`) — D5 ⑤
 
 ```json
 { "id": "M7", "kind": "positioning", "status": "active", "superseded_by": null,
   "background_problem": "…", "asserted_effect": "…", "delta": "…",
-  "quotes": ["…원문 그대로…"] }
+  "numeric_refs": ["M31", "M44"], "quotes": ["…원문 그대로…"] }
 ```
 
 세 필드는 **주장의 출처가 명세서**라는 사실을 유지한 채 적는다. `asserted_effect`는 "명세서가 그렇게 주장한다"이지 "그렇다"가 아니다. 성능 수치가 없으면 `delta`에 구조적 차이를 적고, 없는 수치를 만들지 않는다.
 
-## 3. 수치 사실 (`kind: "fact"`) — origin 4갈래는 상호 배타다
+`numeric_refs`는 함의와 같은 규율이다(필수, 빈 배열 허용) — 포지셔닝이 근거로 든 수치를 **수확 목록에서 골라 참조 ID로** 적는다.
 
-`origin`이 값의 **보증 종류**를 정한다. 한 항목이 다른 origin의 부속 필드를 함께 가질 수 없다.
+## 3. 수치 사실 (`kind: "fact"`) — ★ 원문 수치는 네가 만들지 않는다 (재정 P-B)
+
+**수치 사실의 수확은 기계가 전수로 한다.** 접지 레인이 붙인 명세서 인용 스팬 전량과 서지 필드에서 엔진이 `origin: "quoted"`·`"bibliographic"` 항목을 **빠짐없이** 만들어 두었고, 그 목록이 이 요청의 지시에 실려 있다. **너는 그중에서 고른다** — 만들지 않는다.
+
+| origin | 소유자 | 네가 할 일 |
+|---|---|---|
+| `quoted` | **엔진(수확기)** | 만들지 마라. `numeric_refs`로 **참조**한다 |
+| `bibliographic` | **엔진(수확기)** | 만들지 마라. 참조한다 |
+| `derived` | **너** | 산식으로 얻는 값은 네 몫이다(아래 규율 그대로) |
+| `figure-sourced` | **너** | 도면 판독값은 기계가 수확할 수 없다. 네 몫이다 |
+
+**왜 이렇게 바뀌었나.** 구 규정은 ⑤단계 레인이 "중요한 수치"를 골라 등재하게 했고, 그것은 **서사가 정답지를 고르는 구조**였다. 도면을 선택분만 편집하지 않는 이유(D12 전량 선편집)와 같은 논리로 수치도 전수 수확한다 — 선택이 생성보다 앞서면 선택되지 않은 것은 존재조차 하지 않게 되고, 나중에 필요해졌을 때 되돌아갈 자리가 없다. **고르는 일은 네가 아니라 `numeric_refs` 역참조가 한다.**
+
+`origin: "quoted"`·`"bibliographic"` 항목을 네가 만들면 `read.value-derivation`의 `value.harvest-parity`가 **수확기 재실행 결과와 대조해 실패**시킨다. 조용히 통과하지 않는다.
+
+아래 표는 네가 만드는 두 갈래(`derived`·`figure-sourced`)의 규율이며, 나머지 둘은 수확기가 같은 규율로 만든 것을 참고로 싣는다. origin 4갈래는 **상호 배타**다 — 한 항목이 다른 origin의 부속 필드를 함께 가질 수 없다.
 
 | `origin` | 부속 필드 | `machine_verifiable` | 무엇이 보증되는가 |
 |---|---|---|---|
@@ -74,7 +90,7 @@
 - `asset_path`는 **항상 `null`**이다. 도면↔자산 매핑의 정본은 편집 단계의 `manifest.json` 하나뿐이며, 동결본이 그 값을 들면 하류가 동결본을 고칠 수 있다는 뜻이 된다.
 - `figure_note` 항목은 "이 도면이 무엇을 보여주는가"를 EN 한 문장으로 적는다.
 
-## 5. 최종 drop 신호 (D4 2단)
+## 5. 최종 drop 신호 (D4 2단 — 확정 재정은 CP1이 한다)
 
 포지셔닝 확정 후 최종 판정을 낸다.
 
@@ -83,6 +99,10 @@
 ```
 
 `drop-proposed`의 사유 표기는 **`안도감 부적합`** 계열이다 — 도면 부족 같은 **형식 전제 미충족**과는 판단의 종류가 다르며, 후자는 이미 `source` 단계에서 걸러진다.
+
+**★ 이 신호도 상신이 아니라 제안이다(재정 P-A).** `drop-proposed`를 내도 러너는 멈추지 않고 CP1까지 간다 — drop의 구속력 있는 결정은 **재료 승인과 한 자리**에서 1회 내려지며, 그 결정은 승인 봉투의 `drop_decision`에 남는다. 따라서 네 판정은 **완전한 정보를 갖춘 Owner에게 올라가는 의견**이고, 그렇게 쓰면 된다.
+
+**★ 분해 레인의 맹검 메모는 너에게 주어지지 않는다.** 앵커링을 막기 위해서다(재정 P-A). 그 메모와 네 최종 판정이 갈리는지 아닌지가 CP1에서 처음 대조되며, **갈린다는 사실 자체가 신호**다. 그러므로 없는 것을 추측해 맞추려 하지 마라.
 
 ## 6. 산출 형태
 

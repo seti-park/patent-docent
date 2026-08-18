@@ -33,9 +33,11 @@
   },
   "items": [ { "id": "M1", "kind": "component", "status": "active", "superseded_by": null,
                "claim_ref": "CL-1/e1", "label_en": "…", "text_verbatim": "…" } ],
-  "drop_signal": { "stage": "early", "verdict": "go", "reason": "…KR…" }
+  "screening_memo": { "direction": "clear", "reason": "…KR…" }
 }
 ```
+
+★ `drop_signal`은 이 레인의 산출이 **아니다**(재정 P-A). 조기 판단은 `screening_memo`로 **기록만** 하며 러너를 세우지 않는다. `direction` ∈ `clear` · `concern`.
 
 ## 2. `ground-independent` · `ground-dependent`
 
@@ -54,15 +56,17 @@
 
 ```json
 {
-  "items": [ { "id": "M5", "kind": "fact", "…": "…" },
-             { "id": "M6", "kind": "implication", "…": "…" },
-             { "id": "M7", "kind": "positioning", "…": "…" },
+  "items": [ { "id": "M5", "kind": "fact", "origin": "figure-sourced", "…": "…" },
+             { "id": "M6", "kind": "implication", "numeric_refs": ["M31"], "…": "…" },
+             { "id": "M7", "kind": "positioning", "numeric_refs": [], "…": "…" },
              { "id": "M8", "kind": "figure_note", "…": "…" } ],
   "figures": [ { "id": "FIG-2", "numerals": ["210"], "caption_quote": "…",
                  "raw_path": "00-source/figures-raw/fig-02.png", "asset_path": null } ],
   "drop_signal": { "stage": "final", "verdict": "go", "reason": "…KR…" }
 }
 ```
+
+★ 이 레인이 만들 수 있는 `fact` 의 `origin` 은 **`derived` · `figure-sourced` 둘뿐**이다(재정 P-B). `quoted` · `bibliographic` 은 엔진의 수확기가 전수로 만들며, 네가 만들면 `value.harvest-parity` 가 실패시킨다. `implication` · `positioning` 은 **`numeric_refs` 가 필수**이며(빈 배열 허용) 수확 목록의 ID 만 가리킨다.
 
 ---
 
@@ -80,7 +84,9 @@
 | 원문에 없는 수치를 적기 | `read.value-derivation`이 스팬·산식으로 대조한다. 유효한 인용 옆의 날조된 수치가 이 검사의 반증 대상이다 |
 | 접지 실패를 누락으로 처리하기 | 예외 상태(`no-anchor-found`·`not-depicted`)로 신고한다. 감춘 예외는 은폐다 |
 | 파생의 파생 | `derivation.inputs[].ref`는 `origin: "quoted"`만 가리킨다(깊이 1) |
-| `alternative-form` 선언 | 현행 파싱 규칙으로 도달 불능이며 반드시 실패한다(신설은 재정 사항) |
+| `alternative-form` 선언 | **폐기된 값**이다. 구조 미분류는 `unclassified`로 적는다(재정 P-1) |
+| 읽히는 종속항에 `unclassified` 선언 | 표지는 규칙이 못 읽는 구조를 위한 것이지 읽기 귀찮은 구조를 위한 것이 아니다. `parse.unclassified-not-an-escape`가 잡는다 |
+| `origin: "quoted"`·`"bibliographic"` fact 만들기 | 원문 스팬 수치와 서지 수치는 **엔진이 전수 수확**한다. 레인이 만들면 `value.harvest-parity`가 수확기 재실행 결과와 대조해 실패시킨다(재정 P-B) |
 | 값 필드에 한글 | 값 언어는 EN 단일. 예외는 `drop_signal.reason`과 `grounding.search_note` **둘뿐**이다 |
 | 다른 실행(`read-a`↔`read-b`)의 산출 참조 | 독립성이 깨지면 수렴 검사가 아무것도 반증하지 못한다 |
 | 스레드·훅·독자 반응을 고려한 취사선택 | 재료는 이 스레드가 아니라 이 특허의 함수다(D14) |

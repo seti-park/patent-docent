@@ -1,21 +1,26 @@
 # 스테이지 I/O 계약 — `read`
 #
 # 정본 서술 = docs/SPEC.md §1.4 (+ §1.5 CP1). 이 파일은 그 서술의 기계 판독본이며,
-# 어긋나면 SPEC 이 이긴다. 서식 = SPEC §1.2 고정 서식 + `schema` 키.
+# 어긋나면 SPEC 이 이긴다. 서식 = SPEC §1.2 고정 서식 + `schema` 키
+# + 서식 확장 3 `checks_on_entry`(재정 P-C) + `execution`(E 지시) + `phase_gates`(재정 P-U3).
+#
+# ★ 공통 규칙 — 런은 시작 시점 git 커밋에 결박된다(재정 P-U1). 계약·스키마·검증기·러너가
+#   함께 고정되므로, 런 도중 리포가 개정되어도 이 런의 법은 run.yaml#engine.commit 하나다.
 
 schema: stage-contract/v0
 id: read
 
-# 독립 2회 실행이 필요한 이유는 품질이 아니라 **안정성**이다(SPEC §1.4).
+# 분해를 독립 2회 실행하는 이유는 품질이 아니라 **안정성**이다(SPEC §1.4).
 # 두 독립 실행이 다른 청구항 트리를 낳는다면 그 소재에 대한 독해는 재현되지 않는 것이고,
 # 이후 모든 결정론 검사의 기준점이 흔들린다.
+# ★ 다만 2회가 필요한 구간은 **분해까지**다 — 수렴이 통과하면 두 산출은 동치로 선언되며,
+#   접지 이후는 정본 1개만 진행한다(재정 P-4 · E 지시). 아래 `execution` 이 그 정본이다.
 lane:
   kind: llm
   model: opus-5
   effort: max
-  instances: 2
   independence: >-
-    두 실행은 서로의 산출을 보지 않는다. 같은 세션의 재생성은 독립 실행이 아니다
+    두 분해 실행은 서로의 산출을 보지 않는다. 같은 세션의 재생성은 독립 실행이 아니다
     (SPEC §2.6 검사 4 보조 규정). provenance.read_runs[] 에 두 실행 식별자를 남긴다.
   # 하위 작업 레인. 재정 R3: 비용은 관할을 낮춰서가 아니라 **레인을 낮춰서** 푼다.
   sub_lanes:
@@ -46,12 +51,36 @@ lane:
     - "한 배치의 팬아웃은 30 미만이며, 초과분은 배치를 쪼개고 배치마다 체크포인트를 남긴다."
     - "첫 배치 완료 직후 실호출 model·effort 를 transcript 로 확인한 뒤 계속한다."
 
+# ★ 실행 형태(E 지시 — 구 `lane.instances: 2` 표기를 폐기하고 이 블록이 대신한다).
+#   폐기 근거: `instances: 2` 는 "스테이지 전체를 2회 돌린다"로 읽혀 접지·통합까지 2회로
+#   오도했다. 재정 P-4 가 접지 이후를 정본 1개로 확정했으므로 표기를 정정한다.
+execution:
+  decompose_instances: 2          # 분해 2회 (독립) — 수렴 검사의 전제
+  post_convergence_instances: 1   # 접지 이후 1회 (정본 1개) — 재정 P-4
+  canonical_selection:
+    rule: declaration-order        # read_runs[0]
+    content_blind: true            # 어떤 품질 비교·판정도 금지
+    why: "수렴 통과 = 동치 선언. 판정자가 없고, 재현성이 규칙을 요구한다(재정 P-4)."
+
+# ★ 진입 지문 검사(재정 P-C). 일반 원리 = "모든 스테이지는 진입 시 선언된 입력의 지문을
+#   검증한다". 검사 목록의 소유자는 코드가 아니라 이 계약이다 — 러너는 이 블록을 읽어 실행한다.
+checks_on_entry:
+  - id: read.input-digest
+    criterion: >-
+      선언된 입력 전건의 지문 대조 — patent.md ↔ patent.sha256 ↔ run.yaml.patent.source_sha256
+      ↔ source-report.json#source.canonical_sha256, 그리고 도면 세트 매니페스트 지문
+      ↔ source-report.json#figures[].sha256.
+    implemented_by: engine/stages/__init__.py
+    on_mismatch: environment-error
+    note: "불일치는 품질 결함이 아니라 환경 오류다 — 재시도·수정 루프가 아니라 즉시 중단+진단(재정 P-C)."
+
 inputs:
   - 00-source/patent.md
   - 00-source/patent.sha256
   - 00-source/figures-raw/
   - 00-source/source-report.json
   - run.yaml
+  - 10-read/convergence-early.json   # 접지 단계의 **선언 입력**(재정 P-U3) — 아래 phase_gates
 
 may_read:
   - "00-source/**"
@@ -73,12 +102,13 @@ must_not_read:
 
 outputs:
   - 10-read/material-spec.json      # status: draft
-  - 10-read/material-spec.md        # KR 인간 판독본 (CP1 주 표면)
+  - 10-read/material-spec.md        # CP1 판독본(KR 틀 · EN 값) — CP1 주 표면(재정 P-U5)
   - 10-read/claim-trees/
   - 10-read/grounding.md
   - 10-read/positioning.md
   - 10-read/drop-signal.md
-  - 10-read/convergence.json        # 계약 = contracts/schemas/convergence.schema.json
+  - 10-read/convergence-early.json  # phase: "early" — 분해 직후 조기 수렴 판정서(재정 P-4)
+  - 10-read/convergence.json        # phase: "full" · 계약 = contracts/schemas/convergence.schema.json
   - 10-read/lanes/                  # 레인 요청·응답 전량 + lane-log.json
 
 # ★ 레인 기록이 필수 산출인 이유. 레인 호출을 파일로 남기지 않으면 "어떤 프롬프트에 어떤
@@ -86,8 +116,21 @@ outputs:
 #   무엇이 나왔는지만 말하고 어떻게 나왔는지는 말하지 않는다. lane-log.json 은 요청 모델·
 #   effort 와 **실제로 돌아간** 모델·effort 를 나란히 적어 조용한 대체를 드러낸다
 #   (SPEC §7.3 펜 배정 규율 3·4의 정신을 독해 레인에 적용).
+#
+# ★ 맹검 스크리닝 메모의 원장(ledgers/shadow/screening.jsonl)은 **런 밖**이며 재료 명세
+#   계약면 밖이다(재정 P-U4). 따라서 outputs 에 등재하지 않는다. CP1 에는 convergence.json 의
+#   screening_memos 를 거쳐 표면화된다.
 
 optional_outputs: []
+
+# ★ 단계 진입 게이트(재정 P-U3). 조기 수렴 판정서를 접지 단계의 **선언 입력**으로 결속해
+#   "수렴을 먼저 돌린다"가 실행 순서의 관습이 아니라 기계 강제가 되게 한다.
+phase_gates:
+  - phase: grounding
+    declared_input: 10-read/convergence-early.json
+    entry_condition: "판정서 존재 ∧ (통과 ∨ Owner '계속' 봉투)"
+    continue_envelope: 10-read/convergence-continue.md
+    envelope_binding: "봉투의 target.digest == 판정서 파일의 SHA-256 (R8 규격)"
 
 # D5 5단계 ↔ 산출물 대응 (SPEC §1.4).
 stage_artifacts:
@@ -102,14 +145,19 @@ stage_artifacts:
   - step: "⑤ 포지셔닝"
     artifact: ["10-read/positioning.md", "items[] kind: positioning"]
 
-# drop 신호 2단(D4). 조기 신호가 drop-proposed 면 그 시점에 즉시 escalate 하며, 나머지 단계를
-# 다 돌린 뒤 보고하지 않는다 — 비용 절약이 아니라 하류 산출물이 Owner 의 판단을 오염시키는
-# 것을 막기 위함이다.
+# ★ drop 신호 2단(D4 — 재정 P-A 로 문언 개정). 구 문언은 "조기 신호가 drop-proposed 면 그
+#   시점에 즉시 escalate" 였고, 그 escalate 는 **폐기**되었다(재정 P-A). 폐기 근거: 청구항만
+#   본 조기 판단으로 런을 세우면 완전 정보 위에서의 재정 1회라는 원칙이 깨진다. 조기 판단은
+#   버리지 않고 **맹검 관찰 메모**로 강등해 축적한다(historian 스크리닝의 사전 훈련 데이터).
 drop_signal:
-  stages: [early, final]
-  early_at: "청구항 분해 직후"
-  final_at: "포지셔닝 확정 후"
-  on_drop_proposed: escalate
+  early:
+    form: blind-screening-memo      # 상신 없음 · 진행 계속 (재정 P-A)
+    recorded_by: [read-a, read-b]   # 각자 (재정 P-U4)
+    withheld_from: synthesize       # 최종 서사 평가 레인에 비공개(앵커링 방지)
+    surfaced_at: CP1                # 둘 다 병기
+  final:
+    at: "포지셔닝 확정 후"
+    adjudicated_at: CP1             # 확정 재정은 CP1 에 통합 (재정 P-A)
 
 checks_before_exit:
   - id: read.schema
@@ -129,28 +177,62 @@ checks_before_exit:
     criterion: "모든 text_verbatim·quote·caption_quote·evidence_quotes[]·quotes[] 가 원천의 바이트 정확 부분문자열"
     implemented_by: reader/lib/verbatim.py
   - id: read.pointer-resolve
-    criterion: "전 구조 참조가 실재 대상으로 해소 + kind 제약 + 자기참조 없음 + 참조 그래프 비순환"
+    criterion: >-
+      전 구조 참조가 실재 대상으로 해소 + kind 제약 + 자기참조 없음 + 참조 그래프 비순환.
+      참조 대상에는 함의·포지셔닝의 `numeric_refs[]`(대상 kind = `fact`)가 포함된다(재정 P-B) —
+      중요분은 LLM 의 중요도 판단이 아니라 이 역참조가 도출한다.
     implemented_by: reader/lib/pointers.py
   - id: read.coverage
     criterion: "독립항 element 전량 + 종속항 additions 전량 접지 · material_id 1:1 · claim_ref 역조건"
     implemented_by: reader/lib/coverage.py
   - id: read.dependency-parse
-    criterion: "종속항 text_verbatim 파싱 집합 == depends_on, 어형 ↔ dependency_type 정합"
+    criterion: >-
+      종속항 text_verbatim 파싱 집합 == depends_on, 어형 ↔ dependency_type 정합.
+      `unclassified`(구조 미분류 — Markush·조건부·수단항·카테고리 전환)는 이 두 판정에서
+      제외하고 별도로 계수해 CP1 미분류 목록에 전건 노출한다(재정 P-1). 다만 파싱이 되는
+      종속항에 `unclassified` 를 선언하면 실패다 — 미분류는 회피 통로가 아니다.
     implemented_by: reader/lib/dependency_parse.py
     ruleset: reader/reader-rules.yaml#dependency_citation
   - id: read.value-derivation
-    criterion: "origin별 대조 + value_type ↔ value_raw 파싱 일치 + value_normalized == render(value_type) + 깊이 1 + _en 한글 부재"
+    criterion: >-
+      origin별 대조 + value_type ↔ value_raw 파싱 일치 + value_normalized == render(value_type) +
+      깊이 1 + _en 한글 부재. 더해 `origin ∈ {quoted, bibliographic}` 집합이 수확기 재실행
+      결과와 **정확히 일치**해야 한다(value.harvest-parity — 재정 P-B). 수확 누락·심은 수치는
+      이 대조가 잡는다.
     implemented_by: reader/lib/derivation.py
     ruleset: reader/reader-rules.yaml#value_grammar
+  - id: read.bibliography
+    criterion: >-
+      서지 확장 필드가 서지면에서 결정론 복사되었음의 대조(재정 P-2 ⓐ) — 관할 접두·공보 종별
+      접미 일치, 발명자·출원인·분류 코드·우선권 번호의 원천 바이트 정확 부분문자열,
+      그리고 `dates.priority == min(priority_claims[].date)`(C18 최우선일 요건).
+    implemented_by: reader/lib/bibliography.py
+    ruleset: reader/reader-rules.yaml#bibliography
+    introduced_by: "재정 2026-08-18 P-2 ⓐ"
   - id: read.claim-inventory
     criterion: "원천 청구항 인벤토리 ↔ 등재분 양방향 일치 + 청구항별 구간 내 verbatim"
     implemented_by: reader/lib/inventory.py
     ruleset: reader/reader-rules.yaml#claim_inventory
     introduced_by: "재정 N14 ① (M0 M12 · M0.6 재감수 M-07 처분)"
   - id: read.convergence
-    criterion: "독립 2회 실행 비교 6축 전부 통과"
+    criterion: >-
+      독립 2회 분해 비교 6축을 **축별 정책**으로 판정한다(재정 P-3) — 구조 사실 3축
+      (independent-count·dependent-count·dependent-set)은 `exact-match`(완전 일치),
+      해석 여지 2축(element-set·tree-edges)은 `escalation-trigger`(미달 = 실패가 아니라 상신),
+      addition-attachment 는 `measure-only`(판정 제외·측정 전용). 구 문언 "6축 전부 통과"는
+      폐기한다 — 세 층을 같은 무게로 읽으면 P-3 의 의미론 분화가 사라진다.
     implemented_by: reader/lib/convergence.py
     ruleset: reader/reader-rules.yaml#convergence
+  - id: read.lane-log-shape
+    criterion: >-
+      레인 로그가 계약 실행 형태와 일치한다 — 분해는 두 실행(read-a·read-b) 각 1건,
+      접지·통합은 **정본 실행에만** 존재하고 비정본 실행에는 **부재**한다(재정 P-4·P-U3).
+    implemented_by: engine/stages/read.py
+    introduced_by: "재정 2026-08-18 P-U3"
+    note: >-
+      정본 1개만 진행했다는 사실은 **로그에 없음으로** 증명된다. 수확(재정 P-B) 슬롯도 정본
+      실행에만 존재하되 결정론 실행이므로 `lane.sub_lanes`(LLM 레인 배정 정본)에는 등재하지
+      않는다 — 이 검사는 그 슬롯의 존재를 결함으로 읽지 않는다.
 
 # 모든 검사 행은 verdict-check-row/v0 서식으로 보고된다(재정 N5).
 # 공허 2종(empty-ruleset·empty-target)은 그 서식의 파생값으로 자동 날인된다.
@@ -158,26 +240,44 @@ report_format: contracts/schemas/verdict-check-row.schema.json
 report_file: 10-read/convergence.json
 
 failure:
-  - condition: "read.verbatim / pointer-resolve / coverage / dependency-parse / value-derivation / claim-inventory 실패"
+  - condition: "read.verbatim / pointer-resolve / coverage / dependency-parse / value-derivation / bibliography / claim-inventory 실패"
     action: retry(1)
     then: escalate
-  - condition: "read.convergence 미달"
+  - condition: "read.convergence 의 exact-match 축 미달"
     action: retry(1)
     then: escalate
-    note: "Owner 재정 대상 — 소재 변경 또는 절차 수정. 품질 결함이 아니라 절차 신호다."
+    note: >-
+      재시도 지점은 **조기 수렴 지점**(분해 직후)이다 — 접지 지출 이후로 미루지 않는다(재정 P-4).
+      Owner 재정 대상: 소재 변경 또는 절차 수정. 품질 결함이 아니라 절차 신호다.
+  - condition: "read.convergence 상신 축(escalation-trigger) 미달"
+    action: escalate
+    reason_label: "독해 프로파일 상신"
+    note: >-
+      재정 P-3. 미달은 **실패가 아니라 상신**이다. 상신 서식 = 수렴 리포트(축별 값·정책·갈린
+      항목)이며 프레임은 "결함 후보"가 아니라 "독해 프로파일"이다. Owner 가 '계속' 봉투를
+      내면 phase_gates 의 접지 진입 조건이 충족된다(재정 P-U3).
   - condition: "read.schema 실패"
     action: retry(1)
     then: halt
-  - condition: "drop-signal = drop-proposed (early 또는 final)"
-    action: escalate
-    reason_label: "안도감 부적합"
-    note: "형식 전제 미충족(source 의 escalate)과 사유를 구별해 적는다 — 재정 N12."
-  - condition: "원천 다이제스트가 run.yaml 기록과 불일치"
+  - condition: "진입 지문 불일치(checks_on_entry: read.input-digest)"
     action: halt
-    note: "원천이 도중에 바뀐 런은 폐기 대상"
+    reason_label: "환경 오류"
+    note: >-
+      재정 P-C. 품질 결함이 아니므로 재시도·수정 루프에 넣지 않는다 — 즉시 중단 + 진단
+      (파일·기대·실측)이다. 원천 자체가 바뀌었으면 부분 복구가 아니라 새 런이다(재정 P-U2).
+  - condition: "원천 다이제스트가 run.yaml 기록과 불일치(read.source-digest)"
+    action: halt
+    note: >-
+      원천이 도중에 바뀐 런은 폐기 대상이다. 같은 불일치를 **진입 시점**에 잡는 자리는
+      위 checks_on_entry 의 read.input-digest 이며 사유 라벨은 "환경 오류"다(재정 P-C).
+      이 행은 그 이후 구간에서 드러난 불일치의 조치를 정한다.
   - condition: "반려 수신(material-defect.md)"
     action: reject-upstream
     note: "재요리 — spec_version +1 로 개정, 항목은 append-only(SPEC §1.6)"
+  # ★ 폐기 행 — `drop-signal = drop-proposed (early 또는 final)` → escalate(reason_label
+  #   "안도감 부적합"). 재정 P-A 가 조기 drop 의 escalate 를 폐지하고 확정 재정을 CP1 에
+  #   통합했으므로, drop 은 더 이상 이 표의 조치 대상이 아니다. drop 의 처분 자리는
+  #   owner_checkpoint(CP1) 한 곳이다.
 
 owner_checkpoint:
   id: material_approval
@@ -185,14 +285,22 @@ owner_checkpoint:
     - 10-read/material-spec.md
     - 10-read/drop-signal.md
     - 10-read/positioning.md
+    - 10-read/convergence-early.json   # 조기 수렴 판정서(재정 P-4·P-U3) — 아래 주석
     - 10-read/convergence.json
+  # ★ 조기 판정서가 CP1 표면인 이유(2026-08-18 총괄 정정 — SPEC §1.5 와 이 파일이 갈렸던 자리).
+  #   최종 보고서(convergence.json)는 **정본 1개**의 검사 결과이고, 조기 판정서는 **두 독해가
+  #   갈렸는가**의 기록이다. 후자는 전자에 남지 않는다 — 정본 지정 이후 read-b 는 더 돌지 않기
+  #   때문이다. Owner 가 "이 재료를 승인할 것인가"를 판단할 때 **두 독해가 얼마나 갈렸는지**는
+  #   재료의 신뢰도 그 자체이며, 그것을 표면에서 빼면 승인은 정본만 보고 내리는 결정이 된다.
+  #   감춰진 예외가 은폐인 것과 같은 이유로, 감춰진 갈림도 은폐다.
   confirm_file: "15-frozen/approval-v<N>.md"
   envelope_schema: contracts/schemas/approval-envelope.schema.json
   question: >-
     이 재료만 읽고 이 특허가 무엇을 하는 물건인지, 그리고 투자자-팬의 어떤 질문에
     답할 수 있는지 말할 수 있는가? 말할 수 없다면 어느 항목이 비었는지 지적하라.
-  # CP1 이 반드시 보는 목록(재정 R1·R3·N9). convergence.json 이 싣고 material-spec.md 가
-  # 별도 절로 강조 렌더한다. 전부 "기계가 무엇을 보증했고 무엇을 보증하지 못했는가"의 목록이다.
+  # CP1 이 반드시 보는 목록(재정 R1·R3·N9 · 2026-08-18 P-1·P-A·P-B). convergence.json 이 싣고
+  # material-spec.md(CP1 판독본)가 별도 절로 강조 렌더한다. 전부 "기계가 무엇을 보증했고
+  # 무엇을 보증하지 못했는가"의 목록이다.
   mandatory_surfaces:
     - list: manual_verification_required
       why: "도면 유래 수치는 기계 검증 불가다. 검사가 통과시켰다는 사실이 값이 옳다는 뜻이 아님을 봉투가 자백한다(재정 R1)."
@@ -202,6 +310,21 @@ owner_checkpoint:
       why: >-
         파생 수치는 원문 어디에도 문자열로 없다. 산식과 입력 항목을 나란히 보여주지 않으면
         Owner 는 그 값이 계산의 결과라는 사실 자체를 알 수 없고 승인은 형식이 된다(재정 N9).
+    - list: unclassified_dependents
+      why: >-
+        구조 미분류(`unclassified`)는 결함이 아니라 관할 축소의 표지다(재정 P-1). 표지를
+        붙이고 침묵하면 도달 불능이 조용한 통과가 되므로, 전건을 목록으로 드러내
+        Owner 의 눈이 마지막 심급이 되게 한다.
+    - list: screening_memos
+      why: >-
+        read-a·read-b 각자의 맹검 스크리닝 메모를 **둘 다 병기**한다(재정 P-A·P-U4).
+        두 독립 관찰의 일치/불일치 자체가 신호이며, drop 의 확정 재정은 완전 정보 위에서
+        CP1 한 자리에서 1회 이루어진다.
+    - list: numeric_inventory
+      why: >-
+        수치는 접지 스팬 기반 전수 기계 수확이고 중요분은 역참조로 도출된다(재정 P-B).
+        표면에는 **전량 카운트를 상시 표기**한다("전체 N건 — 참조 M건 표시, 미참조 접힘") —
+        카운트가 없으면 미참조분 접힘이 은폐가 된다.
   # 무인 실행 금지 — --yes 류 플래그를 설치하지 않는다. 체크포인트 무응답 = 무기한 대기이며
   # 시간 초과 자동 진행은 없다(재정 R8).
   unattended_flag: forbidden

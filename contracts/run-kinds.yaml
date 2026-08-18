@@ -1,6 +1,6 @@
 # 런 종류 — 기계 판독 정본
 #
-# 근거: Owner 재정 2026-08-18 N10(구 재감수 B-01 해소).
+# 근거: Owner 재정 2026-08-18 N10(구 재감수 B-01 해소) + P-9(예행 종료선).
 # 로드맵은 회차가 아니라 **런 종류**로 정의된다. 게시 런 진입을 결정하는 것은 몇 번째 런인가가
 # 아니라 **상태 조건의 충족 여부**다. 그 조건을 L0 가 런 시작 시점에 기계로 검사한다.
 # 산문 주석은 KR, 필드명·enum·검사 id 는 EN 원문.
@@ -16,8 +16,33 @@ kinds:
     purpose: "파이프라인 통주 검증."
     publishes: false                 # 비게시
     requires_defense_layers: false   # 방어층 미완이어도 실행 가능
+    # 종료선 (재정 2026-08-18 P-9)
+    # 예행은 '어디까지 돌려 보는 런'이 아니라 **게시만 뺀 완주**다. 중간에 끊으면 통주가
+    # 검증하려던 것 — 단계 간 이음매 — 이 정확히 검증되지 않은 채 남는다.
+    terminates_at: strip-output      # strip 산출까지 = 완전 리허설
+    terminates_at_artifact: "50-gate/<variant>/thread.stripped.md"   # 재정 P-9 의 "strip 산출"의 실물
+    includes_cp2_variant_selection: true   # CP2 변주 선택도 정상 수행한다
+    excludes: [publication]          # 빼는 것은 게시 행위 하나뿐이다
+    scope_note: >-
+      strip 산출까지 완전 리허설한다(재정 P-9). CP2 변주 선택을 포함하며 게시만 제외한다.
+      "예행이니 여기까지"로 임의 단축하지 않는다 — 단축분은 통주가 아니라 부분 시험이다.
     artifacts: >-
       산출물(재료·도면·변주·선택 데이터)은 실자산으로 보존한다. 예행이라는 이유로 버리지 않는다.
+    deliverables:
+      - id: through_run_report
+        label: 통주 리포트
+        rank: first-class            # 1급 산출물 — 부산물이 아니다 (재정 P-9)
+        contents: [단계별 소요, 상신 이력, 발견 결함, 미가동 게이트 목록]
+        why: >-
+          예행의 산물은 게시물이 아니라 **파이프라인에 대한 지식**이다. 그 지식을 적을 자리를
+          1급으로 두지 않으면 통주는 "돌려 봤다"는 기억으로만 남는다.
+    verdict_requirements:
+      - id: inactive_gates_enumerated
+        rule: "예행 판정문은 미가동 게이트를 목록으로 명기한다."
+        basis: "재정 2026-08-18 P-9 + N5 규율(강제의 범위를 실제보다 넓게 말하지 않는다)"
+        note: >-
+          방어층 미완 상태로 도는 런이므로 무엇이 돌지 않았는지가 판정문에 없으면
+          판정이 실제보다 넓은 보증을 주장하게 된다. 목록은 통주 리포트의 항목과 같은 것이다.
     anchor_ledger: excluded
     anchor_ledger_note: >-
       예행 런은 앵커 원장에 편입하지 않는다. 다만 변주 선택 취향 데이터는 정상 수확한다(D10).

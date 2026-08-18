@@ -1,7 +1,10 @@
 # 스테이지 I/O 계약 — `freeze`
 #
 # 정본 서술 = docs/SPEC.md §1.6. 이 파일은 그 서술의 기계 판독본이며, 어긋나면 SPEC 이 이긴다.
-# 서식 = SPEC §1.2 고정 서식 + `schema` 키.
+# 서식 = SPEC §1.2 고정 서식 + `schema` 키 + 서식 확장 3 `checks_on_entry`(재정 P-C).
+#
+# ★ 공통 규칙 — 런은 시작 시점 git 커밋에 결박된다(재정 P-U1). 계약·스키마·검증기·러너가
+#   함께 고정되므로, 런 도중 리포가 개정되어도 이 런의 법은 run.yaml#engine.commit 하나다.
 
 schema: stage-contract/v0
 id: freeze
@@ -11,9 +14,23 @@ lane:
   model: null
   effort: null
 
+# ★ 진입 지문 검사(재정 P-C). 출구의 freeze.approval-valid 와 겹쳐 보이지만 층이 다르다 —
+#   진입은 **환경 전제**(선언 입력이 실재하고 승인 시점 이후 조용히 바뀌지 않았는가)를 보고,
+#   출구는 봉투의 **신원과 항목 대조**(어느 관문의·어느 런의·무엇에 대한 승인인가)를 본다.
+#   진입 불일치는 품질 결함이 아니므로 재시도·수정 루프에 넣지 않는다.
+checks_on_entry:
+  - id: freeze.input-digest
+    criterion: >-
+      선언된 입력 전건의 존재·지문 대조 — 10-read/material-spec.json 의 실측 SHA-256 ↔
+      승인 봉투 target.digest, 10-read/material-spec.md 존재, 그리고 명세의
+      patent.source_digest ↔ 00-source/patent.sha256.
+    implemented_by: engine/stages/__init__.py
+    on_mismatch: environment-error
+    note: "불일치는 품질 결함이 아니라 환경 오류다 — 즉시 중단+진단(재정 P-C). 봉투는 자동 실효된다(재정 R8)."
+
 inputs:
   - 10-read/material-spec.json
-  - 10-read/material-spec.md
+  - 10-read/material-spec.md          # CP1 판독본(KR 틀 · EN 값) — 재정 P-U5
   - "15-frozen/approval-v<N>.md"
 
 may_read:
@@ -53,7 +70,9 @@ checks_before_exit:
       approval-v<N>.md 프런트매터가 approval-envelope/v0 를 통과하고, decision: "approved" ·
       owner_quote 비어 있지 않음 · target.digest 가 실제 파일 SHA-256 과 일치(재정 R8).
       ★ 더해 봉투와 재료를 함께 읽어야 판정되는 3항을 여기서 본다(스키마 밖):
-      ① drop_signal.verdict == "drop-proposed" 이면 drop_decision 필수
+      ① extensions.docent.drop_signal.verdict == "drop-proposed" 이면 drop_decision 필수
+         (경로 정정 — drop_signal 은 공유 코어가 아니라 docent 확장 블록에 산다: 재정 P-2 ⓑ.
+          drop 의 확정 재정 자리는 CP1 한 곳이다: 재정 P-A)
       ② derived_fact_ack[] 가 재료의 origin == "derived" 항목 집합과 **정확히 일치**
       ③ manual_verification_ack[] 가 origin == "figure-sourced" 항목 집합과 **정확히 일치**
       ★★ 더해 봉투의 **신원** 4항을 본다(sol 재감수 B-02 처분):
@@ -77,7 +96,16 @@ checks_before_exit:
   - id: freeze.readonly
     criterion: "15-frozen/material-spec.v<N>.json 의 권한이 쓰기 불가(0444)"
   - id: freeze.render-parity
-    criterion: "material-spec.md 에 모든 items[].id 가 1회 이상 등장(KR 렌더 누락 탐지)"
+    criterion: >-
+      CP1 판독본(10-read/material-spec.md)에 각 항목의 **EN 값이 바이트 그대로 존재**한다
+      (재정 P-U5). 대상 = label_en · statement_en · what_it_shows_en ·
+      positioning 3필드(background_problem·delta·asserted_effect) ·
+      claims.applicant_interest[].signal · 전 인용 필드(text_verbatim·quote·caption_quote·
+      evidence_quotes[]·quotes[]).
+      ★ 구 문언 "모든 items[].id 가 1회 이상 등장"은 **폐기**한다 — ID 존재만 보면 판독본이
+      값을 잃어도 통과하고, 판독본은 KR 틀 + EN 값이므로 검사 대상은 ID 가 아니라 값이다.
+      파생 번역(EN 값의 KR 요약)은 금지이며, 요약이 값을 대체하면 이 대조가 잡는다.
+    implemented_by: engine/stages/freeze.py
   - id: freeze.id-monotonic
     criterion: "개정 시: v<N-1> 의 모든 항목 ID 가 v<N> 에 존재하고, 삭제된 ID 가 없음"
     implemented_by: reader/lib/freeze_integrity.py

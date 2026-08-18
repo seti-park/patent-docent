@@ -143,10 +143,18 @@ sentence_counting:
   amendment: "예외 목록의 확장·축소는 Owner 재정 사항이다(입법된 문언, D7)."
 
 # ---------------------------------------------------------------------------
-# 7. L0 규칙 최종 목록 (전 항목 거부권 있음 — L0 는 거부권 층이다, D8)
+# 7. L0 규칙 최종 목록
 #    각 항목의 stage 는 실행 시점, params 는 형식 파라미터 시트의 값 포인터다.
 #    판정 결과는 전 항목이 verdict-check-row/v0 서식으로 보고된다(재정 N5,
 #    contracts/schemas/verdict-check-row.schema.json).
+#
+#    ★ 거부권은 항목마다 `veto` 가 정한다 — 목록 전체의 성질이 아니다(2026-08-18 정정).
+#      구 헤더는 "전 항목 거부권 있음 — L0 는 거부권 층이다(D8)"라고 적었고 그것이
+#      사실이던 시절이 있었다. 재정 P-B 가 `numeric.unreviewed-use`(veto: false)를
+#      이 목록에 들이면서 그 문장은 거짓이 되었다. 목록의 성질을 항목의 성질로
+#      읽는 것이 정확히 M0.6 이 벌한 "강제의 범위를 실제보다 넓게 말하기" 다.
+#      로더는 `veto` 를 항목에서 읽어야 하며 목록 위치에서 추정해서는 안 된다.
+#      현재 `veto: false` 인 항목은 하나뿐이다 — `numeric.unreviewed-use`(SPEC §4.4.4).
 # ---------------------------------------------------------------------------
 rules:
   - id: run.publish-preconditions
@@ -236,6 +244,21 @@ rules:
     veto: true
     basis: "D8"
     note: "§9 numeric 집행. 정답지에 active fact 4 origin 전부 포함."
+  - id: numeric.unreviewed-use
+    stage: thread
+    veto: false            # ★ 플래그다. 거부권이 없다 — 판정 적격자는 Owner 다(D7·D8)
+    basis: "재정 2026-08-18 P-B"
+    note: >-
+      §9 numeric 의 짝 규칙. 본문이 **미참조(미검토) 수치**를 처음 인용하면 CP2 봉투에
+      `미검토 수치 사용` 플래그를 자동 첨부한다. 판정 대상 = 출하본이 쓴 MATCH_KEY 중
+      `10-read/convergence.json#numeric_inventory.unreferenced` 에 속한 것.
+      ★ 이 규칙이 있는 이유는 P-B 의 귀결을 닫기 위해서다 — 수치를 **전수** 수확하면
+      정답지가 넓어지고, 넓어진 정답지는 `numeric.exhaustive` 를 그만큼 관대하게 만든다.
+      그 대가로 열리는 구멍이 "CP1 에서 아무도 보지 않은 수치가 본문에 실려 나가는 경로"이며,
+      이 플래그가 그 경로를 **무검토로는 통과할 수 없게** 만든다. 재정 문언 그대로:
+      모든 수치는 **CP1 검토 또는 사용 시 검토**를 거치며, 무검토 게시 경로는 없다.
+      거부권을 주지 않는 이유는 관할이다 — "이 수치를 써도 되는가"에는 정답이 없다(D7).
+      소관 = M4(게이트 러너). 현재 **구현 없음** — `contracts/glossary.md` §2.2 참조.
 
 # ---------------------------------------------------------------------------
 # 8. 자문 측정 (거부권 없음 — 게이트 러너가 측정만 하고 결함을 발행하지 않는다)
@@ -270,9 +293,14 @@ numeric:
   match_key: "{value_normalized}|{unit or ''}"
 
   # 정답지 출처 4종. 재료가 아닌 곳에서 정답을 끌어오지 않는다.
+  # ★ 정답지의 성질이 바뀌었다(재정 2026-08-18 P-B). `origin: quoted`·`bibliographic` 항목은
+  #   이제 서사가 고른 것이 아니라 **접지 스팬에서 전수 기계 수확**된 것이다. 정답지가 넓어진
+  #   만큼 이 검사는 관대해지며, 그 대가는 짝 규칙 `numeric.unreviewed-use`(§7)가 받는다 —
+  #   CP1 에서 참조되지 않은(=검토되지 않은) 수치를 본문이 쓰면 CP2 에 플래그가 붙는다.
+  #   두 규칙을 함께 읽어야 "무검토 게시 경로 없음"이 성립한다.
   answer_sources:
     - id: frozen_facts
-      description: "items[] 중 kind == fact && status == active 의 value_normalized + unit. origin 4종(quoted·derived·figure-sourced·bibliographic) 전부 포함한다."
+      description: "items[] 중 kind == fact && status == active 의 value_normalized + unit. origin 4종(quoted·derived·figure-sourced·bibliographic) 전부 포함한다. quoted·bibliographic 은 수확기 산출이다(재정 P-B)."
     - id: patent_number
       description: "patent.number"
     - id: patent_dates
