@@ -38,7 +38,7 @@
         "F28F 3/12"
       ]
     },
-    "source_digest": "sha256:9426c24769e87831ae1cf90d12f873e4c5828e5912b63d1260d78cb5d09fdd9d",
+    "source_digest": "sha256:26d94f4460a9bb81655da8f1fb7228aa5c69e6e86826eac90a856f5f3243a230",
     "source_path": "00-source/patent.md"
   },
   "claims": {
@@ -777,6 +777,14 @@
           "span": {
             "start": 2850,
             "end": 2903
+          }
+        },
+        {
+          "locator": "[0051]",
+          "quote": "The controller labels each supported format as FP8 (1-5-2) and FP6 (1-3-2), selects the exponent field with Act 0 <6:3>, carries the prior stage bit C.sub.j−1, and repeats the layout of FIG. 1 and Table 2 without changing any dimension.",
+          "span": {
+            "start": 3378,
+            "end": 3616
           }
         }
       ],

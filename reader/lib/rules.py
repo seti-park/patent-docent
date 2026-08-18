@@ -389,6 +389,19 @@ class Rules:
             raise RulesError("numeric_harvest.token_boundary 가 없다")
         self.harvest_left_forbidden = re.compile(left)
         self.harvest_right_letter = re.compile(right)
+        # 경계 기각의 사유 라벨 — 지금까지 이 기각은 `continue` 하나였고 아무 기록도 남기지
+        # 않았다(2026-08-18 통주 2 실측). 라벨을 코드가 아니라 파일에 두는 이유는 CP1 §12.3 이
+        # 사유별로 세는 어휘가 곧 계약이기 때문이다.
+        labels = boundaries.get("rejection_labels") or {}
+        if not labels.get("left") or not labels.get("right"):
+            raise RulesError(
+                "numeric_harvest.token_boundary.rejection_labels 에 left·right 가 없다"
+                "(경계 기각을 기록 없이 버리는 경로를 막는다)"
+            )
+        self.harvest_boundary_labels = {
+            "left": str(labels["left"]),
+            "right": str(labels["right"]),
+        }
         vocabulary = detection.get("vocabulary")
         if not vocabulary:
             raise RulesError("numeric_harvest.unit_detection.vocabulary 가 비어 있다")
@@ -448,6 +461,49 @@ class Rules:
         # 배제 규칙(도면부호 등) — 조건은 코드가 알고 **어느 규칙이 켜져 있는지**는 파일이 안다.
         exclusions = block.get("exclusions") or []
         self.harvest_exclusions = tuple(exclusions)
+        self._compile_harvest_envelopes(block, exclusions)
+
+    def _compile_harvest_envelopes(self, block: dict, exclusions) -> None:
+        """봉투 배제 — 좌표 표현 **구간**을 먼저 표시하는 패턴들(2026-08-18 통주 2 처분).
+
+        `figure-numeral` 과 달리 조건을 코드가 알지 못한다. 여기서 아는 것은 "규칙 파일이
+        든 정규식에 걸리는 구간은 값이 아니라 자리다" 하나뿐이며, 무엇이 좌표 표현인지는
+        전적으로 파일이 든다(D7 — 코드가 자기 법을 갖지 않는다).
+
+        ★ 부재는 통과가 아니라 오류다. 넷 중 하나를 지우는 것만으로 배제가 조용히 꺼지면
+        통주 2 가 실측한 23건이 아무 신호 없이 정답지로 돌아온다. 같은 회차의
+        `bibliography.priority_window` 가 세운 선례를 그대로 따른다.
+        """
+        declaration = block.get("enclosing_exclusions") or {}
+        if declaration.get("required") is not True:
+            raise RulesError(
+                "numeric_harvest.enclosing_exclusions.required 가 true 가 아니다"
+                "(봉투 배제의 부재를 통과로 읽는 경로를 막는다 — 재정 P-B 잔여)"
+            )
+        compiled = []
+        for entry in exclusions:
+            if entry.get("match") != "enclosing-pattern":
+                continue
+            pattern = entry.get("pattern")
+            label = entry.get("reason_label")
+            if not pattern or not label:
+                raise RulesError(
+                    f"numeric_harvest.exclusions[{entry.get('id')}] 에 pattern 또는 "
+                    "reason_label 이 없다(봉투 배제)"
+                )
+            compiled.append(
+                {
+                    "id": str(entry.get("id")),
+                    "pattern": re.compile(str(pattern)),
+                    "reason_label": str(label),
+                }
+            )
+        if not compiled:
+            raise RulesError(
+                "numeric_harvest.exclusions 에 match: enclosing-pattern 항목이 하나도 없다"
+                "(봉투 배제가 꺼졌다 — 좌표 오파싱이 정답지로 돌아온다)"
+            )
+        self.harvest_envelope_patterns = tuple(compiled)
 
     def in_answer_scope(self, item: dict) -> bool:
         """항목이 **정답지 범위**에 드는가(kind·origin·status 3조건).

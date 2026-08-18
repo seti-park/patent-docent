@@ -21,12 +21,21 @@
 통째로 사라지고 `at least 12 mm` 가 `12` 로 뭉개진다. 형태를 잃은 수확은 전수가 아니다.
 매칭의 좌우에는 토큰 경계를 요구한다 — `cm3` 의 `3` 은 영숫자 토큰의 내부이지 수치가 아니다.
 
-**무엇을 빼는가.** 도면부호(`figures[].numerals` ∪ `grounding.figure_refs[].numerals`)는
-정답지에 올리지 않는다(SPEC §2.5). 다만 배제한 사실을 `skipped[]` 에 남긴다.
+**무엇을 빼는가.** 둘이다. ① 도면부호(`figures[].numerals` ∪ `grounding.figure_refs[].numerals`)는
+정답지에 올리지 않는다(SPEC §2.5). ② **좌표 표현 구간**(FP 3항 표기 `(1-5-2)` · 비트 슬라이스
+`<6:3>` · 도면·표 번호 `FIG. 60` · 아래첨자 인덱스 `.sub.j−1`)은 스캔 **전에** 통째로 표시하고
+그 구간과 겹치는 수확을 배제한다. 둘 다 배제한 사실을 `skipped[]` 에 남긴다.
+
+★ ②를 토큰 규칙이 아니라 **구간 규칙**으로 두는 이유(2026-08-18 통주 2 실측): `(1-5-2)` 의
+셋째 필드는 매칭이 **생성조차 되지 않는다** — 선행 부호를 포함한 `scalar` 가 `-2` 로 잡히고
+왼쪽 이웃이 숫자라 기각되므로 토큰 규칙이 심사할 대상이 없다. 닿지 않는 것은 먼저 표시하는
+수밖에 없다. 통주 2 의 `origin: quoted` 30건 중 23건이 이 네 계열의 오파싱이었다.
 
 **시끄럽게 실패하되 죽이지 않는다.** 정규식에 걸렸으나 값 문법으로 파싱되지 않는 토큰은
 수확하지 않고 둘째 반환값에 기록한다. 수확은 검사가 아니므로 스테이지를 멈추지 않지만,
-기록하지 않으면 "전수"가 조용히 줄어든다.
+기록하지 않으면 "전수"가 조용히 줄어든다. ★ 그 규율이 **경계 기각에서만 지켜지지 않고
+있었다** — 왼쪽·오른쪽 이웃 기각이 `continue` 하나여서 `(1-5-2)` 의 셋째 필드는 오파싱이
+아니라 **기록 없이 사라졌다**. 지금은 두 기각도 `boundary-left`·`boundary-right` 로 센다.
 
 규칙 정본 = `reader/reader-rules.yaml#numeric_harvest`. 패턴·라벨 서식·단위 인정 범위·중복
 제거 키·서지 필드 표를 여기에 리터럴로 두지 않는다(D7 — 코드가 자기 법을 갖지 않는다).
@@ -99,7 +108,8 @@ def harvest_numeric_facts(
     numerals = _figure_numerals(spec)
     numeral_rule = rules.harvest_exclusion("figure-numeral")
 
-    for entry in _quoted_candidates(spec, rules):
+    candidates, rejections = _quoted_candidates(spec, rules)
+    for entry in candidates:
         key = (
             entry["locator"],
             entry["quote"],
@@ -133,6 +143,11 @@ def harvest_numeric_facts(
             continue
         harvested.append(fact)
 
+    # 봉투 배제와 경계 기각은 **값 후보가 되기 전에** 갈린 것들이라 위 반복이 보지 못한다.
+    # 뒤에 붙이는 이유는 순서가 결정론이어야 하기 때문이며, 앞뒤 어느 쪽이든 상관없되 한쪽으로
+    # 고정되어야 한다 — 섞어 넣으면 같은 명세가 두 번 다른 `skipped[]` 를 낸다.
+    skipped.extend(rejections)
+
     # 서지 수확은 인용 스팬을 갖지 않는다(스키마가 bibliographic 에 `source` 를 금지한다).
     # 순서는 규칙 파일의 `emission_order` 대로 원문 스팬 뒤에 온다.
     for fact, failure in _bibliographic_facts(spec, rules):
@@ -152,8 +167,12 @@ def harvest_numeric_facts(
 # ---------------------------------------------------------------------------
 
 
-def _quoted_candidates(spec: dict, rules: Rules) -> list[dict]:
+def _quoted_candidates(spec: dict, rules: Rules) -> tuple[list[dict], list[dict]]:
     """접지 인용을 훑어 값 후보를 등장 순으로 뽑는다(파싱 전).
+
+    반환 = `(값 후보들, 거두지 못한 자리들)`. 둘째가 생긴 이유는 스캔 단계의 배제·기각이
+    지금까지 **아무 기록도 남기지 않았기** 때문이다(2026-08-18 통주 2 실측) — 값이 되기 전에
+    사라진 자리는 어느 목록에도 없었고, 그래서 "전수"가 조용히 줄었다.
 
     ★ 어형 rank 순으로 훑고 **먼저 매칭된 구간은 소비한다**(규칙 파일 `numeric_harvest.scan`).
     낱개 십진만 훑던 초판은 `0.05 to 0.10 mm`(range)·`50 ±5 %`(tolerance)를 통째로 잃고
@@ -161,6 +180,10 @@ def _quoted_candidates(spec: dict, rules: Rules) -> list[dict]:
     (2026-08-18 총괄 검수 실측). 소비 규칙이 `claims 1 to 3` 을 지키는 종속 파서의 것과 같다.
     """
     out: list[dict] = []
+    rejections: list[dict] = []
+    # 같은 인용문이 두 접지 항목에 실려도 기각 기록은 한 번이다(값 후보의 `dedupe_key` 와
+    # 같은 논리 — 같은 자리를 두 번 세면 §12.3 의 계수가 접지 구조를 반영하게 된다).
+    seen_rejects: set[tuple] = set()
     for item in spec.get("items") or []:
         if not isinstance(item, dict) or item.get("kind") != "grounding":
             continue
@@ -174,7 +197,8 @@ def _quoted_candidates(spec: dict, rules: Rules) -> list[dict]:
             # 좌표가 비면 지어내지 않고 그 인용을 든 접지 항목의 ID 를 쓴다
             # (규칙 파일 `locator_fallback`).
             locator = ref.get("locator") or item_id
-            for span in _scan_quote(quote, rules):
+            spans, rejected = _scan_quote(quote, rules)
+            for span in spans:
                 start, end, unit = span
                 out.append(
                     {
@@ -186,21 +210,54 @@ def _quoted_candidates(spec: dict, rules: Rules) -> list[dict]:
                         "reason": "",
                     }
                 )
-    return out
+            for start, end, reason in rejected:
+                key = (str(locator), quote, start, end, reason)
+                if key in seen_rejects:
+                    continue
+                seen_rejects.add(key)
+                rejections.append(
+                    {
+                        "locator": str(locator),
+                        "token": quote[start:end],
+                        "reason": reason,
+                    }
+                )
+    return out, rejections
 
 
-def _scan_quote(quote: str, rules: Rules) -> list[tuple[int, int, str | None]]:
-    """인용문 1건에서 값 스팬을 뽑는다. 반환은 **등장 순** `(start, end, unit)`."""
+def _scan_quote(
+    quote: str, rules: Rules
+) -> tuple[list[tuple[int, int, str | None]], list[tuple[int, int, str]]]:
+    """인용문 1건에서 값 스팬을 뽑는다.
+
+    반환 = `(등장 순 (start, end, unit), 등장 순 (start, end, 사유 라벨))`. 둘째가 "거두지
+    못한 자리"이며 셋 중 하나에서 온다 — 봉투 배제 · 왼쪽 경계 기각 · 오른쪽 경계 기각.
+    """
+    # ★ 좌표 표현은 스캔 **전에** 통째로 표시한다(규칙 파일 `enclosing_exclusions`).
+    #   토큰 규칙으로는 닿지 않는 자리가 있기 때문이다 — `(1-5-2)` 의 셋째 필드는 매칭이
+    #   생성조차 되지 않는다. 표시된 구간은 여기서 한 줄로 기록하고, 그 안의 매칭은 이미
+    #   센 자리이므로 다시 세지 않는다.
+    masked = _envelope_spans(quote, rules)
+    rejected: list[tuple[int, int, str]] = list(masked)
+    # `blocked` = 배제·기각으로 이미 처분된 구간. `consumed`(정상 수확 구간)와 갈라 두는
+    # 이유는 겹침의 뜻이 다르기 때문이다 — consumed 와 겹치면 **더 긴 어형이 이미 거둔**
+    # 자리라 손실이 아니고, blocked 와 겹치면 **이미 기록된 손실**이라 두 번 적지 않는다.
+    blocked: list[tuple[int, int]] = [(start, end) for start, end, _ in masked]
     consumed: list[tuple[int, int]] = []
     found: list[tuple[int, int, str | None]] = []
+    labels = rules.harvest_boundary_labels
     for form in rules.value_scan_forms:
         for match in form["scan"].finditer(quote):
             start, end = match.start(), match.end()
             if _overlaps((start, end), consumed):
                 continue
+            if _overlaps((start, end), blocked):
+                continue
             # ★ 왼쪽 경계 — 앞이 영숫자면 그 매칭은 토큰의 **내부**다(`cm3` 의 `3`).
             #   수치가 아닌 것을 수치로 올리면 정답지에 없는 값이 하나 생긴다.
             if start > 0 and rules.harvest_left_forbidden.match(quote[start - 1]):
+                rejected.append((start, end, labels["left"]))
+                blocked.append((start, end))
                 continue
             # 단위는 어형 매칭 **뒤**에 붙는다 — 값 스팬이 단위까지 늘어나는 경우가 있다.
             end_with_unit, unit = _unit_after(quote, end, rules)
@@ -209,11 +266,39 @@ def _scan_quote(quote: str, rules: Rules) -> list[tuple[int, int, str | None]]:
             # ★ 오른쪽 경계 — 뒤에 영문자가 붙어 있는데 그것이 단위로 인정되지 않았다면
             #   역시 토큰의 내부다(`3D` 의 `3`). 단위로 소비된 경우만 살린다.
             if unit is None and end < len(quote) and rules.harvest_right_letter.match(quote[end]):
+                rejected.append((start, end, labels["right"]))
+                blocked.append((start, end))
                 continue
             consumed.append((start, end_with_unit))
             found.append((start, end_with_unit, unit))
     found.sort()
-    return found
+    rejected.sort()
+    return found, rejected
+
+
+def _envelope_spans(quote: str, rules: Rules) -> list[tuple[int, int, str]]:
+    """좌표 표현 구간을 등장 순으로 표시한다(규칙 파일이 패턴을 든다).
+
+    겹치는 봉투는 **먼저 시작하는 것**을 남기고 시작이 같으면 **긴 쪽**을 남긴다. 임의
+    선택이 아니라 결정론이 필요해서 정한 순서다 — 집합·사전 순회에 기대면 같은 명세가 두 번
+    다른 `skipped[]` 를 내고, `value.harvest-parity` 가 서는 결정론이 무너진다.
+
+    이 함수는 좌표를 **해석하지 않는다**. `(1-5-2)` 가 부호 1·지수 5·가수 2 라는 사실은
+    여기서 알 바가 아니며, 아는 것은 "그 구간의 숫자들은 값이 아니라 자리다" 하나뿐이다
+    (규칙 파일 `enclosing_exclusions.not_a_parser` — 전개를 붙이면 수확기가 표기법을
+    입법하게 된다).
+    """
+    spans: list[tuple[int, int, str]] = []
+    for entry in rules.harvest_envelope_patterns:
+        for match in entry["pattern"].finditer(quote):
+            spans.append((match.start(), match.end(), entry["reason_label"]))
+    spans.sort(key=lambda span: (span[0], -span[1], span[2]))
+    merged: list[tuple[int, int, str]] = []
+    for span in spans:
+        if merged and span[0] < merged[-1][1]:
+            continue
+        merged.append(span)
+    return merged
 
 
 def _overlaps(span: tuple[int, int], consumed: list[tuple[int, int]]) -> bool:

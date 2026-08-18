@@ -1,0 +1,1169 @@
+{
+  "schema": "material-spec/v0",
+  "reader_version": "0.5.0",
+  "spec_version": 1,
+  "status": "draft",
+  "run_id": "example-xx0000000a1-stacked-thermal-module",
+  "patent": {
+    "number": "XX0000000A1",
+    "title": "Stacked thermal module with an integrated fluid channel (fictional example)",
+    "jurisdiction": "XX",
+    "kind_code": "A1",
+    "assignee": "Example Devices, Inc.",
+    "applicants": [
+      "Example Devices, Inc."
+    ],
+    "inventors": [
+      "Dana R. Example",
+      "Jordan L. Fixture"
+    ],
+    "dates": {
+      "priority": "2024-03-11",
+      "filing": "2025-03-10",
+      "publication": "2026-01-15"
+    },
+    "priority_claims": [
+      {
+        "number": "XX-2024-000101",
+        "date": "2024-03-11",
+        "jurisdiction": "IP"
+      }
+    ],
+    "classifications": {
+      "ipc": [
+        "H01L 23/473"
+      ],
+      "cpc": [
+        "H01L 23/4735",
+        "F28F 3/12"
+      ]
+    },
+    "source_digest": "sha256:26d94f4460a9bb81655da8f1fb7228aa5c69e6e86826eac90a856f5f3243a230",
+    "source_path": "00-source/patent.md"
+  },
+  "claims": {
+    "independent": [
+      {
+        "id": "CL-1",
+        "type": "independent",
+        "text_verbatim": "A stacked thermal module comprising: a substrate having a first surface; and a heat spreader thermally coupled to the first surface, the heat spreader defining a fluid channel that includes an inlet port and a folded flow path.",
+        "elements": [
+          {
+            "id": "CL-1/e1",
+            "text_verbatim": "a substrate having a first surface;",
+            "material_id": "M1",
+            "children": []
+          },
+          {
+            "id": "CL-1/e2",
+            "text_verbatim": "a heat spreader thermally coupled to the first surface, the heat spreader defining a fluid channel that includes an inlet port and a folded flow path.",
+            "material_id": "M2",
+            "children": [
+              {
+                "id": "CL-1/e2/e1",
+                "text_verbatim": "an inlet port",
+                "material_id": "M3",
+                "children": []
+              },
+              {
+                "id": "CL-1/e2/e2",
+                "text_verbatim": "a folded flow path",
+                "material_id": "M4",
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "CL-7",
+        "type": "independent",
+        "text_verbatim": "A method of assembling a stacked thermal module, the method comprising: bonding a heat spreader to a first surface of a substrate; and sealing a folded flow path formed in the heat spreader.",
+        "elements": [
+          {
+            "id": "CL-7/e1",
+            "text_verbatim": "bonding a heat spreader to a first surface of a substrate;",
+            "material_id": "M9",
+            "children": []
+          },
+          {
+            "id": "CL-7/e2",
+            "text_verbatim": "sealing a folded flow path formed in the heat spreader.",
+            "material_id": "M10",
+            "children": []
+          }
+        ]
+      }
+    ],
+    "dependents": [
+      {
+        "id": "CL-2",
+        "depends_on": [
+          "CL-1"
+        ],
+        "dependency_type": "single",
+        "text_verbatim": "The stacked thermal module of claim 1, wherein the fluid channel has a hydraulic diameter of 0.08 mm.",
+        "additions": [
+          {
+            "id": "CL-2/a1",
+            "attaches_to": "CL-1/e2",
+            "text_verbatim": "wherein the fluid channel has a hydraulic diameter of 0.08 mm",
+            "material_id": "M5"
+          }
+        ]
+      },
+      {
+        "id": "CL-4",
+        "depends_on": [
+          "CL-1",
+          "CL-2"
+        ],
+        "dependency_type": "multiple-and",
+        "text_verbatim": "The stacked thermal module of claims 1 and 2, wherein the substrate comprises a ceramic layer having a thickness of 0.05 to 0.10 mm.",
+        "additions": [
+          {
+            "id": "CL-4/a1",
+            "attaches_to": "CL-1/e1",
+            "text_verbatim": "wherein the substrate comprises a ceramic layer having a thickness of 0.05 to 0.10 mm",
+            "material_id": "M6"
+          }
+        ]
+      },
+      {
+        "id": "CL-5",
+        "depends_on": [
+          "CL-1",
+          "CL-2"
+        ],
+        "dependency_type": "multiple-or",
+        "text_verbatim": "The stacked thermal module of claim 1 or claim 2, wherein the folded flow path has a total flow path length of at least 12 mm.",
+        "additions": [
+          {
+            "id": "CL-5/a1",
+            "attaches_to": "CL-1/e2/e2",
+            "text_verbatim": "wherein the folded flow path has a total flow path length of at least 12 mm",
+            "material_id": "M7"
+          }
+        ]
+      },
+      {
+        "id": "CL-6",
+        "depends_on": [
+          "CL-1"
+        ],
+        "dependency_type": "single",
+        "text_verbatim": "The stacked thermal module of claim 1, wherein the inlet port is offset from an outlet port of the fluid channel.",
+        "additions": [
+          {
+            "id": "CL-6/a1",
+            "attaches_to": "CL-1/e2/e1",
+            "text_verbatim": "wherein the inlet port is offset from an outlet port of the fluid channel",
+            "material_id": "M8"
+          }
+        ]
+      },
+      {
+        "id": "CL-8",
+        "depends_on": [
+          "CL-7"
+        ],
+        "dependency_type": "single",
+        "text_verbatim": "The method of claim 7, wherein the bonding is performed at a bonding temperature selected from 320, 340, 360 °C.",
+        "additions": [
+          {
+            "id": "CL-8/a1",
+            "attaches_to": "CL-7/e1",
+            "text_verbatim": "wherein the bonding is performed at a bonding temperature selected from 320, 340, 360 °C",
+            "material_id": "M11"
+          }
+        ]
+      },
+      {
+        "id": "CL-9",
+        "depends_on": [
+          "CL-4",
+          "CL-5",
+          "CL-6"
+        ],
+        "dependency_type": "multiple-or",
+        "text_verbatim": "The stacked thermal module of any one of claims 4 to 6, wherein the heat spreader comprises a copper alloy.",
+        "additions": [
+          {
+            "id": "CL-9/a1",
+            "attaches_to": "CL-1/e2",
+            "text_verbatim": "wherein the heat spreader comprises a copper alloy",
+            "material_id": "M12"
+          }
+        ]
+      }
+    ],
+    "applicant_interest": [
+      {
+        "claim": "CL-1",
+        "signal": "The interest is staked on forming the coolant path inside the spreader body itself; every dimension of the channel sits in a dependent claim, not in claim 1.",
+        "material_id": "M25"
+      },
+      {
+        "claim": "CL-7",
+        "signal": "The method claim stakes the same structure from the assembly side: bonding first, then sealing the folded path, with no separate lid step.",
+        "material_id": "M26"
+      }
+    ]
+  },
+  "figures": [
+    {
+      "id": "FIG-1",
+      "numerals": [
+        "110",
+        "112",
+        "116",
+        "210"
+      ],
+      "caption_quote": "FIG. 1 is an exploded view of the stacked thermal module.",
+      "raw_path": "00-source/figures-raw/fig-01.png",
+      "asset_path": null
+    },
+    {
+      "id": "FIG-2",
+      "numerals": [
+        "210",
+        "212",
+        "214",
+        "216"
+      ],
+      "caption_quote": "FIG. 2 is a section view of the heat spreader.",
+      "raw_path": "00-source/figures-raw/fig-02.png",
+      "asset_path": null
+    }
+  ],
+  "items": [
+    {
+      "id": "M1",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-1/e1",
+      "label_en": "substrate having a first surface",
+      "text_verbatim": "a substrate having a first surface;"
+    },
+    {
+      "id": "M2",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-1/e2",
+      "label_en": "heat spreader that defines the fluid channel in its own body",
+      "text_verbatim": "a heat spreader thermally coupled to the first surface, the heat spreader defining a fluid channel that includes an inlet port and a folded flow path."
+    },
+    {
+      "id": "M3",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-1/e2/e1",
+      "label_en": "inlet port of the fluid channel",
+      "text_verbatim": "an inlet port"
+    },
+    {
+      "id": "M4",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-1/e2/e2",
+      "label_en": "folded flow path of the fluid channel",
+      "text_verbatim": "a folded flow path"
+    },
+    {
+      "id": "M5",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-2/a1",
+      "label_en": "hydraulic diameter limitation on the fluid channel",
+      "text_verbatim": "wherein the fluid channel has a hydraulic diameter of 0.08 mm"
+    },
+    {
+      "id": "M6",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-4/a1",
+      "label_en": "ceramic layer thickness limitation on the substrate",
+      "text_verbatim": "wherein the substrate comprises a ceramic layer having a thickness of 0.05 to 0.10 mm"
+    },
+    {
+      "id": "M7",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-5/a1",
+      "label_en": "flow path length limitation on the folded flow path",
+      "text_verbatim": "wherein the folded flow path has a total flow path length of at least 12 mm"
+    },
+    {
+      "id": "M8",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-6/a1",
+      "label_en": "offset limitation between the inlet port and the outlet port",
+      "text_verbatim": "wherein the inlet port is offset from an outlet port of the fluid channel"
+    },
+    {
+      "id": "M9",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-7/e1",
+      "label_en": "bonding step of the assembly method",
+      "text_verbatim": "bonding a heat spreader to a first surface of a substrate;"
+    },
+    {
+      "id": "M10",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-7/e2",
+      "label_en": "sealing step of the assembly method",
+      "text_verbatim": "sealing a folded flow path formed in the heat spreader."
+    },
+    {
+      "id": "M11",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-8/a1",
+      "label_en": "bonding temperature limitation on the bonding step",
+      "text_verbatim": "wherein the bonding is performed at a bonding temperature selected from 320, 340, 360 °C"
+    },
+    {
+      "id": "M12",
+      "kind": "component",
+      "status": "active",
+      "superseded_by": null,
+      "claim_ref": "CL-9/a1",
+      "label_en": "copper alloy limitation on the heat spreader",
+      "text_verbatim": "wherein the heat spreader comprises a copper alloy"
+    },
+    {
+      "id": "M13",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "hydraulic diameter of the fluid channel",
+      "origin": "quoted",
+      "value_raw": "0.08 mm",
+      "value_normalized": "0.08",
+      "value_type": {
+        "kind": "scalar",
+        "approximate": false,
+        "value": "0.08"
+      },
+      "unit": "mm",
+      "machine_verifiable": true,
+      "source": {
+        "locator": "[0043]",
+        "quote": "the hydraulic diameter is 0.08 mm, and the drawings do not mark this dimension",
+        "value_span": {
+          "start": 26,
+          "end": 33
+        }
+      }
+    },
+    {
+      "id": "M14",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "thickness of the ceramic layer of the substrate",
+      "origin": "quoted",
+      "value_raw": "0.05 to 0.10 mm",
+      "value_normalized": "0.05-0.1",
+      "value_type": {
+        "kind": "range",
+        "approximate": false,
+        "low": "0.05",
+        "high": "0.1",
+        "low_inclusive": true,
+        "high_inclusive": true
+      },
+      "unit": "mm",
+      "machine_verifiable": true,
+      "source": {
+        "locator": "[0045]",
+        "quote": "The substrate 110 carries a ceramic layer 116 whose thickness is 0.05 to 0.10 mm.",
+        "value_span": {
+          "start": 65,
+          "end": 80
+        }
+      }
+    },
+    {
+      "id": "M15",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "minimum total flow path length in the preferred arrangement",
+      "origin": "quoted",
+      "value_raw": "at least 12 mm",
+      "value_normalized": ">=12",
+      "value_type": {
+        "kind": "inequality",
+        "approximate": false,
+        "bound": "12",
+        "direction": "at-least"
+      },
+      "unit": "mm",
+      "machine_verifiable": true,
+      "source": {
+        "locator": "[0044]",
+        "quote": "In a preferred arrangement the total flow path length is at least 12 mm.",
+        "value_span": {
+          "start": 57,
+          "end": 71
+        }
+      }
+    },
+    {
+      "id": "M16",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "coolant fill fraction of the channel volume",
+      "origin": "quoted",
+      "value_raw": "50 ±5 %",
+      "value_normalized": "50+-5%",
+      "value_type": {
+        "kind": "tolerance",
+        "approximate": false,
+        "center": "50",
+        "tolerance": "5",
+        "tolerance_unit": "percent"
+      },
+      "unit": null,
+      "machine_verifiable": true,
+      "source": {
+        "locator": "[0048]",
+        "quote": "Coolant occupies 50 ±5 % of the channel volume",
+        "value_span": {
+          "start": 17,
+          "end": 24
+        }
+      }
+    },
+    {
+      "id": "M17",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "bonding temperatures offered for the bonding step",
+      "origin": "quoted",
+      "value_raw": "320, 340, 360 °C",
+      "value_normalized": "320;340;360",
+      "value_type": {
+        "kind": "set",
+        "approximate": false,
+        "members": [
+          "320",
+          "340",
+          "360"
+        ]
+      },
+      "unit": "°C",
+      "machine_verifiable": true,
+      "source": {
+        "locator": "[0047]",
+        "quote": "the bonding temperature is selected from 320, 340, 360 °C according to the alloy of the heat spreader 210",
+        "value_span": {
+          "start": 41,
+          "end": 57
+        }
+      }
+    },
+    {
+      "id": "M18",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "total flow path length of the folded flow path",
+      "origin": "quoted",
+      "value_raw": "12 mm",
+      "value_normalized": "12",
+      "value_type": {
+        "kind": "scalar",
+        "approximate": false,
+        "value": "12"
+      },
+      "unit": "mm",
+      "machine_verifiable": true,
+      "source": {
+        "locator": "[0044]",
+        "quote": "The folded flow path 214 doubles back within the footprint so that the total flow path length is 12 mm.",
+        "value_span": {
+          "start": 97,
+          "end": 102
+        }
+      }
+    },
+    {
+      "id": "M19",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "ratio of total flow path length to hydraulic diameter",
+      "origin": "derived",
+      "value_raw": "150",
+      "value_normalized": "150",
+      "value_type": {
+        "kind": "scalar",
+        "approximate": false,
+        "value": "150"
+      },
+      "unit": null,
+      "machine_verifiable": true,
+      "derivation": {
+        "formula": "length_mm / diameter_mm",
+        "inputs": [
+          {
+            "name": "length_mm",
+            "ref": "M18"
+          },
+          {
+            "name": "diameter_mm",
+            "ref": "M13"
+          }
+        ],
+        "rounding": {
+          "mode": "none",
+          "digits": 0
+        }
+      }
+    },
+    {
+      "id": "M20",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "total flow path length expressed in centimetres",
+      "origin": "derived",
+      "value_raw": "1.2 cm",
+      "value_normalized": "1.2",
+      "value_type": {
+        "kind": "scalar",
+        "approximate": false,
+        "value": "1.2"
+      },
+      "unit": "cm",
+      "machine_verifiable": true,
+      "derivation": {
+        "formula": "length_mm / 10",
+        "inputs": [
+          {
+            "name": "length_mm",
+            "ref": "M18"
+          }
+        ],
+        "rounding": {
+          "mode": "decimal-places",
+          "digits": 1
+        }
+      }
+    },
+    {
+      "id": "M21",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "priority date of the application",
+      "origin": "bibliographic",
+      "value_raw": "2024-03-11",
+      "value_normalized": "2024-03-11",
+      "value_type": {
+        "kind": "date",
+        "approximate": false,
+        "value": "2024-03-11"
+      },
+      "unit": null,
+      "machine_verifiable": true,
+      "bib_source": {
+        "field": "patent.dates.priority"
+      }
+    },
+    {
+      "id": "M22",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "publication number of the application",
+      "origin": "bibliographic",
+      "value_raw": "XX0000000A1",
+      "value_normalized": "XX0000000A1",
+      "value_type": {
+        "kind": "identifier",
+        "approximate": false,
+        "value": "XX0000000A1"
+      },
+      "unit": null,
+      "machine_verifiable": true,
+      "bib_source": {
+        "field": "patent.number"
+      }
+    },
+    {
+      "id": "M23",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "number of channel passes visible in the section view",
+      "origin": "figure-sourced",
+      "value_raw": "4",
+      "value_normalized": "4",
+      "value_type": {
+        "kind": "scalar",
+        "approximate": false,
+        "value": "4"
+      },
+      "unit": null,
+      "machine_verifiable": false,
+      "figure_source": {
+        "figure": "FIG-2",
+        "numerals": [
+          "214"
+        ],
+        "locator": "FIG. 2"
+      }
+    },
+    {
+      "id": "M24",
+      "kind": "fact",
+      "status": "retracted",
+      "superseded_by": null,
+      "label_en": "thickness of the ceramic layer as recited in claim 4",
+      "origin": "quoted",
+      "value_raw": "0.05 to 0.10 mm",
+      "value_normalized": "0.05-0.1",
+      "value_type": {
+        "kind": "range",
+        "approximate": false,
+        "low": "0.05",
+        "high": "0.1",
+        "low_inclusive": true,
+        "high_inclusive": true
+      },
+      "unit": "mm",
+      "machine_verifiable": true,
+      "source": {
+        "locator": "claim 4",
+        "quote": "a ceramic layer having a thickness of 0.05 to 0.10 mm",
+        "value_span": {
+          "start": 38,
+          "end": 53
+        }
+      }
+    },
+    {
+      "id": "M25",
+      "kind": "implication",
+      "status": "active",
+      "superseded_by": null,
+      "statement_en": "Forming the channel inside the spreader body points at removing a cold plate rather than adding one: the design attacks heat by deleting an interface, not by stacking another part.",
+      "basis": "spec",
+      "derived_from": [
+        "M2",
+        "M30"
+      ],
+      "numeric_refs": [],
+      "evidence_quotes": [
+        "the channel is formed within the spreader so that a separate cold plate is not required"
+      ],
+      "confidence": "inferred"
+    },
+    {
+      "id": "M26",
+      "kind": "implication",
+      "status": "active",
+      "superseded_by": null,
+      "statement_en": "The method claim reads as the assembly-side twin of the same idea: the folded path is closed after bonding, so the sealing step is what replaces the lid that a separate cold plate would have needed.",
+      "basis": "claim",
+      "derived_from": [
+        "M25",
+        "M9",
+        "M10"
+      ],
+      "numeric_refs": [],
+      "evidence_quotes": [
+        "The sealing step closes the folded flow path 214 after the spreader has been bonded, and no separate lid is used."
+      ],
+      "confidence": "inferred"
+    },
+    {
+      "id": "M27",
+      "kind": "positioning",
+      "status": "active",
+      "superseded_by": null,
+      "background_problem": "Conventional assemblies put a cold plate on top of the module, which adds one more thermal interface.",
+      "asserted_effect": "The specification states in words that the thermal interface count is reduced by one.",
+      "delta": "The asserted delta is structural simplification - a part is removed - rather than a claimed performance number.",
+      "numeric_refs": [],
+      "quotes": [
+        "Conventional assemblies stack a cold plate on top of the module, which adds one more thermal interface.",
+        "the thermal interface count is reduced by one"
+      ]
+    },
+    {
+      "id": "M28",
+      "kind": "figure_note",
+      "status": "active",
+      "superseded_by": null,
+      "figure": "FIG-2",
+      "what_it_shows_en": "The section view shows the folded path doubling back inside the spreader, with the inlet and the outlet at opposite corners.",
+      "numerals": [
+        "210",
+        "212",
+        "214",
+        "216"
+      ]
+    },
+    {
+      "id": "M29",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M1",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "found"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0042]",
+          "quote": "the first surface 112 of the substrate 110",
+          "span": {
+            "start": 2232,
+            "end": 2274
+          }
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-1",
+          "numerals": [
+            "110",
+            "112"
+          ],
+          "caption_quote": "FIG. 1 is an exploded view of the stacked thermal module."
+        }
+      ]
+    },
+    {
+      "id": "M30",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M2",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "found"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0042]",
+          "quote": "The heat spreader 210 is bonded to the first surface 112 of the substrate 110.",
+          "span": {
+            "start": 2197,
+            "end": 2275
+          }
+        },
+        {
+          "locator": "[0048]",
+          "quote": "Coolant occupies 50 ±5 % of the channel volume",
+          "span": {
+            "start": 3096,
+            "end": 3143
+          }
+        },
+        {
+          "locator": "[0051]",
+          "quote": "The controller labels each supported format as FP8 (1-5-2) and FP6 (1-3-2), selects the exponent field with Act 0 <6:3>, carries the prior stage bit C.sub.j−1, and repeats the layout of FIG. 1 and Table 2 without changing any dimension.",
+          "span": {
+            "start": 3378,
+            "end": 3616
+          }
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-2",
+          "numerals": [
+            "210"
+          ],
+          "caption_quote": "FIG. 2 is a section view of the heat spreader."
+        }
+      ]
+    },
+    {
+      "id": "M31",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M3",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "found"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0046]",
+          "quote": "The inlet port 212 sits at one corner of the spreader",
+          "span": {
+            "start": 2850,
+            "end": 2903
+          }
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-2",
+          "numerals": [
+            "212"
+          ],
+          "caption_quote": "FIG. 2 is a section view of the heat spreader."
+        }
+      ]
+    },
+    {
+      "id": "M32",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M4",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "found"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0044]",
+          "quote": "The folded flow path 214 doubles back within the footprint so that the total flow path length is 12 mm.",
+          "span": {
+            "start": 2575,
+            "end": 2678
+          }
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-2",
+          "numerals": [
+            "214"
+          ],
+          "caption_quote": "FIG. 2 is a section view of the heat spreader."
+        }
+      ]
+    },
+    {
+      "id": "M33",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M5",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "not-depicted"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0043]",
+          "quote": "the hydraulic diameter is 0.08 mm, and the drawings do not mark this dimension",
+          "span": {
+            "start": 2487,
+            "end": 2565
+          }
+        }
+      ],
+      "figure_refs": [],
+      "search_note": "FIG-1·FIG-2 의 전 도면부호(110·112·116·210·212·214·216)와 두 캡션을 대조했으나 수력직경 치수는 도면에 표기되지 않음. 명세서 [0043] 이 미표기 사실을 문언으로 밝히므로 은폐가 아니라 신고된 예외로 처리함."
+    },
+    {
+      "id": "M34",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M6",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "found"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0045]",
+          "quote": "The substrate 110 carries a ceramic layer 116 whose thickness is 0.05 to 0.10 mm.",
+          "span": {
+            "start": 2760,
+            "end": 2841
+          }
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-1",
+          "numerals": [
+            "110",
+            "116"
+          ],
+          "caption_quote": "FIG. 1 is an exploded view of the stacked thermal module."
+        }
+      ]
+    },
+    {
+      "id": "M35",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M7",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "found"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0044]",
+          "quote": "In a preferred arrangement the total flow path length is at least 12 mm.",
+          "span": {
+            "start": 2679,
+            "end": 2751
+          }
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-2",
+          "numerals": [
+            "214"
+          ],
+          "caption_quote": "FIG. 2 is a section view of the heat spreader."
+        }
+      ]
+    },
+    {
+      "id": "M36",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M8",
+      "anchor_state": {
+        "spec": "no-anchor-found",
+        "figure": "found"
+      },
+      "spec_refs": [],
+      "figure_refs": [
+        {
+          "figure": "FIG-2",
+          "numerals": [
+            "212",
+            "216"
+          ],
+          "caption_quote": "FIG. 2 is a section view of the heat spreader."
+        }
+      ],
+      "search_note": "Description 전문([0041]~[0050])과 Claims 구간을 '오프셋·offset· opposite·spacing' 으로 훑었으나 두 포트의 오프셋 한정에 대응하는 명세서 조응부 없음. [0046] 은 두 포트가 반대 모서리에 있다는 배치만 말하고 오프셋 관계를 문언으로 밝히지 않음."
+    },
+    {
+      "id": "M37",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M9",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "found"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0047]",
+          "quote": "During assembly the bonding temperature is selected from",
+          "span": {
+            "start": 2964,
+            "end": 3020
+          }
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-1",
+          "numerals": [
+            "110",
+            "210"
+          ],
+          "caption_quote": "FIG. 1 is an exploded view of the stacked thermal module."
+        }
+      ]
+    },
+    {
+      "id": "M38",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M10",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "found"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0049]",
+          "quote": "The sealing step closes the folded flow path 214 after the spreader has been bonded",
+          "span": {
+            "start": 3181,
+            "end": 3264
+          }
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-2",
+          "numerals": [
+            "214"
+          ],
+          "caption_quote": "FIG. 2 is a section view of the heat spreader."
+        }
+      ]
+    },
+    {
+      "id": "M39",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M11",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "found"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0047]",
+          "quote": "the bonding temperature is selected from 320, 340, 360 °C according to the alloy of the heat spreader 210",
+          "span": {
+            "start": 2980,
+            "end": 3086
+          }
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-1",
+          "numerals": [
+            "210"
+          ],
+          "caption_quote": "FIG. 1 is an exploded view of the stacked thermal module."
+        }
+      ]
+    },
+    {
+      "id": "M40",
+      "kind": "grounding",
+      "status": "active",
+      "superseded_by": null,
+      "component": "M12",
+      "anchor_state": {
+        "spec": "found",
+        "figure": "found"
+      },
+      "spec_refs": [
+        {
+          "locator": "[0050]",
+          "quote": "The heat spreader 210 comprises a copper alloy",
+          "span": {
+            "start": 3303,
+            "end": 3349
+          }
+        }
+      ],
+      "figure_refs": [
+        {
+          "figure": "FIG-2",
+          "numerals": [
+            "210"
+          ],
+          "caption_quote": "FIG. 2 is a section view of the heat spreader."
+        }
+      ]
+    },
+    {
+      "id": "M41",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "filing date of the application",
+      "origin": "bibliographic",
+      "value_raw": "2025-03-10",
+      "value_normalized": "2025-03-10",
+      "value_type": {
+        "kind": "date",
+        "approximate": false,
+        "value": "2025-03-10"
+      },
+      "unit": null,
+      "machine_verifiable": true,
+      "bib_source": {
+        "field": "patent.dates.filing"
+      }
+    },
+    {
+      "id": "M42",
+      "kind": "fact",
+      "status": "active",
+      "superseded_by": null,
+      "label_en": "publication date of the application",
+      "origin": "bibliographic",
+      "value_raw": "2026-01-15",
+      "value_normalized": "2026-01-15",
+      "value_type": {
+        "kind": "date",
+        "approximate": false,
+        "value": "2026-01-15"
+      },
+      "unit": null,
+      "machine_verifiable": true,
+      "bib_source": {
+        "field": "patent.dates.publication"
+      }
+    },
+    {
+      "id": "M43",
+      "kind": "implication",
+      "status": "active",
+      "superseded_by": null,
+      "statement_en": "Sizing the channel at a hydraulic diameter of 0.08 mm is what makes the in-body coolant path a real path rather than a decorative one: at that scale the spreader body itself carries the flow instead of merely housing a tube.",
+      "basis": "spec",
+      "derived_from": [
+        "M2",
+        "M33"
+      ],
+      "numeric_refs": [
+        "M13"
+      ],
+      "evidence_quotes": [
+        "the hydraulic diameter is 0.08 mm"
+      ],
+      "confidence": "inferred"
+    }
+  ],
+  "provenance": {
+    "read_runs": [
+      "read-a-0f1c2d3",
+      "read-b-9a8b7c6"
+    ],
+    "produced_at": "2026-02-01T00:00:00Z",
+    "engine_commit": "0000000"
+  },
+  "extensions": {
+    "docent": {
+      "drop_signal": {
+        "stage": "final",
+        "verdict": "go",
+        "reason": "권리 관심이 한 구성(스프레더 몸체 안의 유로)에 뚜렷하고 효과 주장이 명세서 문언으로 존재해, 도슨트가 물증으로 착지할 자리가 있음."
+      }
+    }
+  }
+}

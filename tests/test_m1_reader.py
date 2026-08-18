@@ -1720,7 +1720,14 @@ def test_unclassified_dependent_is_excluded_from_parse_verdict() -> None:
         pytest.fail(f"미분류 목록이 비었거나 다르다: {row.extras['unclassified']}")
 
 
-def test_unclassified_declared_on_parseable_claim_is_rejected() -> None:
+def test_unclassified_without_structure_marker_is_rejected() -> None:
+    # ★ 개명(2026-08-19). 구 이름 `test_unclassified_declared_on_parseable_claim_is_rejected`
+    #   의 `on_parseable_claim` 은 폐기된 판정 기준(인용 어형의 파싱 가능성)의 어휘였고,
+    #   본문 ⓐ가 검증하는 것과 **정반대**였다 — ⓐ는 파싱이 잘 되는 Markush 종속항의
+    #   `unclassified` 선언이 **통과해야 한다**고 못 박는다. 이름이 본문과 모순하면
+    #   다음 사람이 이름을 믿고 규칙을 되돌린다. 구 이름을 인용한 자리 =
+    #   `docs/decisions/D-20260818-04-m1-close.md` §1 — 그 문서는 기록이므로 고치지 않고,
+    #   대응은 `D-20260819-01` 이 든다.
     """미분류가 회피 통로가 되면 침묵 통과가 부활한다 — 판정 기준은 본문의 **구조 표지 유무**다(재정 P-1)."""
     # ⓐ 구조 표지가 있는 청구항의 선언은 **통과**한다.
     #    (재정이 명한 사용을 벌하면 그 규칙은 재정을 뒤집는 것이다.)
@@ -1761,14 +1768,21 @@ def test_bibliography_rejects_wrong_earliest_priority() -> None:
     spec = golden_spec()
     spec["patent"]["priority_claims"].append(
         # 같은 번호의 더 이른 주장 — 번호는 원천에 실재하므로 부분문자열 대조는 통과한다.
-        {"number": "XX2024-0000111", "date": "2023-11-02", "jurisdiction": "XX"}
+        #
+        # ★ 날짜를 2024년 안에서 고른다(2026-08-19 정정). 구 픽스처는 `2023-11-02` 를 썼는데
+        #   골든 원천은 `Priority: application XX2024-0000111 filed on 11 March 2024 (XX)` 라
+        #   적으므로 **2023 은 원천 어디에도 없다** — 즉 구 대조군은 그 자체가 날조된 우선권
+        #   날짜였고, 신설 규칙 `bib.priority-year-in-source`(재정 P-2 ⓐ 부분 판정의 처분)가
+        #   정확히 그것을 잡는다. 이 시험의 의도(최우선일 등식의 반증)는 연도를 바꾸어도
+        #   그대로 살아 있으므로 픽스처를 고친다. 규칙을 느슨하게 하는 쪽이 아니다.
+        {"number": "XX2024-0000111", "date": "2024-01-05", "jurisdiction": "XX"}
     )
     row = run("read.bibliography", spec)
     require_fail(row, "bib.earliest-priority")
 
     # 대조군 — 최우선일을 목록의 최소 날짜로 맞추면 통과한다(과잉 제약 배제).
     fixed = copy.deepcopy(spec)
-    fixed["patent"]["dates"]["priority"] = "2023-11-02"
+    fixed["patent"]["dates"]["priority"] = "2024-01-05"
     require_pass(run("read.bibliography", fixed))
 
 

@@ -8,7 +8,7 @@
     "revision": "base/material-spec.rev2.json"
   },
   "floors": {
-    "min_cases": 39,
+    "min_cases": 42,
     "per_check_min": 1,
     "exempt_checks": [
       "read.schema"
@@ -545,11 +545,42 @@
         "read.bibliography"
       ],
       "mutation": "patent.priority_claims[0].date 를 '2024-03-11' → '2023-11-20' 으로 앞당긴다. dates.priority 는 '2024-03-11' 그대로이므로 최우선일이 목록의 최소 날짜와 어긋난다. 날짜 형태는 지켰으므로 스키마는 통과한다.",
-      "basis": "★ C18(최우선일의 정확성)의 유일한 기계 판정인 bib.earliest-priority 의 반증 표본. 재정 P-2 ⓐ 가 우선권을 목록형으로 만든 이유가 바로 이것이다 — 목록이 없으면 '최우선일이 맞는가'는 검증조차 성립하지 않는다. ★ 변조 방식의 선택 근거: '더 이른 우선권 주장을 하나 **추가**' 하는 판이 서사적으로는 더 자연스럽지만(레인이 두 번째 주장을 최우선일 산정에 접지 않은 경우), 그 판은 새 번호가 원천 서지면에 없으므로 bib.priority-number-in-source 까지 함께 울린다. 두 결함을 한 파일에 넣지 않기 위해 **기존 항목의 날짜 한 곳만** 바꿨다. 날짜는 정규화 값이라 원천 부분문자열 대조 대상이 아니므로(bibliography.dates_excluded_why) 이 한 곳은 다른 어느 규칙도 건드리지 않는다.",
+      "basis": "★ C18(최우선일의 정확성)의 유일한 기계 판정인 bib.earliest-priority 의 반증 표본. 재정 P-2 ⓐ 가 우선권을 목록형으로 만든 이유가 바로 이것이다 — 목록이 없으면 '최우선일이 맞는가'는 검증조차 성립하지 않는다. ★ 변조 방식의 선택 근거: '더 이른 우선권 주장을 하나 **추가**' 하는 판이 서사적으로는 더 자연스럽지만(레인이 두 번째 주장을 최우선일 산정에 접지 않은 경우), 그 판은 새 번호가 원천 서지면에 없으므로 bib.priority-number-in-source 까지 함께 울린다. 두 결함을 한 파일에 넣지 않기 위해 **기존 항목의 날짜 한 곳만** 바꿨다. 날짜는 정규화 값이라 원천 부분문자열 대조 대상이 아니므로(bibliography.dates_excluded_why) 이 한 곳은 다른 어느 규칙도 건드리지 않는다. ★ 이 마지막 문장은 2026-08-18 근접 대조 신설로 **범위가 좁아졌다**(지우지 않고 정정한다): 연 4자리는 이제 대조 대상이므로(bib.priority-year-in-source) 이 변조는 같은 검사 안에서 **규칙 2종**을 울린다 — 2023 은 우선권 번호 곁의 창 안에 없다. 검사 배정(read.bibliography 단독)은 그대로이므로 expect_fail 은 바뀌지 않는다.",
       "traces": [
         "재정 2026-08-18 P-2 ⓐ",
         "reader-rules.yaml#bibliography.rules.bib.earliest-priority",
         "스키마 $comment (15)"
+      ]
+    },
+    {
+      "file": "invalid/bibliography-priority-jurisdiction-out-of-window.json",
+      "role": "spec",
+      "expect_fail": [
+        "read.bibliography"
+      ],
+      "mutation": "patent.priority_claims[0].jurisdiction 을 'XX' → 'IP' 로 바꾼다. ★ 'IP' 는 원천에 **실재한다** — 서지면 마지막에서 두 번째 행이 'IPC: H01L 23/473' 이다. 다만 그 자리는 우선권 번호(XX-2024-000101)에서 90자 넘게 떨어져 있어 창(priority_window 32/32) 밖이다. 형태는 ^[A-Z]{2}$ 를 지키므로 스키마는 통과한다.",
+      "basis": "★ 2026-08-18 sol 독립 감수 P-2 ⓐ 부분 판정의 처분으로 신설된 bib.priority-jurisdiction-in-source 의 반증 표본이다. 감수자는 실특허 런에서 우선권 관할을 **전부 KR 로 바꿔도** 검사가 pass·checked=16 이었음을 실측했다 — 우선권 목록의 관할은 어느 규칙도 보지 않는 자리였다. ★ 이 판이 'KR' 같은 완전 부재 코드가 아니라 원천에 실재하는 'IP' 를 쓰는 이유: 신설 규칙이 **전역 부분문자열 대조가 아니라 근접 대조**임을 반증하기 위해서다. 전역 대조로 구현하면 이 판은 통과하고, 그러면 US·KR 처럼 긴 명세서 어디에나 나타나는 두 글자 코드는 무엇으로 바꿔도 통과한다 — 근접성이 이 검사의 전부이며 그 사실을 데이터로 붙잡는 판이 이것이다. ★ 다른 축과 섞이지 않는 이유: priority_claims[].jurisdiction 은 patent 블록 안에서 닫히고 어느 항목도 이 값을 참조하지 않는다(bib_source.field enum 에도 없다). 상위 patent.jurisdiction 은 손대지 않았으므로 bib.jurisdiction-prefix 도 통과한다 — 그 규칙과 이 규칙이 보는 대상이 다르다는 사실 자체가 이 판으로 드러난다.",
+      "traces": [
+        "2026-08-18 sol 독립 감수 P-2 ⓐ 부분 판정",
+        "docs/lessons/2026-08-18-sol-audit-m15-full.md",
+        "reader-rules.yaml#bibliography.rules.bib.priority-jurisdiction-in-source",
+        "reader-rules.yaml#bibliography.priority_window"
+      ]
+    },
+    {
+      "file": "invalid/bibliography-priority-year-coherent-forgery.json",
+      "role": "spec",
+      "expect_fail": [
+        "read.bibliography",
+        "read.value-derivation"
+      ],
+      "mutation": "patent.priority_claims[0].date 와 patent.dates.priority 를 **함께** '1900-01-01' 로 바꾼다(정합 위조). 두 값이 서로 맞으므로 bib.earliest-priority 의 등식은 성립하며 그 규칙은 울리지 않는다 — 잡는 것은 bib.priority-year-in-source 다(1900 은 우선권 번호 곁의 창 안에 없다).",
+      "basis": "★ 관계만 보는 검사는 **관계를 지킨 거짓**을 막지 못한다. 총괄이 실특허 런에서 실측한 잔여 구멍이 이것이며(D-20260818-04 §5.3), 두 날짜를 나란히 위조하면 구 규칙 7종 전부가 pass 였다. 연 4자리는 어느 표기 형식에서도 원천에 그대로 나타나므로(dates_excluded_why 의 범위 정정) 그 자리에 대조가 선다. ★ 이 판이 '한 곳만' 규율의 예외인 이유를 적는다: **정합 위조는 정의상 두 자리를 함께 바꾸는 것**이다. 한 곳만 바꾸면 그것은 이미 등재된 bibliography-earliest-priority-mismatch 이며 새 규칙이 무엇을 더 막는지 증명하지 못한다. ★ 파급 1건을 선언한다: patent.dates.priority 는 서지 수확기의 소유이므로(재정 P-B) 그 값을 바꾸면 M21(origin: bibliographic · bib_source.field = patent.dates.priority)이 원천 서지면과 어긋나 read.value-derivation 이 value.bibliographic·value.harvest-parity 2건을 함께 낸다. 회피가 아니라 사실이며, 그것이 이 판을 **다층 방어의 실측**으로 만든다 — 다만 그 층은 patent.dates.priority 한 자리만 지킨다. priority_claims[].date 는 수확기의 소유가 아니므로(서지 fact 4종에 없다) 그 자리를 지키는 검사는 신설 규칙뿐이며, 그 사실의 반증은 tests/test_m16_bibliography.py 의 실특허 시험(다른 검사는 전부 통과한 채 이 규칙만 우는 판)이 맡는다.",
+      "traces": [
+        "docs/decisions/D-20260818-04-m1-close.md §5.3",
+        "2026-08-18 sol 독립 감수 P-2 ⓐ 부분 판정",
+        "reader-rules.yaml#bibliography.rules.bib.priority-year-in-source",
+        "reader-rules.yaml#bibliography.dates_excluded_why(범위 정정)"
       ]
     },
     {
@@ -564,6 +595,21 @@
         "SPEC §2.2 불변식 I5",
         "SPEC §2.4 ID 규율",
         "M1 실특허 스모크 2026-08-18"
+      ]
+    },
+    {
+      "file": "invalid/harvest-coordinate-artifact.json",
+      "role": "spec",
+      "expect_fail": [
+        "read.value-derivation"
+      ],
+      "mutation": "M14(quoted · [0045] 의 '0.05 to 0.10 mm')를 [0051] 의 FP 3항 표기 'FP8 (1-5-2)' 안쪽 구간으로 옮기고 value_raw 를 '1-5'(range 1~5)로 바꾼 판. 좌표 표현의 조각이 수치 사실로 정답지에 오른 형태이며, 통주 2 가 실특허에서 실측한 23건(M87~M109)의 대표 1건을 합성 코퍼스로 옮긴 것이다. ★ 파급 2건을 그대로 적는다 — 이 한 곳의 이동은 [0045] 에 [누락] 1건(수확기는 여전히 '0.05 to 0.10 mm' 를 낸다)과 [0051] 에 [추가] 1건(수확기는 봉투 배제로 그 구간에서 아무것도 내지 않는다)을 함께 만든다. 둘은 같은 이동의 앞뒤 면이며 회피할 수 없다. value_type 을 range 그대로 둔 이유는 M14 가 본래 range 였기 때문이다 — 종류를 함께 바꾸면 어느 것이 실패를 유발했는지 증명되지 않는다.",
+      "basis": "★ 2026-08-18 통주 2 실측 처분(재정 P-B 잔여 — 봉투 패턴 배제 4종). 이 판이 겨누는 것은 '좌표 표현을 값으로 읽지 않는다' 는 규율의 **역방향**이다: 배제된 구간의 조각을 사람이 손으로 fact 로 올리면 정답지에 원문이 하지 않은 주장이 심긴다('1-5' 는 '1 이상 5 이하' 라는 뜻이 되는데 원문은 FP8 의 부호-지수-가수 비트 폭을 적었을 뿐이다). ★ 정직한 한계 표기 — 이 판은 **검사 수준에서 봉투 규칙을 단독으로 판별하지 않는다**(봉투 규칙이 없어도 [누락] 때문에 같은 검사가 운다). 봉투 규칙의 단독 판별은 두 자리가 맡는다: ① 무변조 base — [0051] 이 접지되어 있으므로 봉투 배제가 꺼지면 base 에 [누락] 8건이 생겨 기준선이 즉시 깨진다(실측: '1-5'·'1-3'·'0'·'<6'·'3'·'1'·'1'·'2') ② tests/test_m16_harvest_boundary.py 의 양방향 회귀(배제 4계열 + 살아남아야 하는 진짜 어형).",
+      "traces": [
+        "reader-rules.yaml#numeric_harvest.exclusions(match: enclosing-pattern 4종)",
+        "reader-rules.yaml#numeric_harvest.enclosing_exclusions",
+        "runs/openai-us20260147854a1-cim-fp-2 통주 2 실측(quoted 30건 중 23건이 오파싱)",
+        "SPEC §2.6 검사 6 · 재정 P-B"
       ]
     }
   ]

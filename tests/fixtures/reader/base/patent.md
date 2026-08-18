@@ -64,3 +64,5 @@ FIG. 2 is a section view of the heat spreader.
 [0049] The sealing step closes the folded flow path 214 after the spreader has been bonded, and no separate lid is used.
 
 [0050] The heat spreader 210 comprises a copper alloy in one arrangement.
+
+[0051] The controller labels each supported format as FP8 (1-5-2) and FP6 (1-3-2), selects the exponent field with Act 0 <6:3>, carries the prior stage bit C.sub.j−1, and repeats the layout of FIG. 1 and Table 2 without changing any dimension.
