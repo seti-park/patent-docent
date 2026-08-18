@@ -30,6 +30,7 @@
 
 | 일자 | 파일 | 안건 | 지위 | 주 반영처 |
 |---|---|---|---|---|
+| 2026-08-19 | `ruling-20260819-01-P12-P15.md` | P-12 ~ P-15 (4건) — 레인 왕복 시점 결속 · CP1 시점 · 기준선 청정 요건화 · P-9 관할 정정 | **원문** | `engine/lanes/**` · `engine/stages/read.py` · `contracts/stages/read.yaml` · `tools/check_lane_binding.py` · `SPEC.md` §8.2·§8.4 |
 | 2026-08-18 (후반) | `ruling-20260818-03-P1-P11.md` | P-1 ~ P-11 계열 (17건) + D·E 지시 + 처분 4건 | **원문** | `CHARTER.md` v1.3(D4) · `SPEC.md` v0.5 · `contracts/**` · `reader/**` · `engine/**` · `tools/check_spec_refs.py` |
 | 2026-08-18 | `ruling-20260818-02-N14-N15.md` | N14 · N15 (2건) | **원문** | `SPEC.md` v0.4 §2.1·§6.3·§8.4 M1·§9.26~§9.28 · `CLAUDE.md` §2 · `reader/READER-VERSION` |
 | 2026-08-18 | `ruling-20260818-01-N1-N13.md` | N1 · N2 · N-D11 · N3 ~ N13 (13건) | **원문** | `CHARTER.md` v1.2 · `SPEC.md` v0.3 · `contracts/**` · `reader/schemas/**` |
