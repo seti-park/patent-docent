@@ -91,8 +91,14 @@ def run_all_read(spec: dict, source: str) -> list:
 #   `value.harvest-parity` 가 그것을 [추가]로 신고한다. 그 신고는 옳다 — 옛 산출이 새 법에
 #   맞지 않는다는 사실의 정확한 기술이며, 런을 고쳐서 지울 것이 아니다(원본은 읽기 전용).
 #   그러므로 이 파일은 그 한 검사만 예외로 두되 **범위를 좁혀** 둔다: 아래 헬퍼가
-#   "이 실패가 정말 그 표류인가"(전 결함이 value.harvest-parity 의 [추가]인가)를 확인하며,
-#   다른 규칙이 섞이는 순간 예외는 성립하지 않는다.
+#   "이 실패가 정말 그 표류인가"를 확인하며, 다른 규칙이 섞이는 순간 예외는 성립하지 않는다.
+#
+#   ★ 2026-08-19 (재정 Q4) — **표류가 반대 방향으로도 생겼다.** 단위 어휘에 `b`(bits)가
+#   신설되면서 `[0189]` 의 `5b, 4b, 3b or 2b` 넷이 이제 수확된다. 그 넷은 이 핀 커밋의
+#   명세에 **없으므로** 같은 규칙이 [누락]으로 신고한다. [추가]와 [누락]은 **같은 사건의 두
+#   방향**이다 — 옛 수확본과 현행 수확기가 다르다는 것. 그래서 예외를 방향으로 좁히던
+#   기존 조건을 **두 방향으로** 넓히되, [변조]는 **여전히 예외가 아니다**: 좌표가 같은데
+#   값이 다른 것은 표류가 아니라 위조이며, 그것까지 눈감으면 예외가 곧 은폐가 된다.
 PINNED_HARVEST_DRIFT = "read.value-derivation"
 
 
@@ -101,11 +107,16 @@ def is_pinned_harvest_drift(row) -> bool:
 
     표류가 아닌 결함(값 파싱·산식 재계산·정규화 불일치)이 하나라도 섞이면 False 다 —
     예외의 폭이 넓어지면 예외가 곧 은폐가 된다.
+
+    방향은 둘 다 표류다: [추가] = 옛 명세가 든 값을 지금 수확기가 내지 않는다 ·
+    [누락] = 지금 수확기가 내는 값을 옛 명세가 들지 않는다. **[변조]는 표류가 아니다** —
+    좌표가 같은데 값이 다른 것은 법의 개정으로 설명되지 않는다.
     """
     if row.check_id != PINNED_HARVEST_DRIFT or not row.findings:
         return False
     return all(
-        finding.rule == "value.harvest-parity" and "[추가]" in finding.message
+        finding.rule == "value.harvest-parity"
+        and ("[추가]" in finding.message or "[누락]" in finding.message)
         for finding in row.findings
     )
 

@@ -320,7 +320,10 @@ numeric:
     - { rank: 6,  kind: range,               pattern: '\b\d+(?:\.\d+)?\s*(?:-|–|—|to)\s*\d+(?:\.\d+)?\s*[A-Za-zµ%°]*\b' }
     - { rank: 7,  kind: percent,             pattern: '\b\d+(?:\.\d+)?\s*%' }
     - { rank: 8,  kind: multiplier,          pattern: '\b\d+(?:\.\d+)?\s*[x×]\b' }
-    - { rank: 9,  kind: value-unit,          pattern: '\b\d[\d,]*(?:\.\d+)?\s*(?:micron|µm|um|nm|mm|cm|kHz|MHz|GHz|Hz|TOPS|GB|MB|Gb|bits|bit|kg|mg|ms|ns|ps|us|dB|pJ|mW|mV|mA|ohm|Ω|°C|K|W|V|A|J|m|g|t|s)\b' }
+    # rank 9 의 단위 대안은 **좌측 우선**이다(파이썬 `re`) — 긴 표기를 앞에 둔다.
+    # 맨 끝의 `b`(bits, 재정 2026-08-19 Q4)가 그 규율의 자리다: `bits|bit|Gb` 보다 앞에 두면
+    # `5 bits` 가 `5 b` 로 잘려 단위가 갈린다. 새 단위를 더할 때도 짧은 것을 뒤로 민다.
+    - { rank: 9,  kind: value-unit,          pattern: '\b\d[\d,]*(?:\.\d+)?\s*(?:micron|µm|um|nm|mm|cm|kHz|MHz|GHz|Hz|TOPS|GB|MB|Gb|bits|bit|kg|mg|ms|ns|ps|us|dB|pJ|mW|mV|mA|ohm|Ω|°C|K|W|V|A|J|m|g|t|s|b)\b' }
     - { rank: 10, kind: bare-year,           pattern: '\b(?:19|20)\d{2}\b' }
     - { rank: 11, kind: bare-number,         pattern: '\b\d[\d,]*(?:\.\d+)?\b' }
 
@@ -335,6 +338,15 @@ numeric:
         value-unit 단위 목록 확장 — micron · kg · g · mg · t · ns · ps · us · ms · s ·
         Hz · kHz · dB · Ω|ohm 추가. micron 이 별칭 사전에만 있고 토큰화에 없어
         도달 불가였던 결함을 해소한다(기존 목록은 전량 유지).
+    - at: 2026-08-19
+      change: >-
+        value-unit 단위 목록에 `b`(bits) 추가 — **재정 2026-08-19 Q4**. 실측 근거 = 통주 특허
+        `[0189]` 의 `5b, 4b, 3b or 2b`(네 값이 단위 미인정 탓에 수확에서 기각되고 있었다).
+        `reader/reader-rules.yaml#numeric_harvest.unit_detection.vocabulary` 와 **함께 가는
+        입법**이다 — 두 벌이 갈리면 재료와 본문이 다른 MATCH_KEY 를 만들어 숫자 전수 대조가
+        성립하지 않는다. 대안 목록의 **맨 끝**에 둔 것은 규율이다(위 주석 — 좌측 우선).
+        `unit_aliases` 는 건드리지 않았다: 인식 어휘의 확장이지 정규화 매핑의 신설이 아니며,
+        `normalize_unit("b") == "b"` 이므로 MATCH_KEY 의 의미는 바뀌지 않는다.
 
   # 정규화 규칙
   normalization:

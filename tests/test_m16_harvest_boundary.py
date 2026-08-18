@@ -309,10 +309,18 @@ def test_surface_scope_text_matches_the_rules_file() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_real_patent_quoted_harvest_splits_into_seven_and_the_excluded() -> None:
+def test_real_patent_quoted_harvest_splits_into_eleven_and_the_excluded() -> None:
     """합성 표본만으로는 "통주 2 가 본 그 30건이 갈렸는가"를 증명할 수 없다.
 
     원본 런은 **읽기만** 한다(구 커밋의 런이며 이 레인의 소관이 아니다).
+
+    ★ 2026-08-19 (재정 Q4) — 기대값이 **7 에서 11 로** 늘었다. 구 이름은
+    test_real_patent_quoted_harvest_splits_into_seven_and_the_excluded 였다(폐기 이름은
+    백틱 없이 적는다 — 살아 있는 증거와 같은 서식으로 적으면 증거 대조 검사가 그것을
+    인용으로 읽는다). **규칙을 느슨하게 해서 통과시킨 것이 아니다**: 단위 어휘에 `b`(bits)가
+    신설되면서 `[0189]` 의 `5b, 4b, 3b, 2b` 넷이 **경계 기각에서 수확으로 승격**되었고,
+    이 시험은 그 승격을 **실특허에서 실측**한다. 넷은 재정 이전에 아무 기록 없이 사라지던
+    진짜 수치였다(재정 Q4 의 상신 근거가 정확히 그 실측이다).
     """
     if not os.path.isfile(RUN_SPEC):
         pytest.fail(f"실특허 런 산출이 없다: {RUN_SPEC} — 재현의 피검체가 사라졌다")
@@ -329,18 +337,27 @@ def test_real_patent_quoted_harvest_splits_into_seven_and_the_excluded() -> None
 
     facts, skipped = harvest_numeric_facts(spec, rules=RULES)
     quoted = [fact for fact in facts if fact.get("origin") == "quoted"]
-    if len(quoted) != 7:
-        pytest.fail(f"재수확이 7건으로 갈리지 않았다: {len(quoted)} — {raw_values(quoted)}")
+    if len(quoted) != 11:
+        pytest.fail(f"재수확이 11건으로 갈리지 않았다: {len(quoted)} — {raw_values(quoted)}")
     if raw_values(quoted) != [
         "2, 3, 4, or 5",
         "5, 4, 3 or 2",
         "2, 3, 4, or 5",
+        "5b",
+        "4b",
+        "3b",
+        "2b",
         "12",
         "12",
         "12",
         "4, 3, and 2",
     ]:
-        pytest.fail(f"살아남은 일곱의 어형이 다르다: {raw_values(quoted)}")
+        pytest.fail(f"살아남은 열하나의 어형이 다르다: {raw_values(quoted)}")
+    # 넷은 단위를 들고 나머지는 들지 않는다 — 단위가 붙지 않으면 `b` 신설이 값 스팬만
+    # 넓히고 MATCH_KEY 는 그대로여서, 승격이 절반만 일어난 것이 된다.
+    bit_units = [fact.get("unit") for fact in quoted if fact["value_raw"].endswith("b")]
+    if bit_units != ["b", "b", "b", "b"]:
+        pytest.fail(f"비트 폭 수치가 단위 `b` 를 들지 않았다: {bit_units}")
 
     tally: dict = {}
     for entry in skipped:
@@ -355,8 +372,18 @@ def test_real_patent_quoted_harvest_splits_into_seven_and_the_excluded() -> None
     if actual != expected_envelopes:
         pytest.fail(f"계열별 봉투 배제가 실측과 다르다: {actual} != {expected_envelopes}")
     # 경계 기각은 이 개정 전에는 **한 건도 기록되지 않았다**. 0 이 되면 그 침묵이 돌아온 것이다.
-    if tally.get("boundary-left", 0) == 0 or tally.get("boundary-right", 0) == 0:
-        pytest.fail(f"경계 기각이 다시 침묵했다: {tally}")
+    if tally.get("boundary-left", 0) == 0:
+        pytest.fail(f"왼쪽 경계 기각이 다시 침묵했다: {tally}")
+    # ★ 오른쪽 경계 기각은 이 런에서 **0 이어야 한다**(재정 2026-08-19 Q4). 이 런의
+    #   `boundary-right` 4건은 전부 `[0189]` 의 `5b, 4b, 3b, 2b` 였고, 단위 어휘에 `b` 가
+    #   신설되면서 넷 다 수확으로 올라갔다 — 즉 이 0 은 기록이 침묵한 것이 아니라 **기각할
+    #   것이 남지 않은 것**이다. 기록 기제 자체의 반증은 합성 표본이 계속 진다
+    #   (`test_boundary_rejections_are_counted` 의 `3D printed housing`).
+    if tally.get("boundary-right", 0) != 0:
+        pytest.fail(
+            f"오른쪽 경계 기각이 남아 있다: {tally} — 재정 Q4 가 그 넷을 수확으로 올렸으므로 "
+            "0 이 기대값이다. 남았다면 단위 인식이 그 자리에 닿지 않은 것이다"
+        )
 
 
 def test_harvest_is_deterministic_on_the_real_patent() -> None:
