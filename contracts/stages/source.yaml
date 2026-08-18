@@ -155,6 +155,46 @@ source_change_policy:
   diagnostics: "진단 보고에 변경 내용(파일·규모)을 명시한다"
   reseal_tooling: "생산 경로에 지문 재계산 자리를 두지 않는다. 재봉인 도구는 테스트 하네스에만 산다."
 
+  # ★ 표시가 실물이 되는 자리 — 어휘·필드·기입 주체의 선언(필드 명세 = SPEC §7.3).
+  #   위 old_run_marking·cross_link 는 **무엇을 하는가**만 말했고 **어디에 어떤 이름으로**를
+  #   말하지 않았다. 그 공백에서 구현이 비었다 — 정책이 계약과 주석에만 있고 생산 코드는
+  #   아무것도 기록하지 않았다(sol 재감수 P-U2 = 부분 판정). 표시가 파일로 남지 않으면
+  #   "폐기하되 지우지 않는다"는 규율은 문서상의 말로만 산다.
+  marking:
+    written_by: engine/stages/source.py#run     # 감지한 러너가 그 자리에서 남긴다
+    old_run:
+      status: superseded-by-source-change       # run.yaml#status 가 active 에서 이 값으로 바뀐다
+      cross_link_field: superseded_by           # 신 런의 run_id. 감지 시점에는 신 런이 없어 null
+      diagnostics_field: source_change          # 아래 diagnostics_fields 를 담는 블록
+    new_run:
+      cross_link_field: supersedes              # 구 런의 run_id
+      written_when: "새 런의 source 진입에 supersedes_run_root 를 준 때"
+    link_states:
+      pending: >-
+        구 런 표시는 섰고 신 런이 아직 없다 — superseded_by 가 null 인 정상 중간 상태다.
+        "링크가 아직 비었다"와 "링크를 잃었다"는 다른 사고이므로 파일이 스스로 구별해 적는다.
+      linked: "신 런이 생겨 superseded_by ↔ supersedes 왕복이 닫혔다"
+    ordering: >-
+      구 런 표시는 감지 즉시, 링크 닫기는 신 런의 run.yaml 이 실물이 된 뒤. 순서가 반대이면
+      구 런이 아직 없는 런을 가리키는 창이 생긴다.
+    single_use: >-
+      승계는 한 번뿐이다. 이미 승계된 런을 다른 런으로 다시 승계하면 앞선 승계의 사료가
+      사라지므로, 러너는 그 자리에서 넘어진다.
+  diagnostics_fields:
+    - "summary — 변경 건수와 파일·규모 한 줄(진단문과 파일에 같은 문장이 실린다)"
+    - "changes[] — path · change(modified|added|removed) · old_sha256 · new_sha256 · old_bytes · new_bytes · byte_delta"
+    - "figures_manifest_digest — {old, new}. 세트 변경은 파일 하나의 지문으로 드러나지 않는다"
+    - "input_path — 변경을 들고 온 투입물의 절대 경로"
+    - "detected_at · linked_at — 감지·링크 시각(UTC)"
+  seal_immutability: >-
+    표시는 run.yaml(런 메타)에만 쓴다. 00-source/ 의 봉인물(patent.md · patent.sha256 ·
+    figures-raw/)은 읽기만 하고 다시 쓰지 않는다 — 이 표시는 덮어쓰기 거부를 없애는 것이
+    아니라 그 거부의 **흔적을 남기는** 것이다. 봉인에 손이 닿는 순간 "원천이 바뀌면 새 런"은
+    표시 절차에 딸린 뒷문을 얻는다.
+  over_marking: >-
+    진입 검사는 원천 변경 말고도 **투입물 부재**로 넘어진다. 표시는 봉인분과 투입물의 차이가
+    실재할 때만 서며, 부재는 다른 사고로 남는다 — 정직한 경로가 벌받지 않아야 한다.
+
 failure:
   - condition: "원천 텍스트 취득 실패·문자 깨짐"
     action: halt

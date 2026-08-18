@@ -209,6 +209,227 @@ def _engine_pin(paths: RunPaths) -> tuple[str, str | None]:
     return commit, worktree
 
 
+# ---------------------------------------------------------------------------
+# 원천 변경 처분 — 표시·상호 링크·진단 (재정 P-U2)
+# ---------------------------------------------------------------------------
+
+
+def _source_change_policy(contract: dict) -> dict:
+    """원천 변경 처분 정책 블록. 상태값·필드명의 **정본은 계약**이고 러너는 읽을 뿐이다.
+
+    코드가 `superseded-by-source-change` 를 리터럴로 들면 어휘가 두 벌이 되고, 두 벌이 되면
+    한 벌은 반드시 낡는다 — `failure_entry` 가 사유 라벨을 계약에서 전사하는 규율과 같다.
+    """
+    policy = contract.get("source_change_policy")
+    if not isinstance(policy, dict):
+        raise StageError("계약에 source_change_policy 가 없다(재정 P-U2)")
+    return policy
+
+
+def _marking_term(contract: dict, side: str, key: str) -> str:
+    """`source_change_policy.marking.<side>.<key>` 한 낱말. 선언이 없으면 그 자리에서 넘어진다."""
+    marking = _source_change_policy(contract).get("marking") or {}
+    value = (marking.get(side) or {}).get(key)
+    if not isinstance(value, str) or not value:
+        raise StageError(f"계약 source_change_policy.marking.{side}.{key} 선언이 없다")
+    return value
+
+
+def _dir_entries(directory: str) -> dict[str, tuple[int, str]]:
+    """`{파일명: (바이트, 지문)}`.
+
+    지문만 들지 않고 **바이트까지** 드는 이유 = 진단이 "무엇이 **얼마나** 달라졌는가"에
+    답해야 하기 때문이다(재정 P-U2 — 변경 내용은 파일·규모로 명시한다). 지문만으로는
+    "달라졌다"까지밖에 말하지 못하고, 그것만으로는 재취득이 옳았는지 판정할 수 없다.
+    """
+    out: dict[str, tuple[int, str]] = {}
+    if not os.path.isdir(directory):
+        return out
+    for name in sorted(os.listdir(directory)):
+        path = os.path.join(directory, name)
+        if not os.path.isfile(path):
+            continue
+        with open(path, "rb") as handle:
+            payload = handle.read()
+        out[name] = (len(payload), sha256_bytes(payload))
+    return out
+
+
+def _change_row(
+    path: str, old: tuple[int, str] | None, new: tuple[int, str] | None
+) -> dict | None:
+    """변경 1건의 행. 같으면 `None`(행을 만들지 않는다 — 무변경까지 적으면 진단이 아니라 목록이다)."""
+    if old == new:
+        return None
+    kind = "modified" if old and new else ("added" if new else "removed")
+    old_bytes = old[0] if old else None
+    new_bytes = new[0] if new else None
+    return {
+        "path": path,
+        "change": kind,
+        "old_sha256": old[1] if old else None,
+        "new_sha256": new[1] if new else None,
+        "old_bytes": old_bytes,
+        "new_bytes": new_bytes,
+        "byte_delta": (new_bytes or 0) - (old_bytes or 0),
+    }
+
+
+def _source_changes(
+    paths: RunPaths, *, figures_dir: str, canonical_bytes: bytes, canonical_digest: str
+) -> list[dict]:
+    """봉인분 ↔ 새 투입물의 **차이 목록**. 비어 있으면 원천은 바뀌지 않은 것이다.
+
+    이 함수가 진입 검사와 별도로 존재하는 이유 — 진입 검사(`verify_declared_inputs`)는
+    "어긋났는가"를 판정할 뿐 "무엇이 얼마나"를 남기지 않는다. 그리고 진입 검사의 실패에는
+    원천 변경 말고도 **투입물 부재**가 섞여 있다. 둘을 같은 표시로 처리하면 파일 하나가
+    없어진 사고가 "원천이 바뀌었다"로 기록된다 — 그래서 표시는 이 목록이 비지 않을 때만
+    선다(정직한 경로가 벌받지 않아야 한다).
+    """
+    changes: list[dict] = []
+    if os.path.isfile(paths.patent_md):
+        with open(paths.patent_md, "rb") as handle:
+            sealed = handle.read()
+        row = _change_row(
+            "00-source/patent.md",
+            (len(sealed), sha256_bytes(sealed)),
+            (len(canonical_bytes), canonical_digest),
+        )
+        if row:
+            changes.append(row)
+
+    sealed_figures = _dir_entries(paths.figures_raw)
+    incoming_figures = _dir_entries(figures_dir)
+    for name in sorted(set(sealed_figures) | set(incoming_figures)):
+        row = _change_row(
+            f"00-source/figures-raw/{name}",
+            sealed_figures.get(name),
+            incoming_figures.get(name),
+        )
+        if row:
+            changes.append(row)
+    return changes
+
+
+def _changes_summary(changes: list[dict]) -> str:
+    """변경 목록 → 한 줄. 진단문과 파일에 **같은 문장**이 실리게 하려고 한 곳에서 만든다."""
+    parts: list[str] = []
+    for row in changes:
+        label = {"modified": "수정", "added": "추가", "removed": "삭제"}[row["change"]]
+        old_size = row["old_bytes"] if row["old_bytes"] is not None else "-"
+        new_size = row["new_bytes"] if row["new_bytes"] is not None else "-"
+        size = f"{old_size}→{new_size} bytes({row['byte_delta']:+d})"
+        parts.append(
+            f"{row['path']} {label} {size} "
+            f"{row['old_sha256'] or '(없음)'} → {row['new_sha256'] or '(없음)'}"
+        )
+    return f"변경 {len(changes)}건: " + " · ".join(parts)
+
+
+def _mark_superseded(
+    paths: RunPaths,
+    contract: dict,
+    *,
+    changes: list[dict],
+    input_path: str,
+    sealed_manifest: str,
+    incoming_manifest: str,
+) -> str:
+    """구 런의 **메타에만** 표시를 남긴다(재정 P-U2). 반환 = 진단 한 줄.
+
+    ★ 이 함수가 여는 파일은 `run.yaml` 하나다. `00-source/` 의 봉인물(patent.md ·
+      patent.sha256 · figures-raw/)은 다시 쓰지 않는다 — 이 보수는 덮어쓰기 거부를 없애는
+      일이 아니라 그 거부의 **흔적을 남기는** 일이다. 봉인에 손이 닿는 순간 "원천이 바뀌면
+      새 런"이라는 규율은 표시 절차에 딸린 뒷문을 얻는다.
+    ★ `superseded_by` 가 null 인 채로 표시가 서는 것이 **정상**이다. 감지 시점에 신 런은
+      아직 없기 때문이며, 그 미완성 상태의 뜻(`link_state: pending`)을 파일 자신이 적는다 —
+      "링크가 아직 비었다"와 "링크를 잃었다"를 사람이 구별할 수 있어야 한다.
+    """
+    summary = _changes_summary(changes)
+    if not os.path.isfile(paths.run_yaml):
+        # 표시를 남길 메타 자체가 없다. 조용히 넘어가지 않고 그 사실을 진단에 싣는다.
+        return f"{summary} · 구 런에 run.yaml 이 없어 표시를 남기지 못했다"
+
+    policy = _source_change_policy(contract)
+    status_value = _marking_term(contract, "old_run", "status")
+    link_field = _marking_term(contract, "old_run", "cross_link_field")
+    diagnostics_field = _marking_term(contract, "old_run", "diagnostics_field")
+    link_states = (policy.get("marking") or {}).get("link_states") or {}
+
+    meta = load_yaml(paths.run_yaml)
+    meta["status"] = status_value
+    meta.setdefault(link_field, None)
+    meta[diagnostics_field] = {
+        "ruling": policy.get("ruling"),
+        "detected_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "link_state": "pending" if meta.get(link_field) in (None, "") else "linked",
+        "link_note": str(link_states.get("pending", "")),
+        "input_path": os.path.abspath(input_path),
+        "summary": summary,
+        "changes": changes,
+        "figures_manifest_digest": {"old": sealed_manifest, "new": incoming_manifest},
+    }
+    dump_yaml(paths.run_yaml, meta)
+    return (
+        f"{summary} · 구 런 표시: run.yaml#status={status_value} · "
+        f"{link_field}=null(신 런 미정 — 처분은 새 런이다)"
+    )
+
+
+def _supersedes_target(
+    contract: dict, supersedes_run_root: str, repo: str | None, new_run_id: str
+) -> tuple[RunPaths, str]:
+    """승계 대상(구 런)을 열어 신원을 확인한다 — **봉인 전에** 본다(재정 P-U2).
+
+    링크는 표시의 뒤를 따른다. 표시되지 않은 런을 승계로 적으면 "왜 대체되었는가"가 사라진
+    링크가 남고, 그 링크는 사료가 아니라 주장이다. 그래서 구 런이 `superseded-by-source-change`
+    로 서 있지 않으면 여기서 넘어진다.
+    """
+    old_paths = RunPaths(supersedes_run_root, repo)
+    if not os.path.isfile(old_paths.run_yaml):
+        raise StageError(f"승계 대상 런에 run.yaml 이 없다: {old_paths.run_yaml}")
+    meta = load_yaml(old_paths.run_yaml)
+    status_value = _marking_term(contract, "old_run", "status")
+    link_field = _marking_term(contract, "old_run", "cross_link_field")
+    if str(meta.get("status") or "") != status_value:
+        raise StageError(
+            f"승계 대상 런이 {status_value} 로 표시되어 있지 않다: "
+            f"status={meta.get('status')!r} — 링크는 표시의 뒤를 따른다(재정 P-U2)"
+        )
+    linked = meta.get(link_field)
+    if linked and str(linked) != new_run_id:
+        raise StageError(
+            f"이미 다른 런에 승계되었다: {link_field}={linked!r} — 승계는 한 번뿐이고, "
+            "링크를 갈아 끼우면 앞선 승계의 사료가 사라진다"
+        )
+    old_run_id = str(meta.get("run_id") or "")
+    if not old_run_id:
+        raise StageError(f"승계 대상 런의 run.yaml 에 run_id 가 없다: {old_paths.run_yaml}")
+    return old_paths, old_run_id
+
+
+def _close_cross_link(old_paths: RunPaths, contract: dict, *, new_run_id: str) -> None:
+    """구 런의 링크 절반을 채운다 — 여기서 왕복이 닫힌다(재정 P-U2).
+
+    신 런의 `run.yaml` 이 실물이 된 **뒤에** 부른다. 순서가 반대이면 구 런이 존재하지 않는
+    런을 가리키는 창이 생기고, 그 창에서 죽으면 링크가 유령을 가리킨 채 남는다.
+    """
+    link_field = _marking_term(contract, "old_run", "cross_link_field")
+    diagnostics_field = _marking_term(contract, "old_run", "diagnostics_field")
+    meta = load_yaml(old_paths.run_yaml)
+    meta[link_field] = new_run_id
+    block = meta.get(diagnostics_field)
+    if isinstance(block, dict):
+        link_states = (_source_change_policy(contract).get("marking") or {}).get(
+            "link_states"
+        ) or {}
+        block["link_state"] = "linked"
+        block["link_note"] = str(link_states.get("linked", ""))
+        block["linked_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        meta[diagnostics_field] = block
+    dump_yaml(old_paths.run_yaml, meta)
+
+
 def _provenance_md(
     *,
     run_id: str,
@@ -264,10 +485,15 @@ def run(
     patent_meta: dict,
     run_kind: str = "rehearsal",
     repo: str | None = None,
+    supersedes_run_root: str | None = None,
 ) -> dict:
     """`00-source/` 를 고정하고 `source-report.json` 을 낸다.
 
     반환 = `{"rows", "report", "status", "reason_label"}`.
+
+    `supersedes_run_root` = 이 런이 **대체하는 구 런의 작업장**(재정 P-U2). 원천이 바뀌면
+    처분은 언제나 새 런이고, 그 새 런이 열릴 때 상호 링크의 나머지 절반이 닫힌다. 경로를
+    추측하지 않고 인자로 받는 이유는 이 리포의 규율 그대로다 — 경로는 드러나야 한다.
     """
     paths = RunPaths(run_root, repo)
     contract = paths.contracts[STAGE_ID]
@@ -276,6 +502,16 @@ def run(
     #    어느 커밋에서 고정되는지를 확정하지 못하면 그 뒤의 어떤 산출물도 "어떤 법 아래
     #    만들어졌는가"에 답할 수 없다. 확정한 값은 아래 ④에서 run.yaml 에 기입된다.
     commit, worktree = _engine_pin(paths)
+
+    # ⓪' 승계 대상 확인(재정 P-U2). 봉인 **전에** 본다 — 링크가 설 수 없는 상태(표시 없음·
+    #    이미 다른 런에 승계됨)라면 이 런은 열리기 전에 멈춰야 한다. 산출물을 만든 뒤에
+    #    링크에서 넘어지면 반쯤 열린 런이 남는다.
+    old_paths: RunPaths | None = None
+    supersedes_id: str | None = None
+    if supersedes_run_root:
+        old_paths, supersedes_id = _supersedes_target(
+            contract, supersedes_run_root, repo, run_id
+        )
 
     with open(source_patent_path, "rb") as handle:
         raw_bytes = handle.read()
@@ -289,16 +525,48 @@ def run(
     #    어긋나면 덮어쓰지 않고 즉시 중단한다 — 원천이 바뀌었을 때의 처분은 부분 복구가
     #    아니라 **새 런**이며(재정 P-U2), 바이트 오프셋 특성상 부분 재사용은 정확성 위반이다.
     #    구 런은 status: superseded-by-source-change 로 표시하고 상호 링크를 보존한다.
-    verify_declared_inputs(
-        paths,
-        contract,
-        STAGE_ID,
-        inputs={
-            "source_patent_path": source_patent_path,
-            "figures_dir": figures_dir,
-            "canonical_digest": canonical_digest,
-        },
-    )
+    #
+    #    ★ 그 표시를 **여기서 실물로** 남긴다. 표시가 계약과 주석에만 있으면 "폐기하되 지우지
+    #    않는다"는 규율이 문서상의 말로만 산다(sol 재감수 P-U2 = 부분). 표시는 구 런의 메타
+    #    (run.yaml)에만 닿고 봉인물은 건드리지 않으며, 표시를 남긴 뒤에도 중단은 그대로다 —
+    #    이 자리가 하는 일은 거부를 없애는 것이 아니라 거부의 흔적을 남기는 것이다.
+    try:
+        verify_declared_inputs(
+            paths,
+            contract,
+            STAGE_ID,
+            inputs={
+                "source_patent_path": source_patent_path,
+                "figures_dir": figures_dir,
+                "canonical_digest": canonical_digest,
+            },
+        )
+    except StageEnvironmentError as entry_error:
+        changes = _source_changes(
+            paths,
+            figures_dir=figures_dir,
+            canonical_bytes=canonical_bytes,
+            canonical_digest=canonical_digest,
+        )
+        if not changes:
+            # 진입 검사는 원천 변경 말고도 투입물 부재로 넘어진다. 그것은 다른 사고이므로
+            # 승계 표시를 남기지 않는다 — 과잉 표시는 표시의 뜻을 지운다.
+            raise
+        note = _mark_superseded(
+            paths,
+            contract,
+            changes=changes,
+            input_path=source_patent_path,
+            sealed_manifest=figures_manifest_digest(
+                (name, digest)
+                for name, (_size, digest) in _dir_entries(paths.figures_raw).items()
+            ),
+            incoming_manifest=figures_manifest_digest(
+                (name, digest)
+                for name, (_size, digest) in _dir_entries(figures_dir).items()
+            ),
+        )
+        raise StageEnvironmentError(f"{entry_error} · {note}") from entry_error
 
     # ② 00-source/ 는 한 번만 쓴다(SPEC §7.4 — 이후 어떤 스테이지도 수정하지 못한다).
     #    지문이 같아도 재투입은 허용하지 않는다. 위 진입 검사가 통과했다는 것은 "바뀌지
@@ -375,7 +643,13 @@ def run(
         repo=repo,
         commit=commit,
         worktree=worktree,
+        supersedes=supersedes_id,
     )
+
+    # ④' 상호 링크 닫기(재정 P-U2). 신 런의 run.yaml 이 실물이 된 **뒤에** 구 런의 절반을
+    #    채운다 — 순서가 반대이면 구 런이 아직 없는 런을 가리키는 창이 생긴다.
+    if old_paths is not None:
+        _close_cross_link(old_paths, contract, new_run_id=run_id)
 
     # ⑤ 종료 전 검사 5종
     rows = _checks(
@@ -402,12 +676,17 @@ def _write_run_yaml(
     repo: str | None,
     commit: str,
     worktree: str | None,
+    supersedes: str | None = None,
 ) -> None:
     """런 메타 골격(SPEC §7.3). 이미 있으면 원천 관련 필드와 **커밋 핀**만 갱신한다.
 
     핀은 `_engine_pin` 이 확정한 값이며(재정 P-U1·P-8), 빈 문자열 골격을 남기지 않는다 —
     빈 핀은 "아직 아무도 쓰지 않았다"를 "결박이 있다"처럼 보이게 만든다. 기존 블록의 다른
     필드(`gate_version` 등)는 보존한다.
+
+    `supersedes`·`superseded_by` 는 **상호 링크의 두 끝**이다(재정 P-U2, 필드 명세 = SPEC §7.3).
+    승계가 없는 평범한 런에서도 두 키를 null 로 적는 이유는, 링크의 부재가 **선언된 부재**여야
+    하기 때문이다 — 키가 없으면 "승계가 없다"와 "이 판 러너는 승계를 모른다"가 구별되지 않는다.
     """
     existing = load_yaml(paths.run_yaml) if os.path.exists(paths.run_yaml) else {}
     patent = dict(patent_meta or {})
@@ -425,6 +704,8 @@ def _write_run_yaml(
         ),
         "status": "active",
         "run_kind": run_kind,
+        "supersedes": supersedes if supersedes is not None else existing.get("supersedes"),
+        "superseded_by": existing.get("superseded_by"),
         "patent": patent,
         "engine": engine_block,
         "reader_version": reader_version(repo),
