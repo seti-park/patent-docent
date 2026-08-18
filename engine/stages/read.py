@@ -57,7 +57,12 @@ from . import (
     write_json,
     write_text,
 )
-from ..lanes.contract import LaneRequest, LaneResponse
+from ..lanes.contract import (
+    LanePending,
+    LaneRequest,
+    LaneResponse,
+    LaneStaleResponseError,
+)
 from ..lanes.plan import (
     harvest_band_start,
     lane_profiles,
@@ -65,7 +70,15 @@ from ..lanes.plan import (
     plan_grounding,
     plan_synthesis,
 )
-from ..paths import RunPaths, reader_version, repo_root, shadow_screening_ledger
+from ..paths import (
+    SHADOW_LEDGER_RELATIVE,
+    RunPaths,
+    ShadowLedgerRootError,
+    reader_version,
+    repo_root,
+    shadow_ledger_root,
+    shadow_screening_ledger,
+)
 from ..read_view import ReadView
 from ..render.material_spec_md import render
 from .freeze import parse_envelope
@@ -93,13 +106,20 @@ class RunnerContractError(StageError):
 
 
 class LaneJournal:
-    """전 요청·응답의 배정 기록. `10-read/lanes/lane-log.json` 의 본문이 된다."""
+    """전 요청·응답의 배정 기록. `10-read/lanes/lane-log.json` 의 본문이 된다.
+
+    행이 드는 것은 두 켤레다. **모델·effort 병기**(요청 ↔ 실호출)가 조용한 대체를 드러내고,
+    **지문 3종**(요청 지문 ↔ 반향 ↔ 응답 파일 지문)이 시점 결속을 드러낸다(재정 P-12). 뒤엣것은
+    앞엣것의 확장이지 대체가 아니다 — 두 병기가 답하는 질문이 다르다: "누가 답했는가"와
+    "무엇에 대해 답했으며 그 답이 지금도 그 파일인가".
+    """
 
     def __init__(self) -> None:
         self.rows: list[dict] = []
 
     def record(self, request: LaneRequest, response: LaneResponse | None) -> None:
         mismatch = response is not None and response.mismatches(request)
+        digest_ok = response is not None and response.input_digest == request.input_digest
         self.rows.append(
             {
                 "lane_id": request.lane_id,
@@ -110,8 +130,45 @@ class LaneJournal:
                 "requested_effort": request.effort,
                 "actual_model": response.model if response else None,
                 "actual_effort": response.effort if response else None,
+                # 시점 결속 3종(재정 P-12). `response_digest` 는 러너가 **실제로 소비한
+                # 파일 바이트**의 지문이며, 사후에 `sha256sum response.json` 과 대조된다 —
+                # 값이 갈리면 소비 이후 그 파일이 바뀐 것이다(감수 OOS-02 가 실증한 사고).
+                "input_digest": request.input_digest,
+                "echoed_digest": response.input_digest if response else None,
+                "response_digest": response.response_digest if response else None,
+                "digest_ok": digest_ok,
+                "rejected": False,
+                "reason": None,
                 "ok": response is not None and not mismatch,
                 "mismatch": mismatch,
+            }
+        )
+
+    def record_rejected(self, request: LaneRequest, *, echoed: str, reason: str) -> None:
+        """러너가 **거부한** 응답의 행(재정 P-12 ③④).
+
+        거부는 소비하지 않은 사건이므로 실호출 모델도 응답 지문도 없다 — 남는 것은 "무엇을
+        요청했고 무엇이 반향되었으며 왜 물렸는가"다. 이 행이 없으면 거부는 예외 메시지로만
+        존재하고 런 폴더에는 아무 흔적도 남지 않는다. 재정 ③이 요구한 것이 바로 그 흔적이다.
+        """
+        self.rows.append(
+            {
+                "lane_id": request.lane_id,
+                "read_run": request.read_run,
+                "task": request.task,
+                "batch": request.batch,
+                "requested_model": request.model,
+                "requested_effort": request.effort,
+                "actual_model": None,
+                "actual_effort": None,
+                "input_digest": request.input_digest,
+                "echoed_digest": echoed,
+                "response_digest": None,
+                "digest_ok": False,
+                "rejected": True,
+                "reason": reason,
+                "ok": False,
+                "mismatch": False,
             }
         )
 
@@ -120,8 +177,19 @@ class LaneJournal:
 
 
 def _dispatch(adapter, requests: list[LaneRequest], journal: LaneJournal) -> list[LaneResponse]:
-    """배치 1개를 보내고 배정 기록을 남긴다. 응답 순서는 요청 순서에 맞춘다."""
-    responses = adapter.dispatch(requests)
+    """배치 1개를 보내고 배정 기록을 남긴다. 응답 순서는 요청 순서에 맞춘다.
+
+    낡은 응답은 **기록한 뒤 다시 던진다**(재정 P-12 ④). 던지기만 하면 런이 죽으면서 거부
+    사실이 함께 사라지고, 기록만 하면 오염된 응답이 조립까지 흘러간다. `run()` 의 `finally`
+    가 레인 로그를 쓰므로 이 행은 런 폴더에 남는다.
+    """
+    try:
+        responses = adapter.dispatch(requests)
+    except LaneStaleResponseError as exc:
+        stale = {request.lane_id: request for request in requests}.get(exc.lane_id)
+        if stale is not None:
+            journal.record_rejected(stale, echoed=exc.actual, reason=str(exc))
+        raise
     by_id = {response.lane_id: response for response in responses}
     ordered: list[LaneResponse] = []
     for request in requests:
@@ -709,12 +777,18 @@ def append_screening_ledger(
     Owner 재정은 CP1 에서 내려오므로 이 시점에는 `null` 이다(재정 P-A — 확정은 CP1 한 자리).
     추가 전용이며 이미 쓴 행을 고쳐 쓰지 않는다 — 축적물의 값은 그 무편집성에 있다.
 
+    ★ "한 행"은 이 함수가 아니라 **호출 자리**가 지킨다. 무편집성 탓에 여기서 중복을 사후에
+    지울 수 없으므로, 러너는 런이 종결될 때만 이 함수를 부른다(`run()` 의 `terminated` 주석).
+
     목적은 섀도 모드다: 청구항만 본 맹검 판단 · 접지 후 최종 평가 · Owner 재정의 3층이
     자매 프로젝트 patent-historian 의 스크리닝 능력에 대한 사전 훈련 데이터가 된다(D4).
 
-    `shadow_root` 는 원장 루트의 명시 주입구다(기본 `None` = 생산 자리). 테스트 하네스만 채운다 —
-    합성 픽스처의 메모가 생산 원장에 섞이면 축적물이 훈련 데이터로서 죽는다(재정 P-U2 의
-    "표본은 자기완결 미니 세계"를 재정 P-U4 의 원장에 적용한 것이다).
+    `shadow_root` 는 **원장 누적 루트의 명시 지정**이다(2026-08-19 정정 — 구 문언은 "테스트
+    하네스 전용 주입구"였다). 테스트 격리는 그 지정의 **한 사용자**일 뿐이며(합성 픽스처의
+    메모가 생산 원장에 섞이면 축적물이 훈련 데이터로서 죽는다 — 재정 G6·P-U2), 다른 사용자는
+    누적 자리를 런과 다른 곳에 두려는 운영자다. 비우면 `shadow_ledger_root` 가 판정한다 —
+    주 작업 트리면 거기, 격리 체크아웃이면 **주 작업 트리로 옮겨** 쌓는다(재정 P-U1 + P-U4).
+    `repo` 는 계약 트리의 루트이고 이 인자는 원장의 루트다. 층이 다르므로 합치지 않는다.
     """
     if not memos:
         return None
@@ -827,12 +901,16 @@ def continue_envelope_state(paths: RunPaths) -> tuple[bool, str]:
 def check_lane_log_shape(
     journal: LaneJournal, *, read_runs: tuple[str, ...], canonical: str
 ) -> CheckRow:
-    """⑨ `read.lane-log-shape` — 레인 로그가 계약 실행 형태와 일치하는가(재정 P-4 · P-U3).
+    """⑨ `read.lane-log-shape` — 레인 로그가 계약 실행 형태와 일치하는가(재정 P-4 · P-U3 · P-12).
 
-    판정 3항: ⓐ 분해가 두 실행 각각에 존재 ⓑ 접지·통합이 정본 실행에 존재
-    ⓒ 접지·통합이 **비정본 실행에 부재**. ⓒ가 이 검사의 존재 이유다 — "정본 1개만
+    판정 5항. **형태** 3항: ⓐ 분해가 두 실행 각각에 존재 ⓑ 접지·통합이 정본 실행에 존재
+    ⓒ 접지·통합이 **비정본 실행에 부재**. ⓒ가 이 검사가 생긴 이유다 — "정본 1개만
     진행했다"는 사실은 로그에 **없음으로** 증명되며, 그 부재를 아무도 보지 않으면 재정
     P-4 의 절반(접지 이후 1회)이 관습으로만 남는다.
+
+    **시점 결속** 2항(재정 P-12): ⓓ 모든 행이 요청 지문을 든다 ⓔ 응답이 도착한 행은 응답
+    지문을 들고 반향이 일치한다. 여기서 보는 것도 같은 종류의 사실이다 — 결속이 코드에만
+    있고 로그에 남지 않으면, 다음 개정이 그것을 지워도 산출물은 아무 말도 하지 않는다.
 
     ★ 수확 슬롯은 판정 대상이 아니다. 결정론 실행이라 `lane.sub_lanes`(LLM 레인 배정의
     정본)에 등재되지 않으며 레인 로그에도 나타나지 않는다(`read.yaml` 의 같은 검사 note).
@@ -875,6 +953,33 @@ def check_lane_log_shape(
             "통합 1건",
             "정본 실행이 통합에 닿지 않았다 — 조립할 산출이 없다",
         )
+
+    # ⓓⓔ 시점 결속(재정 P-12). 응답이 도착하지 않은 행(미충족·짝 없음)은 응답 지문을 가질 수
+    # 없으므로 ⓔ의 대상이 아니고, **거부 행**은 대상이다 — 거부는 "응답이 있었으나 물렸다"는
+    # 사건이며 그 사실이 판정에서 빠지면 거부가 조용한 통과가 된다.
+    for entry in journal.rows:
+        locus = f"10-read/lanes/{entry.get('lane_id')}"
+        if not str(entry.get("input_digest") or ""):
+            row.add(
+                "lane-log.request-digest",
+                locus,
+                "(입력 지문 없음)",
+                "sha256(요청 본문)",
+                "요청 지문이 없는 왕복이다 — 응답이 어느 판의 요청에 답한 것인지 증명할 "
+                "근거가 로그에 없다(재정 P-12 ①③)",
+            )
+        arrived = entry.get("actual_model") is not None or bool(entry.get("rejected"))
+        if not arrived:
+            continue
+        if not str(entry.get("response_digest") or "") or not entry.get("digest_ok"):
+            row.add(
+                "lane-log.response-digest",
+                locus,
+                f"응답 지문 {entry.get('response_digest')!r} · digest_ok={entry.get('digest_ok')!r}",
+                "sha256(response.json) 기록 + digest_ok: true",
+                "소비한 응답의 지문·반향 일치가 로그에 없다 — 같은 자리에 응답이 두 번 "
+                "쓰이면 런이 정본을 증명하지 못한다(재정 P-12 ②③)",
+            )
     return row
 
 
@@ -906,11 +1011,20 @@ def run(
 ) -> dict:
     """READ 스테이지 1회. 실행 순서는 모듈 docstring 의 ①~⑩ 그대로다.
 
-    반환 = `{"rows", "spec", "convergence", "status", "reason_label"}`.
+    반환 = `{"rows", "spec", "convergence", "status", "reason_label"}`. 원장 자리는 반환값이
+    아니라 **산출물**에 남는다 — `10-read/lanes/shadow-ledger.json`(아래 `_write_shadow_pointer`).
+    반환값은 호출자의 메모리에서 끝나고 산출물은 런 폴더에 남으므로, 사후 감사가 볼 수 있는
+    것은 뒤엣것뿐이다.
 
-    `shadow_root` = 섀도 원장 루트의 명시 주입구(기본 `None` = 생산 자리 `<repo>/ledgers/shadow/`,
-    재정 P-U4). 런 작업장은 격리되어도 원장은 리포 루트에 누적되므로, 합성 픽스처로 이 함수를
-    부르는 하네스는 이 인자를 반드시 채운다(재정 P-U2 — 표본은 자기완결 미니 세계).
+    `shadow_root` = **섀도 원장 누적 루트의 명시 지정**(재정 P-U4). 비우면 러너가 판정한다 —
+    주 작업 트리면 거기, **커밋 결박된 격리 체크아웃이면 주 작업 트리로 옮겨** 쌓는다
+    (`engine/paths.py#shadow_ledger_root`). 법은 worktree 에서 오고(재정 P-U1 행위시법) 축적은
+    리포에 남는다는 귀결이며, 이 배선이 없던 동안 통주 2 의 메모 4행은 worktree 와 함께 사라져
+    리포에 한 행도 도착하지 않았다.
+
+    합성 픽스처로 이 함수를 부르는 하네스는 이 인자를 **반드시** 채운다(재정 G6·P-U2 — 표본은
+    자기완결 미니 세계, 과거 생산 원장 1,178행 오염). 판정에 기대지 마라: 픽스처의 계약 트리는
+    대개 임시 git 리포이므로 판정은 그 임시 리포를 정직하게 가리킬 뿐이다.
     """
     paths = RunPaths(run_root, repo)
     contract = paths.contracts[STAGE_ID]
@@ -946,6 +1060,13 @@ def run(
     attempt = 0
     run_id = str(run_meta.get("run_id", ""))
 
+    # ★ 원장 기입은 런이 **종결**될 때 한 번이다(재정 P-U4 의 "한 행" 문언 이행).
+    #   `LanePending` 은 오류가 아니라 상태이며 오케스트레이터가 서브에이전트를 붙이고 같은
+    #   스테이지를 다시 부른다 — 그 재진입마다 원장에 적으면 한 run_id 아래 미완성 행이
+    #   쌓인다(2026-08-18 감수 실측: 4행, 앞 3행은 `final_verdict: null`). 축적물의 값은
+    #   무편집성에 있으므로 이미 쓴 행을 지우거나 갱신해 고칠 수는 없다. 그러므로 애초에
+    #   **적지 않는다** — 아직 끝나지 않은 런은 기록할 관찰이 아니라 진행 중인 상태다.
+    terminated = True
     try:
         # ②③④ 분해 2회 → 맹검 메모 → 조기 수렴. 재시도가 일어나는 자리는 **여기 하나**다.
         early_defects: list[dict] | None = None
@@ -1146,15 +1267,33 @@ def run(
             "status": "ok",
             "reason_label": None,
         }
+    except LanePending:
+        # 재진입 — 이 호출은 런의 끝이 아니다. 레인 로그는 아래 `finally` 가 그대로 남긴다
+        # (요청이 어디까지 나갔는지는 대기 중에도 볼 수 있어야 한다).
+        terminated = False
+        raise
     finally:
         _finish_lane_log(paths, journal)
-        # 메모는 런의 성패와 무관하게 남는다 — 축적물이 목적이므로 중단된 런의 관찰도 신호다.
-        append_screening_ledger(
-            paths.repo,
-            run_id=run_id,
-            memos=memos,
-            final=final_signal,
+        # 메모는 런의 **성패**와 무관하게 남는다 — 축적물이 목적이므로 중단된 런의 관찰도
+        # 신호다. 성패와 종결은 다른 축이며, 여기서 가르는 것은 종결 여부 하나다.
+        written = None
+        if terminated:
+            written = append_screening_ledger(
+                paths.repo,
+                run_id=run_id,
+                memos=memos,
+                final=final_signal,
+                shadow_root=shadow_root,
+            )
+        # 어느 원장에 썼는지를 산출에 남긴다. 재진입 회차(`terminated=False`)도 적는다 —
+        # "아직 아무것도 쓰지 않았다"는 것 역시 그 시점의 사실이고, 적지 않으면 사후에
+        # "왜 이 회차에는 기록이 없는가"를 다시 조사하게 된다.
+        _write_shadow_pointer(
+            paths,
             shadow_root=shadow_root,
+            written=written,
+            terminated=terminated,
+            memo_count=len(memos),
         )
 
 
@@ -1181,3 +1320,47 @@ def _failure_verdict(contract: dict, failing: list[CheckRow]) -> tuple[str, str 
 
 def _finish_lane_log(paths: RunPaths, journal: LaneJournal) -> None:
     write_json(paths.lane_log, journal.rows)
+
+
+def _write_shadow_pointer(
+    paths: RunPaths,
+    *,
+    shadow_root: str | None,
+    written: str | None,
+    terminated: bool,
+    memo_count: int,
+) -> None:
+    """`10-read/lanes/shadow-ledger.json` — 이 런이 **어느 섀도 원장에 썼는가**(재정 P-U4).
+
+    ★ 이 파일이 있는 이유. 원장은 런 밖에 누적되므로(재정 P-U4) 런 산출물만 보아서는 그것이
+    어디에 있는지 알 수 없다. 2026-08-18 통주 2 는 커밋 결박된 격리 체크아웃에서 돌았고
+    (재정 P-U1) 메모 4행이 그 worktree 안에 쌓였는데, **런은 그 사실을 아무 데도 적지 않았다** —
+    worktree 가 소모품이라 행이 함께 사라진 뒤에야 리포 원장 0행으로 드러났다. 쓴 자리를 적지
+    않으면 다음에 또 사라진다.
+
+    `root_source` 는 자리의 **판정 사유**이며(`engine/paths.py` 의 상수 4종) 자리 자체보다
+    중요하다 — `main-worktree-resolved` 는 "여기는 worktree 였고 러너가 주 트리로 옮겼다"를,
+    `explicit` 은 "호출자가 지정했다"를 뜻한다. 사유 없이 경로만 적으면 그 경로가 옳은지를
+    다음 사람이 처음부터 다시 조사해야 한다.
+    """
+    payload = {
+        "run_repo": paths.repo,
+        "root_source": None,
+        "root": None,
+        "ledger": None,
+        "appended": written is not None,
+        "terminated": terminated,
+        "memo_count": memo_count,
+    }
+    try:
+        root, source = shadow_ledger_root(paths.repo, shadow_root)
+    except ShadowLedgerRootError as exc:
+        # 판정이 거부로 끝났다면 그 사실 자체가 기록 대상이다. 여기서 조용해지면 러너가 왜
+        # 멈췄는지가 런 폴더에 남지 않는다(예외는 호출자에게만 간다).
+        payload["root_source"] = "refused"
+        payload["error"] = str(exc)
+    else:
+        payload["root_source"] = source
+        payload["root"] = root
+        payload["ledger"] = os.path.join(root, *SHADOW_LEDGER_RELATIVE)
+    write_json(paths.shadow_pointer, payload)

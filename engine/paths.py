@@ -21,6 +21,8 @@ from typing import Any
 
 import yaml
 
+from .gitpin import GitUnavailable, git_common_dir, worktree_of
+
 # engine/paths.py → 리포 루트
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -33,10 +35,30 @@ _READER_VERSION = ("reader", "READER-VERSION")
 PROVENANCE_BASENAME = "PROVENANCE.md"
 LANES_DIRNAME = "lanes"
 LANE_LOG_BASENAME = "lane-log.json"
+SHADOW_POINTER_BASENAME = "shadow-ledger.json"
+
+# 섀도 원장의 리포 상대 자리(재정 P-U4). 루트가 어디인가는 아래 `shadow_ledger_root` 가 정한다.
+SHADOW_LEDGER_RELATIVE = ("ledgers", "shadow", "screening.jsonl")
+
+# `shadow_ledger_root` 가 돌려주는 판정 사유. 산출(포인터 파일)에 그대로 실린다 —
+# "어느 원장에 썼는가"만 남기고 "왜 거기인가"를 빼면 다음 사람이 같은 조사를 처음부터 한다.
+SHADOW_ROOT_EXPLICIT = "explicit"                 # 호출자가 명시 지정했다
+SHADOW_ROOT_MAIN = "main-worktree"                # 여기가 주 작업 트리다
+SHADOW_ROOT_RESOLVED = "main-worktree-resolved"   # 여기는 worktree, 주 작업 트리를 찾아 옮겼다
+SHADOW_ROOT_NO_GIT = "git-unavailable"            # git 판정을 할 수 없었다(아래 주석)
 
 
 class PathContractError(Exception):
     """계약이 선언하지 않은 경로를 요구했거나 선언이 모호하다."""
+
+
+class ShadowLedgerRootError(Exception):
+    """섀도 원장의 누적 루트를 판정할 수 없다(재정 P-U4 · P-U1).
+
+    조용히 넘어갈 자리가 아니다. 여기서 아무 자리나 고르면 원장은 **아무 데도 도착하지 않은
+    채** 런과 함께 사라진다 — 2026-08-18 통주 2 에서 실제로 일어난 일이며(worktree 안 4행,
+    리포 0행) 그때 잃은 것은 행 수가 아니라 축적물 자체다. 없는 장부는 고칠 것이 없다.
+    """
 
 
 def repo_root() -> str:
@@ -122,22 +144,76 @@ def _declared_paths(contract: dict) -> list[str]:
     return out
 
 
+def shadow_ledger_root(
+    repo: str | None = None, shadow_root: str | None = None
+) -> tuple[str, str]:
+    """섀도 원장이 누적되는 루트와 그 **판정 사유** — `(root, source)`.
+
+    ★ 층이 둘이다. `repo` 는 **계약 트리의 루트**(이 런의 법이 어디서 오는가)이고 `shadow_root`
+    는 **원장의 루트**(축적물이 어디에 쌓이는가)다. 구 판은 `shadow_root or repo or _REPO_ROOT`
+    라는 폴백으로 그 둘을 다시 합쳤고, 그래서 재정 P-U1 의 커밋 결박(런은 `.worktrees/<run-id>`
+    에서 돈다)과 만나는 순간 원장이 **worktree 안에** 섰다. worktree 는 `.gitignore` 대상이고
+    소모품이므로, 2026-08-18 통주 2 의 메모 4행은 리포에 **한 행도** 도착하지 않았다. 법은
+    worktree 에서 오고 축적은 리포에 남는다 — 그 귀결을 여기서 집행한다.
+
+    판정 순서와 사유.
+
+    | 순서 | 조건 | `source` | 루트 |
+    |---|---|---|---|
+    | ① | `shadow_root` 가 있다 | `explicit` | 그 값 |
+    | ② | 여기가 주 작업 트리다 | `main-worktree` | `repo`(또는 `_REPO_ROOT`) |
+    | ③ | 여기가 링크된 worktree 다 | `main-worktree-resolved` | **주 작업 트리** |
+    | ④ | git 판정 자체가 불가능하다 | `git-unavailable` | `repo`(또는 `_REPO_ROOT`) |
+    | — | worktree 인데 주 작업 트리를 못 찾는다 | — | `ShadowLedgerRootError` |
+
+    ★ ②③의 판정(`여기가 worktree 인가`)은 **반드시** `engine/gitpin.py` 를 거친다 — 런 결박
+    판정의 단일 진원이며(재정 P-U1·P-8), 두 벌째 판정이 생기면 그날 도구와 러너가 같은 런을
+    다르게 읽는다. 여기서 gitpin 밖으로 나가는 것은 판정이 아니라 **자리 계산** 한 줄뿐이고
+    (공용 git 디렉터리의 부모 = 주 작업 트리) 그 최종 자리는 `gitpin.main_worktree_of()` 다 —
+    이관은 gitpin 소관 레인의 몫으로 남긴다.
+
+    ★ ④를 거부가 아니라 진행으로 둔 이유: git 이 없으면 링크된 worktree 라는 것 자체가 성립할
+    수 없다(worktree 는 git 의 구조물이다). 그러나 "판정하지 못했다"는 사실은 삼키지 않고
+    `source` 로 돌려주며, 러너는 그것을 산출(`10-read/lanes/shadow-ledger.json`)에 적는다.
+    반대로 **worktree 임을 알면서 주 트리를 못 찾는** 경우는 거부한다 — 그 자리에서 진행하면
+    아는 채로 사라지는 장부를 만드는 것이다.
+
+    ★ `shadow_root` 의 지위(2026-08-19 정정). 이것은 "테스트 하네스 전용 주입구"가 아니라
+    **원장 누적 루트의 명시 지정**이며, 테스트 격리(재정 G6·P-U2 — 합성 픽스처의 메모가 생산
+    원장을 오염시키면 D4 훈련 데이터가 죽는다)는 그 지정의 **한 사용자**일 뿐이다. 환경 변수
+    같은 암묵 경로를 두지 않는 이유는 이 리포의 규율 그대로다 — 경로는 인자로 드러나야 한다.
+    """
+    if shadow_root:
+        return os.path.realpath(shadow_root), SHADOW_ROOT_EXPLICIT
+    base = os.path.realpath(repo or _REPO_ROOT)
+    try:
+        worktree = worktree_of(base)
+    except GitUnavailable:
+        return base, SHADOW_ROOT_NO_GIT
+    if worktree is None:
+        return base, SHADOW_ROOT_MAIN
+    common = git_common_dir(base)
+    main_root = os.path.dirname(common) if os.path.basename(common) == ".git" else None
+    if not main_root or not os.path.isdir(main_root):
+        raise ShadowLedgerRootError(
+            f"여기는 격리 체크아웃({worktree})인데 주 작업 트리를 찾지 못했다 — "
+            f"공용 git 디렉터리 {common}. 원장은 worktree 와 함께 사라지므로 여기에 쓰지 "
+            "않는다. 처분: 누적 루트를 명시 지정하라(shadow_root)"
+        )
+    return os.path.realpath(main_root), SHADOW_ROOT_RESOLVED
+
+
 def shadow_screening_ledger(repo: str | None = None, shadow_root: str | None = None) -> str:
-    """맹검 스크리닝 메모의 섀도 원장 — `<repo>/ledgers/shadow/screening.jsonl`.
+    """맹검 스크리닝 메모의 섀도 원장 — `<누적 루트>/ledgers/shadow/screening.jsonl`.
 
     ★ 런 **밖**이다(재정 P-U4). 메모는 재료 명세 계약면 밖의 관찰 기록이며, 한 런의 산출이
     아니라 여러 런에 걸쳐 쌓이는 축적물(historian 스크리닝의 사전 훈련 데이터 — 헌장 D4)이다.
     그래서 `RunPaths` 의 프로퍼티가 아니라 리포 수준의 모듈 함수로 노출한다.
 
-    ★ `shadow_root` = 원장이 누적되는 루트를 **명시로** 갈아끼우는 자리(기본 `None` = 생산 자리).
-    테스트 하네스 전용이다 — 재정 P-U2 가 "표본은 자기완결 미니 세계"라고 못 박았는데, 합성
-    픽스처의 메모가 생산 원장에 섞이면 축적물의 값(D4 훈련 데이터)이 사라진다. 환경 변수 같은
-    암묵 경로를 두지 않는 이유는 이 리포의 규율 그대로다 — 경로는 인자로 드러나야 한다.
-    `repo` 는 계약 트리의 루트이고 `shadow_root` 는 원장의 루트다. 둘은 층이 다르므로 분리한다.
+    누적 루트의 판정은 `shadow_ledger_root` 하나가 한다 — 사유가 필요하면 그쪽을 부른다.
     """
-    return os.path.join(
-        shadow_root or repo or _REPO_ROOT, "ledgers", "shadow", "screening.jsonl"
-    )
+    root, _ = shadow_ledger_root(repo, shadow_root)
+    return os.path.join(root, *SHADOW_LEDGER_RELATIVE)
 
 
 class RunPaths:
@@ -276,6 +352,17 @@ class RunPaths:
     @property
     def lane_log(self) -> str:
         return os.path.join(self.lanes_dir, LANE_LOG_BASENAME)
+
+    @property
+    def shadow_pointer(self) -> str:
+        """이 런이 **어느 섀도 원장에 썼는가**의 기록. 계약 미선언 — `10-read/lanes/` 안이다.
+
+        원장 자체는 런 밖에 있으므로(재정 P-U4) 런 산출물만 보아서는 그 자리를 알 수 없고,
+        자리를 적지 않으면 다음에 또 사라진다 — 통주 2 의 4행이 worktree 와 함께 없어진 뒤에야
+        그 사실이 드러났다. 레인 로그 옆에 두는 이유는 성질이 같기 때문이다: 둘 다 "무엇이
+        나왔는가"가 아니라 **"어디로 갔는가"**를 적는 기록이다.
+        """
+        return os.path.join(self.lanes_dir, SHADOW_POINTER_BASENAME)
 
     def claim_tree(self, claim_id: str) -> str:
         return os.path.join(self.claim_trees, f"{claim_id}.md")

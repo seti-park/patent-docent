@@ -49,10 +49,12 @@ from engine.lanes.plan import (  # noqa: E402
     plan_synthesis,
     referenced_figures,
 )
-from engine.lanes.replay_adapter import ReplayLaneAdapter  # noqa: E402
+from engine.lanes.replay_adapter import (  # noqa: E402
+    ReplayLaneAdapter as _EngineReplayLaneAdapter,
+)
 from engine.paths import RunPaths, format_parameter  # noqa: E402
 from engine.read_view import ReadView  # noqa: E402
-from engine.render.material_spec_md import render  # noqa: E402
+from engine.render.material_spec_md import ANSWER_SCOPE_TEXT, render  # noqa: E402
 from engine.stages import (  # noqa: E402
     StageEnvironmentError,
     StageError,
@@ -662,6 +664,34 @@ def write_lane_responses(
                         ensure_ascii=False,
                     )
     return root
+
+
+class ReplayLaneAdapter(_EngineReplayLaneAdapter):
+    """픽스처 트리 전용 재생 어댑터 — **부재한** 입력 지문 반향만 채운다(재정 P-12).
+
+    ★ 이 우회가 필요한 이유. 응답은 요청 지문을 반향해야 하는데(재정 P-12 ②), 합성 픽스처의
+    응답은 **요청이 존재하기 전에** 저작되므로 반향할 값을 가질 수 없다. 기록된 실제 런의
+    재생에는 이 문제가 없다 — 그때 레인이 반향을 적었기 때문이다. 그러므로 이 메움은 픽스처의
+    사정이지 계약의 완화가 아니며, 그래서 엔진이 아니라 여기 산다(`engine/lanes/replay_adapter.py`
+    docstring 의 같은 판단).
+
+    ★ 메움의 경계가 이 클래스의 핵심이다 — **키가 없을 때만** 채우고 값이 있으면 손대지 않는다.
+    덕분에 "낡은 응답"(지문이 있으나 다른 값) 시나리오는 재생 경로에서도 그대로 거부되며,
+    이 우회가 시점 결속 자체를 무력화하지 않는다.
+    """
+
+    def dispatch(self, requests):
+        for request in requests:
+            path = os.path.join(self.root, *request.lane_id.split("/"), "response.json")
+            if not os.path.exists(path):
+                continue
+            raw = json.loads(read_text(path))
+            if not isinstance(raw, dict) or "input_digest" in raw:
+                continue
+            raw["input_digest"] = request.input_digest
+            with open(path, "w", encoding="utf-8") as handle:
+                json.dump(raw, handle, ensure_ascii=False)
+        return super().dispatch(requests)
 
 
 def shadow_root_for(run_root: str) -> str:
@@ -2532,7 +2562,13 @@ def test_cp1_surface_shows_total_numeric_count(tmp_path) -> None:
     if sorted(referenced) != sorted(["M7", "M8"]):
         pytest.fail(f"역참조로 도출된 중요분이 다르다: {referenced}")
 
-    headline = f"**전체 {total}건 — 참조 {len(referenced)}건 표시, 미참조 {len(unreferenced)}건 접힘**"
+    # ★ 헤드라인은 **범위를 밝히고** 센다(2026-08-18 통주 2 처분 ⓒ). 구 문언 "전체 N건"은
+    #   어느 범위의 계수인지를 적지 않아, 정답지 밖 역참조(figure-sourced)가 하나 섞이면
+    #   같은 문서 안의 두 수가 어긋난 채로 읽혔다.
+    headline = (
+        f"**수확 정답지 {total}건({ANSWER_SCOPE_TEXT}) — "
+        f"참조 {len(referenced)}건 표시, 미참조 {len(unreferenced)}건 접힘**"
+    )
     if headline not in rendered:
         pytest.fail(f"전량 카운트 상시 표기가 없다: {headline!r}")
     section = rendered.split("## 12. ★ 수치 인벤토리")[1].split("## 13.")[0]
