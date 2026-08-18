@@ -1,0 +1,861 @@
+{
+  "lane_id": "read-b/decompose/batch-0",
+  "model": "claude-opus-5[1m]",
+  "effort": "max",
+  "input_digest": "ec2b5064d88403050fd7f3ee45df45d9c2503f117c4689465cd7d3bcb3f3f389",
+  "payload": {
+    "claims": {
+      "independent": [
+        {
+          "id": "CL-1",
+          "type": "independent",
+          "text_verbatim": "A hardware accelerator comprising: a compute-in-memory (CIM) macro configured to perform a vector matrix multiplication (VMM) operation between a vector of activation values and a matrix of weight values; and a mode decoding unit configured to provide an arithmetic mode of the VMM operation according to a first floating point format of the activation values and a second floating point format of the weight values, the first floating point format and the second floating point format being flexible, wherein a column cell of the CIM macro is configured to output a primitive product between an activation value and a weight value and comprises: a half adder configured to add an exponent bit of the activation value and an exponent bit of the weight value and output a carry-out bit and a sum bit; a first multiplexer configured to select zero or a prior stage carry-out bit from a prior stage half adder and output a first selection to a full adder; a second multiplexer configured to select zero or the sum bit and output a second selection to the full adder; and a third multiplexer configured to select zero or a carry-in bit from a prior stage full adder and output a third selection to the full adder, wherein the first multiplexer, the second multiplexer and the third multiplexer perform respective selections based on control signals according to the arithmetic mode.",
+          "elements": [
+            {
+              "id": "CL-1/e1",
+              "text_verbatim": "a compute-in-memory (CIM) macro configured to perform a vector matrix multiplication (VMM) operation between a vector of activation values and a matrix of weight values",
+              "material_id": "M1",
+              "children": []
+            },
+            {
+              "id": "CL-1/e2",
+              "text_verbatim": "a mode decoding unit configured to provide an arithmetic mode of the VMM operation according to a first floating point format of the activation values and a second floating point format of the weight values",
+              "material_id": "M2",
+              "children": [
+                {
+                  "id": "CL-1/e2/e1",
+                  "text_verbatim": "the first floating point format and the second floating point format being flexible",
+                  "material_id": "M3",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "CL-1/e3",
+              "text_verbatim": "wherein a column cell of the CIM macro is configured to output a primitive product between an activation value and a weight value and comprises:",
+              "material_id": "M4",
+              "children": [
+                {
+                  "id": "CL-1/e3/e1",
+                  "text_verbatim": "a half adder configured to add an exponent bit of the activation value and an exponent bit of the weight value and output a carry-out bit and a sum bit",
+                  "material_id": "M5",
+                  "children": []
+                },
+                {
+                  "id": "CL-1/e3/e2",
+                  "text_verbatim": "a first multiplexer configured to select zero or a prior stage carry-out bit from a prior stage half adder and output a first selection to a full adder",
+                  "material_id": "M6",
+                  "children": []
+                },
+                {
+                  "id": "CL-1/e3/e3",
+                  "text_verbatim": "a second multiplexer configured to select zero or the sum bit and output a second selection to the full adder",
+                  "material_id": "M7",
+                  "children": []
+                },
+                {
+                  "id": "CL-1/e3/e4",
+                  "text_verbatim": "a third multiplexer configured to select zero or a carry-in bit from a prior stage full adder and output a third selection to the full adder",
+                  "material_id": "M8",
+                  "children": []
+                },
+                {
+                  "id": "CL-1/e3/e5",
+                  "text_verbatim": "wherein the first multiplexer, the second multiplexer and the third multiplexer perform respective selections based on control signals according to the arithmetic mode",
+                  "material_id": "M9",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "CL-12",
+          "type": "independent",
+          "text_verbatim": "A method for performing a vector matrix multiplication (VMM) operation in a compute-in-memory (CIM) macro between a vector of activation values and a matrix of weight values, the method comprising: adding, by a half adder in a column cell of the CIM macro, an exponent bit of an activation value and an exponent bit of a weight value to output a carry-out bit and a sum bit; selecting, by a first multiplexer in the column cell, zero or a prior stage carry-out bit from a prior stage half adder to output a first selection to a full adder; selecting, by a second multiplexer in the column cell, zero or the sum bit to output a second selection to the full adder; selecting, by a third multiplexer in the column cell, zero or a carry-in bit from a prior stage full adder to output a third selection to the full adder; and outputting an exponent bit of a primitive product between the activation value and the weight value.",
+          "elements": [
+            {
+              "id": "CL-12/e1",
+              "text_verbatim": "adding, by a half adder in a column cell of the CIM macro, an exponent bit of an activation value and an exponent bit of a weight value to output a carry-out bit and a sum bit",
+              "material_id": "M10",
+              "children": []
+            },
+            {
+              "id": "CL-12/e2",
+              "text_verbatim": "selecting, by a first multiplexer in the column cell, zero or a prior stage carry-out bit from a prior stage half adder to output a first selection to a full adder",
+              "material_id": "M11",
+              "children": []
+            },
+            {
+              "id": "CL-12/e3",
+              "text_verbatim": "selecting, by a second multiplexer in the column cell, zero or the sum bit to output a second selection to the full adder",
+              "material_id": "M12",
+              "children": []
+            },
+            {
+              "id": "CL-12/e4",
+              "text_verbatim": "selecting, by a third multiplexer in the column cell, zero or a carry-in bit from a prior stage full adder to output a third selection to the full adder",
+              "material_id": "M13",
+              "children": []
+            },
+            {
+              "id": "CL-12/e5",
+              "text_verbatim": "outputting an exponent bit of a primitive product between the activation value and the weight value",
+              "material_id": "M14",
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "CL-20",
+          "type": "independent",
+          "text_verbatim": "A system comprising: a compute device configured to perform a vector matrix multiplication (VMM) operation between a vector of activation values and a matrix of weight values; and a mode device configured to provide a mode of the VMM operation according to a first floating point format of the activation values and a second floating point format of the weight values, the first floating point format and the second floating point format being flexible, wherein the compute device comprises: a half adder configured to add an exponent bit of the activation value and an exponent bit of the weight value and output a carry-out bit and a sum bit; a first multiplexer configured to select zero or a prior stage carry-out bit from a prior stage half adder and output a first selection to a full adder; a second multiplexer configured to select zero or the sum bit and output a second selection to the full adder; and a third multiplexer configured to select zero or a carry-in bit from a prior stage full adder and output a third selection to the full adder, wherein the first multiplexer, the second multiplexer, and the third multiplexer perform respective selections based on control signals according to the mode.",
+          "elements": [
+            {
+              "id": "CL-20/e1",
+              "text_verbatim": "a compute device configured to perform a vector matrix multiplication (VMM) operation between a vector of activation values and a matrix of weight values",
+              "material_id": "M15",
+              "children": [
+                {
+                  "id": "CL-20/e1/e1",
+                  "text_verbatim": "a half adder configured to add an exponent bit of the activation value and an exponent bit of the weight value and output a carry-out bit and a sum bit",
+                  "material_id": "M16",
+                  "children": []
+                },
+                {
+                  "id": "CL-20/e1/e2",
+                  "text_verbatim": "a first multiplexer configured to select zero or a prior stage carry-out bit from a prior stage half adder and output a first selection to a full adder",
+                  "material_id": "M17",
+                  "children": []
+                },
+                {
+                  "id": "CL-20/e1/e3",
+                  "text_verbatim": "a second multiplexer configured to select zero or the sum bit and output a second selection to the full adder",
+                  "material_id": "M18",
+                  "children": []
+                },
+                {
+                  "id": "CL-20/e1/e4",
+                  "text_verbatim": "a third multiplexer configured to select zero or a carry-in bit from a prior stage full adder and output a third selection to the full adder",
+                  "material_id": "M19",
+                  "children": []
+                },
+                {
+                  "id": "CL-20/e1/e5",
+                  "text_verbatim": "wherein the first multiplexer, the second multiplexer, and the third multiplexer perform respective selections based on control signals according to the mode",
+                  "material_id": "M20",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "CL-20/e2",
+              "text_verbatim": "a mode device configured to provide a mode of the VMM operation according to a first floating point format of the activation values and a second floating point format of the weight values",
+              "material_id": "M21",
+              "children": [
+                {
+                  "id": "CL-20/e2/e1",
+                  "text_verbatim": "the first floating point format and the second floating point format being flexible",
+                  "material_id": "M22",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "dependents": [
+        {
+          "id": "CL-2",
+          "depends_on": [
+            "CL-1"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The hardware accelerator according to claim 1, wherein the column cell further comprises a fourth multiplexer configured to output an exponent bit of the primitive product by selecting an output from the full adder, the sum bit from the half adder or the carry-in bit from the prior stage full adder.",
+          "additions": [
+            {
+              "id": "CL-2/a1",
+              "attaches_to": "CL-1/e3",
+              "text_verbatim": "wherein the column cell further comprises a fourth multiplexer configured to output an exponent bit of the primitive product by selecting an output from the full adder, the sum bit from the half adder or the carry-in bit from the prior stage full adder",
+              "material_id": "M23"
+            }
+          ]
+        },
+        {
+          "id": "CL-3",
+          "depends_on": [
+            "CL-1"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The hardware accelerator according to claim 1, wherein the column cell further comprises a plurality of memory cells configured to store the weight value.",
+          "additions": [
+            {
+              "id": "CL-3/a1",
+              "attaches_to": "CL-1/e3",
+              "text_verbatim": "wherein the column cell further comprises a plurality of memory cells configured to store the weight value",
+              "material_id": "M24"
+            }
+          ]
+        },
+        {
+          "id": "CL-4",
+          "depends_on": [
+            "CL-3"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The hardware accelerator according to claim 3, wherein one of the plurality of memory cells comprises a bitcell configured to store the exponent bit of the weight value and provide the exponent bit of the weight value to the half adder.",
+          "additions": [
+            {
+              "id": "CL-4/a1",
+              "attaches_to": "CL-1/e3",
+              "text_verbatim": "wherein one of the plurality of memory cells comprises a bitcell configured to store the exponent bit of the weight value and provide the exponent bit of the weight value to the half adder",
+              "material_id": "M25"
+            }
+          ]
+        },
+        {
+          "id": "CL-5",
+          "depends_on": [
+            "CL-3"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The hardware accelerator according to claim 3, wherein: one of the plurality of memory cells comprises a first bitcell and a second bitcell, and the first bitcell is addressed by a first wordline and the second bitcell is addressed by a second wordline different from the first wordline.",
+          "additions": [
+            {
+              "id": "CL-5/a1",
+              "attaches_to": "CL-1/e3",
+              "text_verbatim": "one of the plurality of memory cells comprises a first bitcell and a second bitcell",
+              "material_id": "M26"
+            },
+            {
+              "id": "CL-5/a2",
+              "attaches_to": "CL-1/e3",
+              "text_verbatim": "the first bitcell is addressed by a first wordline and the second bitcell is addressed by a second wordline different from the first wordline",
+              "material_id": "M27"
+            }
+          ]
+        },
+        {
+          "id": "CL-6",
+          "depends_on": [
+            "CL-5"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The hardware accelerator according to claim 5, wherein the first bitcell and the second bitcell share a bitline and are addressed by different wordlines.",
+          "additions": [
+            {
+              "id": "CL-6/a1",
+              "attaches_to": "CL-1/e3",
+              "text_verbatim": "wherein the first bitcell and the second bitcell share a bitline and are addressed by different wordlines",
+              "material_id": "M28"
+            }
+          ]
+        },
+        {
+          "id": "CL-7",
+          "depends_on": [
+            "CL-5"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The hardware accelerator according to claim 5, wherein the first bitcell is configured to store a first bit of the weight value and the second bitcell is configured to store a second bit of another weight value that is different from the weight value.",
+          "additions": [
+            {
+              "id": "CL-7/a1",
+              "attaches_to": "CL-1/e3",
+              "text_verbatim": "wherein the first bitcell is configured to store a first bit of the weight value and the second bitcell is configured to store a second bit of another weight value that is different from the weight value",
+              "material_id": "M29"
+            }
+          ]
+        },
+        {
+          "id": "CL-8",
+          "depends_on": [
+            "CL-7"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The hardware accelerator according to claim 7, wherein the first bitcell is configured to provide the first bit of the weight value to the half adder, the first bit being the exponent bit of the weight value.",
+          "additions": [
+            {
+              "id": "CL-8/a1",
+              "attaches_to": "CL-1/e3",
+              "text_verbatim": "wherein the first bitcell is configured to provide the first bit of the weight value to the half adder, the first bit being the exponent bit of the weight value",
+              "material_id": "M30"
+            }
+          ]
+        },
+        {
+          "id": "CL-9",
+          "depends_on": [
+            "CL-8"
+          ],
+          "dependency_type": "unclassified",
+          "text_verbatim": "The hardware accelerator according to claim 8, wherein the second bitcell is configured to concurrently update the second bit when the first bitcell is providing the first bit to the half adder.",
+          "additions": [
+            {
+              "id": "CL-9/a1",
+              "attaches_to": "CL-1/e3",
+              "text_verbatim": "wherein the second bitcell is configured to concurrently update the second bit when the first bitcell is providing the first bit to the half adder",
+              "material_id": "M31"
+            }
+          ]
+        },
+        {
+          "id": "CL-10",
+          "depends_on": [
+            "CL-1"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The hardware accelerator according to claim 1, wherein a number of exponent bits in the activation value comprises at least one of 2, 3, 4 and 5.",
+          "additions": [
+            {
+              "id": "CL-10/a1",
+              "attaches_to": "CL-1/e1",
+              "text_verbatim": "wherein a number of exponent bits in the activation value comprises at least one of 2, 3, 4 and 5",
+              "material_id": "M32"
+            }
+          ]
+        },
+        {
+          "id": "CL-11",
+          "depends_on": [
+            "CL-1"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The hardware accelerator according to claim 1, wherein a number of exponent bits in the weight value comprises at least one of 2, 3, 4 and 5.",
+          "additions": [
+            {
+              "id": "CL-11/a1",
+              "attaches_to": "CL-1/e1",
+              "text_verbatim": "wherein a number of exponent bits in the weight value comprises at least one of 2, 3, 4 and 5",
+              "material_id": "M33"
+            }
+          ]
+        },
+        {
+          "id": "CL-13",
+          "depends_on": [
+            "CL-12"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The method according to claim 12, further comprising: controlling the selections performed by the first multiplexer, the second multiplexer, and the third multiplexer based on control signals according to an arithmetic mode of the VMM operation.",
+          "additions": [
+            {
+              "id": "CL-13/a1",
+              "attaches_to": "CL-12/e2",
+              "text_verbatim": "controlling the selections performed by the first multiplexer, the second multiplexer, and the third multiplexer based on control signals according to an arithmetic mode of the VMM operation",
+              "material_id": "M34"
+            }
+          ]
+        },
+        {
+          "id": "CL-14",
+          "depends_on": [
+            "CL-13"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The method according to claim 13, further comprising: determining the arithmetic mode based on a first floating point format of the activation value and a second floating point format of the weight value.",
+          "additions": [
+            {
+              "id": "CL-14/a1",
+              "attaches_to": "CL-12/e2",
+              "text_verbatim": "determining the arithmetic mode based on a first floating point format of the activation value and a second floating point format of the weight value",
+              "material_id": "M35"
+            }
+          ]
+        },
+        {
+          "id": "CL-15",
+          "depends_on": [
+            "CL-12"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The method according to claim 12, further comprising: selecting, by a fourth multiplexer in the column cell, an output from the full adder, the sum bit from the half adder or the carry-in bit from the prior stage full adder; and outputting, by the fourth multiplexer in the column cell, an exponent bit of the primitive product.",
+          "additions": [
+            {
+              "id": "CL-15/a1",
+              "attaches_to": "CL-12/e2",
+              "text_verbatim": "selecting, by a fourth multiplexer in the column cell, an output from the full adder, the sum bit from the half adder or the carry-in bit from the prior stage full adder",
+              "material_id": "M36"
+            },
+            {
+              "id": "CL-15/a2",
+              "attaches_to": "CL-12/e5",
+              "text_verbatim": "outputting, by the fourth multiplexer in the column cell, an exponent bit of the primitive product",
+              "material_id": "M37"
+            }
+          ]
+        },
+        {
+          "id": "CL-16",
+          "depends_on": [
+            "CL-12"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The method according to claim 12, further comprising: providing, by a first bitcell in the column cell, the exponent bit of the weight value to the half adder.",
+          "additions": [
+            {
+              "id": "CL-16/a1",
+              "attaches_to": "CL-12/e1",
+              "text_verbatim": "providing, by a first bitcell in the column cell, the exponent bit of the weight value to the half adder",
+              "material_id": "M38"
+            }
+          ]
+        },
+        {
+          "id": "CL-17",
+          "depends_on": [
+            "CL-16"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The method according to claim 16, further comprising: writing, concurrently, a further exponent bit of a further weight value to a second bitcell in the column cell, wherein the further weight value is different from the weight value.",
+          "additions": [
+            {
+              "id": "CL-17/a1",
+              "attaches_to": "CL-12/e1",
+              "text_verbatim": "writing, concurrently, a further exponent bit of a further weight value to a second bitcell in the column cell, wherein the further weight value is different from the weight value",
+              "material_id": "M39"
+            }
+          ]
+        },
+        {
+          "id": "CL-18",
+          "depends_on": [
+            "CL-17"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The method according to claim 17, further comprising: writing the further exponent bit to the second bitcell through a bitline shared with the first bitcell.",
+          "additions": [
+            {
+              "id": "CL-18/a1",
+              "attaches_to": "CL-12/e1",
+              "text_verbatim": "writing the further exponent bit to the second bitcell through a bitline shared with the first bitcell",
+              "material_id": "M40"
+            }
+          ]
+        },
+        {
+          "id": "CL-19",
+          "depends_on": [
+            "CL-12"
+          ],
+          "dependency_type": "single",
+          "text_verbatim": "The method according to claim 12, wherein: a number of exponent bits in the activation value is at least one of 2, 3, 4, or 5; a number of exponent bits in the weight value is at least one of 2, 3, 4, or 5; and the method further comprises determining a number of bitcells in the column cell using a least common multiple among a plurality of possible number of exponent bits in the activation value and the weight value.",
+          "additions": [
+            {
+              "id": "CL-19/a1",
+              "attaches_to": "CL-12/e1",
+              "text_verbatim": "a number of exponent bits in the activation value is at least one of 2, 3, 4, or 5",
+              "material_id": "M41"
+            },
+            {
+              "id": "CL-19/a2",
+              "attaches_to": "CL-12/e1",
+              "text_verbatim": "a number of exponent bits in the weight value is at least one of 2, 3, 4, or 5",
+              "material_id": "M42"
+            },
+            {
+              "id": "CL-19/a3",
+              "attaches_to": "CL-12/e1",
+              "text_verbatim": "the method further comprises determining a number of bitcells in the column cell using a least common multiple among a plurality of possible number of exponent bits in the activation value and the weight value",
+              "material_id": "M43"
+            }
+          ]
+        }
+      ],
+      "applicant_interest": []
+    },
+    "items": [
+      {
+        "id": "M1",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-1/e1",
+        "label_en": "compute-in-memory (CIM) macro performing the VMM operation",
+        "text_verbatim": "a compute-in-memory (CIM) macro configured to perform a vector matrix multiplication (VMM) operation between a vector of activation values and a matrix of weight values"
+      },
+      {
+        "id": "M2",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-1/e2",
+        "label_en": "mode decoding unit providing the arithmetic mode from the two floating point formats",
+        "text_verbatim": "a mode decoding unit configured to provide an arithmetic mode of the VMM operation according to a first floating point format of the activation values and a second floating point format of the weight values"
+      },
+      {
+        "id": "M3",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-1/e2/e1",
+        "label_en": "flexibility of the first and second floating point formats",
+        "text_verbatim": "the first floating point format and the second floating point format being flexible"
+      },
+      {
+        "id": "M4",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-1/e3",
+        "label_en": "column cell outputting a primitive product",
+        "text_verbatim": "wherein a column cell of the CIM macro is configured to output a primitive product between an activation value and a weight value and comprises:"
+      },
+      {
+        "id": "M5",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-1/e3/e1",
+        "label_en": "half adder summing the two exponent bits into carry-out and sum bits",
+        "text_verbatim": "a half adder configured to add an exponent bit of the activation value and an exponent bit of the weight value and output a carry-out bit and a sum bit"
+      },
+      {
+        "id": "M6",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-1/e3/e2",
+        "label_en": "first multiplexer selecting zero or the prior stage carry-out bit",
+        "text_verbatim": "a first multiplexer configured to select zero or a prior stage carry-out bit from a prior stage half adder and output a first selection to a full adder"
+      },
+      {
+        "id": "M7",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-1/e3/e3",
+        "label_en": "second multiplexer selecting zero or the sum bit",
+        "text_verbatim": "a second multiplexer configured to select zero or the sum bit and output a second selection to the full adder"
+      },
+      {
+        "id": "M8",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-1/e3/e4",
+        "label_en": "third multiplexer selecting zero or the prior stage carry-in bit",
+        "text_verbatim": "a third multiplexer configured to select zero or a carry-in bit from a prior stage full adder and output a third selection to the full adder"
+      },
+      {
+        "id": "M9",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-1/e3/e5",
+        "label_en": "control-signal driven selection of the three multiplexers per arithmetic mode",
+        "text_verbatim": "wherein the first multiplexer, the second multiplexer and the third multiplexer perform respective selections based on control signals according to the arithmetic mode"
+      },
+      {
+        "id": "M10",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-12/e1",
+        "label_en": "adding step performed by the half adder in the column cell",
+        "text_verbatim": "adding, by a half adder in a column cell of the CIM macro, an exponent bit of an activation value and an exponent bit of a weight value to output a carry-out bit and a sum bit"
+      },
+      {
+        "id": "M11",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-12/e2",
+        "label_en": "first multiplexer selecting step",
+        "text_verbatim": "selecting, by a first multiplexer in the column cell, zero or a prior stage carry-out bit from a prior stage half adder to output a first selection to a full adder"
+      },
+      {
+        "id": "M12",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-12/e3",
+        "label_en": "second multiplexer selecting step",
+        "text_verbatim": "selecting, by a second multiplexer in the column cell, zero or the sum bit to output a second selection to the full adder"
+      },
+      {
+        "id": "M13",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-12/e4",
+        "label_en": "third multiplexer selecting step",
+        "text_verbatim": "selecting, by a third multiplexer in the column cell, zero or a carry-in bit from a prior stage full adder to output a third selection to the full adder"
+      },
+      {
+        "id": "M14",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-12/e5",
+        "label_en": "outputting the exponent bit of the primitive product",
+        "text_verbatim": "outputting an exponent bit of a primitive product between the activation value and the weight value"
+      },
+      {
+        "id": "M15",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-20/e1",
+        "label_en": "compute device performing the VMM operation",
+        "text_verbatim": "a compute device configured to perform a vector matrix multiplication (VMM) operation between a vector of activation values and a matrix of weight values"
+      },
+      {
+        "id": "M16",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-20/e1/e1",
+        "label_en": "half adder of the compute device",
+        "text_verbatim": "a half adder configured to add an exponent bit of the activation value and an exponent bit of the weight value and output a carry-out bit and a sum bit"
+      },
+      {
+        "id": "M17",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-20/e1/e2",
+        "label_en": "first multiplexer of the compute device",
+        "text_verbatim": "a first multiplexer configured to select zero or a prior stage carry-out bit from a prior stage half adder and output a first selection to a full adder"
+      },
+      {
+        "id": "M18",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-20/e1/e3",
+        "label_en": "second multiplexer of the compute device",
+        "text_verbatim": "a second multiplexer configured to select zero or the sum bit and output a second selection to the full adder"
+      },
+      {
+        "id": "M19",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-20/e1/e4",
+        "label_en": "third multiplexer of the compute device",
+        "text_verbatim": "a third multiplexer configured to select zero or a carry-in bit from a prior stage full adder and output a third selection to the full adder"
+      },
+      {
+        "id": "M20",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-20/e1/e5",
+        "label_en": "control-signal driven selection of the three multiplexers per mode",
+        "text_verbatim": "wherein the first multiplexer, the second multiplexer, and the third multiplexer perform respective selections based on control signals according to the mode"
+      },
+      {
+        "id": "M21",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-20/e2",
+        "label_en": "mode device providing the mode from the two floating point formats",
+        "text_verbatim": "a mode device configured to provide a mode of the VMM operation according to a first floating point format of the activation values and a second floating point format of the weight values"
+      },
+      {
+        "id": "M22",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-20/e2/e1",
+        "label_en": "flexibility of the first and second floating point formats",
+        "text_verbatim": "the first floating point format and the second floating point format being flexible"
+      },
+      {
+        "id": "M23",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-2/a1",
+        "label_en": "fourth multiplexer outputting the exponent bit of the primitive product",
+        "text_verbatim": "wherein the column cell further comprises a fourth multiplexer configured to output an exponent bit of the primitive product by selecting an output from the full adder, the sum bit from the half adder or the carry-in bit from the prior stage full adder"
+      },
+      {
+        "id": "M24",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-3/a1",
+        "label_en": "plurality of memory cells storing the weight value",
+        "text_verbatim": "wherein the column cell further comprises a plurality of memory cells configured to store the weight value"
+      },
+      {
+        "id": "M25",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-4/a1",
+        "label_en": "bitcell storing and supplying the weight exponent bit to the half adder",
+        "text_verbatim": "wherein one of the plurality of memory cells comprises a bitcell configured to store the exponent bit of the weight value and provide the exponent bit of the weight value to the half adder"
+      },
+      {
+        "id": "M26",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-5/a1",
+        "label_en": "memory cell made of a first bitcell and a second bitcell",
+        "text_verbatim": "one of the plurality of memory cells comprises a first bitcell and a second bitcell"
+      },
+      {
+        "id": "M27",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-5/a2",
+        "label_en": "first and second bitcells addressed by different wordlines",
+        "text_verbatim": "the first bitcell is addressed by a first wordline and the second bitcell is addressed by a second wordline different from the first wordline"
+      },
+      {
+        "id": "M28",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-6/a1",
+        "label_en": "first and second bitcells sharing a bitline",
+        "text_verbatim": "wherein the first bitcell and the second bitcell share a bitline and are addressed by different wordlines"
+      },
+      {
+        "id": "M29",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-7/a1",
+        "label_en": "two bitcells holding bits of two different weight values",
+        "text_verbatim": "wherein the first bitcell is configured to store a first bit of the weight value and the second bitcell is configured to store a second bit of another weight value that is different from the weight value"
+      },
+      {
+        "id": "M30",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-8/a1",
+        "label_en": "first bitcell supplying the weight exponent bit to the half adder",
+        "text_verbatim": "wherein the first bitcell is configured to provide the first bit of the weight value to the half adder, the first bit being the exponent bit of the weight value"
+      },
+      {
+        "id": "M31",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-9/a1",
+        "label_en": "second bitcell updated concurrently with the first bitcell read",
+        "text_verbatim": "wherein the second bitcell is configured to concurrently update the second bit when the first bitcell is providing the first bit to the half adder"
+      },
+      {
+        "id": "M32",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-10/a1",
+        "label_en": "number of activation exponent bits among 2, 3, 4 and 5",
+        "text_verbatim": "wherein a number of exponent bits in the activation value comprises at least one of 2, 3, 4 and 5"
+      },
+      {
+        "id": "M33",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-11/a1",
+        "label_en": "number of weight exponent bits among 2, 3, 4 and 5",
+        "text_verbatim": "wherein a number of exponent bits in the weight value comprises at least one of 2, 3, 4 and 5"
+      },
+      {
+        "id": "M34",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-13/a1",
+        "label_en": "controlling the three multiplexer selections by control signals per arithmetic mode",
+        "text_verbatim": "controlling the selections performed by the first multiplexer, the second multiplexer, and the third multiplexer based on control signals according to an arithmetic mode of the VMM operation"
+      },
+      {
+        "id": "M35",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-14/a1",
+        "label_en": "determining the arithmetic mode from the two floating point formats",
+        "text_verbatim": "determining the arithmetic mode based on a first floating point format of the activation value and a second floating point format of the weight value"
+      },
+      {
+        "id": "M36",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-15/a1",
+        "label_en": "fourth multiplexer selecting step",
+        "text_verbatim": "selecting, by a fourth multiplexer in the column cell, an output from the full adder, the sum bit from the half adder or the carry-in bit from the prior stage full adder"
+      },
+      {
+        "id": "M37",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-15/a2",
+        "label_en": "fourth multiplexer outputting the exponent bit of the primitive product",
+        "text_verbatim": "outputting, by the fourth multiplexer in the column cell, an exponent bit of the primitive product"
+      },
+      {
+        "id": "M38",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-16/a1",
+        "label_en": "providing the weight exponent bit from a first bitcell to the half adder",
+        "text_verbatim": "providing, by a first bitcell in the column cell, the exponent bit of the weight value to the half adder"
+      },
+      {
+        "id": "M39",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-17/a1",
+        "label_en": "concurrent writing of a further weight exponent bit to a second bitcell",
+        "text_verbatim": "writing, concurrently, a further exponent bit of a further weight value to a second bitcell in the column cell, wherein the further weight value is different from the weight value"
+      },
+      {
+        "id": "M40",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-18/a1",
+        "label_en": "writing the further exponent bit through the shared bitline",
+        "text_verbatim": "writing the further exponent bit to the second bitcell through a bitline shared with the first bitcell"
+      },
+      {
+        "id": "M41",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-19/a1",
+        "label_en": "number of activation exponent bits among 2, 3, 4, or 5",
+        "text_verbatim": "a number of exponent bits in the activation value is at least one of 2, 3, 4, or 5"
+      },
+      {
+        "id": "M42",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-19/a2",
+        "label_en": "number of weight exponent bits among 2, 3, 4, or 5",
+        "text_verbatim": "a number of exponent bits in the weight value is at least one of 2, 3, 4, or 5"
+      },
+      {
+        "id": "M43",
+        "kind": "component",
+        "status": "active",
+        "superseded_by": null,
+        "claim_ref": "CL-19/a3",
+        "label_en": "determining the bitcell count from the least common multiple",
+        "text_verbatim": "the method further comprises determining a number of bitcells in the column cell using a least common multiple among a plurality of possible number of exponent bits in the activation value and the weight value"
+      }
+    ],
+    "screening_memo": {
+      "direction": "clear",
+      "reason": "권리 관심이 '메모리 셀 안에서 지수부를 반가산기 1개와 멀티플렉서 3개로 더해 부동소수점 포맷을 바꿔 끼운다'는 한 구성(CL-1/e3 계열)에 뚜렷이 몰려 있고, 곱셈을 메모리 밖으로 꺼내지 않는다는 그림이 비전문 독자에게도 한 문장으로 서므로 서사가 설 것으로 봄."
+    }
+  }
+}

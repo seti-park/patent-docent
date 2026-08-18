@@ -1,0 +1,185 @@
+{
+  "canonical_selection": {
+    "content_blind": true,
+    "read_run": "read-a",
+    "rule": "declaration-order"
+  },
+  "checks": [
+    {
+      "check_id": "read.input-digest",
+      "checked": 6,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "read.convergence",
+      "checked": 6,
+      "ruleset": "reader-rules#convergence",
+      "ruleset_size": 6,
+      "ruleset_version": "0",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    }
+  ],
+  "convergence_detail": {
+    "attempt": 2,
+    "axes": [
+      {
+        "id": "independent-count",
+        "jaccard": null,
+        "policy": "exact-match",
+        "status": "pass",
+        "threshold": null
+      },
+      {
+        "id": "element-set",
+        "jaccard": 1.0,
+        "policy": "escalation-trigger",
+        "status": "pass",
+        "threshold": 0.95
+      },
+      {
+        "id": "tree-edges",
+        "jaccard": 1.0,
+        "policy": "escalation-trigger",
+        "status": "pass",
+        "threshold": 0.95
+      },
+      {
+        "id": "dependent-count",
+        "jaccard": null,
+        "policy": "exact-match",
+        "status": "pass",
+        "threshold": null
+      },
+      {
+        "id": "dependent-set",
+        "jaccard": 1.0,
+        "policy": "exact-match",
+        "status": "pass",
+        "threshold": 1.0
+      },
+      {
+        "id": "addition-attachment",
+        "jaccard": 0.75,
+        "policy": "measure-only",
+        "status": "measured",
+        "threshold": null
+      }
+    ],
+    "dependent_count": [
+      17,
+      17
+    ],
+    "executed": true,
+    "independent_count": [
+      3,
+      3
+    ]
+  },
+  "convergence_report": {
+    "axes": [
+      {
+        "id": "independent-count",
+        "jaccard": null,
+        "policy": "exact-match",
+        "status": "pass",
+        "threshold": null
+      },
+      {
+        "id": "element-set",
+        "jaccard": 1.0,
+        "policy": "escalation-trigger",
+        "status": "pass",
+        "threshold": 0.95
+      },
+      {
+        "id": "tree-edges",
+        "jaccard": 1.0,
+        "policy": "escalation-trigger",
+        "status": "pass",
+        "threshold": 0.95
+      },
+      {
+        "id": "dependent-count",
+        "jaccard": null,
+        "policy": "exact-match",
+        "status": "pass",
+        "threshold": null
+      },
+      {
+        "id": "dependent-set",
+        "jaccard": 1.0,
+        "policy": "exact-match",
+        "status": "pass",
+        "threshold": 1.0
+      },
+      {
+        "id": "addition-attachment",
+        "jaccard": 0.75,
+        "policy": "measure-only",
+        "status": "measured",
+        "threshold": null
+      }
+    ],
+    "divergences": [
+      {
+        "axis": "addition-attachment",
+        "only_in_canonical": [
+          "selecting, by a fourth multiplexer in the column cell, an output from the full adder, the sum bit from the half adder or the carry-in bit from the prior stage full adder | adding, by a half adder in a …",
+          "wherein a number of exponent bits in the activation value comprises at least one of 2, 3, 4 and 5 | a half adder configured to add an exponent bit of the activation value and an exponent bit of the we …",
+          "wherein a number of exponent bits in the weight value comprises at least one of 2, 3, 4 and 5 | a half adder configured to add an exponent bit of the activation value and an exponent bit of the weight …"
+        ],
+        "only_in_peer": [
+          "selecting, by a fourth multiplexer in the column cell, an output from the full adder, the sum bit from the half adder or the carry-in bit from the prior stage full adder | selecting, by a first multip …",
+          "wherein a number of exponent bits in the activation value comprises at least one of 2, 3, 4 and 5 | a compute-in-memory (CIM) macro configured to perform a vector matrix multiplication (VMM) operation …",
+          "wherein a number of exponent bits in the weight value comprises at least one of 2, 3, 4 and 5 | a compute-in-memory (CIM) macro configured to perform a vector matrix multiplication (VMM) operation bet …"
+        ]
+      }
+    ],
+    "escalations": []
+  },
+  "fact_classification": {
+    "bibliographic_ids": [],
+    "derived": [],
+    "figure_sourced": [],
+    "quoted_span": {
+      "count": 0,
+      "material_ids": []
+    }
+  },
+  "findings": [],
+  "grounding_exceptions": [],
+  "manual_verification_required": [],
+  "numeric_inventory": {
+    "referenced": [],
+    "skipped": [],
+    "total": 0,
+    "unreferenced": []
+  },
+  "phase": "early",
+  "reader_version": "0.6.0",
+  "run_id": "openai-us20260147854a1-cim-fp-3",
+  "schema": "convergence/v0",
+  "screening_memos": [
+    {
+      "direction": "clear",
+      "note": "권리 관심이 CIM 컬럼 셀의 지수부 가산 경로 한 곳(반가산기 + 멀티플렉서 3개 → 전가산기)에 뚜렷하게 모여 있고, 그 선택 신호가 활성값·가중치의 부동소수점 포맷(모드)으로 결정된다는 인과가 청구항만으로 끝까지 읽힌다. '포맷이 바뀌어도 회로를 갈아끼우지 않고 배선 선택만 바꾼다'는 한 문장으로 일반 독자에게 안도감을 줄 수 있고, 종속항(비트셀 2개·비트라인 공유·동시 기입·지수 비트 수 2~5·최소공배수 셀 수)이 그 서사의 구체 장면을 그대로 제공한다.",
+      "read_run": "read-a"
+    },
+    {
+      "direction": "clear",
+      "note": "권리 관심이 '메모리 셀 안에서 지수부를 반가산기 1개와 멀티플렉서 3개로 더해 부동소수점 포맷을 바꿔 끼운다'는 한 구성(CL-1/e3 계열)에 뚜렷이 몰려 있고, 곱셈을 메모리 밖으로 꺼내지 않는다는 그림이 비전문 독자에게도 한 문장으로 서므로 서사가 설 것으로 봄.",
+      "read_run": "read-b"
+    }
+  ],
+  "source_digest": "sha256:40f1905b78c990134f5b115a268ed8d0658438da8bbfd4f03970c4132cbd12d5",
+  "spec_version": 1,
+  "unclassified_dependents": [],
+  "vacuous_pass": []
+}

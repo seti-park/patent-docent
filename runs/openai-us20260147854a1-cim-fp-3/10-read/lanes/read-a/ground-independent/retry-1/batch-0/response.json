@@ -1,0 +1,746 @@
+{
+ "lane_id": "read-a/ground-independent/retry-1/batch-0",
+ "model": "claude-opus-5[1m]",
+ "effort": "high",
+ "input_digest": "b304fb427f90db8918b9b2c9f19402b0c42da6d301f978cf3d4f40ca86ec51ff",
+ "payload": {
+  "items": [
+   {
+    "id": "M44",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M1",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0128]",
+      "quote": "For example, CIM macro **101** can support a Vector Matrix Multiplication (VMM) operation between a vector of activation values and a matrix of weight values."
+     },
+     {
+      "locator": "[0136]",
+      "quote": "Each column of computing unit **222** in the CIM macro **101** drives a dot product operation during an VMM operation."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-2",
+      "numerals": [
+       "101",
+       "222",
+       "220"
+      ],
+      "caption_quote": "FIG. **2** illustrates a representation of a block diagram of an example compute-in memory (CIM) macro, in accordance with some aspects of the present disclosure."
+     },
+     {
+      "figure": "FIG-1",
+      "numerals": [
+       "100",
+       "101"
+      ],
+      "caption_quote": "FIG. **1** illustrates a block diagram of an exemplary hardware accelerator, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M45",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M2",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0146]",
+      "quote": "In some embodiments, the compute engine **100** includes a mode decoding unit **110** (also referred to as a mode device) to provide a mode of operation to the CIM macro **101** for the tensor operation between the streaming operand and the stationary operand."
+     },
+     {
+      "locator": "[0063]",
+      "quote": "A mode decoding unit can supply an arithmetic mode that may reflect the floating-point formats chosen for activations and weights, allowing the accelerator to support multiple “flexible” low-precision formats without redesigning the datapath."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-1",
+      "numerals": [
+       "110",
+       "100",
+       "101"
+      ],
+      "caption_quote": "FIG. **1** illustrates a block diagram of an exemplary hardware accelerator, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M46",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M3",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0186]",
+      "quote": "The compute engine **100** can support various FP formats (e.g., FP8, FP6, FP4), beyond those listed in Tables 1 and 2. For example, FP8 format includes FP8 (1-5-2), FP8 (1-4-3), FP8(1-3-4); FP6 format includes FP6 (1-3-2), FP6 (1-2-3); and FP4 format includes FP4 (1-2-1), FP (1-1-2). The activation values and weight values can be represented by any of these FP formats."
+     },
+     {
+      "locator": "[0188]",
+      "quote": "FIG. **28** illustrates an exemplary design of the column cell **220** for handling exponents of the flexible FP data."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-60",
+      "numerals": [],
+      "caption_quote": "FIG. **60** illustrates a table describing schemes for handling weight values and activation values in various FP formats, in accordance with some aspects of the present disclosure."
+     },
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "220",
+       "830"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ],
+    "search_note": "FP 포맷의 유연성 자체를 그리는 도면은 회로도가 아니라 Table 2(FIG. **60**) 이다 — [0057] 캡션과 [0183] 의 Table 2 지시를 대조해 FIG-60 을 도면 자리로 잡았고, 회로 쪽 조응은 FIG. **28**(flexible FP data) 으로 보완했다."
+   },
+   {
+    "id": "M47",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M4",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0137]",
+      "quote": "FIG. **3** illustrates a block diagram of an exemplary column cell **220**configured to produce a primitive product between an activation value and a weight value."
+     },
+     {
+      "locator": "[0149]",
+      "quote": "Step S1: multiplying, by each column cell **220** of the CIM macro **101**, a corresponding activation value a.sub.i and a corresponding weight value w.sub.ik to produce an element-wise primitive product P.sub.ik=a.sub.i×w.sub.ik, with specific handling method for the signs, exponents and mantissas of the activation value a.sub.i and the weight value w.sub.ik."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-3",
+      "numerals": [
+       "220",
+       "340"
+      ],
+      "caption_quote": "FIG. **3** illustrates an exemplary column cell in the CIM macro, in accordance with some aspects of the present disclosure."
+     },
+     {
+      "figure": "FIG-2",
+      "numerals": [
+       "220",
+       "222"
+      ],
+      "caption_quote": "FIG. **2** illustrates a representation of a block diagram of an example compute-in memory (CIM) macro, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M48",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M5",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "To compute the exponent of the primitive product, the exponent bit of the weight value and a corresponding exponent bit of the activation value can be provided to a corresponding half adder. The half adder can add the corresponding exponent bits of the activation value and the weight value to produce one sum bit S.sub.j and one carry-out bit C.sub.j."
+     },
+     {
+      "locator": "[0165]",
+      "quote": "First, half adders (labeled as HA) can be used to add the exponent bits of the activation value Act 0 <6:3> to corresponding exponent bits of the weight value Wdata 0 <4:2> (simplified as W0 <4:2>). Each half adder can output a sum bit and a carry-out bit."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "220",
+       "830"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     },
+     {
+      "figure": "FIG-9",
+      "numerals": [
+       "830"
+      ],
+      "caption_quote": "FIG. **9** illustrates a scheme for handling exponent bits in a column cell in the CIM macro, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M49",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M6",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "A second multiplexer **2862** selects zero or a prior stage carry-out bit C.sub.j−1 from a prior stage half adder and output a second selection to the full adder."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "2862",
+       "830"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ],
+    "search_note": "FIG. **28**([0188]) 의 멀티플렉서 번호 부여가 청구항 순서와 뒤바뀌어 있어, 기능 조응(무엇을 선택하는가)을 기준으로 문단을 붙였다 — 청구항의 first multiplexer(prior stage carry-out 선택) = 명세서 second multiplexer **2862**, 청구항의 second multiplexer(sum bit 선택) = 명세서 first multiplexer **2860** 이다. third multiplexer **2864** 는 양쪽이 일치한다."
+   },
+   {
+    "id": "M50",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M7",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "A first multiplexer **2860** selects zero or the sum bit S.sub.j produced by the half adder and output a first selection to a corresponding full adder."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "2860",
+       "830"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ],
+    "search_note": "FIG. **28**([0188]) 의 멀티플렉서 번호 부여가 청구항 순서와 뒤바뀌어 있어, 기능 조응(무엇을 선택하는가)을 기준으로 문단을 붙였다 — 청구항의 first multiplexer(prior stage carry-out 선택) = 명세서 second multiplexer **2862**, 청구항의 second multiplexer(sum bit 선택) = 명세서 first multiplexer **2860** 이다. third multiplexer **2864** 는 양쪽이 일치한다."
+   },
+   {
+    "id": "M51",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M8",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "A third multiplexer **2864** selects zero or a carry-in bit CIN.sub.j−1 from a prior stage full adder and output a third selection to the full adder."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "2864",
+       "830"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M52",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M9",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "To perform respective selections, the first multiplexer **2860**, the second multiplexer **2862**, the third multiplexer **2864** and the fourth multiplexer **2866** can be controlled by one or more control signals from the mode decoding unit **110** (in FIG. **1**) according to a corresponding arithmetic mode and associated FP formats of the activation values and the weight values."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "2860",
+       "2862",
+       "2864",
+       "2866"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     },
+     {
+      "figure": "FIG-1",
+      "numerals": [
+       "110"
+      ],
+      "caption_quote": "FIG. **1** illustrates a block diagram of an exemplary hardware accelerator, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M53",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M10",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "To compute the exponent of the primitive product, the exponent bit of the weight value and a corresponding exponent bit of the activation value can be provided to a corresponding half adder. The half adder can add the corresponding exponent bits of the activation value and the weight value to produce one sum bit S.sub.j and one carry-out bit C.sub.j."
+     },
+     {
+      "locator": "[0165]",
+      "quote": "First, half adders (labeled as HA) can be used to add the exponent bits of the activation value Act 0 <6:3> to corresponding exponent bits of the weight value Wdata 0 <4:2> (simplified as W0 <4:2>). Each half adder can output a sum bit and a carry-out bit."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "220",
+       "830"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     },
+     {
+      "figure": "FIG-9",
+      "numerals": [
+       "830"
+      ],
+      "caption_quote": "FIG. **9** illustrates a scheme for handling exponent bits in a column cell in the CIM macro, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M54",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M11",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "A second multiplexer **2862** selects zero or a prior stage carry-out bit C.sub.j−1 from a prior stage half adder and output a second selection to the full adder."
+     },
+     {
+      "locator": "[0063]",
+      "quote": "Within each column cell, a half adder may add selected exponent bits from the activation and weight, and a set of multiplexers can steer carry bits and sum bits into a full adder based on mode-dependent control signals."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "2862"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ],
+    "search_note": "FIG. **28**([0188]) 의 멀티플렉서 번호 부여가 청구항 순서와 뒤바뀌어 있어, 기능 조응(무엇을 선택하는가)을 기준으로 문단을 붙였다 — 청구항의 first multiplexer(prior stage carry-out 선택) = 명세서 second multiplexer **2862**, 청구항의 second multiplexer(sum bit 선택) = 명세서 first multiplexer **2860** 이다. third multiplexer **2864** 는 양쪽이 일치한다."
+   },
+   {
+    "id": "M55",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M12",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "A first multiplexer **2860** selects zero or the sum bit S.sub.j produced by the half adder and output a first selection to a corresponding full adder."
+     },
+     {
+      "locator": "[0063]",
+      "quote": "Within each column cell, a half adder may add selected exponent bits from the activation and weight, and a set of multiplexers can steer carry bits and sum bits into a full adder based on mode-dependent control signals."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "2860"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ],
+    "search_note": "FIG. **28**([0188]) 의 멀티플렉서 번호 부여가 청구항 순서와 뒤바뀌어 있어, 기능 조응(무엇을 선택하는가)을 기준으로 문단을 붙였다 — 청구항의 first multiplexer(prior stage carry-out 선택) = 명세서 second multiplexer **2862**, 청구항의 second multiplexer(sum bit 선택) = 명세서 first multiplexer **2860** 이다. third multiplexer **2864** 는 양쪽이 일치한다."
+   },
+   {
+    "id": "M56",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M13",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "A third multiplexer **2864** selects zero or a carry-in bit CIN.sub.j−1 from a prior stage full adder and output a third selection to the full adder."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "2864"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M57",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M14",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "The resulting exponent bits of the primitive product include the sum bit S.sub.LSB from the half adder for the LSBs of the exponents of the activation value and the weight value, the exponent bits E.sub.j output from the fourth multiplexers **2866**, and the carry-in bit CIN.sub.MSB from the last stage full adder for the MSB of the exponent of the activation value and/or the MSB of the exponent of the weight value."
+     },
+     {
+      "locator": "[0166]",
+      "quote": "The full adders can be connected in series, where each full adder can output an exponent bit of the primitive product and a carry-in bit for the next stage full adder."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "2866",
+       "830"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     },
+     {
+      "figure": "FIG-9",
+      "numerals": [
+       "830"
+      ],
+      "caption_quote": "FIG. **9** illustrates a scheme for handling exponent bits in a column cell in the CIM macro, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M58",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M15",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0017]",
+      "quote": "For example, in the disclosed technology a system may be provided that performs vector-matrix multiplication using a compute device that generates portions of a floating-point product directly within memory structures."
+     },
+     {
+      "locator": "[0072]",
+      "quote": "At the system level, the disclosed technology may be implemented in a compute device that can house the exponent-processing hardware described above, while a mode device provides the control mode based on the selected floating-point formats for activations and weights."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-1",
+      "numerals": [
+       "100",
+       "101"
+      ],
+      "caption_quote": "FIG. **1** illustrates a block diagram of an exemplary hardware accelerator, in accordance with some aspects of the present disclosure."
+     },
+     {
+      "figure": "FIG-2",
+      "numerals": [
+       "101",
+       "222"
+      ],
+      "caption_quote": "FIG. **2** illustrates a representation of a block diagram of an example compute-in memory (CIM) macro, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M59",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M16",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "To compute the exponent of the primitive product, the exponent bit of the weight value and a corresponding exponent bit of the activation value can be provided to a corresponding half adder. The half adder can add the corresponding exponent bits of the activation value and the weight value to produce one sum bit S.sub.j and one carry-out bit C.sub.j."
+     },
+     {
+      "locator": "[0165]",
+      "quote": "First, half adders (labeled as HA) can be used to add the exponent bits of the activation value Act 0 <6:3> to corresponding exponent bits of the weight value Wdata 0 <4:2> (simplified as W0 <4:2>). Each half adder can output a sum bit and a carry-out bit."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "220",
+       "830"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     },
+     {
+      "figure": "FIG-9",
+      "numerals": [
+       "830"
+      ],
+      "caption_quote": "FIG. **9** illustrates a scheme for handling exponent bits in a column cell in the CIM macro, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M60",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M17",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "A second multiplexer **2862** selects zero or a prior stage carry-out bit C.sub.j−1 from a prior stage half adder and output a second selection to the full adder."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "2862",
+       "830"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ],
+    "search_note": "FIG. **28**([0188]) 의 멀티플렉서 번호 부여가 청구항 순서와 뒤바뀌어 있어, 기능 조응(무엇을 선택하는가)을 기준으로 문단을 붙였다 — 청구항의 first multiplexer(prior stage carry-out 선택) = 명세서 second multiplexer **2862**, 청구항의 second multiplexer(sum bit 선택) = 명세서 first multiplexer **2860** 이다. third multiplexer **2864** 는 양쪽이 일치한다."
+   },
+   {
+    "id": "M61",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M18",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "A first multiplexer **2860** selects zero or the sum bit S.sub.j produced by the half adder and output a first selection to a corresponding full adder."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "2860",
+       "830"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ],
+    "search_note": "FIG. **28**([0188]) 의 멀티플렉서 번호 부여가 청구항 순서와 뒤바뀌어 있어, 기능 조응(무엇을 선택하는가)을 기준으로 문단을 붙였다 — 청구항의 first multiplexer(prior stage carry-out 선택) = 명세서 second multiplexer **2862**, 청구항의 second multiplexer(sum bit 선택) = 명세서 first multiplexer **2860** 이다. third multiplexer **2864** 는 양쪽이 일치한다."
+   },
+   {
+    "id": "M62",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M19",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "A third multiplexer **2864** selects zero or a carry-in bit CIN.sub.j−1 from a prior stage full adder and output a third selection to the full adder."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "2864",
+       "830"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M63",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M20",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0188]",
+      "quote": "To perform respective selections, the first multiplexer **2860**, the second multiplexer **2862**, the third multiplexer **2864** and the fourth multiplexer **2866** can be controlled by one or more control signals from the mode decoding unit **110** (in FIG. **1**) according to a corresponding arithmetic mode and associated FP formats of the activation values and the weight values."
+     },
+     {
+      "locator": "[0063]",
+      "quote": "Within each column cell, a half adder may add selected exponent bits from the activation and weight, and a set of multiplexers can steer carry bits and sum bits into a full adder based on mode-dependent control signals."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "2860",
+       "2862",
+       "2864",
+       "2866"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     },
+     {
+      "figure": "FIG-1",
+      "numerals": [
+       "110"
+      ],
+      "caption_quote": "FIG. **1** illustrates a block diagram of an exemplary hardware accelerator, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M64",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M21",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0146]",
+      "quote": "In some embodiments, the compute engine **100** includes a mode decoding unit **110** (also referred to as a mode device) to provide a mode of operation to the CIM macro **101** for the tensor operation between the streaming operand and the stationary operand."
+     },
+     {
+      "locator": "[0072]",
+      "quote": "This split can allow the compute device to focus on dense, fast arithmetic and the mode device to handle configuration and format-aware control."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-1",
+      "numerals": [
+       "110"
+      ],
+      "caption_quote": "FIG. **1** illustrates a block diagram of an exemplary hardware accelerator, in accordance with some aspects of the present disclosure."
+     }
+    ]
+   },
+   {
+    "id": "M65",
+    "kind": "grounding",
+    "status": "active",
+    "superseded_by": null,
+    "component": "M22",
+    "anchor_state": {
+     "spec": "found",
+     "figure": "found"
+    },
+    "spec_refs": [
+     {
+      "locator": "[0186]",
+      "quote": "The compute engine **100** can support various FP formats (e.g., FP8, FP6, FP4), beyond those listed in Tables 1 and 2. For example, FP8 format includes FP8 (1-5-2), FP8 (1-4-3), FP8(1-3-4); FP6 format includes FP6 (1-3-2), FP6 (1-2-3); and FP4 format includes FP4 (1-2-1), FP (1-1-2). The activation values and weight values can be represented by any of these FP formats."
+     },
+     {
+      "locator": "[0183]",
+      "quote": "Table 2 (in FIG. **60**) lists exemplary representations for the lower FP formats based on FP8 (1-4-3) for activation values and FP6 (1-3-2) for weight values during the VMM operation in the CIM macro **101**."
+     }
+    ],
+    "figure_refs": [
+     {
+      "figure": "FIG-60",
+      "numerals": [],
+      "caption_quote": "FIG. **60** illustrates a table describing schemes for handling weight values and activation values in various FP formats, in accordance with some aspects of the present disclosure."
+     },
+     {
+      "figure": "FIG-28",
+      "numerals": [
+       "220",
+       "830"
+      ],
+      "caption_quote": "FIGS. **28**-**29** illustrate exemplary column cells for handling exponent bits for various FP data, in accordance with some aspects of the present disclosure."
+     }
+    ],
+    "search_note": "FP 포맷의 유연성 자체를 그리는 도면은 회로도가 아니라 Table 2(FIG. **60**) 이다 — [0057] 캡션과 [0183] 의 Table 2 지시를 대조해 FIG-60 을 도면 자리로 잡았고, 회로 쪽 조응은 FIG. **28**(flexible FP data) 으로 보완했다."
+   }
+  ]
+ }
+}
