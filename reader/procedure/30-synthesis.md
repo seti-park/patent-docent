@@ -90,6 +90,15 @@
 - `asset_path`는 **항상 `null`**이다. 도면↔자산 매핑의 정본은 편집 단계의 `manifest.json` 하나뿐이며, 동결본이 그 값을 들면 하류가 동결본을 고칠 수 있다는 뜻이 된다.
 - `figure_note` 항목은 "이 도면이 무엇을 보여주는가"를 EN 한 문장으로 적는다.
 
+#### ★ 부호가 어긋나면 둘 다 등재하고 불일치를 표시한다 (재정 2026-08-19 Q8 ④)
+
+| # | 규약 | 이유 |
+|---|---|---|
+| ⓐ | **명세서 본문의 부호와 도면 실물의 부호가 다르면 `figures[].numerals`와 `figure_note` 항목의 `numerals`에 둘 다 싣는다.** 실물 판독대로 하나만 고르지 마라 | **2026-08-19 실측**: [0140]은 `a column cell **340**` 이라 적었으나 **FIG-3 실물의 부호는 `220`**이다. 접지 레인은 **둘 다**, 통합 레인은 실물 판독대로 **`220`만** 등재했다 — **두 레인의 처리가 갈렸고**, 판정 기준이 절차 어디에도 없었다. 그래서 이 규약은 `20-grounding.md` §4 ⓑ와 **한 쌍**으로 선다 |
+| ⓑ | **불일치 사실을 `what_it_shows_en`에 남긴다**(EN 한 절 — 예: `spec text at [0140] labels this cell 340 while the drawing prints 220`). 없는 필드를 지어내지 마라 | 계약에 **KR 메모 자리가 없다**. `figures[]`는 `{id, numerals, caption_quote, raw_path, asset_path}`뿐이고 `figure_note` 항목은 `{figure, what_it_shows_en, numerals}`뿐이며, 스키마가 `additionalProperties: false`다. 접지가 쓰는 `search_note`에 해당하는 자리는 이 단계에 없으므로 **서술 필드 하나가 그 기록을 진다**. 그 필드는 `en_text`이므로 **한글이 한 글자라도 들어가면 거부된다** — 불일치 메모도 EN이다 |
+
+**★ 대가는 접지 쪽과 같다.** `numerals`는 수치 수확의 **배제 집합**(`figure-numeral`)에 들어가므로(`reader/lib/harvest.py`가 `figures[].numerals` ∪ 전 `grounding.figure_refs[].numerals`를 합쳐 쓴다) 둘 다 등재하면 **본문의 그 수가 수확 정답지에서 빠진다.** 그 손실은 `skipped[]`에 사유와 함께 기록되어 **CP1에 드러난다** — **보이는 채로 남는 손실**이며, 그것이 이 재정을 받아들일 수 있는 이유다. 조용히 사라지는 것이 아니면 우리는 그것을 감수한다.
+
 ## 5. 최종 drop 신호 (D4 2단 — 확정 재정은 CP1이 한다)
 
 포지셔닝 확정 후 최종 판정을 낸다.
