@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import copy
 import os
+import subprocess
 import sys
+import textwrap
 
 import pytest
 
@@ -466,3 +468,41 @@ def test_pin_mismatch_halt_explains_that_the_supersede_mark_is_absent(tmp_path) 
     for needle in ("superseded-by-source-change", "진단문"):
         if needle not in order_note:
             pytest.fail(f"source.yaml 이 순서의 귀결을 적지 않았다: {order_note!r}")
+
+
+# ---------------------------------------------------------------------------
+# ⑦ 관문 승격의 대가 — 환경 오류가 검증 실패로 오독되지 않는가 (재정 H7 · sol 감수 A′)
+# ---------------------------------------------------------------------------
+
+
+def test_lane_binding_gate_reports_env_failure_as_exit_two() -> None:
+    """이 시험이 없으면 **환경 때문에 막힌 커밋이 "레인 결속이 깨졌다"로 적힌다**.
+
+    재정 2026-08-19 **H7** 이 `tools/check_lane_binding.py` 를 커밋 전 필수 관문의 넷째로
+    올렸다. 그 직후 sol 감수 A′ 가 읽기 전용 샌드박스(쓸 수 있는 `/tmp` 없음)에서 이 도구만
+    `FileNotFoundError` 트레이스백과 함께 **exit 1** 로 죽는 것을 실측했다 — SPEC §8.3 3항의
+    종료 코드 규약은 `1` = 검증 실패 · `2` = 입력·환경 오류이므로, 그 자리는 규약 위반이었다.
+    관문이 된 도구가 두 사건을 같은 코드로 말하면 그 신호는 마모된다.
+
+    **서브프로세스의 종료 코드는 테스트 안에서도 명시 비교로 본다**(CLAUDE.md §3).
+    """
+    program = textwrap.dedent(
+        """
+        import runpy, sys, tempfile
+        def boom(*args, **kwargs):
+            raise FileNotFoundError(2, "No usable temporary directory found in ['/tmp']")
+        tempfile.mkdtemp = boom
+        sys.argv = ["check_lane_binding.py"]
+        runpy.run_path("tools/check_lane_binding.py", run_name="__main__")
+        """
+    )
+    for optimized in (False, True):
+        argv = [sys.executable] + (["-O"] if optimized else []) + ["-c", program]
+        proc = subprocess.run(argv, capture_output=True, text=True, cwd=REPO)
+        if proc.returncode != 2:
+            pytest.fail(
+                f"임시 작업장 실패의 종료 코드가 {proc.returncode} 다 — 기대 2"
+                f"({'-O' if optimized else 'plain'}) · stderr={proc.stderr[-400:]}"
+            )
+        if "ENVIRONMENT ERROR" not in (proc.stderr + proc.stdout):
+            pytest.fail(f"환경 오류 표기가 없다: {proc.stderr[-400:]}")

@@ -273,7 +273,19 @@ def main(argv: list[str] | None = None) -> int:
     print("레인 왕복 시점 결속 — 변조 실증 (재정 2026-08-19 P-12)")
     print(f"  리포: {repo}")
 
-    workdir = tempfile.mkdtemp(prefix="lane-binding-")
+    # ★ 임시 작업장을 못 만드는 것은 **환경 오류**이지 반증 실패가 아니다(exit 2 — SPEC §8.3 3항).
+    #   감싸지 않으면 `FileNotFoundError` 트레이스백과 함께 **exit 1**로 죽고, 그것은
+    #   "레인 결속이 깨졌다"와 구별되지 않는다. 2026-08-19 sol 감수 A′ 가 읽기 전용 샌드박스
+    #   (쓸 수 있는 `/tmp` 없음)에서 정확히 그 오독을 실측했다 — 재정 H7 로 이 도구가 커밋 전
+    #   필수 관문이 된 직후이므로, 환경 때문에 커밋이 막히는데 사유가 "검증 실패"로 적히는
+    #   것은 관문의 신호를 마모시킨다.
+    try:
+        workdir = tempfile.mkdtemp(prefix="lane-binding-")
+    except OSError as exc:
+        fail_env(
+            f"임시 작업장을 만들 수 없다 — {type(exc).__name__}: {exc}. "
+            "쓸 수 있는 임시 디렉터리를 TMPDIR 로 지정하라(예: TMPDIR=/dev/shm)"
+        )
     try:
         report = run_probe(repo, workdir)
     finally:
