@@ -1,0 +1,435 @@
+# 공유 코어 표면 승인 목록 (K8 판정 8 의 참조 데이터 — 재정 2026-08-18 P-2 ⓑ)
+#
+# ── 이 파일이 왜 있는가 ────────────────────────────────────────────────────────
+# `reader/schemas/material-spec.schema.json` 의 공유 코어(10키)는 patent-docent 와
+# patent-historian 이 **같은 의미로 읽는 계약면**이다. 재정 P-2 ⓑ 는 그 계약면에 한 줄을
+# 그었다 — "공유 필수 필드는 프로젝트 간 동일 의미, 프로젝트 고유 판단은 확장 블록에만."
+#
+# 문제는 기계가 "이 키가 프로젝트 판단인가" 를 **의미로** 판정할 수 없다는 것이다. 그래서
+# 검사기는 오래 금칙 이름 목록(확장 전용 키)만 들고 있었고, sol 독립 감수(2026-08-18)가
+# 그 구멍을 실물로 보였다: `patent.marketing_verdict` 라는 순전한 편집 판단을 `[공유 코어]`
+# 표지까지 달아 코어에 심었는데 검사기는 findings=0 으로 통과시켰다. 판정은 이랬다 —
+# *"Enforces known names, not the boundary principle."*
+#
+# 이 파일이 그 세계를 뒤집는다. 코어의 표면을 **열린 세계(금칙 목록)가 아니라 닫힌 세계
+# (승인 목록)** 로 정의한다. 여기에 없는 경로가 코어에서 도달하면, 그 이름이 무엇이든
+# **경계를 넘은 것**이다. 반대로 정당한 확장이라면 이 목록에 줄이 더해지고, 그 diff 한 줄이
+# 곧 "두 프로젝트의 계약면을 고쳤다" 는 가시적 흔적이 된다. 계약면의 변경은 소리 없이
+# 일어나서는 안 된다는 것 — 그것이 이 목록의 전부다.
+#
+# ── 무엇이 적혀 있는가 ────────────────────────────────────────────────────────
+# 공유 코어 10키(schema·reader_version·spec_version·status·run_id·patent·claims·figures·
+# items·provenance)에서 **도달 가능한** property 경로 전량이다. `$ref` 는 해소해서 따라가고
+# (`-> $defs/x`), 순환은 끊는다. `required[x]` 항목도 표면의 일부다 — 필수 여부의 변경 역시
+# 계약면의 변경이기 때문이다. 확장 블록(`extensions`)은 **대상이 아니다**: 그 면은 프로젝트가
+# 자기 판단을 늘리는 자리이므로 늘어나는 것이 정상이고, 그 규율은 K8 판정 4·5·6 이 본다.
+#
+# ── 갱신 절차 ────────────────────────────────────────────────────────────────
+# 스키마 라인은 `material-spec/v0` 이고 **0.x = 미동결**(재정 N15)이다. 즉 지금 구간에서는
+# 코어 표면이 자주 바뀌며, 그 잦음이 이 목록을 무의미하게 만들지 않는다 — 오히려 미동결
+# 구간이야말로 "무엇이 언제 늘었는가" 가 기록으로만 남는 구간이다(N15 의 문언: 0.x 의 자유는
+# **기록 없는 자유가 아니다**).
+#
+#   1. 스키마를 고친다.
+#   2. `python3 tools/check_spec_refs.py --print-core-surface` 를 돌린다.
+#   3. 그 출력의 `paths:` 블록으로 아래를 **통째로 교체**한다(정렬·중복 없음이 강제된다).
+#   4. 커밋 diff 에 표면 변경이 드러나는지 눈으로 확인한다. 그 diff 가 감사의 대상이다.
+#
+# 검사기는 파일을 쓰지 않는다(read-only, 설계 요건 4). 붙여 넣는 일은 사람이 하며, 그 손이
+# 곧 계약 개정의 서명이다. 목록의 부재·파싱 실패는 결함이 아니라 **환경 오류(exit 2)** 로
+# 다룬다 — 목록이 없으면 경계를 잴 자가 없고, 그때 조용히 통과하는 것이 이 판정이 막으려는
+# 바로 그 상태다.
+#
+# ★ 이 파일은 계약 라인을 선언하지 않는다(최상위 `schema:` 키가 없다). 스키마의 표면을
+#   비추는 **참조 데이터**이지 독립한 계약이 아니기 때문이다 — `tools/retired-tokens.yaml`
+#   이 K5 의 참조 데이터인 것과 같은 층이다.
+paths:
+- properties.claims -> $defs/claims.properties.applicant_interest
+- properties.claims -> $defs/claims.properties.applicant_interest.items.properties.claim
+- properties.claims -> $defs/claims.properties.applicant_interest.items.properties.material_id
+- properties.claims -> $defs/claims.properties.applicant_interest.items.properties.signal
+- properties.claims -> $defs/claims.properties.applicant_interest.items.required[claim]
+- properties.claims -> $defs/claims.properties.applicant_interest.items.required[material_id]
+- properties.claims -> $defs/claims.properties.applicant_interest.items.required[signal]
+- properties.claims -> $defs/claims.properties.dependents
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.allOf[0].if.properties.dependency_type
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.allOf[0].if.required[dependency_type]
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.allOf[0].then.properties.depends_on
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.allOf[1].if.properties.dependency_type
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.allOf[1].if.required[dependency_type]
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.allOf[1].then.properties.depends_on
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.additions
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.additions.items.properties.attaches_to
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.additions.items.properties.id
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.additions.items.properties.material_id
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.additions.items.properties.text_verbatim
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.additions.items.required[attaches_to]
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.additions.items.required[id]
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.additions.items.required[material_id]
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.additions.items.required[text_verbatim]
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.dependency_type
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.depends_on
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.id
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.properties.text_verbatim
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.required[additions]
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.required[dependency_type]
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.required[depends_on]
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.required[id]
+- properties.claims -> $defs/claims.properties.dependents.items -> $defs/dependent.required[text_verbatim]
+- properties.claims -> $defs/claims.properties.independent
+- properties.claims -> $defs/claims.properties.independent.items.properties.elements
+- properties.claims -> $defs/claims.properties.independent.items.properties.elements.items -> $defs/element.properties.children
+- properties.claims -> $defs/claims.properties.independent.items.properties.elements.items -> $defs/element.properties.id
+- properties.claims -> $defs/claims.properties.independent.items.properties.elements.items -> $defs/element.properties.material_id
+- properties.claims -> $defs/claims.properties.independent.items.properties.elements.items -> $defs/element.properties.text_verbatim
+- properties.claims -> $defs/claims.properties.independent.items.properties.elements.items -> $defs/element.required[children]
+- properties.claims -> $defs/claims.properties.independent.items.properties.elements.items -> $defs/element.required[id]
+- properties.claims -> $defs/claims.properties.independent.items.properties.elements.items -> $defs/element.required[material_id]
+- properties.claims -> $defs/claims.properties.independent.items.properties.elements.items -> $defs/element.required[text_verbatim]
+- properties.claims -> $defs/claims.properties.independent.items.properties.id
+- properties.claims -> $defs/claims.properties.independent.items.properties.text_verbatim
+- properties.claims -> $defs/claims.properties.independent.items.properties.type
+- properties.claims -> $defs/claims.properties.independent.items.required[elements]
+- properties.claims -> $defs/claims.properties.independent.items.required[id]
+- properties.claims -> $defs/claims.properties.independent.items.required[text_verbatim]
+- properties.claims -> $defs/claims.properties.independent.items.required[type]
+- properties.claims -> $defs/claims.required[applicant_interest]
+- properties.claims -> $defs/claims.required[dependents]
+- properties.claims -> $defs/claims.required[independent]
+- properties.figures.items -> $defs/figure.properties.asset_path
+- properties.figures.items -> $defs/figure.properties.caption_quote
+- properties.figures.items -> $defs/figure.properties.id
+- properties.figures.items -> $defs/figure.properties.numerals
+- properties.figures.items -> $defs/figure.properties.raw_path
+- properties.figures.items -> $defs/figure.required[asset_path]
+- properties.figures.items -> $defs/figure.required[caption_quote]
+- properties.figures.items -> $defs/figure.required[id]
+- properties.figures.items -> $defs/figure.required[numerals]
+- properties.figures.items -> $defs/figure.required[raw_path]
+- properties.items.items -> $defs/item.allOf[0] -> $defs/item_common.properties.id
+- properties.items.items -> $defs/item.allOf[0] -> $defs/item_common.properties.kind
+- properties.items.items -> $defs/item.allOf[0] -> $defs/item_common.properties.status
+- properties.items.items -> $defs/item.allOf[0] -> $defs/item_common.properties.superseded_by
+- properties.items.items -> $defs/item.allOf[0] -> $defs/item_common.required[id]
+- properties.items.items -> $defs/item.allOf[0] -> $defs/item_common.required[kind]
+- properties.items.items -> $defs/item.allOf[0] -> $defs/item_common.required[status]
+- properties.items.items -> $defs/item.allOf[0] -> $defs/item_common.required[superseded_by]
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.properties.claim_ref
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.properties.id
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.properties.label_en
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.properties.status
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.properties.superseded_by
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.properties.text_verbatim
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.required[claim_ref]
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.required[id]
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.required[label_en]
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.required[status]
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.required[superseded_by]
+- properties.items.items -> $defs/item.allOf[1].oneOf[0] -> $defs/component_item.required[text_verbatim]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[0].else.properties.spec_refs
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[0].if.properties.anchor_state
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[0].if.properties.anchor_state.properties.spec
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[0].if.properties.anchor_state.required[spec]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[0].if.required[anchor_state]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[0].then.properties.spec_refs
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[1].else.properties.figure_refs
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[1].if.properties.anchor_state
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[1].if.properties.anchor_state.properties.figure
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[1].if.properties.anchor_state.required[figure]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[1].if.required[anchor_state]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[1].then.properties.figure_refs
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[2].if.properties.anchor_state
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[2].if.properties.anchor_state.anyOf[0].properties.spec
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[2].if.properties.anchor_state.anyOf[0].required[spec]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[2].if.properties.anchor_state.anyOf[1].properties.figure
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[2].if.properties.anchor_state.anyOf[1].required[figure]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[2].if.required[anchor_state]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.allOf[2].then.required[search_note]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.anchor_state
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.anchor_state -> $defs/anchor_state.properties.figure
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.anchor_state -> $defs/anchor_state.properties.spec
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.anchor_state -> $defs/anchor_state.required[figure]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.anchor_state -> $defs/anchor_state.required[spec]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.component
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.figure_refs
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.figure_refs.items -> $defs/figure_ref.properties.caption_quote
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.figure_refs.items -> $defs/figure_ref.properties.figure
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.figure_refs.items -> $defs/figure_ref.properties.numerals
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.figure_refs.items -> $defs/figure_ref.required[caption_quote]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.figure_refs.items -> $defs/figure_ref.required[figure]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.figure_refs.items -> $defs/figure_ref.required[numerals]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.id
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.search_note
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.spec_refs
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.spec_refs.items -> $defs/quote_ref.properties.locator
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.spec_refs.items -> $defs/quote_ref.properties.quote
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.spec_refs.items -> $defs/quote_ref.properties.span
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.spec_refs.items -> $defs/quote_ref.properties.span -> $defs/span.properties.end
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.spec_refs.items -> $defs/quote_ref.properties.span -> $defs/span.properties.start
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.spec_refs.items -> $defs/quote_ref.properties.span -> $defs/span.required[end]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.spec_refs.items -> $defs/quote_ref.properties.span -> $defs/span.required[start]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.spec_refs.items -> $defs/quote_ref.required[locator]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.spec_refs.items -> $defs/quote_ref.required[quote]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.status
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.properties.superseded_by
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.required[anchor_state]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.required[component]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.required[figure_refs]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.required[id]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.required[spec_refs]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.required[status]
+- properties.items.items -> $defs/item.allOf[1].oneOf[1] -> $defs/grounding_item.required[superseded_by]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[0].if.properties.origin
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[0].if.required[origin]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[0].then.properties.bib_source
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[0].then.properties.derivation
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[0].then.properties.figure_source
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[0].then.properties.machine_verifiable
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[0].then.required[source]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[1].if.properties.origin
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[1].if.required[origin]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[1].then.properties.bib_source
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[1].then.properties.figure_source
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[1].then.properties.machine_verifiable
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[1].then.properties.source
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[1].then.required[derivation]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[2].if.properties.origin
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[2].if.required[origin]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[2].then.properties.bib_source
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[2].then.properties.derivation
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[2].then.properties.machine_verifiable
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[2].then.properties.source
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[2].then.required[figure_source]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[3].if.properties.origin
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[3].if.required[origin]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[3].then.properties.derivation
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[3].then.properties.figure_source
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[3].then.properties.machine_verifiable
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[3].then.properties.source
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.allOf[3].then.required[bib_source]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.bib_source
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.bib_source -> $defs/bib_source.properties.field
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.bib_source -> $defs/bib_source.required[field]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.formula
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[0].properties.name
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[0].properties.ref
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[0].required[name]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[0].required[ref]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[1].properties.locator
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[1].properties.name
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[1].properties.quote
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[1].properties.value_span
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[1].properties.value_span -> $defs/span.properties.end
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[1].properties.value_span -> $defs/span.properties.start
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[1].properties.value_span -> $defs/span.required[end]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[1].properties.value_span -> $defs/span.required[start]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[1].required[locator]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[1].required[name]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[1].required[quote]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.inputs.items -> $defs/derivation_input.oneOf[1].required[value_span]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.rounding
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.rounding.properties.digits
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.rounding.properties.mode
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.rounding.required[digits]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.properties.rounding.required[mode]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.required[formula]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.required[inputs]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.derivation -> $defs/derivation.required[rounding]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.figure_source
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.figure_source -> $defs/figure_source.properties.figure
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.figure_source -> $defs/figure_source.properties.locator
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.figure_source -> $defs/figure_source.properties.numerals
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.figure_source -> $defs/figure_source.required[figure]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.figure_source -> $defs/figure_source.required[locator]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.figure_source -> $defs/figure_source.required[numerals]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.id
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.label_en
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.machine_verifiable
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.origin
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.source
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.source -> $defs/fact_source.properties.locator
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.source -> $defs/fact_source.properties.quote
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.source -> $defs/fact_source.properties.value_span
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.source -> $defs/fact_source.properties.value_span -> $defs/span.properties.end
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.source -> $defs/fact_source.properties.value_span -> $defs/span.properties.start
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.source -> $defs/fact_source.properties.value_span -> $defs/span.required[end]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.source -> $defs/fact_source.properties.value_span -> $defs/span.required[start]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.source -> $defs/fact_source.required[locator]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.source -> $defs/fact_source.required[quote]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.source -> $defs/fact_source.required[value_span]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.status
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.superseded_by
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.unit
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_normalized
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_raw
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[0].properties.approximate
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[0].properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[0].properties.value
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[0].required[approximate]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[0].required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[0].required[value]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[1].properties.approximate
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[1].properties.high
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[1].properties.high_inclusive
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[1].properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[1].properties.low
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[1].properties.low_inclusive
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[1].required[approximate]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[1].required[high]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[1].required[high_inclusive]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[1].required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[1].required[low]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[1].required[low_inclusive]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[2].properties.approximate
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[2].properties.bound
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[2].properties.direction
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[2].properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[2].required[approximate]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[2].required[bound]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[2].required[direction]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[2].required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[3].properties.approximate
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[3].properties.center
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[3].properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[3].properties.tolerance
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[3].properties.tolerance_unit
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[3].required[approximate]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[3].required[center]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[3].required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[3].required[tolerance]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[3].required[tolerance_unit]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[4].properties.approximate
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[4].properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[4].properties.members
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[4].required[approximate]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[4].required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[4].required[members]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[5].properties.approximate
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[5].properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[5].properties.value
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[5].required[approximate]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[5].required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[5].required[value]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[6].properties.approximate
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[6].properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[6].properties.value
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[6].required[approximate]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[6].required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.properties.value_type -> $defs/value_type.oneOf[6].required[value]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.required[id]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.required[label_en]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.required[machine_verifiable]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.required[origin]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.required[status]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.required[superseded_by]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.required[unit]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.required[value_normalized]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.required[value_raw]
+- properties.items.items -> $defs/item.allOf[1].oneOf[2] -> $defs/fact_item.required[value_type]
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.properties.basis
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.properties.confidence
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.properties.derived_from
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.properties.evidence_quotes
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.properties.id
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.properties.numeric_refs
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.properties.statement_en
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.properties.status
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.properties.superseded_by
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.required[basis]
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.required[confidence]
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.required[derived_from]
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.required[evidence_quotes]
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.required[id]
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.required[numeric_refs]
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.required[statement_en]
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.required[status]
+- properties.items.items -> $defs/item.allOf[1].oneOf[3] -> $defs/implication_item.required[superseded_by]
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.properties.asserted_effect
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.properties.background_problem
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.properties.delta
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.properties.id
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.properties.numeric_refs
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.properties.quotes
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.properties.status
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.properties.superseded_by
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.required[asserted_effect]
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.required[background_problem]
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.required[delta]
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.required[id]
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.required[numeric_refs]
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.required[quotes]
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.required[status]
+- properties.items.items -> $defs/item.allOf[1].oneOf[4] -> $defs/positioning_item.required[superseded_by]
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.properties.figure
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.properties.id
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.properties.kind
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.properties.numerals
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.properties.status
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.properties.superseded_by
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.properties.what_it_shows_en
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.required[figure]
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.required[id]
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.required[kind]
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.required[numerals]
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.required[status]
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.required[superseded_by]
+- properties.items.items -> $defs/item.allOf[1].oneOf[5] -> $defs/figure_note_item.required[what_it_shows_en]
+- properties.patent.properties.applicants
+- properties.patent.properties.assignee
+- properties.patent.properties.classifications
+- properties.patent.properties.classifications.properties.cpc
+- properties.patent.properties.classifications.properties.ipc
+- properties.patent.properties.classifications.required[cpc]
+- properties.patent.properties.classifications.required[ipc]
+- properties.patent.properties.dates
+- properties.patent.properties.dates.properties.filing
+- properties.patent.properties.dates.properties.priority
+- properties.patent.properties.dates.properties.publication
+- properties.patent.properties.dates.required[filing]
+- properties.patent.properties.dates.required[priority]
+- properties.patent.properties.dates.required[publication]
+- properties.patent.properties.inventors
+- properties.patent.properties.jurisdiction
+- properties.patent.properties.kind_code
+- properties.patent.properties.number
+- properties.patent.properties.priority_claims
+- properties.patent.properties.priority_claims.items.properties.date
+- properties.patent.properties.priority_claims.items.properties.jurisdiction
+- properties.patent.properties.priority_claims.items.properties.number
+- properties.patent.properties.priority_claims.items.required[date]
+- properties.patent.properties.priority_claims.items.required[jurisdiction]
+- properties.patent.properties.priority_claims.items.required[number]
+- properties.patent.properties.source_digest
+- properties.patent.properties.source_path
+- properties.patent.properties.title
+- properties.patent.required[applicants]
+- properties.patent.required[assignee]
+- properties.patent.required[classifications]
+- properties.patent.required[dates]
+- properties.patent.required[inventors]
+- properties.patent.required[jurisdiction]
+- properties.patent.required[kind_code]
+- properties.patent.required[number]
+- properties.patent.required[priority_claims]
+- properties.patent.required[source_digest]
+- properties.patent.required[source_path]
+- properties.patent.required[title]
+- properties.provenance -> $defs/provenance.properties.engine_commit
+- properties.provenance -> $defs/provenance.properties.produced_at
+- properties.provenance -> $defs/provenance.properties.read_runs
+- properties.provenance -> $defs/provenance.required[engine_commit]
+- properties.provenance -> $defs/provenance.required[produced_at]
+- properties.provenance -> $defs/provenance.required[read_runs]

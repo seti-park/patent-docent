@@ -17,6 +17,11 @@ M0 감수에서 grep 서식 견본이 자기 자신에 매칭되어 오탐한 �
   2. 탐지 패턴·표본 데이터는 코드에서 분리한다 — 폐지 토큰과 그 예외 규칙은
      `tools/retired-tokens.yaml`(도구 자산, 스캔 대상 아님)에, 결함 표본은
      `tests/fixtures/`에 둔다. 검사기 소스에 표본 문장을 리터럴로 두지 않는다.
+     K8 판정 8의 **승인된 공유 코어 표면 목록**도 코드가 아니라 `reader/core-surface.yaml`
+     에 있다. 이것은 도구 자산이 아니라 **계약면의 일부**이므로 리포 안(독해층)에 살고
+     K6의 파싱 대상이기도 하다 — 그러나 K8이 **훑는 대상**은 아니다. 층이 다르다:
+     K8은 스키마를 재고, 이 파일은 그 잰 값을 대조할 **참조 데이터**다
+     (`tools/retired-tokens.yaml`이 K5의 참조 데이터인 것과 같다).
   3. 스캔 목록에 검사기 자신(`tools/**`)이나 픽스처(`tests/**`), 회귀 변조본
      (`ledgers/regression/**`)이 들어오면 finding이 아니라 **exit 2로 실행을 거부**한다
      (`FORBIDDEN_SCAN_PREFIXES`, `enforce_isolation()`).
@@ -144,6 +149,21 @@ EXTENSION_ONLY_KEYS: frozenset[str] = frozenset(
 # 로컬 정의 참조 접두 — K8 의 도달 가능성 판정이 따라가는 유일한 참조 형태.
 LOCAL_DEFS_REF_PREFIX = "#/$defs/"
 
+# 판정 8 의 참조 데이터 — **승인된** 공유 코어 표면 목록.
+#
+# 판정 7 이 알려진 이름(EXTENSION_ONLY_KEYS)의 침입을 막는 **열린 세계**라면, 판정 8 은
+# 코어의 표면 자체를 **닫힌 세계**로 뒤집는다. 그 반전이 이 파일의 존재 이유다 — 이름을
+# 몰라도 새로 생긴 것은 전부 걸린다. sol 독립 감수(2026-08-18)가 `patent.marketing_verdict`
+# 를 `[공유 코어]` 표지까지 달아 코어에 심고도 findings=0 을 받아낸 지점이 정확히 그
+# 차이였다("Enforces known names, not the boundary principle"). 코어는 두 프로젝트의
+# 계약면이므로 그 표면의 변경은 **명시적이고 눈에 보이는 행위**여야 하며, 이 목록에 한 줄을
+# 더하는 일 자체가 계약 개정의 흔적이 된다.
+#
+# 위치의 근거 = 재정 2026-08-18 N8 ①("이식 단위에 속하는 계약 = reader/") — 코어 표면은
+# 이식 단위의 계약면이므로 `reader/reader-rules.yaml` 과 나란히 선다.
+CORE_SURFACE_REL = "reader/core-surface.yaml"
+CORE_SURFACE_KEY = "paths"
+
 EPILOG = """\
 검사 항목:
   K1  절 참조 해소     docs/*.md 의 §N[.M] 참조가 실재 절 헤더로 해소되는가
@@ -155,18 +175,30 @@ EPILOG = """\
   K6  계약 파일 파싱   contracts/**·reader/*.yaml·reader/schemas/** 의 JSON·YAML 파싱
   K7  스키마 메타 검증 $schema 선언이 draft 2020-12 이고 check_schema() 통과
   K8  코어·확장 경계   material-spec 의 공유 코어 10키 / 프로젝트 확장 블록 층 분리 (재정 P-2)
-                       판정 7항 — 최상위 required·properties 집합 · 층 표지($comment) ·
-                       네임스페이스 선택성·화이트리스트 · 코어에서 확장 전용 키 도달 불능
+                       판정 8항 — 최상위 required·properties 집합 · 층 표지($comment) ·
+                       네임스페이스 선택성·화이트리스트 · 코어에서 확장 전용 키 도달 불능 ·
+                       **코어 표면 폐쇄 대조**(reader/core-surface.yaml 과 실측 표면의 동일성)
+
+★ 판정 7 과 판정 8 은 두 겹의 그물이며 잡는 것이 다르다:
+  판정 7 = "알려진 확장 키가 코어로 되돌아왔다" (열린 세계 — 금칙 이름 목록)
+  판정 8 = "코어 표면이 승인 없이 늘었다(또는 소리 없이 줄었다)" (닫힌 세계 — 승인 목록)
+  이름을 모르는 새 키는 7 이 놓치고 8 이 잡는다. 승인 목록 갱신 = --print-core-surface.
 
 ★ 자기매칭 격리 (이 도구의 설계 요건 — 정본: SPEC §4.8 · D-20260817-02 §5 규율 3):
   1. 스캔 대상은 allowlist로만 정한다 — 암묵 전수 스캔 없음.
      K1·K3·K4·K5 = docs/CHARTER.md, docs/SPEC.md 뿐.
      K6·K7 = contracts/**, reader/*.yaml, reader/schemas/** 뿐.
-     K8 = reader/schemas/material-spec.schema.json 하나뿐.
-  2. 탐지 패턴·표본은 코드 밖 데이터 파일에 둔다(tools/retired-tokens.yaml, tests/fixtures/).
+     K8 이 **훑는 대상**은 reader/schemas/material-spec.schema.json 하나뿐이다.
+     reader/core-surface.yaml 은 스캔 대상이 아니라 대조용 **참조 데이터**다 —
+     tools/retired-tokens.yaml 이 K5 의 참조 데이터인 것과 같은 층이며,
+     그 파일이 K6 의 파싱 대상인 것은 계약 파일이기 때문이지 K8 이 훑기 때문이 아니다.
+  2. 탐지 패턴·표본·승인 목록은 코드 밖 데이터 파일에 둔다
+     (tools/retired-tokens.yaml, reader/core-surface.yaml, tests/fixtures/).
   3. tools/ · tests/ · ledgers/regression/ 이 스캔 목록에 들어오면 finding이 아니라
      ISOLATION VIOLATION 으로 즉시 exit 2 한다 — 격리 위반은 결함 보고가 아니라 실행 거부다.
   4. 이 도구는 read-only 다. --fix/--write 류 플래그는 설계상 두지 않는다.
+     --print-core-surface 도 예외가 아니다 — **표준출력에만** 쓰고 파일은 건드리지 않는다.
+     승인 목록의 갱신은 사람이 그 출력을 붙여 넣는 **가시적 행위**로만 일어난다.
 
 종료 코드: 0 통과 / 1 검증 실패 / 2 입력·환경 오류 (격리 위반 포함)
 """
@@ -291,6 +323,50 @@ def load_retired_tokens(script_dir: str) -> dict[str, Any]:
         else:
             fail_env(f"exemptions kind 미지원: {kind!r} ({path})")
     return data
+
+
+def load_core_surface(repo: str) -> list[str]:
+    """승인된 공유 코어 표면 목록을 읽는다 (K8 판정 8 의 참조 데이터).
+
+    부재·파싱 실패·형식 오류는 전부 **환경 오류(exit 2)** 다. 목록이 없으면 경계를 잴
+    자가 없고, 그때 조용히 통과하는 것이 바로 이 판정이 막으려는 상태이기 때문이다
+    (없으면 통과하는 검사는 검사가 아니다).
+
+    정렬·중복 없음까지 여기서 강제한다. 이 파일의 값은 **사람이 diff 로 읽는 것**이므로
+    순서가 흔들리면 "무엇이 늘었는가" 가 diff 에서 보이지 않게 된다.
+    """
+    path = os.path.join(repo, CORE_SURFACE_REL)
+    if not os.path.isfile(path):
+        fail_env(
+            f"공유 코어 표면 선언 파일 부재: {CORE_SURFACE_REL} (repo={repo}) — "
+            "목록이 없으면 코어의 경계를 잴 수 없다. "
+            "`--print-core-surface` 출력으로 파일을 만든다 (재정 P-2 ⓑ)"
+        )
+    try:
+        with open(path, encoding="utf-8") as handle:
+            data = yaml.safe_load(handle)
+    except Exception as exc:  # noqa: BLE001 - 파싱 불능 = 환경 오류
+        fail_env(f"공유 코어 표면 선언 파일 파싱 불능: {CORE_SURFACE_REL}: {exc}")
+    if not isinstance(data, dict):
+        fail_env(f"공유 코어 표면 선언 파일 형식 오류(맵 아님): {CORE_SURFACE_REL}")
+    paths = data.get(CORE_SURFACE_KEY)
+    if not isinstance(paths, list):
+        fail_env(
+            f"`{CORE_SURFACE_KEY}` 가 목록이 아니다: {CORE_SURFACE_REL} — "
+            "빈 목록(`paths: []`)은 허용되지만 키의 부재는 허용하지 않는다"
+        )
+    for entry in paths:
+        if not isinstance(entry, str) or not entry:
+            fail_env(f"`{CORE_SURFACE_KEY}` 항목은 비어 있지 않은 문자열이어야 한다: {CORE_SURFACE_REL}")
+    if len(set(paths)) != len(paths):
+        duplicates = sorted({item for item in paths if paths.count(item) > 1})
+        fail_env(f"공유 코어 표면 선언에 중복 경로가 있다: {duplicates[:5]} ({CORE_SURFACE_REL})")
+    if paths != sorted(paths):
+        fail_env(
+            f"공유 코어 표면 선언이 정렬되어 있지 않다: {CORE_SURFACE_REL} — "
+            "정렬은 diff 가독성의 전제다. `--print-core-surface` 출력을 그대로 쓴다"
+        )
+    return list(paths)
 
 
 def load_doc(repo: str, rel: str) -> DocFile:
@@ -847,11 +923,39 @@ def iter_declared_property_names(
             yield from iter_declared_property_names(item, f"{path}[{index}]", defs, visited_defs)
 
 
-def check_k8(repo: str, parsed: dict[str, Any]) -> CheckResult:
+def measure_core_surface(properties: dict[str, Any], defs: dict[str, Any]) -> list[str]:
+    """공유 코어 10키에서 **도달 가능한** property 경로 전량(정렬·중복 제거).
+
+    순회는 판정 7 과 **같은 함수**(`iter_declared_property_names`)를 쓴다. 도달 가능성의
+    정의가 두 벌이 되면 한 벌은 반드시 낡고, 그 순간 판정 7 이 보는 코어와 판정 8 이 재는
+    코어가 달라진다 — 경계 검사가 자기 경계를 두 개 갖는 셈이다.
+
+    확장 블록(`extensions`)은 기점에서 뺀다. 닫아야 하는 것은 **공유면**이고, 확장면은
+    프로젝트가 자기 판단을 늘리는 자리이므로 늘어나는 것이 정상이다(재정 P-2 ⓑ).
+    """
+    surface: set[str] = set()
+    for key in CORE_TOP_KEYS:
+        node = properties.get(key)
+        if node is None:
+            continue  # 부재는 판정 1·2 의 소관이다
+        for _name, locus in iter_declared_property_names(
+            node, f"properties.{key}", defs, frozenset()
+        ):
+            surface.add(locus)
+    return sorted(surface)
+
+
+def check_k8(repo: str, parsed: dict[str, Any], declared_surface: list[str]) -> CheckResult:
     """공유 코어 / 프로젝트 확장 블록의 경계를 기계로 집행한다 (재정 2026-08-18 P-2 ⓑ).
 
     재정은 경계 원칙의 명문화에서 멈추지 말고 **정합 검사기의 검사 항목으로** 두라고
-    지시했다. 아래 7항이 그 이행이며, 각 판정의 `message` 에 근거를 병기한다.
+    지시했다. 아래 8항이 그 이행이며, 각 판정의 `message` 에 근거를 병기한다.
+
+    ★ 판정 8(코어 표면 폐쇄 대조)은 sol 독립 감수의 P-2 ⓑ **부분** 판정에서 왔다. 판정
+    1~7 은 전부 **아는 것**을 집행한다 — 아는 최상위 키 집합, 아는 표지 문자열, 아는 확장
+    전용 이름. 감수자는 그 사이로 `patent.marketing_verdict` 를 심어 통과시켰고, 판정은
+    이랬다: *"Enforces known names, not the boundary principle."* 판정 8 은 세계를 뒤집어
+    **승인된 표면 밖의 모든 것**을 잡는다. 이름을 몰라도 새로 생긴 것은 전부 걸린다.
     """
     result = CheckResult("K8", "코어·확장 경계")
     rel = MATERIAL_SPEC_REL
@@ -1152,12 +1256,109 @@ def check_k8(repo: str, parsed: dict[str, Any]) -> CheckResult:
                 f"{rel}  판정7 확장 전용 키 {len(EXTENSION_ONLY_KEYS)}종 코어에서 도달 불능($ref 해소 순회)"
             )
 
+    # --- 판정 8: 코어 표면 폐쇄 대조 (승인 목록 == 실측 표면) ---
+    #
+    # 판정 7 은 **아는 이름**만 막는다. 그래서 이름을 모르는 새 키(`marketing_verdict` 같은
+    # 프로젝트 판단)는 `[공유 코어]` 표지까지 달고 코어에 들어와도 전부 통과했다 — 감수가
+    # 실제로 그렇게 심어 findings=0 을 받아냈고, 그것이 "알려진 이름을 집행할 뿐 경계 원칙을
+    # 집행하지 않는다" 는 판정의 근거였다. 여기서 세계를 뒤집는다: 코어의 표면은
+    # **승인된 목록과 정확히 같아야** 하며, 목록에 없는 것이 코어에서 도달하면 그것은 이름과
+    # 무관하게 경계를 넘은 것이다. 코어는 두 프로젝트의 계약면이므로 그 표면의 변경은
+    # 소리 없이 일어날 수 없고, 목록에 한 줄을 더하는 행위가 곧 계약 개정의 가시적 흔적이다.
+    #
+    # 삭제도 같은 무게로 잡는다. 승인된 경로가 사라지는 것은 상대 프로젝트가 읽던 필드가
+    # 사라지는 일이며, 그것을 검사가 침묵으로 넘기면 "추가는 보이고 삭제는 안 보이는" 반쪽
+    # 그물이 된다.
+    if properties is not None:
+        measured = measure_core_surface(properties, defs)
+        measured_set = set(measured)
+        declared_set = set(declared_surface)
+        added = sorted(measured_set - declared_set)
+        removed = sorted(declared_set - measured_set)
+        if added:
+            result.findings.append(
+                Finding(
+                    check="K8",
+                    path=rel,
+                    line=0,
+                    found=f"승인되지 않은 코어 경로 {len(added)}건: {added[:8]}"
+                    + (" …" if len(added) > 8 else ""),
+                    expected=f"`{CORE_SURFACE_REL}` 의 승인 목록 안의 경로만",
+                    message=(
+                        "공유 코어의 표면이 승인 없이 늘었다 — 코어는 두 프로젝트가 같은 의미로 "
+                        "읽는 계약면이므로, 그 표면에 무엇이 더해지는 일은 명시적 계약 개정이어야 한다. "
+                        "이 판정은 이름을 보지 않는다: 프로젝트 고유 판단인지 사실인지를 기계가 의미로 "
+                        "가릴 수 없으므로, 대신 **표면의 변경 자체를 가시화**한다. 정당한 추가라면 "
+                        f"`--print-core-surface` 출력으로 `{CORE_SURFACE_REL}` 을 갱신하라 — "
+                        "그 한 줄이 계약을 고쳤다는 흔적이다 (재정 P-2 ⓑ)"
+                    ),
+                )
+            )
+        if removed:
+            result.findings.append(
+                Finding(
+                    check="K8",
+                    path=rel,
+                    line=0,
+                    found=f"승인 목록에만 있고 스키마에 없는 경로 {len(removed)}건: {removed[:8]}"
+                    + (" …" if len(removed) > 8 else ""),
+                    expected="승인 목록의 전 경로가 스키마에서 도달 가능",
+                    message=(
+                        "공유 코어의 표면이 승인 없이 줄었다 — 상대 프로젝트가 읽던 필드가 사라지는 "
+                        "일이며, 추가만 잡고 삭제를 놓치면 그물은 반쪽이다. 의도한 삭제라면 "
+                        f"`{CORE_SURFACE_REL}` 에서도 그 줄을 지워 계약 개정을 명시하라 (재정 P-2 ⓑ)"
+                    ),
+                )
+            )
+        if not added and not removed:
+            result.resolved.append(
+                f"{rel}  판정8 코어 표면 {len(measured)}경로 == 승인 목록({CORE_SURFACE_REL})"
+            )
+
     return result
 
 
 # ---------------------------------------------------------------------------
 # 출력
 # ---------------------------------------------------------------------------
+
+
+def emit_core_surface(repo: str) -> int:
+    """현재 스키마의 **실측** 코어 표면을 표준출력으로 낸다 (`--print-core-surface`).
+
+    ★ 파일을 쓰지 않는다. 이 도구의 설계 요건 4(read-only, --fix/--write 류 없음)는
+    갱신 편의보다 앞선다 — 검사기가 자기 승인 목록을 스스로 고칠 수 있으면 "표면의 변경은
+    눈에 보이는 행위" 라는 판정 8 의 전제가 그 자리에서 무너진다. 사람이 이 출력을
+    `reader/core-surface.yaml` 에 붙여 넣는 그 행위가 계약 개정의 흔적이다.
+
+    출력은 선언 파일의 `paths` 블록과 **같은 서식**(yaml.safe_dump)이라 그대로 붙는다.
+    """
+    path = os.path.join(repo, MATERIAL_SPEC_REL)
+    if not os.path.isfile(path):
+        fail_env(f"K8 대상 스키마 부재: {MATERIAL_SPEC_REL} (repo={repo})")
+    try:
+        with open(path, encoding="utf-8") as handle:
+            data = json.loads(handle.read())
+    except Exception as exc:  # noqa: BLE001 - 파싱 불능 = 환경 오류
+        fail_env(f"K8 대상 스키마 파싱 불능: {MATERIAL_SPEC_REL}: {exc}")
+    if not isinstance(data, dict) or not isinstance(data.get("properties"), dict):
+        fail_env(
+            f"최상위 properties 가 맵이 아니어서 코어 표면을 잴 수 없다: {MATERIAL_SPEC_REL}"
+        )
+    defs = data.get("$defs") if isinstance(data.get("$defs"), dict) else {}
+    surface = measure_core_surface(data["properties"], defs)
+    sys.stdout.write(
+        yaml.safe_dump(
+            {CORE_SURFACE_KEY: surface},
+            allow_unicode=True,
+            default_flow_style=False,
+            sort_keys=True,
+            # 줄바꿈 금지: 경로 하나가 한 줄이어야 diff·grep 이 성립한다(기본 폭 80 은 긴 경로를
+            # 접어 값은 같되 읽을 수 없는 파일을 만든다).
+            width=10**6,
+        )
+    )
+    return 0
 
 
 def emit_text(results: list[CheckResult], verbose: bool) -> None:
@@ -1222,16 +1423,31 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repo", default=default_repo, help="리포 루트 (기본: 이 스크립트의 상위 디렉터리)")
     parser.add_argument("--verbose", action="store_true", help="해소된 참조를 대상 절 제목과 함께 전량 출력")
     parser.add_argument("--json", action="store_true", dest="as_json", help="기계 판독 결과(JSON) 출력")
+    parser.add_argument(
+        "--print-core-surface",
+        action="store_true",
+        dest="print_core_surface",
+        help=(
+            "현재 스키마의 실측 공유 코어 표면을 표준출력으로 낸다(K8 판정 8 의 승인 목록 갱신용). "
+            "**파일을 쓰지 않는다** — 붙여 넣는 일은 사람이 하며 그 행위가 계약 개정의 흔적이다"
+        ),
+    )
     args = parser.parse_args(argv)
 
     repo = os.path.realpath(args.repo)
     if not os.path.isdir(repo):
         fail_env(f"리포 경로가 디렉터리가 아니다: {args.repo}")
 
+    # 승인 목록 갱신용 출력은 검사 이전에 끝난다 — 목록이 아직 없는 상태(신설·대개정)에서
+    # 쓰이는 경로이므로 목록의 실재를 전제하지 않는다.
+    if args.print_core_surface:
+        return emit_core_surface(repo)
+
     # 자기 배제 단정용 절대 경로 집합 (격리 요건 3항).
     self_paths = {script_path, os.path.realpath(os.path.join(script_dir, RETIRED_TOKENS_FILE))}
 
     retired = load_retired_tokens(script_dir)
+    core_surface = load_core_surface(repo)
 
     # --- 스캔 목록 확정 → 격리 검사 → 그 다음에야 읽는다 ---
     doc_targets = list(DOC_TARGETS)
@@ -1261,7 +1477,7 @@ def main(argv: list[str] | None = None) -> int:
         check_k5(docs, retired),
         k6,
         check_k7(parsed),
-        check_k8(repo, parsed),
+        check_k8(repo, parsed, core_surface),
     ]
     results.sort(key=lambda check: check.id)
 
