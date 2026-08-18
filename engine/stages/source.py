@@ -25,11 +25,14 @@ from reader.lib.report import CheckRow
 from reader.lib.rules import Rules
 
 from . import (
+    StageEnvironmentError,
     StageError,
     failure_entry,
+    figures_manifest_digest,
     load_yaml,
     dump_yaml,
     sha256_bytes,
+    verify_declared_inputs,
     write_json,
     write_text,
     worst_status,
@@ -121,7 +124,14 @@ def _figure_rows(figures_dir: str) -> list[dict]:
 
 
 def _exhibit_block(contract: dict, figure_rows: list[dict], repo: str | None) -> dict:
-    """전시물 후보 산정 블록. 산정식·태그·미결 3논점을 **계약에서 그대로** 옮긴다."""
+    """전시물 후보 산정 블록. 산정식·태그·처분을 **계약에서 그대로** 옮긴다.
+
+    ★ 개명(재정 P-5): `provisional_resolutions` → `resolutions`. 산정식이 **정식 승인**되어
+    더는 잠정이 아니며, "첫 런 개시 전 Owner 재정 대상"이라 적던 `open` 필드는 폐기되었다.
+    대신 `adjudicated_in`(재정 원장 좌표)과 `observation_metric`(채택률 관찰 지표)을 싣는다 —
+    승인 사실과 그 승인을 실물로 검증할 지표가 보고에 함께 남아야 한다.
+    `tag: "[가설]"` 은 유지된다: 산정식이 승인된 것과 그 산정식이 실물에서 옳은가는 별개다.
+    """
     declared = contract.get("exhibit_candidates") or {}
     floor = format_parameter("tweet_count.value.min", repo)
     sheet = load_format_parameters(repo)
@@ -131,8 +141,9 @@ def _exhibit_block(contract: dict, figure_rows: list[dict], repo: str | None) ->
         "unit": declared.get("unit"),
         "formula": declared.get("formula"),
         "rationale": declared.get("rationale"),
-        "provisional_resolutions": declared.get("provisional_resolutions") or [],
-        "open": declared.get("open"),
+        "adjudicated_in": declared.get("adjudicated_in"),
+        "resolutions": declared.get("resolutions") or [],
+        "observation_metric": declared.get("observation_metric") or {},
         "floor": {
             "value": floor,
             "source": "contracts/format-parameters.yaml#tweet_count.value.min",
@@ -205,20 +216,38 @@ def run(
     paths = RunPaths(run_root, repo)
     contract = paths.contracts[STAGE_ID]
 
-    # ① 00-source/ 는 한 번만 쓴다(SPEC §7.4 — 이후 어떤 스테이지도 수정하지 못한다).
-    if os.path.exists(paths.patent_md):
-        raise StageError(
-            f"00-source/ 가 이미 고정되어 있다: {paths.patent_md} — "
-            "원천 재투입은 런을 새로 만드는 일이다"
-        )
-    paths.ensure_source_dirs()
-
     with open(source_patent_path, "rb") as handle:
         raw_bytes = handle.read()
     original_digest = sha256_bytes(raw_bytes)
     canonical_text, counts = canonicalize(raw_bytes.decode("utf-8"))
     canonical_bytes = canonical_text.encode("utf-8")
     canonical_digest = sha256_bytes(canonical_bytes)
+
+    # ① 진입 지문 검사(재정 P-C · P-U2). 투입물의 실재·지문을 기록하고, 런 작업장에 이미
+    #    00-source/ 가 있으면 patent.md 지문과 **도면 세트 매니페스트 지문**을 대조한다.
+    #    어긋나면 덮어쓰지 않고 즉시 중단한다 — 원천이 바뀌었을 때의 처분은 부분 복구가
+    #    아니라 **새 런**이며(재정 P-U2), 바이트 오프셋 특성상 부분 재사용은 정확성 위반이다.
+    #    구 런은 status: superseded-by-source-change 로 표시하고 상호 링크를 보존한다.
+    verify_declared_inputs(
+        paths,
+        contract,
+        STAGE_ID,
+        inputs={
+            "source_patent_path": source_patent_path,
+            "figures_dir": figures_dir,
+            "canonical_digest": canonical_digest,
+        },
+    )
+
+    # ② 00-source/ 는 한 번만 쓴다(SPEC §7.4 — 이후 어떤 스테이지도 수정하지 못한다).
+    #    지문이 같아도 재투입은 허용하지 않는다. 위 진입 검사가 통과했다는 것은 "바뀌지
+    #    않았다"만 뜻하며, 그것이 "다시 써도 된다"는 뜻은 아니다.
+    if os.path.exists(paths.patent_md):
+        raise StageError(
+            f"00-source/ 가 이미 고정되어 있다: {paths.patent_md} — "
+            "원천 재투입은 런을 새로 만드는 일이다"
+        )
+    paths.ensure_source_dirs()
 
     write_text(paths.patent_md, canonical_text)
     write_text(paths.patent_sha256, canonical_digest + "\n")
@@ -261,6 +290,16 @@ def run(
         },
         "figures": figure_rows,
         "figure_count": len(figure_rows),
+        # ★ 도면 세트 매니페스트 지문(재정 P-U2). 원천은 patent.md 하나가 아니라 **도면 세트
+        #   전체**이고, 세트의 변경(파일 추가·삭제·교체)은 파일 하나의 지문으로는 드러나지
+        #   않는다. 하류 read.input-digest 가 이 값을 대조한다.
+        #   ★ 생산 경로에 **재봉인(지문 재계산) 함수를 두지 않는다**(재정 P-U2). 이 값은
+        #   봉인 시점에 한 번 산출되고 이후 갱신되지 않으며, 픽스처 재봉인 도구는 테스트
+        #   하네스에만 산다 — 생산 경로에 재계산 자리가 있으면 "원천이 바뀌면 새 런"이라는
+        #   규율이 스위치 하나로 우회된다.
+        "figures_manifest_digest": figures_manifest_digest(
+            (row["filename"], row["sha256"]) for row in figure_rows
+        ),
         "exhibit_candidates": exhibit,
     }
     write_json(paths.source_report, report)
@@ -284,6 +323,7 @@ def run(
         canonical_digest=canonical_digest,
         figure_rows=figure_rows,
         exhibit=exhibit,
+        manifest_digest=report["figures_manifest_digest"],
     )
     status, reason_label = _verdict(contract, rows)
     return {"rows": rows, "report": report, "status": status, "reason_label": reason_label}
@@ -331,6 +371,7 @@ def _checks(
     canonical_digest: str,
     figure_rows: list[dict],
     exhibit: dict,
+    manifest_digest: str,
 ) -> list[CheckRow]:
     rules = Rules.load()
     rows: list[CheckRow] = []
@@ -403,6 +444,22 @@ def _checks(
             )
     rows.append(row)
 
+    # source.figures-manifest-digest — 세트 지문이 실제 봉인분과 일치하는가(재정 P-U2).
+    row = CheckRow(check_id="source.figures-manifest-digest", checked=len(figure_rows))
+    actual_manifest = figures_manifest_digest(
+        (entry["filename"], entry["sha256"]) for entry in figure_rows
+    )
+    if actual_manifest != manifest_digest:
+        row.add(
+            "source.figures-manifest-digest",
+            "00-source/source-report.json#figures_manifest_digest",
+            manifest_digest,
+            actual_manifest,
+            "매니페스트 지문이 봉인된 도면 세트와 다르다 — 하류 진입 검사의 기준점이 어긋난다",
+        )
+    row.extras["figures_manifest_digest"] = actual_manifest
+    rows.append(row)
+
     # source.run-id
     pattern = _run_id_pattern(contract)
     row = CheckRow(check_id="source.run-id", checked=1)
@@ -462,6 +519,10 @@ def _verdict(contract: dict, rows: list[CheckRow]) -> tuple[str, str | None]:
         entry = failure_entry(contract, "전시물 후보")
         statuses.append(str(entry.get("action")))
         reason_label = entry.get("reason_label")
+    if "source.figures-manifest-digest" in failures:
+        # 세트 지문이 봉인분과 어긋나면 하류 진입 검사가 근거 없는 값을 대조하게 된다 —
+        # 원천 변경과 같은 층의 사고이므로 같은 행의 조치를 쓴다(재정 P-U2).
+        statuses.append(str(failure_entry(contract, "원천 변경 감지").get("action")))
     if "source.run-id" in failures:
         statuses.append(str(failure_entry(contract, "run_id 형식 위반").get("action")))
 

@@ -23,3 +23,8 @@ node_modules/
 #   파일명·바이트 수·SHA-256 을 기록하므로, 원본이 바뀌었는지는 사후에도 판정된다.
 #   (수십 MB의 이진 원본을 리포에 넣지 않는 대가로 재취득이 필요해진다는 것을 명시 수용한다.)
 runs/*/00-source/figures-raw/
+
+# ★ 런 결박 worktree (재정 P-U1 · P-8).
+#   런은 시작 시점의 git 커밋에 결박되며 그 격리 체크아웃이 여기 산다.
+#   worktree 는 커밋의 사본이므로 추적 대상이 아니다 — 핀은 run.yaml 의 engine.commit 이 남긴다.
+.worktrees/

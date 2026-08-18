@@ -3,17 +3,28 @@
 
 계약 = `contracts/stages/read.yaml`(정본 서술 = SPEC §1.4 + §1.5 CP1).
 
-이 스테이지가 하는 일은 셋이다.
+실행 순서(재정 P-4 · P-A · P-C · P-U3 · P-U4 · P-B — SPEC §1.4).
 
-① **레인을 돌린다.** D5 5단계를 하위 작업 4종으로 전개해 두 독립 실행(`read-a`·`read-b`)에
-   각각 태운다. 두 실행이 필요한 이유는 품질이 아니라 **안정성**이다 — 두 독해가 다른
-   청구항 트리를 낳으면 이후 모든 결정론 검사의 기준점이 흔들린다.
-② **조립하고 검사한다.** 레인 산출을 재료 명세로 조립하고 `reader/lib` 의 검사 8종을
-   돌린다. 검사 구현은 여기 없다(이식 단위 안에 있다).
-③ **CP1 표면을 낸다.** 중간 산출물과 KR 판독본을 남긴다. 감춰진 예외는 예외가 아니라 은폐다.
+```
+① 진입 지문 검사(P-C)                      → 불일치면 StageEnvironmentError(재시도 아님)
+② read-a.decompose · read-b.decompose      → 분해 **2회**. 여기까지만 2회다.
+③ 맹검 스크리닝 메모 2건 수집(P-A·P-U4)    → 섀도 원장(런 밖)에 한 행으로 등재
+④ 조기 수렴 검사(P-4)                      → 10-read/convergence-early.json (phase: "early")
+⑤ 정본 지정(P-4)                           → read_runs[0]. 내용맹·결정론. 품질 비교 금지.
+⑥ 접지 진입 게이트(P-U3)                   → 판정서 존재 ∧ (통과 ∨ Owner '계속' 봉투)
+⑦ 접지 → 수확(P-B) → 통합                  → **정본 1개만**
+⑧ 조립 → 검사 전건 → convergence.json (phase: "full")
+⑨ 출구 검사 + read.lane-log-shape          → 비정본 실행에 접지·통합 레인이 **없음**을 판정
+⑩ CP1 상신물 — 판독본·중간 산출물
+```
 
-정본 재료는 `read-a` 의 산출이며 `read-b` 는 **수렴 비교 전용**이다. 그 사실은
-`provenance.read_runs[]` 와 판독본 §12 에 남는다.
+순서가 이렇게 생긴 이유는 하나다. **수렴이 통과하면 두 독해는 동치로 선언되고, 동치인 것을
+두 벌 접지하는 것은 지출이다.** 반대로 수렴이 깨졌다면 그 사실은 접지 지출 **전에** 드러나야
+한다 — 그것이 조기 수렴 이동(P-4)이고, 접지 진입을 판정서에 결속한 것(P-U3)이 그 이동을
+관습이 아니라 기계 강제로 만든다. 정본 1개만 진행했다는 사실은 **레인 로그에 없음으로**
+증명된다.
+
+검사 구현은 여기 없다(이식 단위 `reader/lib` 안에 있다). 감춰진 예외는 예외가 아니라 은폐다.
 """
 
 from __future__ import annotations
@@ -26,34 +37,45 @@ from datetime import datetime, timezone
 
 from jsonschema import Draft202012Validator
 
-from reader.lib import run_read_checks, to_convergence_payload
+from reader.lib import CHECK_REGISTRY, run_read_checks, to_convergence_payload
+from reader.lib.harvest import harvest_numeric_facts
 from reader.lib.report import CheckContext, CheckRow
 from reader.lib.rules import Rules
 from reader.lib.spec_io import load_schema
 
 from . import (
+    StageEnvironmentError,
     StageError,
     failure_entry,
     findings_of,
+    load_json,
     load_yaml,
     read_text,
     sha256_bytes,
+    sha256_file,
+    verify_declared_inputs,
     write_json,
     write_text,
 )
 from ..lanes.contract import LaneRequest, LaneResponse
 from ..lanes.plan import (
+    harvest_band_start,
     lane_profiles,
     plan_decompose,
     plan_grounding,
     plan_synthesis,
 )
-from ..paths import RunPaths, reader_version, repo_root
+from ..paths import RunPaths, reader_version, repo_root, shadow_screening_ledger
 from ..read_view import ReadView
 from ..render.material_spec_md import render
+from .freeze import parse_envelope
 
 STAGE_ID = "read"
 CONVERGENCE_SCHEMA = ("contracts", "schemas", "convergence.schema.json")
+APPROVAL_SCHEMA = ("contracts", "schemas", "approval-envelope.schema.json")
+CONVERGENCE_CHECK_ID = "read.convergence"
+LANE_LOG_SHAPE_CHECK_ID = "read.lane-log-shape"
+CONTINUE_CHECKPOINT = "convergence_continue"
 RETRY_PATTERN = re.compile(r"retry\((?P<count>\d+)\)")
 
 
@@ -128,19 +150,34 @@ def _dispatch(adapter, requests: list[LaneRequest], journal: LaneJournal) -> lis
 # 조립기가 투입 순서대로 `M1` 부터 다시 매긴 뒤 참조 전량을 같은 표로 고쳐 쓴다.
 ID_MAP_BASENAME = "id-map.json"
 DECOMPOSE_LANE = "decompose"
+HARVEST_LANE = "harvest"
 SYNTHESIS_LANE = "synthesize"
 
 
-def lane_payloads(decompose: dict, groundings: list[dict], synthesis: dict) -> list[tuple[str, dict]]:
+def lane_payloads(
+    decompose: dict,
+    groundings: list[dict],
+    synthesis: dict,
+    harvest: dict | None = None,
+) -> list[tuple[str, dict]]:
     """레인 투입 순서 그대로의 `(lane_key, payload)`. 이 순서가 최종 ID 순서다.
+
+    순서 = `decompose` → `grounding[i]` → **`harvest`** → `synthesize`(재정 P-B).
+    수확 슬롯이 통합 **앞**인 이유는 실행 순서 그대로이기 때문이다 — 수확은 접지 스팬 위에서
+    돌고, 통합은 그 수확 목록을 받아 `numeric_refs` 를 적는다.
 
     접지 레인을 위치로 키잉하는 이유: 조립기는 `groundings` 를 **배열로만** 받고, 한 작업이
     팬아웃 상한에 걸려 배치로 쪼개지면 접지 payload 는 둘보다 많아진다. 배열 위치는
     `plan_grounding` 의 계획 순서(독립 → 종속)와 언제나 같다.
+
+    ★ `harvest` 는 LLM 레인이 아니라 **결정론 실행**이다. 그래서 레인 로그(`lane-log.json`)
+    에는 나타나지 않고 여기 ID 대역 계산에만 자리를 갖는다 — `read.lane-log-shape` 가 이
+    슬롯을 결함으로 읽지 않는 근거가 그것이다(`read.yaml#checks_before_exit` note).
     """
     lanes: list[tuple[str, dict]] = [(DECOMPOSE_LANE, decompose)]
     for position, payload in enumerate(groundings or []):
         lanes.append((f"grounding[{position}]", payload))
+    lanes.append((HARVEST_LANE, harvest or {}))
     lanes.append((SYNTHESIS_LANE, synthesis))
     return lanes
 
@@ -238,6 +275,18 @@ class _Renumbering:
                 item["superseded_by"] = self.resolve(
                     item["superseded_by"], owner_lane=owner, kind=kind
                 )
+            # ★ 수치 역참조(재정 P-B). 함의·포지셔닝이 **어느 수치를 근거로 삼았는가**가
+            #   여기서 보존되지 않으면 중요분 도출식 자체가 끊긴다 — 중요분은 LLM 의
+            #   중요도 판단이 아니라 이 역참조로 도출되기 때문이다. 대상 kind 는 `fact`
+            #   하나이며 소유 레인은 수확(quoted·bibliographic)과 통합(derived·figure-sourced)
+            #   양쪽에 걸치므로, 레인이 아니라 **kind** 로 해소한다.
+            if kind in ("implication", "positioning") and isinstance(
+                item.get("numeric_refs"), list
+            ):
+                item["numeric_refs"] = [
+                    self.resolve(ref, owner_lane=owner, kind="fact")
+                    for ref in item["numeric_refs"]
+                ]
             if kind == "grounding":
                 item["component"] = self.resolve(
                     item.get("component"), owner_lane=DECOMPOSE_LANE, kind="component"
@@ -285,6 +334,7 @@ def assemble_spec(
     read_runs: tuple[str, ...],
     repo: str | None,
     source_digest: str,
+    harvest: dict | None = None,
 ) -> dict:
     """레인 산출 → 재료 명세 초안. 조립은 결정론이며 값을 만들지 않는다.
 
@@ -297,7 +347,9 @@ def assemble_spec(
     patent["source_digest"] = source_digest
     patent.setdefault("source_path", "00-source/patent.md")
 
-    renumbering = _Renumbering(lane_payloads(decompose, groundings or [], synthesis))
+    renumbering = _Renumbering(
+        lane_payloads(decompose, groundings or [], synthesis, harvest)
+    )
     renumbering.rewrite_items()
     claims = copy.deepcopy(decompose.get("claims") or {})
     renumbering.rewrite_claims(claims)
@@ -313,7 +365,12 @@ def assemble_spec(
         "claims": claims,
         "figures": copy.deepcopy(synthesis.get("figures") or []),
         "items": renumbering.items,
-        "drop_signal": copy.deepcopy(synthesis.get("drop_signal") or {}),
+        # ★ 층 분리(재정 P-2 ⓑ). `drop_signal` 은 사실이 아니라 **편집 판단**이고 그 판단은
+        #   docent 고유의 것이다 — 이식 상대(historian)는 같은 재료를 읽으면서 그 판단을
+        #   하지 않는다. 그래서 공유 코어 최상위가 아니라 확장 네임스페이스 안에 산다.
+        "extensions": {
+            "docent": {"drop_signal": copy.deepcopy(synthesis.get("drop_signal") or {})}
+        },
         "provenance": {
             # 정본은 첫 실행이고 둘째는 수렴 비교 전용이다 — 그 역할을 문자열에 적어 둔다.
             "read_runs": [
@@ -458,32 +515,54 @@ def write_positioning_md(paths: RunPaths, spec: dict) -> None:
     write_text(paths.positioning_md, "\n".join(lines))
 
 
-def write_drop_signal_md(paths: RunPaths, early: dict, final: dict | None) -> None:
-    """D4 2단 신호. 조기 신호만 있는 판(즉시 escalate)도 이 파일로 남는다."""
-    lines = ["# drop 신호 (D4 · 2단)", ""]
-    lines.append("| 단계 | 시점 | 판정 | 사유 |")
-    lines.append("|---|---|---|---|")
-    lines.append(
-        f"| `early` | 청구항 분해 직후 | `{early.get('verdict', '')}` | {early.get('reason', '')} |"
-    )
-    if final is None:
-        lines.append("| `final` | 포지셔닝 확정 후 | _미산출_ | 조기 신호로 중단 |")
-    else:
+def write_drop_signal_md(paths: RunPaths, memos: list[dict], final: dict | None) -> None:
+    """D4 2단 신호 — 조기 = 맹검 메모 2건, 최종 = drop 신호(재정 P-A 로 문언 개정).
+
+    ★ 폐기: 조기 `drop-proposed` 로 나머지 단계를 돌리지 않고 즉시 escalate 하던 문단.
+    근거 = 재정 P-A. 청구항만 본 조기 판단으로 런을 세우면 "완전 정보 위에서 1회"라는
+    원칙이 깨진다. 조기 판단은 버리지 않고 맹검 관찰 메모로 강등해 축적하며(historian
+    스크리닝의 사전 훈련 데이터 — D4), 확정 재정의 자리는 CP1 한 곳이다.
+    """
+    lines = ["# drop 신호 (D4 · 2단 — 재정 P-A)", ""]
+    lines.append("## 1. 조기 — 맹검 스크리닝 메모 (상신 없음 · 진행 계속)")
+    lines.append("")
+    lines.append("`read-a`·`read-b` 가 **각자** 쓴다. 둘 다 싣는 이유는 두 독립 관찰의")
+    lines.append("일치/불일치 자체가 신호이기 때문이다(재정 P-U4). 이 메모는 최종 서사 평가")
+    lines.append("레인(`synthesize`)에 전달되지 않는다(앵커링 방지).")
+    lines.append("")
+    lines.append("| 실행 | 방향 | 근거 요지 |")
+    lines.append("|---|---|---|")
+    if not memos:
+        lines.append("| _없음_ | _없음_ | 분해 레인이 메모를 내지 않았다 |")
+    for memo in memos:
         lines.append(
-            f"| `final` | 포지셔닝 확정 후 | `{final.get('verdict', '')}` | "
-            f"{final.get('reason', '')} |"
+            f"| `{memo.get('read_run', '')}` | `{memo.get('direction', '')}` | "
+            f"{memo.get('note', '')} |"
         )
     lines.append("")
-    if early.get("verdict") == "drop-proposed":
-        lines.append(
-            "★ 조기 신호가 `drop-proposed` 이므로 나머지 단계를 돌리지 않고 즉시 escalate 했다. "
-            "비용 절약이 아니라, 하류 산출물이 Owner 의 판단을 오염시키는 것을 막기 위함이다(D4)."
-        )
+    directions = {memo.get("direction") for memo in memos}
+    if len(directions) > 1:
+        lines.append("★ 두 관찰의 방향이 **갈렸다**. 갈림은 결함이 아니라 신호다 — CP1 이 본다.")
         lines.append("")
+    lines.append("## 2. 최종 — 포지셔닝 확정 후")
+    lines.append("")
+    lines.append("| 시점 | 판정 | 사유 |")
+    lines.append("|---|---|---|")
+    if final is None:
+        lines.append("| 포지셔닝 확정 후 | _미산출_ | 통합 단계에 닿기 전에 멈춘 런 |")
+    else:
+        lines.append(
+            f"| 포지셔닝 확정 후 | `{final.get('verdict', '')}` | {final.get('reason', '')} |"
+        )
+    lines.append("")
     if final is not None and final.get("verdict") == "drop-proposed":
         lines.append(
             "★ 최종 신호가 `drop-proposed` 다. 사유 표기는 `안도감 부적합`이며, "
             "`source` 의 `형식 전제 미충족`과는 판단의 종류가 다르다(재정 N12)."
+        )
+        lines.append(
+            "★ 그럼에도 러너는 여기서 멈추지 않는다 — drop 의 **확정 재정은 CP1 에 통합**되며"
+            "(재정 P-A), 승인 봉투가 `drop_decision`(`go` | `drop`)을 담는다."
         )
         lines.append("")
     write_text(paths.drop_signal_md, "\n".join(lines))
@@ -504,7 +583,7 @@ def _retry_budget(contract: dict) -> int:
     return budget
 
 
-def _execute_read_run(
+def _execute_decompose(
     *,
     read_run: str,
     adapter,
@@ -514,33 +593,280 @@ def _execute_read_run(
     attempt: int,
     defects: list[dict] | None,
 ) -> dict:
-    """독립 실행 1회. 조기 drop 신호면 접지 지출 **전에** 멈춘다."""
-    decompose = _dispatch(
+    """② 분해 1회. **두 실행이 도는 구간은 여기까지다**(재정 P-4 · E 지시).
+
+    구 `_execute_read_run` 은 한 실행이 분해→접지→통합을 통째로 돌았고, 그것이 두 번
+    반복됐다. 재정 P-4 가 수렴을 분해 직후로 옮기고 접지 이후를 정본 1개로 확정했으므로
+    실행 단위를 **분해 전용**과 **정본 후속** 둘로 가른다.
+
+    ★ 폐기: 조기 `drop_signal.verdict == "drop-proposed"` 면 접지 지출 전에 멈추던 분기.
+    근거 = 재정 P-A(조기 drop 의 escalate 폐지). 조기 판단은 `screening_memo` 로 기록만
+    되고 러너는 멈추지 않는다 — 확정 재정의 자리는 CP1 한 곳이다.
+    """
+    return _dispatch(
         adapter, plan_decompose(read_run, view, profiles, attempt, defects), journal
     )[0].payload
-    early = decompose.get("drop_signal") or {}
-    if early.get("verdict") == "drop-proposed":
-        return {"early_drop": early, "decompose": decompose}
 
+
+def _execute_canonical_tail(
+    *,
+    read_run: str,
+    decompose: dict,
+    adapter,
+    view: ReadView,
+    profiles: dict,
+    journal: LaneJournal,
+    attempt: int,
+    defects: list[dict] | None,
+    rules: Rules,
+    run_meta: dict,
+    read_runs: tuple[str, ...],
+    repo: str | None,
+    source_digest: str,
+) -> dict:
+    """⑦ 접지 → **수확** → 통합. 정본 실행 하나만 여기 들어온다(재정 P-4).
+
+    수확이 접지와 통합 **사이**에 있는 이유(재정 P-B): 수확기는 접지 항목의
+    `spec_refs[].quote` 를 스캔하므로 접지 뒤여야 하고, 통합 레인은 그 수확 목록을 받아
+    `numeric_refs` 를 적으므로 통합 앞이어야 한다. 순서가 바뀌면 "고르는 주체가 서사가
+    아니라 참조"라는 도출식이 성립하지 않는다.
+    """
     claims = decompose.get("claims") or {}
     grounding_requests = plan_grounding(read_run, claims, view, profiles, attempt, defects)
     groundings = [
         response.payload for response in _dispatch(adapter, grounding_requests, journal)
     ]
+
+    # 수확은 조립된 명세 위에서 돈다 — 수확기가 보는 것은 원천 파일이 아니라 **접지 스팬**이다.
+    # 여기서 만드는 임시 조립본은 통합 전 단계의 것이며 산출물로 남지 않는다.
+    provisional = assemble_spec(
+        run_meta=run_meta,
+        decompose=decompose,
+        groundings=groundings,
+        synthesis={},
+        read_runs=read_runs,
+        repo=repo,
+        source_digest=source_digest,
+    )
+    harvested, skipped = harvest_numeric_facts(
+        provisional, rules=rules, id_start=harvest_band_start(claims)
+    )
+
     synthesis = _dispatch(
         adapter,
         # 접지 산출을 넘기는 이유: `figures[]` 는 synthesize 만 만들 수 있는데 그 배열에
         # 해소되어야 하는 `figure_refs` 는 접지가 만든다. 무엇이 참조되었는지 알려 주지
         # 않으면 두 레인 사이에 아무도 책임지지 않는 구간이 남는다(실특허 스모크 적발).
-        plan_synthesis(read_run, claims, view, profiles, attempt, defects, groundings),
+        # 수확 목록을 함께 넘기는 이유는 재정 P-B — 수치를 다시 지어내지 않게 하기 위해서다.
+        plan_synthesis(
+            read_run, claims, view, profiles, attempt, defects, groundings, harvested
+        ),
         journal,
     )[0].payload
     return {
-        "early_drop": None,
         "decompose": decompose,
         "groundings": groundings,
+        "harvest": {"items": harvested},
+        "skipped": skipped,
         "synthesis": synthesis,
     }
+
+
+# ---------------------------------------------------------------------------
+# 맹검 스크리닝 메모 (재정 P-A · P-U4)
+# ---------------------------------------------------------------------------
+
+
+def screening_memo(read_run: str, decompose: dict) -> dict:
+    """분해 응답의 `screening_memo` → 보고 서식 1행.
+
+    응답 키는 `reason`(절차 문서 `reader/procedure/10-decompose.md` §5 의 실물 서식)이고
+    보고 서식의 키는 `note`(`convergence/v0#screening_memos`)다. 두 이름을 잇는 자리를
+    여기 하나로 둔다 — 두 곳에서 각자 옮기면 한쪽이 반드시 낡는다.
+    """
+    memo = decompose.get("screening_memo") or {}
+    note = memo.get("reason")
+    if not isinstance(note, str) or not note:
+        note = str(memo.get("note", ""))
+    return {
+        "read_run": read_run,
+        "direction": str(memo.get("direction", "")),
+        "note": note,
+    }
+
+
+def append_screening_ledger(
+    repo: str | None, *, run_id: str, memos: list[dict], final: dict | None
+) -> str | None:
+    """섀도 원장(`ledgers/shadow/screening.jsonl`)에 **한 행**을 추가한다(재정 P-U4).
+
+    ★ 런 밖이고 재료 명세 계약면 밖이다. 한 행 = 맹검 메모 2건 + 최종 평가 + Owner 재정이며,
+    Owner 재정은 CP1 에서 내려오므로 이 시점에는 `null` 이다(재정 P-A — 확정은 CP1 한 자리).
+    추가 전용이며 이미 쓴 행을 고쳐 쓰지 않는다 — 축적물의 값은 그 무편집성에 있다.
+
+    목적은 섀도 모드다: 청구항만 본 맹검 판단 · 접지 후 최종 평가 · Owner 재정의 3층이
+    자매 프로젝트 patent-historian 의 스크리닝 능력에 대한 사전 훈련 데이터가 된다(D4).
+    """
+    if not memos:
+        return None
+    path = shadow_screening_ledger(repo)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    row = {
+        "run_id": run_id,
+        "recorded_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "memos": memos,
+        "final_verdict": (final or {}).get("verdict"),
+        "final_reason": (final or {}).get("reason"),
+        "owner_decision": None,
+    }
+    with open(path, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+    return path
+
+
+# ---------------------------------------------------------------------------
+# 조기 수렴 · 접지 진입 게이트 (재정 P-4 · P-U3)
+# ---------------------------------------------------------------------------
+
+
+def decompose_only_spec(
+    *,
+    run_meta: dict,
+    decompose: dict,
+    read_runs: tuple[str, ...],
+    repo: str | None,
+    source_digest: str,
+) -> dict:
+    """분해 산출만으로 만드는 조립본.
+
+    수렴 6축은 전부 `claims` 위에서 계산되므로(구성요소 문언·트리 간선·종속항 서명·부착)
+    접지·통합 없이도 축이 전부 선다 — 그것이 수렴을 분해 직후로 옮길 수 있는 이유다
+    (재정 P-4). 이 조립본은 판정용이며 산출물로 남지 않는다.
+    """
+    return assemble_spec(
+        run_meta=run_meta,
+        decompose=decompose,
+        groundings=[],
+        synthesis={},
+        read_runs=read_runs,
+        repo=repo,
+        source_digest=source_digest,
+    )
+
+
+def early_convergence_row(*, canonical_spec: dict, peer_spec: dict | None, rules: Rules) -> CheckRow:
+    """④ 조기 수렴 검사 — 두 분해 산출만으로 6축을 계산한다(재정 P-4).
+
+    검사 구현은 이식 단위(`reader/lib/convergence.py`)에 있고 러너는 등재부를 거쳐 부른다.
+    여기서 축을 다시 계산하면 구현이 두 벌이 되고, 두 벌 중 하나는 반드시 낡는다.
+    """
+    return CHECK_REGISTRY[CONVERGENCE_CHECK_ID](
+        CheckContext(spec=canonical_spec, peer_spec=peer_spec, rules=rules)
+    )
+
+
+def escalation_entries(row: CheckRow) -> list[dict]:
+    """상신 축(`escalation-trigger`)의 미달 기록(재정 P-3).
+
+    판정 행의 `fail` 과 **층이 다르다** — 상신 축의 미달은 실패가 아니라 Owner 상신이므로
+    검사기가 결함을 등재하지 않고 이 목록에만 남긴다. 러너는 그 층 구분을 그대로 따른다.
+    """
+    entries = row.extras.get("escalations") or []
+    return [dict(entry) for entry in entries if isinstance(entry, dict)]
+
+
+def continue_envelope_state(paths: RunPaths) -> tuple[bool, str]:
+    """Owner '계속' 봉투가 **이 판정서에** 결속되어 있는가(재정 P-U3).
+
+    조건 4항: 봉투 실재 · `approval-envelope/v0` 통과 · `checkpoint == convergence_continue`
+    이고 `decision == approved` · `target.digest` 가 **판정서 파일의 실제 SHA-256**.
+    마지막 항이 핵심이다 — 봉투가 판정서에 결속되지 않으면 '계속'은 판정서와 무관한 종이가
+    되고, 재분해로 판정서가 바뀌어도 옛 승인이 살아남는다(R8 규격의 자동 실효).
+    """
+    path = paths.convergence_continue_md
+    if not os.path.isfile(path):
+        return False, "계속 봉투가 없다"
+    try:
+        envelope = parse_envelope(read_text(path))
+    except StageError as exc:
+        return False, f"계속 봉투 서식 위반 — {exc}"
+    schema = load_json(os.path.join(paths.repo, *APPROVAL_SCHEMA))
+    errors = sorted(
+        Draft202012Validator(schema).iter_errors(envelope),
+        key=lambda err: list(err.absolute_path),
+    )
+    if errors:
+        return False, f"계속 봉투가 approval-envelope/v0 를 위반한다: {errors[0].message}"
+    if envelope.get("checkpoint") != CONTINUE_CHECKPOINT:
+        return False, (
+            f"계속 봉투의 checkpoint 가 {envelope.get('checkpoint')!r} 다 — "
+            f"{CONTINUE_CHECKPOINT!r} 이어야 한다"
+        )
+    if envelope.get("decision") != "approved":
+        return False, f"계속 봉투가 승인이 아니다(decision={envelope.get('decision')!r})"
+    if not os.path.isfile(paths.convergence_early_json):
+        return False, "결속 대상인 조기 수렴 판정서가 없다"
+    actual = sha256_file(paths.convergence_early_json)
+    declared = str((envelope.get("target") or {}).get("digest", ""))
+    if declared != actual:
+        return False, (
+            f"계속 봉투가 다른 판정서에 결속되어 있다 — 봉투 {declared} ≠ 판정서 {actual}"
+        )
+    return True, "계속 봉투 유효(판정서 지문 결속 확인)"
+
+
+def check_lane_log_shape(
+    journal: LaneJournal, *, read_runs: tuple[str, ...], canonical: str
+) -> CheckRow:
+    """⑨ `read.lane-log-shape` — 레인 로그가 계약 실행 형태와 일치하는가(재정 P-4 · P-U3).
+
+    판정 3항: ⓐ 분해가 두 실행 각각에 존재 ⓑ 접지·통합이 정본 실행에 존재
+    ⓒ 접지·통합이 **비정본 실행에 부재**. ⓒ가 이 검사의 존재 이유다 — "정본 1개만
+    진행했다"는 사실은 로그에 **없음으로** 증명되며, 그 부재를 아무도 보지 않으면 재정
+    P-4 의 절반(접지 이후 1회)이 관습으로만 남는다.
+
+    ★ 수확 슬롯은 판정 대상이 아니다. 결정론 실행이라 `lane.sub_lanes`(LLM 레인 배정의
+    정본)에 등재되지 않으며 레인 로그에도 나타나지 않는다(`read.yaml` 의 같은 검사 note).
+    """
+    row = CheckRow(check_id=LANE_LOG_SHAPE_CHECK_ID, checked=len(journal.rows))
+    tail_tasks = {"ground-independent", "ground-dependent", "synthesize"}
+    tasks_by_run: dict[str, list[str]] = {}
+    for entry in journal.rows:
+        tasks_by_run.setdefault(str(entry.get("read_run")), []).append(str(entry.get("task")))
+    row.extras["lane_tasks"] = {name: sorted(set(tasks)) for name, tasks in tasks_by_run.items()}
+
+    for read_run in read_runs:
+        tasks = tasks_by_run.get(read_run, [])
+        if "decompose" not in tasks:
+            row.add(
+                "lane-log.decompose-present",
+                f"10-read/lanes/{read_run}/decompose",
+                "(레인 로그 없음)",
+                "분해 1건",
+                "분해는 두 독립 실행 각각에 존재해야 한다 — 없으면 수렴 검사의 전제가 없다",
+            )
+        if read_run == canonical:
+            continue
+        stray = sorted({task for task in tasks if task in tail_tasks})
+        if stray:
+            row.add(
+                "lane-log.non-canonical-tail",
+                f"10-read/lanes/{read_run}",
+                ", ".join(stray),
+                "(부재)",
+                "비정본 실행이 접지·통합 레인을 돌았다 — 접지 이후는 정본 1개다(재정 P-4)",
+            )
+
+    canonical_tasks = tasks_by_run.get(canonical, [])
+    if "synthesize" not in canonical_tasks:
+        row.add(
+            "lane-log.canonical-tail",
+            f"10-read/lanes/{canonical}/synthesize",
+            "(레인 로그 없음)",
+            "통합 1건",
+            "정본 실행이 통합에 닿지 않았다 — 조립할 산출이 없다",
+        )
+    return row
 
 
 def _validate_convergence(payload: dict, repo: str | None) -> None:
@@ -555,7 +881,8 @@ def _validate_convergence(payload: dict, repo: str | None) -> None:
         first = errors[0]
         locus = "/".join(str(step) for step in first.absolute_path) or "$"
         raise RunnerContractError(
-            f"convergence.json 이 convergence/v0 를 위반한다(@{locus}): {first.message}"
+            f"{payload.get('phase', '')} 수렴 보고서가 convergence/v0 를 위반한다(@{locus}): "
+            f"{first.message}"
         )
 
 
@@ -567,180 +894,248 @@ def run(
     read_runs: tuple[str, str] = ("read-a", "read-b"),
     repo: str | None = None,
 ) -> dict:
-    """D5 5단계를 두 독립 실행으로 돌리고 재료 명세·중간 산출물·`convergence.json` 을 낸다.
+    """READ 스테이지 1회. 실행 순서는 모듈 docstring 의 ①~⑩ 그대로다.
 
     반환 = `{"rows", "spec", "convergence", "status", "reason_label"}`.
     """
     paths = RunPaths(run_root, repo)
     contract = paths.contracts[STAGE_ID]
     paths.ensure_read_dirs()
-
     run_meta = load_yaml(paths.run_yaml)
+
+    # ① 진입 지문 검사(재정 P-C).
+    #
+    # ★ 폐기: 여기서 patent.md ↔ patent.sha256 ↔ run.yaml 을 직접 대조해
+    #   `read.source-digest` 행으로 halt 하던 블록. 근거 = 재정 P-C — 같은 불일치를 보는
+    #   자리를 진입 검사 한 곳으로 모으고, 그 처분을 품질 결함이 아니라 **환경 오류**로
+    #   바꾼다(재시도·수정 루프가 아니라 즉시 중단 + 진단). 같은 불변식 I1 을 **명세 위에서**
+    #   보는 출구 검사 `read.source-digest`(reader/lib)는 그대로 돈다 — 층이 다르다.
+    entry_row = verify_declared_inputs(paths, contract, STAGE_ID)
+
     source_text = read_text(paths.patent_md)
     actual_digest = sha256_bytes(source_text.encode("utf-8"))
-    recorded_digest = read_text(paths.patent_sha256).strip()
-    declared_digest = str((run_meta.get("patent") or {}).get("source_sha256", ""))
-
-    if actual_digest != recorded_digest or (
-        declared_digest and declared_digest != actual_digest
-    ):
-        # 원천이 도중에 바뀐 런은 폐기 대상이다 — 모든 verbatim 검사의 기준점이 붕괴한다.
-        # 검사 id 는 등재된 이름을 쓴다(`reader/lib/source_digest.py` · 글로사리 §2.1).
-        # 그 검사는 **명세가 신고한** 기준점을 보고, 여기서는 **런의 기록**(run.yaml ·
-        # patent.sha256)을 본다 — 판정은 같은 불변식 I1 이고 보는 자리가 다르다.
-        entry = failure_entry(contract, "원천 다이제스트")
-        row = CheckRow(check_id="read.source-digest", checked=1)
-        row.add(
-            "source.digest-match",
-            "00-source/patent.md",
-            actual_digest,
-            recorded_digest or declared_digest,
-            "원천 다이제스트가 기록과 다르다 — 원천이 바뀐 런은 폐기 대상이다",
-        )
-        return {
-            "rows": [row],
-            "spec": None,
-            "convergence": None,
-            "status": str(entry.get("action")),
-            "reason_label": entry.get("reason_label"),
-        }
-
     view = ReadView(source_text, rules)
     profiles = lane_profiles(repo)
     journal = LaneJournal()
     schema = load_schema()
-
     budget = _retry_budget(contract)
-    attempt = 0
-    defects: list[dict] | None = None
-    rows: list[CheckRow] = []
-    specs: dict[str, dict] = {}
-    id_maps: dict[str, dict[str, str]] = {}
-    early_signals: dict[str, dict] = {}
+
+    # ⑤ 정본 지정(재정 P-4) — **선언 순서**다. 내용맹이며 결정론이고, 어떤 품질 비교·판정도
+    #   하지 않는다. 근거: 수렴 통과는 두 독해가 동치라는 선언이므로 정본 선택에 판정자가
+    #   없고, 남는 요구는 재현성뿐이다. "어느 쪽이 더 나은가"를 묻는 코드가 여기 생기는
+    #   순간 재정 P-4 가 금지한 품질 비교가 부활한다.
+    canonical_run = read_runs[0]
+    peer_run = read_runs[1] if len(read_runs) > 1 else None
+
+    memos: list[dict] = []
     final_signal: dict | None = None
+    attempt = 0
+    run_id = str(run_meta.get("run_id", ""))
 
     try:
+        # ②③④ 분해 2회 → 맹검 메모 → 조기 수렴. 재시도가 일어나는 자리는 **여기 하나**다.
+        early_defects: list[dict] | None = None
         while True:
-            specs = {}
-            id_maps = {}
+            decomposes: dict[str, dict] = {}
+            memos = []
             for read_run in read_runs:
-                outcome = _execute_read_run(
+                decomposes[read_run] = _execute_decompose(
                     read_run=read_run,
                     adapter=adapter,
                     view=view,
                     profiles=profiles,
                     journal=journal,
                     attempt=attempt,
-                    defects=defects,
+                    defects=early_defects,
                 )
-                if outcome["early_drop"]:
-                    early_signals[read_run] = outcome["early_drop"]
-                    _finish_lane_log(paths, journal)
-                    write_drop_signal_md(paths, outcome["early_drop"], None)
-                    drop_entry = failure_entry(contract, "drop-signal")
-                    return {
-                        "rows": [],
-                        "spec": None,
-                        "convergence": None,
-                        "status": str(drop_entry.get("action")),
-                        "reason_label": drop_entry.get("reason_label"),
-                    }
-                early_signals[read_run] = (outcome["decompose"].get("drop_signal") or {})
-                specs[read_run] = assemble_spec(
+                memos.append(screening_memo(read_run, decomposes[read_run]))
+
+            decompose_specs = {
+                name: decompose_only_spec(
                     run_meta=run_meta,
-                    decompose=outcome["decompose"],
-                    groundings=outcome["groundings"],
-                    synthesis=outcome["synthesis"],
+                    decompose=payload,
                     read_runs=read_runs,
                     repo=repo,
                     source_digest=actual_digest,
                 )
-                # 재번호 표는 레인 응답과 최종 명세를 잇는 **유일한 좌표**다. 남기지 않으면
-                # "레인이 답한 M2065 가 명세의 어느 항목인가"를 사후에 되짚을 길이 끊긴다.
-                _, lane_id_map = renumber_items(
-                    lane_payloads(
-                        outcome["decompose"], outcome["groundings"], outcome["synthesis"]
-                    )
-                )
-                for lane_key, mapping in lane_id_map.items():
-                    id_maps[f"{read_run}/{lane_key}"] = mapping
-                final_signal = outcome["synthesis"].get("drop_signal") or final_signal
+                for name, payload in decomposes.items()
+            }
+            early_row = early_convergence_row(
+                canonical_spec=decompose_specs[canonical_run],
+                peer_spec=decompose_specs[peer_run] if peer_run else None,
+                rules=rules,
+            )
+            early_payload = to_convergence_payload(
+                [entry_row, early_row],
+                decompose_specs[canonical_run],
+                phase="early",
+                canonical_read_run=canonical_run,
+                screening_memos=memos,
+            )
+            if early_payload["convergence_detail"]["executed"]:
+                early_payload["convergence_detail"]["attempt"] = attempt + 1
+            _validate_convergence(early_payload, paths.repo)
+            write_json(paths.convergence_early_json, early_payload)
 
-            canonical = specs[read_runs[0]]
-            peer = specs[read_runs[1]] if len(read_runs) > 1 else None
+            escalations = escalation_entries(early_row)
+            # exact-match 축 미달 = 판정 행 fail. 재시도는 **분해**를 다시 돌린다 — 접지
+            # 지출 이후로 미루지 않는다(재정 P-4). 상신 축 미달은 재시도 대상이 아니다:
+            # 해석 차이는 다시 돌린다고 줄지 않으며, 재정이 그것을 "실패가 아니라 상신"이라
+            # 정했다(재정 P-3).
+            if early_row.status == "fail" and attempt < budget:
+                early_defects = findings_of([early_row])
+                attempt += 1
+                continue
+            break
+
+        # ⑥ 접지 진입 게이트(재정 P-U3) — 판정서 존재 ∧ (통과 ∨ Owner '계속' 봉투 유효).
+        early_passed = early_row.status == "pass" and not escalations
+        envelope_ok, envelope_note = continue_envelope_state(paths)
+        if not early_passed and not envelope_ok:
+            if early_row.status == "fail":
+                entry = failure_entry(contract, "exact-match 축")
+                status = str(entry.get("then", entry.get("action")))
+            else:
+                entry = failure_entry(contract, "상신 축")
+                status = str(entry.get("action"))
+            return {
+                "rows": [entry_row, early_row],
+                "spec": None,
+                "convergence": early_payload,
+                "status": status,
+                "reason_label": entry.get("reason_label"),
+                "gate_note": envelope_note,
+            }
+
+        # ⑦ 접지 → 수확 → 통합. **정본 1개만** 여기 들어간다(재정 P-4).
+        tail_defects: list[dict] | None = None
+        id_maps: dict[str, dict[str, str]] = {}
+        while True:
+            tail = _execute_canonical_tail(
+                read_run=canonical_run,
+                decompose=decomposes[canonical_run],
+                adapter=adapter,
+                view=view,
+                profiles=profiles,
+                journal=journal,
+                attempt=attempt,
+                defects=tail_defects,
+                rules=rules,
+                run_meta=run_meta,
+                read_runs=read_runs,
+                repo=repo,
+                source_digest=actual_digest,
+            )
+            final_signal = tail["synthesis"].get("drop_signal") or final_signal
+            canonical = assemble_spec(
+                run_meta=run_meta,
+                decompose=tail["decompose"],
+                groundings=tail["groundings"],
+                synthesis=tail["synthesis"],
+                read_runs=read_runs,
+                repo=repo,
+                source_digest=actual_digest,
+                harvest=tail["harvest"],
+            )
+            # 재번호 표는 레인 응답과 최종 명세를 잇는 **유일한 좌표**다. 남기지 않으면
+            # "레인이 답한 M2065 가 명세의 어느 항목인가"를 사후에 되짚을 길이 끊긴다.
+            _, lane_id_map = renumber_items(
+                lane_payloads(
+                    tail["decompose"], tail["groundings"], tail["synthesis"], tail["harvest"]
+                )
+            )
+            id_maps = {
+                f"{canonical_run}/{lane_key}": mapping
+                for lane_key, mapping in lane_id_map.items()
+            }
+
+            # ⑧ 검사 전건. 수렴 축의 peer 는 **분해만 돈** 비정본 실행이다 — 6축은 claims
+            #    위에서 계산되므로 접지·통합이 없어도 같은 판정이 선다.
             rows = run_read_checks(
                 CheckContext(
                     spec=canonical,
                     source_text=source_text,
                     rules=rules,
                     schema=schema,
-                    peer_spec=peer,
+                    peer_spec=decompose_specs[peer_run] if peer_run else None,
                 )
             )
             failing = [row for row in rows if row.status == "fail"]
             if not failing or attempt >= budget:
                 break
             # 재시도는 결함 목록을 레인에 되돌려 준다 — 그러지 않으면 같은 오류를 재생산한다.
-            defects = findings_of(failing)
+            # 이 재시도는 **정본 후속**만 다시 돈다(분해는 이미 수렴 판정을 받았다).
+            tail_defects = findings_of(failing)
             attempt += 1
-    finally:
-        _finish_lane_log(paths, journal)
 
-    write_json(os.path.join(paths.lanes_dir, ID_MAP_BASENAME), id_maps)
+        write_json(os.path.join(paths.lanes_dir, ID_MAP_BASENAME), id_maps)
 
-    mismatched = journal.mismatched()
-    if mismatched:
-        raise LaneAssignmentError(
-            "레인이 요청과 다른 모델·effort 로 돌았다(조용한 대체 금지): "
-            + ", ".join(
-                f"{row['lane_id']} 요청 {row['requested_model']}/{row['requested_effort']} "
-                f"→ 실제 {row['actual_model']}/{row['actual_effort']}"
-                for row in mismatched
+        mismatched = journal.mismatched()
+        if mismatched:
+            raise LaneAssignmentError(
+                "레인이 요청과 다른 모델·effort 로 돌았다(조용한 대체 금지): "
+                + ", ".join(
+                    f"{row['lane_id']} 요청 {row['requested_model']}/{row['requested_effort']} "
+                    f"→ 실제 {row['actual_model']}/{row['actual_effort']}"
+                    for row in mismatched
+                )
+                + f" — 기록: {paths.lane_log}"
             )
-            + f" — 기록: {paths.lane_log}"
+
+        # ⑨ 출구 검사 + 레인 로그 형태 판정.
+        rows = [entry_row, *rows, check_lane_log_shape(
+            journal, read_runs=read_runs, canonical=canonical_run
+        )]
+
+        payload = to_convergence_payload(
+            rows,
+            canonical,
+            phase="full",
+            canonical_read_run=canonical_run,
+            screening_memos=memos,
+            skipped_tokens=tail["skipped"],
         )
+        if payload["convergence_detail"]["executed"]:
+            payload["convergence_detail"]["attempt"] = attempt + 1
+        _validate_convergence(payload, paths.repo)
+        write_json(paths.convergence_json, payload)
 
-    canonical = specs[read_runs[0]]
-    payload = to_convergence_payload(rows, canonical)
-    if payload["convergence_detail"]["executed"]:
-        payload["convergence_detail"]["attempt"] = attempt + 1
-    _validate_convergence(payload, paths.repo)
-    write_json(paths.convergence_json, payload)
+        write_drop_signal_md(paths, memos, final_signal)
 
-    write_drop_signal_md(paths, early_signals.get(read_runs[0], {}), final_signal)
+        failing = [row for row in rows if row.status == "fail"]
+        if failing:
+            # C5 — 검사가 하나라도 실패하면 산출을 확정하지 않는다. 판정 보고서와 drop 신호는
+            # Owner 가 판단할 자료이므로 남기되, 재료 명세와 판독본은 쓰지 않는다.
+            status, reason_label = _failure_verdict(contract, failing)
+            return {
+                "rows": rows,
+                "spec": None,
+                "convergence": payload,
+                "status": status,
+                "reason_label": reason_label,
+            }
 
-    failing = [row for row in rows if row.status == "fail"]
-    if failing:
-        # C5 — 검사가 하나라도 실패하면 산출을 확정하지 않는다. 판정 보고서와 drop 신호는
-        # Owner 가 판단할 자료이므로 남기되, 재료 명세와 판독본은 쓰지 않는다.
-        status, reason_label = _failure_verdict(contract, failing)
+        # ⑩ CP1 상신물.
+        write_json(paths.material_spec_json, canonical)
+        write_claim_trees(paths, canonical)
+        write_grounding_md(paths, canonical, payload)
+        write_positioning_md(paths, canonical)
+        write_text(paths.material_spec_md, render(canonical, payload, contract, paths.repo))
+
+        # ★ 최종 drop 이 `drop-proposed` 여도 러너는 멈추지 않는다(재정 P-A). 계약의 failure
+        #   표에서 drop 행이 삭제되었고, 확정 재정의 자리는 CP1(승인 봉투의 drop_decision)
+        #   한 곳이다 — 부분 정보 위에서 두 번 판단하는 것보다 완전한 정보 위에서 한 번이 낫다.
         return {
             "rows": rows,
-            "spec": None,
+            "spec": canonical,
             "convergence": payload,
-            "status": status,
-            "reason_label": reason_label,
+            "status": "ok",
+            "reason_label": None,
         }
-
-    write_json(paths.material_spec_json, canonical)
-    write_claim_trees(paths, canonical)
-    write_grounding_md(paths, canonical, payload)
-    write_positioning_md(paths, canonical)
-    write_text(paths.material_spec_md, render(canonical, payload, contract, paths.repo))
-
-    status = "ok"
-    reason_label = None
-    if (canonical.get("drop_signal") or {}).get("verdict") == "drop-proposed":
-        entry = failure_entry(contract, "drop-signal")
-        status = str(entry.get("action"))
-        reason_label = entry.get("reason_label")
-    return {
-        "rows": rows,
-        "spec": canonical,
-        "convergence": payload,
-        "status": status,
-        "reason_label": reason_label,
-    }
+    finally:
+        _finish_lane_log(paths, journal)
+        # 메모는 런의 성패와 무관하게 남는다 — 축적물이 목적이므로 중단된 런의 관찰도 신호다.
+        append_screening_ledger(paths.repo, run_id=run_id, memos=memos, final=final_signal)
 
 
 def _failure_verdict(contract: dict, failing: list[CheckRow]) -> tuple[str, str | None]:
@@ -749,8 +1144,16 @@ def _failure_verdict(contract: dict, failing: list[CheckRow]) -> tuple[str, str 
     if "read.schema" in ids:
         entry = failure_entry(contract, "read.schema 실패")
         return str(entry.get("then", entry.get("action"))), entry.get("reason_label")
-    if "read.convergence" in ids:
-        entry = failure_entry(contract, "read.convergence 미달")
+    if "read.source-digest" in ids:
+        # 계약이 두 층을 구별해 남겼다(재정 P-C) — 같은 불일치를 **진입 시점**에 잡는 자리는
+        # checks_on_entry 의 read.input-digest(환경 오류)이고, 이 행은 그 **이후 구간**에서
+        # 명세 위로 드러난 불일치의 조치를 정한다. 조치는 halt 다: 원천이 바뀐 런은 폐기 대상이다.
+        entry = failure_entry(contract, "원천 다이제스트")
+        return str(entry.get("then", entry.get("action"))), entry.get("reason_label")
+    if CONVERGENCE_CHECK_ID in ids:
+        # 계약 문언이 "read.convergence 미달"에서 "read.convergence 의 exact-match 축 미달"로
+        # 바뀌었다(재정 P-3) — 상신 축 미달은 판정 행을 fail 로 만들지 않으므로 여기 오지 않는다.
+        entry = failure_entry(contract, "exact-match 축")
         return str(entry.get("then", entry.get("action"))), entry.get("reason_label")
     entry = failure_entry(contract, "read.verbatim")
     return str(entry.get("then", entry.get("action"))), entry.get("reason_label")

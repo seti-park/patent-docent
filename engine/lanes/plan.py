@@ -10,6 +10,11 @@
 | ③ 3중 접지(종속항 additions) | `ground-dependent` | 〃 (저비용 레인 허용 — 재정 R3) |
 | ④ 유기적 통합 + ⑤ 포지셔닝 | `synthesize` | 〃 |
 
+★ 이 표에 **수확(harvest)은 없다**(재정 P-B). 수확은 접지와 통합 사이에 도는 **결정론 실행**
+이며 LLM 레인이 아니다 — 그래서 `read.yaml#lane.sub_lanes` 에도, 레인 로그에도 나타나지
+않는다. 다만 발번 대역은 한 칸 차지한다(`harvest_band_start`): 통합 레인이 수확 항목의 임시
+ID 를 `numeric_refs` 로 되가리키므로 번호가 겹치면 그 참조의 해소 근거가 사라진다.
+
 **모델·effort 를 여기 적지 않는다.** 계약에서 읽는다 — 값이 코드에 박히면 재정으로 레인을
 낮춰도(재정 R3) 러너가 따라오지 않는다.
 
@@ -84,11 +89,30 @@ _DROP_SIGNAL = {
     },
 }
 
+# ★ 맹검 스크리닝 메모(재정 P-A · P-U4). 분해 레인의 조기 판단은 이제 `drop_signal` 이
+#   아니라 이 메모다 — 상신하지 않고 **기록만** 하며 러너를 세우지 않는다. 서식은 스크리닝
+#   판단 기록형(판단 방향 하나 + 근거 요지 하나)이고 정본 서술은
+#   `reader/procedure/10-decompose.md` §5 · `40-output-contract.md` §1 이다.
+#   키 이름이 `reason` 인 것은 그 두 절차 문서의 실물 서식을 따른 것이다(레인이 읽는 것은
+#   절차 문서이므로 계약을 절차에 맞춘다). CP1 표면·섀도 원장에서는 이 값이 `note` 로 실린다.
+_SCREENING_MEMO = {
+    "type": "object",
+    "required": ["direction", "reason"],
+    "properties": {
+        "direction": {"enum": ["concern", "clear"]},
+        "reason": {"type": "string", "minLength": 1},
+    },
+}
+
+# ★ 폐기: `DECOMPOSE_SCHEMA` 의 `drop_signal`(stage: early).
+#   근거 = 재정 P-A. 조기 drop 의 escalate 가 폐지되었고 조기 판단은 맹검 메모로 강등되었다.
+#   폐기가 손실을 만들지 않는 이유는 판단 자체가 사라진 것이 아니라 **자리와 구속력**만
+#   바뀌었기 때문이다 — 기록은 남고(섀도 원장·CP1 병기), 확정 재정은 CP1 한 자리로 모인다.
 DECOMPOSE_SCHEMA: dict = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "lane-response/decompose",
     "type": "object",
-    "required": ["claims", "items", "drop_signal"],
+    "required": ["claims", "items", "screening_memo"],
     "properties": {
         "claims": {
             "type": "object",
@@ -100,9 +124,7 @@ DECOMPOSE_SCHEMA: dict = {
             },
         },
         "items": {"type": "array", "minItems": 1, "items": _ITEM},
-        "drop_signal": {
-            "allOf": [_DROP_SIGNAL, {"properties": {"stage": {"const": "early"}}}]
-        },
+        "screening_memo": _SCREENING_MEMO,
     },
 }
 
@@ -138,6 +160,24 @@ SYNTHESIS_SCHEMA: dict = {
                                 "enum": ["fact", "implication", "positioning", "figure_note"]
                             }
                         }
+                    },
+                    # ★ 수확 소유권(재정 P-B). `origin ∈ {quoted, bibliographic}` 은 전수
+                    #   기계 수확기(reader/lib/harvest.py)의 소유이며 레인이 만들지 않는다 —
+                    #   레인이 만들면 같은 수치가 두 벌 생기거나(중복) 수확본과 갈린다(변조).
+                    #   레인 소유는 `derived`(산식)와 `figure-sourced`(도면 판독) 둘뿐이다.
+                    #   이 조건이 없어도 `value.harvest-parity` 가 사후에 잡지만, 응답 계약이
+                    #   먼저 거부하면 레인이 그 사실을 즉시 안다.
+                    {
+                        "if": {
+                            "required": ["kind"],
+                            "properties": {"kind": {"const": "fact"}},
+                        },
+                        "then": {
+                            "required": ["origin"],
+                            "properties": {
+                                "origin": {"enum": ["derived", "figure-sourced"]}
+                            },
+                        },
                     },
                 ]
             },
@@ -311,6 +351,70 @@ def _band_block(start: int, width: int = ID_BAND_WIDTH) -> str:
     )
 
 
+def grounding_slot_count(claims: dict) -> int:
+    """접지가 쓰는 대역 슬롯 수(독립·종속 각각의 배치 수)."""
+    return len(batched(independent_targets(claims))) + len(batched(dependent_targets(claims)))
+
+
+def synthesis_band_start(claims: dict) -> int:
+    """통합 레인의 발번 대역 시작. 접지 대역 **다음**이다."""
+    return highest_item_number(claims) + 1 + grounding_slot_count(claims) * ID_BAND_WIDTH
+
+
+def harvest_band_start(claims: dict) -> int:
+    """수확기의 임시 발번 대역 시작 — 통합 대역 **다음** 칸(재정 P-B).
+
+    수확은 레인이 아니라 결정론 실행이지만 대역은 똑같이 지켜야 한다. 통합 레인이
+    `numeric_refs` 에 수확 항목의 임시 ID 를 적어 내고, 조립기는 그 참조를 원본 ID 로
+    해소하기 때문이다 — 두 자리가 같은 번호를 쓰면 그 해소가 어느 항목을 뜻하는지
+    판정할 근거가 사라진다(`engine/stages/read.py#_Renumbering`).
+
+    수확이 통합보다 **먼저** 도는데 대역은 뒤에 두는 이유: 대역 배치는 계획 시점에
+    결정론으로 계산되고 실행 순서와 무관하다. 통합 대역을 옮기면 이미 굳은 계산
+    (`plan_synthesis`)이 함께 흔들린다.
+    """
+    return synthesis_band_start(claims) + ID_BAND_WIDTH
+
+
+def _harvest_block(harvest: list[dict] | None) -> str:
+    """수확된 수치 목록을 통합 레인 지시에 싣는다(재정 P-B).
+
+    ★ 이 표가 있어야 통합 레인이 `numeric_refs` 를 **참조 ID로** 적을 수 있다. 표가 없으면
+    레인은 자기가 본 원문에서 숫자를 다시 옮겨 적게 되고, 그 순간 같은 수치가 두 벌 생겨
+    `value.harvest-parity` 가 실패한다. 고르는 주체를 서사가 아니라 참조로 옮긴다는 것이
+    재정 P-B 의 요지다.
+    """
+    if not harvest:
+        return (
+            "\n\n**수확된 수치.** 접지 스팬에서 수확된 수치가 없다. `numeric_refs` 는 빈 배열로"
+            "\n적는다 — 없다는 사실을 빈 배열로 적는 것과 필드를 빠뜨리는 것은 다르다."
+        )
+    lines = [
+        "",
+        "",
+        "**★ 수확된 수치 목록(전수 · 재정 P-B).** 아래는 접지 스팬과 서지면에서 **이미 전수**",
+        "기계 수확된 수치다. 함의·포지셔닝 항목은 근거로 삼은 수치를 `numeric_refs` 에",
+        "**참조 ID로** 적는다. **수치를 새로 지어내지 마라** — 원문 스팬 수치와 서지 수치는",
+        "이미 전수 수확되어 있으므로, 네가 만들 수 있는 `fact` 는 산식(`derived`)과",
+        "도면 판독(`figure-sourced`) 둘뿐이다.",
+        "",
+        "| 참조 ID | 라벨 | 정규화 값 | 단위 |",
+        "|---|---|---|---|",
+    ]
+    for item in harvest:
+        unit = item.get("unit")
+        lines.append(
+            f"| `{item.get('id')}` | {item.get('label_en', '')} | "
+            f"`{item.get('value_normalized', '')}` | {unit if unit else '-'} |"
+        )
+    lines.append("")
+    lines.append(
+        "이 표의 ID 는 작업용 임시 번호이며 최종 번호는 조립기가 다시 매긴다 — 그래도 참조는"
+    )
+    lines.append("보존된다(조립기가 `numeric_refs` 를 함께 고쳐 쓴다).")
+    return "\n".join(lines)
+
+
 def _request(
     *,
     read_run: str,
@@ -347,7 +451,9 @@ def plan_decompose(
     instructions = (
         "청구항 구간 전량을 분해한다. 원천에 있는 **모든** 청구항이 대상이며, 하나라도 빠지면\n"
         "`read.claim-inventory` 가 잡는다. 산출은 `claims`(독립·종속·출원인 관심)과\n"
-        "`items`(kind: component) 와 조기 `drop_signal` 이다.\n"
+        "`items`(kind: component) 와 `screening_memo` 다.\n"
+        "맹검 스크리닝 메모는 **상신이 아니다** — 기록만 하며 네 메모가 런을 세우지 않는다"
+        "(재정 P-A). 판단 방향(`clear`·`concern`) 하나와 근거 요지(KR) 하나를 적는다.\n"
         f"이 요청은 독립 실행 `{read_run}` 의 것이며, 다른 실행의 산출을 보지 않는다."
         + _defect_block(defects)
     )
@@ -457,27 +563,28 @@ def plan_synthesis(
     attempt: int = 0,
     defects: list[dict] | None = None,
     groundings: list[dict] | None = None,
+    harvest: list[dict] | None = None,
 ) -> list[LaneRequest]:
-    """D5 ④⑤ — 유기적 통합·포지셔닝·수치 사실·최종 drop 신호."""
+    """D5 ④⑤ — 유기적 통합·포지셔닝·수치 사실·최종 drop 신호.
+
+    ★ **맹검 유지(재정 P-A).** 분해 레인의 `screening_memo` 를 이 지시문에 **싣지 않는다.**
+    최종 서사 평가는 조기 판단을 모른 채 이루어져야 하며(앵커링 방지), 두 판단이 독립일 때만
+    축적물(맹검 판단 · 최종 평가 · Owner 재정 3층)이 의미를 갖는다. 메모를 여기 실으면 그
+    독립성이 조용히 사라지고, 사라진 사실은 산출물 어디에도 드러나지 않는다.
+    """
     claim_ids = [claim.get("id") for claim in claims.get("independent") or []]
     instructions = (
         "분해된 골격 위에서 ④ 유기적 통합과 ⑤ 포지셔닝을 낸다. 산출은 `items`\n"
         "(kind: fact · implication · positioning · figure_note)와 `figures` 와 최종 `drop_signal` 이다.\n"
         f"독립항: {', '.join(str(entry) for entry in claim_ids)}\n"
-        "수치 사실은 origin 을 반드시 구별한다 — 원문 스팬(`quoted`)·산식(`derived`, 깊이 1)·\n"
-        "도면 판독(`figure-sourced`, 기계 검증 불가)·서지 복사(`bibliographic`)."
+        "수치 사실의 origin 은 `derived`(산식, 깊이 1)와 `figure-sourced`(도면 판독, 기계 검증\n"
+        "불가) 둘뿐이다 — 원문 스팬(`quoted`)과 서지 복사(`bibliographic`)는 이미 전수 수확되어\n"
+        "있으므로 네 소유가 아니다(재정 P-B)."
         # 접지 레인이 쓴 대역 **다음**을 준다. 슬롯 수는 `plan_grounding` 과 같은 함수로
         # 다시 세므로(레인 산출을 참조하지 않는다) 두 계획이 어긋날 수 없다.
-        + _band_block(
-            highest_item_number(claims)
-            + 1
-            + (
-                len(batched(independent_targets(claims)))
-                + len(batched(dependent_targets(claims)))
-            )
-            * ID_BAND_WIDTH
-        )
+        + _band_block(synthesis_band_start(claims))
         + _figure_registry_block(referenced_figures(groundings))
+        + _harvest_block(harvest)
         + _defect_block(defects)
     )
     return [

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""문서·계약 정합 검사기 (K1~K7).
+"""문서·계약 정합 검사기 (K1~K8).
 
 `docs/SPEC.md`·`docs/CHARTER.md`와 `contracts/`·`reader/schemas/`의 실물 계약 파일이
 서로 어긋나지 않는지를 기계로 확인한다. read-only 도구이며 어떤 파일도 쓰지 않는다.
@@ -62,7 +62,7 @@ DOC_TARGETS: tuple[str, ...] = ("docs/CHARTER.md", "docs/SPEC.md")
 # K2(§6.7 계약 파일 현황표) 대상 문서.
 CONTRACT_TABLE_DOC = "docs/SPEC.md"
 
-# K6(파싱)·K7(JSON Schema 메타)·K3(파일측 계약 라인) 대상 글로브.
+# K6(파싱)·K7(JSON Schema 메타)·K8(코어·확장 경계)·K3(파일측 계약 라인) 대상 글로브.
 #
 # ★ `reader/*.yaml` 는 M1 에서 추가되었다. 재정 2026-08-18 N8 ①의 경계 규칙("이식 단위에
 #   속하는 계약 = reader/")에 따라 독해층 규칙 계약(`reader/reader-rules.yaml`)이 `reader/`
@@ -101,6 +101,49 @@ RE_BACKTICK = re.compile(r"`([^`]+)`")
 
 DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema"
 
+# ---------------------------------------------------------------------------
+# K8 상수 — 공유 코어 / 프로젝트 확장 블록 경계 (재정 2026-08-18 P-2 ⓑ)
+#
+# 재정 원문: "공유 필수 필드는 프로젝트 간 동일 의미 — 프로젝트 고유 판단은 확장 블록에만"
+# + "이 원칙을 정합 검사기 검사 항목으로(문서 선언 아닌 기계 집행)". 아래 상수가 그
+# 경계의 기계 표현이며, 값을 고치는 일은 계약을 고치는 일이다(재정 없이 고치지 마라).
+# ---------------------------------------------------------------------------
+
+# K8 대상은 이 파일 하나다 — 프로젝트 간 계약의 유일한 진원(CLAUDE.md §5).
+MATERIAL_SPEC_REL = "reader/schemas/material-spec.schema.json"
+
+# 공유 코어 10키. 두 프로젝트(docent·historian)가 같은 의미로 읽는 사실면.
+CORE_TOP_KEYS: tuple[str, ...] = (
+    "schema",
+    "reader_version",
+    "spec_version",
+    "status",
+    "run_id",
+    "patent",
+    "claims",
+    "figures",
+    "items",
+    "provenance",
+)
+# 확장 블록의 최상위 키. 코어와 나란히 서지만 코어가 아니다.
+EXTENSIONS_KEY = "extensions"
+
+# 층 표지 — 이 문자열이 곧 "이 property 는 어느 층인가"의 선언이다.
+CORE_COMMENT_PREFIX = "[공유 코어]"
+EXTENSION_COMMENT_PREFIX = "[확장:{ns}]"
+
+# 허용 네임스페이스 = 현존하는 두 프로젝트뿐. 새 프로젝트는 재정으로 연다.
+ALLOWED_NAMESPACES: frozenset[str] = frozenset({"docent", "historian"})
+
+# 확장 전용 키 — 편집 판단·형식 산출의 이름이며 사실면에 있을 수 없다.
+# `drop_signal`(docent 의 게재 포기 제안)과 X 스레드 형식 어휘가 그 표본이다.
+EXTENSION_ONLY_KEYS: frozenset[str] = frozenset(
+    {"drop_signal", "taste_weight", "slot", "tweet", "thread", "hook", "variant"}
+)
+
+# 로컬 정의 참조 접두 — K8 의 도달 가능성 판정이 따라가는 유일한 참조 형태.
+LOCAL_DEFS_REF_PREFIX = "#/$defs/"
+
 EPILOG = """\
 검사 항목:
   K1  절 참조 해소     docs/*.md 의 §N[.M] 참조가 실재 절 헤더로 해소되는가
@@ -111,11 +154,15 @@ EPILOG = """\
   K5  폐지 토큰 부재   tools/retired-tokens.yaml 에 등재된 폐지 토큰의 부재
   K6  계약 파일 파싱   contracts/**·reader/*.yaml·reader/schemas/** 의 JSON·YAML 파싱
   K7  스키마 메타 검증 $schema 선언이 draft 2020-12 이고 check_schema() 통과
+  K8  코어·확장 경계   material-spec 의 공유 코어 10키 / 프로젝트 확장 블록 층 분리 (재정 P-2)
+                       판정 7항 — 최상위 required·properties 집합 · 층 표지($comment) ·
+                       네임스페이스 선택성·화이트리스트 · 코어에서 확장 전용 키 도달 불능
 
 ★ 자기매칭 격리 (이 도구의 설계 요건 — 정본: SPEC §4.8 · D-20260817-02 §5 규율 3):
   1. 스캔 대상은 allowlist로만 정한다 — 암묵 전수 스캔 없음.
      K1·K3·K4·K5 = docs/CHARTER.md, docs/SPEC.md 뿐.
      K6·K7 = contracts/**, reader/*.yaml, reader/schemas/** 뿐.
+     K8 = reader/schemas/material-spec.schema.json 하나뿐.
   2. 탐지 패턴·표본은 코드 밖 데이터 파일에 둔다(tools/retired-tokens.yaml, tests/fixtures/).
   3. tools/ · tests/ · ledgers/regression/ 이 스캔 목록에 들어오면 finding이 아니라
      ISOLATION VIOLATION 으로 즉시 exit 2 한다 — 격리 위반은 결함 보고가 아니라 실행 거부다.
@@ -740,6 +787,375 @@ def check_k7(parsed: dict[str, Any]) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# K8 — 공유 코어·확장 블록 경계 (재정 P-2 ⓑ)
+# ---------------------------------------------------------------------------
+
+
+def comment_of(node: Any) -> str | None:
+    """스키마 노드의 `$comment` 문자열(없거나 문자열이 아니면 None)."""
+    if isinstance(node, dict):
+        value = node.get("$comment")
+        if isinstance(value, str):
+            return value
+    return None
+
+
+def iter_declared_property_names(
+    node: Any,
+    path: str,
+    defs: dict[str, Any],
+    visited_defs: frozenset[str],
+):
+    """스키마 subtree 가 **선언하는** property 이름을 (이름, 위치)로 낸다.
+
+    K8 판정 7항의 기준은 "정의의 존재"가 아니라 **코어에서의 도달 가능성**이다. 그래서
+    `{"$ref": "#/$defs/X"}` 를 만나면 `$defs.X` 로 내려간다 — `$defs` 에 확장 전용 구조의
+    정의가 남아 있는 것 자체는 위반이 아니고(확장 블록이 그것을 가리켜 쓴다), 공유 코어의
+    어느 노드가 그 정의에 **닿는 순간**이 위반이다. `$defs` 를 순회 기점으로 삼지 않는
+    이유가 이것이다.
+
+    순환 참조는 `visited_defs`(경로별 방문 집합)로 끊는다.
+    """
+    if isinstance(node, dict):
+        ref = node.get("$ref")
+        if isinstance(ref, str) and ref.startswith(LOCAL_DEFS_REF_PREFIX):
+            name = ref[len(LOCAL_DEFS_REF_PREFIX) :]
+            if name in defs and name not in visited_defs:
+                yield from iter_declared_property_names(
+                    defs[name],
+                    f"{path} -> $defs/{name}",
+                    defs,
+                    visited_defs | {name},
+                )
+        for keyword in ("properties", "patternProperties"):
+            block = node.get(keyword)
+            if isinstance(block, dict):
+                for key in block:
+                    if isinstance(key, str):
+                        yield key, f"{path}.{keyword}.{key}"
+        required = node.get("required")
+        if isinstance(required, list):
+            for key in required:
+                if isinstance(key, str):
+                    yield key, f"{path}.required[{key}]"
+        for key, value in node.items():
+            if key in ("$comment", "$ref", "$id", "$schema", "title", "description"):
+                continue
+            yield from iter_declared_property_names(value, f"{path}.{key}", defs, visited_defs)
+    elif isinstance(node, list):
+        for index, item in enumerate(node):
+            yield from iter_declared_property_names(item, f"{path}[{index}]", defs, visited_defs)
+
+
+def check_k8(repo: str, parsed: dict[str, Any]) -> CheckResult:
+    """공유 코어 / 프로젝트 확장 블록의 경계를 기계로 집행한다 (재정 2026-08-18 P-2 ⓑ).
+
+    재정은 경계 원칙의 명문화에서 멈추지 말고 **정합 검사기의 검사 항목으로** 두라고
+    지시했다. 아래 7항이 그 이행이며, 각 판정의 `message` 에 근거를 병기한다.
+    """
+    result = CheckResult("K8", "코어·확장 경계")
+    rel = MATERIAL_SPEC_REL
+
+    data = parsed.get(rel)
+    if data is None:
+        # 파일 부재 = 환경 오류. 이 파일이 없으면 경계를 잴 대상 자체가 없다.
+        if not os.path.isfile(os.path.join(repo, rel)):
+            fail_env(
+                f"K8 대상 스키마 부재: {rel} — 재정 P-2 ⓑ 의 층 경계는 이 파일 하나로 집행된다"
+            )
+        # 실재하나 파싱되지 않았다 = K6 가 이미 보고한 결함. 여기서는 대조 불능만 남긴다.
+        result.findings.append(
+            Finding(
+                check="K8",
+                path=rel,
+                line=0,
+                found="(파싱 불능)",
+                expected="JSON 으로 파싱되는 스키마",
+                message="K6 가 보고한 파싱 실패로 코어·확장 경계를 대조할 수 없다 (재정 P-2)",
+            )
+        )
+        return result
+
+    if not isinstance(data, dict):
+        result.findings.append(
+            Finding(
+                check="K8",
+                path=rel,
+                line=0,
+                found=type(data).__name__,
+                expected="최상위가 맵(JSON object)인 스키마",
+                message="스키마 최상위가 맵이 아니어서 층 경계를 읽을 수 없다 (재정 P-2)",
+            )
+        )
+        return result
+
+    defs = data.get("$defs") if isinstance(data.get("$defs"), dict) else {}
+    properties = data.get("properties") if isinstance(data.get("properties"), dict) else None
+    expected_top = set(CORE_TOP_KEYS) | {EXTENSIONS_KEY}
+
+    # --- 판정 1: 최상위 required == 공유 코어 10키 + extensions ---
+    raw_required = data.get("required")
+    required_set: set[str] | None = None
+    if not isinstance(raw_required, list):
+        result.findings.append(
+            Finding(
+                check="K8",
+                path=rel,
+                line=0,
+                found=repr(raw_required),
+                expected="문자열 목록 required",
+                message="최상위 required 가 목록이 아니다 (재정 P-2)",
+            )
+        )
+    else:
+        required_set = {item for item in raw_required if isinstance(item, str)}
+        if required_set != expected_top:
+            missing = sorted(expected_top - required_set)
+            extra = sorted(required_set - expected_top)
+            result.findings.append(
+                Finding(
+                    check="K8",
+                    path=rel,
+                    line=0,
+                    found=f"required={sorted(required_set)}",
+                    expected=f"공유 코어 10키 + `{EXTENSIONS_KEY}` = {sorted(expected_top)}",
+                    message=(
+                        "최상위 필수 집합이 층 분리와 다르다 — "
+                        f"누락 {missing or '없음'} · 잉여 {extra or '없음'} (재정 P-2)"
+                    ),
+                )
+            )
+        else:
+            result.resolved.append(f"{rel}  판정1 최상위 required = 코어 10키 + extensions")
+
+    # --- 판정 2: 최상위 properties 키 집합 == required 집합 (잉여 최상위 키 금지) ---
+    if properties is None:
+        result.findings.append(
+            Finding(
+                check="K8",
+                path=rel,
+                line=0,
+                found=repr(data.get("properties")),
+                expected="맵 properties",
+                message="최상위 properties 가 맵이 아니다 (재정 P-2)",
+            )
+        )
+    else:
+        baseline = required_set if required_set is not None else expected_top
+        property_set = set(properties)
+        if property_set != baseline:
+            undeclared = sorted(property_set - baseline)
+            unbacked = sorted(baseline - property_set)
+            result.findings.append(
+                Finding(
+                    check="K8",
+                    path=rel,
+                    line=0,
+                    found=f"properties={sorted(property_set)}",
+                    expected=f"required 와 동일 집합 = {sorted(baseline)}",
+                    message=(
+                        "최상위 properties 가 required 집합과 다르다 — "
+                        f"선택 최상위 키 {undeclared or '없음'} · 정의 없는 필수 {unbacked or '없음'}. "
+                        "선택 최상위 키는 층에 속하지 않는 회색지대를 만든다 (재정 P-2)"
+                    ),
+                )
+            )
+        else:
+            result.resolved.append(f"{rel}  판정2 최상위 properties == required (잉여 키 없음)")
+
+    # --- 판정 3: 코어 property 전건의 $comment 가 `[공유 코어]` 로 시작 ---
+    if properties is not None:
+        missing_marker: list[str] = []
+        for key in CORE_TOP_KEYS:
+            node = properties.get(key)
+            if node is None:
+                continue  # 부재는 판정 1·2 의 소관이다 — 중복 보고하지 않는다
+            comment = comment_of(node)
+            if comment is None or not comment.startswith(CORE_COMMENT_PREFIX):
+                missing_marker.append(key)
+                result.findings.append(
+                    Finding(
+                        check="K8",
+                        path=rel,
+                        line=0,
+                        found=f"properties.{key}.$comment = {(comment or '(없음)')[:60]}",
+                        expected=f"`{CORE_COMMENT_PREFIX}` 로 시작하는 $comment",
+                        message=(
+                            f"공유 코어 property `{key}` 에 층 표지가 없다 — "
+                            "표지는 층 분리를 기계가 읽을 수 있게 하는 유일한 자리다 (재정 P-2)"
+                        ),
+                    )
+                )
+        if not missing_marker:
+            result.resolved.append(
+                f"{rel}  판정3 코어 {len(CORE_TOP_KEYS)}건 전부 `{CORE_COMMENT_PREFIX}` 표지"
+            )
+
+    # --- 판정 4·5·6: 확장 블록 ---
+    extensions = properties.get(EXTENSIONS_KEY) if properties is not None else None
+    if not isinstance(extensions, dict):
+        result.findings.append(
+            Finding(
+                check="K8",
+                path=rel,
+                line=0,
+                found=repr(extensions),
+                expected=f"맵 properties.{EXTENSIONS_KEY}",
+                message=(
+                    "프로젝트 확장 블록이 없다 — 확장 블록이 없으면 프로젝트 고유 판단이 "
+                    "공유 코어로 되돌아갈 자리밖에 없다 (재정 P-2)"
+                ),
+            )
+        )
+    else:
+        # 판정 5: extensions.required 가 비어 있다 (네임스페이스는 전부 선택).
+        ext_required = extensions.get("required")
+        if not isinstance(ext_required, list):
+            result.findings.append(
+                Finding(
+                    check="K8",
+                    path=rel,
+                    line=0,
+                    found=repr(ext_required),
+                    expected="빈 목록 required: []",
+                    message=f"{EXTENSIONS_KEY}.required 가 목록이 아니다 (재정 P-2)",
+                )
+            )
+        elif ext_required:
+            result.findings.append(
+                Finding(
+                    check="K8",
+                    path=rel,
+                    line=0,
+                    found=f"{EXTENSIONS_KEY}.required = {ext_required}",
+                    expected="빈 목록 required: []",
+                    message=(
+                        "네임스페이스를 필수로 두면 상대 프로젝트가 남의 판단 블록을 기입하게 된다 — "
+                        "historian 은 docent 블록을 기입하지 않는다 (재정 P-2)"
+                    ),
+                )
+            )
+        else:
+            result.resolved.append(f"{rel}  판정5 {EXTENSIONS_KEY}.required = [] (전부 선택)")
+
+        ext_properties = extensions.get("properties")
+        if not isinstance(ext_properties, dict):
+            result.findings.append(
+                Finding(
+                    check="K8",
+                    path=rel,
+                    line=0,
+                    found=repr(ext_properties),
+                    expected=f"맵 {EXTENSIONS_KEY}.properties",
+                    message=f"{EXTENSIONS_KEY}.properties 가 맵이 아니다 (재정 P-2)",
+                )
+            )
+        else:
+            # 판정 6: 네임스페이스 이름 ⊆ {docent, historian}.
+            unknown = sorted(set(ext_properties) - ALLOWED_NAMESPACES)
+            if unknown:
+                result.findings.append(
+                    Finding(
+                        check="K8",
+                        path=rel,
+                        line=0,
+                        found=f"네임스페이스 {unknown}",
+                        expected=f"{sorted(ALLOWED_NAMESPACES)} 안의 이름",
+                        message=(
+                            "미등재 네임스페이스 — 확장 블록은 실재하는 프로젝트의 이름으로만 열린다. "
+                            "새 네임스페이스는 재정 사항이다 (재정 P-2)"
+                        ),
+                    )
+                )
+            else:
+                result.resolved.append(
+                    f"{rel}  판정6 네임스페이스 {sorted(ext_properties)} ⊆ {sorted(ALLOWED_NAMESPACES)}"
+                )
+
+            # 판정 4: extensions.<ns> 하위 property 전건의 $comment 가 `[확장:<ns>]` 로 시작.
+            marker_defects = 0
+            marker_checked = 0
+            for ns in sorted(ext_properties):
+                ns_node = ext_properties[ns]
+                ns_properties = ns_node.get("properties") if isinstance(ns_node, dict) else None
+                if not isinstance(ns_properties, dict):
+                    result.findings.append(
+                        Finding(
+                            check="K8",
+                            path=rel,
+                            line=0,
+                            found=f"{EXTENSIONS_KEY}.properties.{ns}.properties = {type(ns_properties).__name__}",
+                            expected="맵 properties",
+                            message=f"네임스페이스 `{ns}` 가 property 를 선언하지 않는다 (재정 P-2)",
+                        )
+                    )
+                    marker_defects += 1
+                    continue
+                prefix = EXTENSION_COMMENT_PREFIX.format(ns=ns)
+                for key in sorted(ns_properties):
+                    marker_checked += 1
+                    comment = comment_of(ns_properties[key])
+                    if comment is None or not comment.startswith(prefix):
+                        marker_defects += 1
+                        result.findings.append(
+                            Finding(
+                                check="K8",
+                                path=rel,
+                                line=0,
+                                found=f"{EXTENSIONS_KEY}.{ns}.{key}.$comment = {(comment or '(없음)')[:60]}",
+                                expected=f"`{prefix}` 로 시작하는 $comment",
+                                message=(
+                                    f"확장 property `{ns}.{key}` 에 층 표지가 없다 — "
+                                    "표지 없는 확장은 코어로 되돌아가도 아무도 눈치채지 못한다 (재정 P-2)"
+                                ),
+                            )
+                        )
+            if not marker_defects:
+                result.resolved.append(
+                    f"{rel}  판정4 확장 property {marker_checked}건 전부 `[확장:<ns>]` 표지"
+                )
+
+    # --- 판정 7: 공유 코어에서 확장 전용 키에 도달 불능 ---
+    #
+    # 기준은 정의의 부재가 아니라 **도달 가능성**이다. `$defs/drop_signal` 은 확장 블록이
+    # 가리켜 쓰므로 정의가 남아 있는 것이 정상이고, 공유 코어의 어느 노드가 그 정의에
+    # 닿을 때 비로소 경계가 무너진다. 그래서 순회 기점은 `$defs` 가 아니라 코어 property
+    # 10건이며, 순회 중 `$ref` 는 해소해서 따라간다.
+    if properties is not None:
+        reachable: list[tuple[str, str]] = []
+        for key in sorted(set(properties) - {EXTENSIONS_KEY}):
+            if key in EXTENSION_ONLY_KEYS:
+                reachable.append((key, f"properties.{key} (최상위 선언)"))
+            for name, locus in iter_declared_property_names(
+                properties[key], f"properties.{key}", defs, frozenset()
+            ):
+                if name in EXTENSION_ONLY_KEYS:
+                    reachable.append((name, locus))
+        for name, locus in reachable:
+            result.findings.append(
+                Finding(
+                    check="K8",
+                    path=rel,
+                    line=0,
+                    found=f"{locus}",
+                    expected=f"공유 코어에서 `{name}` 에 도달 불능",
+                    message=(
+                        f"확장 전용 키 `{name}` 가 공유 코어에서 도달 가능하다 — "
+                        "판정 기준은 정의의 존재가 아니라 코어로부터의 도달 가능성이다"
+                        "($defs 에 정의가 남아 있는 것은 확장 블록이 그것을 가리켜 쓰기 때문이며 위반이 아니다). "
+                        "프로젝트 고유 판단은 확장 블록 안에만 산다 (재정 P-2)"
+                    ),
+                )
+            )
+        if not reachable:
+            result.resolved.append(
+                f"{rel}  판정7 확장 전용 키 {len(EXTENSION_ONLY_KEYS)}종 코어에서 도달 불능($ref 해소 순회)"
+            )
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # 출력
 # ---------------------------------------------------------------------------
 
@@ -845,6 +1261,7 @@ def main(argv: list[str] | None = None) -> int:
         check_k5(docs, retired),
         k6,
         check_k7(parsed),
+        check_k8(repo, parsed),
     ]
     results.sort(key=lambda check: check.id)
 

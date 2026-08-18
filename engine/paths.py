@@ -109,7 +109,27 @@ def _declared_paths(contract: dict) -> list[str]:
     for entry in checkpoint.get("surfaces") or []:
         if isinstance(entry, str):
             out.append(entry)
+    # 단계 진입 게이트가 선언한 경로(재정 P-U3). `continue_envelope` 는 여기에만 선언되므로
+    # 이 수집이 없으면 계약이 부른 파일을 러너가 해소하지 못한다 — 그때 코드가 경로를
+    # 지어내는 유혹이 생기고, 그 유혹을 막는 것이 이 모듈의 존재 이유다.
+    for gate in contract.get("phase_gates") or []:
+        if not isinstance(gate, dict):
+            continue
+        for key in ("declared_input", "continue_envelope"):
+            value = gate.get(key)
+            if isinstance(value, str):
+                out.append(value)
     return out
+
+
+def shadow_screening_ledger(repo: str | None = None) -> str:
+    """맹검 스크리닝 메모의 섀도 원장 — `<repo>/ledgers/shadow/screening.jsonl`.
+
+    ★ 런 **밖**이다(재정 P-U4). 메모는 재료 명세 계약면 밖의 관찰 기록이며, 한 런의 산출이
+    아니라 여러 런에 걸쳐 쌓이는 축적물(historian 스크리닝의 사전 훈련 데이터 — 헌장 D4)이다.
+    그래서 `RunPaths` 의 프로퍼티가 아니라 리포 수준의 모듈 함수로 노출한다.
+    """
+    return os.path.join(repo or _REPO_ROOT, "ledgers", "shadow", "screening.jsonl")
 
 
 class RunPaths:
@@ -219,6 +239,18 @@ class RunPaths:
     @property
     def convergence_json(self) -> str:
         return self.path("convergence.json")
+
+    @property
+    def convergence_early_json(self) -> str:
+        """조기 수렴 판정서(재정 P-4). 계약은 이 파일을 outputs 이자 접지 단계의 **선언 입력**
+        으로 두 번 적는다(`read.yaml#phase_gates`) — 같은 파일의 중복 선언은 정상이다."""
+        return self.path("convergence-early.json")
+
+    @property
+    def convergence_continue_md(self) -> str:
+        """수렴 미달 시의 Owner '계속' 봉투(재정 P-U3). 선언 자리는 `phase_gates[].continue_envelope`
+        하나뿐이며, 이 경로가 실재하지 않는 것이 정상 상태다(봉투는 필요할 때만 생긴다)."""
+        return self.path("convergence-continue.md")
 
     @property
     def read_dir(self) -> str:

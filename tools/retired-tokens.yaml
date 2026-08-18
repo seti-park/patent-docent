@@ -35,6 +35,19 @@ tokens:
   - token: "format.new-term-budget"
     case_insensitive: false
     note: "재정 2026-08-18 N2 — 용어 관련 자동 검사 완전 제거. 원칙은 펜 계약의 긍정형 지침으로 이전, `blueprint.new_terms[]`는 작업 메모로만 존치."
+  - token: "alternative-form"
+    case_insensitive: false
+    note: >-
+      재정 2026-08-18 P-1 — Markush·조건부·수단항·카테고리 전환의 typed operator 를 N14 범위에서
+      제외하면서 이 enum 값을 폐기하고 `unclassified`(구조 미분류 표지)로 교체했다. 구 값은 파싱
+      규칙 5종으로 **도달 불능**인 채 "선언하면 반드시 실패"로만 존재했으니 어휘가 아니라 함정이었다.
+      폐기가 손실을 만들지 않는 근거는 전문이 이미 `text_verbatim` 에 보존된다는 것이다(재정 R1).
+  - token: "min_effective_rule"
+    case_insensitive: false
+    note: >-
+      재정 2026-08-18 P-6 — 계기 유효 표본 하한 `ceil(probe.n / 2)` 를 폐기하고 **정족수 5/5**
+      (`contracts/parameters.yaml#instrument_quorum`)로 교체했다. 죽은 인스턴스만 재시도하며,
+      복구 실패 시 기계 강등이 아니라 Owner 상신이다.
 
 # 예외 규칙 — "이 토큰은 폐지되었다"고 기록하는 문맥까지 잡으면 오탐이다.
 exemptions:

@@ -18,6 +18,15 @@ origin 별 대조 + 전 origin 공통 2종 + 깊이 1 + `_en` 한글 재확인�
   7. 깊이 1  `derivation.inputs[].ref` 가 가리키는 `fact` 의 `origin` 은 `quoted` 여야 한다
      (재정 N9 · 재감수 M-01 — 원문 스팬만이 원천이다)
   8. `_en` 슬롯에 한글이 없다(재감수 M-02 — 스키마가 1차로 막고 스크립트가 재확인한다)
+  9. **수확 대조** `origin ∈ {quoted, bibliographic}` 집합이 같은 명세로 수확기를 다시 돌린
+     결과와 **정확히 일치**한다(`value.harvest-parity` — 재정 P-B)
+
+★ 9번이 재정 P-B 의 상시 집행자다. "수확 누락은 회귀 변조본(숫자 심은 판)으로 상시
+테스트"라는 문언이 요구하는 것은 픽스처 하나가 아니라 **매 실행의 대조**이며, 그것이 없으면
+"전수"는 이름뿐이다. 같은 대조가 반대 방향도 막는다 — 레인이 원문 스팬 수치를 손으로 만들어
+넣으면 수확기가 낸 적 없는 항목이 되어 "추가"로 잡힌다(`value.origin-ownership` 은 그래서
+별도 규칙을 두지 않는다. 같은 사실을 두 규칙이 판정하면 어느 검사가 그 결함을 지키는지
+확정할 수 없어진다).
 
 산식 평가는 **재귀 하강 파서**로 한다. `eval`·`exec` 를 쓰지 않는다 — 정답지를 만드는
 경로에 임의 코드 실행을 두면 그 검사가 방어가 아니라 구멍이 된다.
@@ -28,6 +37,9 @@ from __future__ import annotations
 import decimal
 import re
 
+# origin 필터는 `rules.in_answer_scope` 가 든다(`HARVESTED_ORIGINS` 를 직접 쓰지 않는다) —
+# 범위 조건이 두 곳으로 갈리면 한쪽만 낡는다.
+from .harvest import harvest_numeric_facts, identity_key, parity_key
 from .normalize import format_decimal, normalize_number, NormalizeError
 from .report import CheckContext, CheckRow
 from .rules import Rules
@@ -366,6 +378,9 @@ def check(ctx: CheckContext) -> CheckRow:
     # 8. `_en` 한글 재확인 — 스키마가 1차로 막고 여기서 스크립트가 재확인한다(재감수 M-02).
     en_checked = _check_en_slots(row, ctx, index)
 
+    # 9. 수확 대조 + 수치 인벤토리(재정 P-B).
+    row.checked += _check_harvest_parity(row, ctx, rules, index, facts)
+
     row.extras["fact_classification"] = {
         "quoted_span": {"count": len(quoted_ids), "material_ids": quoted_ids},
         "bibliographic_ids": bibliographic_ids,
@@ -550,6 +565,151 @@ def _check_derived(
             f"산식 재계산 결과와 다르다(formula={formula})",
         )
     return entry
+
+
+def _check_harvest_parity(
+    row: CheckRow,
+    ctx: CheckContext,
+    rules: Rules,
+    index: SpecIndex,
+    facts: list,
+) -> int:
+    """`value.harvest-parity` — 명세의 수확 소유분 ↔ 수확기 재실행 결과(재정 P-B).
+
+    같은 명세로 수확기를 다시 돌려 얻은 집합과 명세에 실린 집합이 정확히 일치해야 한다.
+    어긋남을 셋으로 갈라 보고한다 — **누락**(수확되어야 할 값이 명세에 없다) ·
+    **추가**(수확기가 낸 적 없는 값이 명세에 있다) · **변조**(좌표는 같은데 값이 다르다).
+    셋을 한 결함으로 뭉치면 "무엇이 어떻게 어긋났는가"를 말하지 못하고, 그러면 국소 수정
+    지시(D8)가 서지 않는다.
+
+    반환 = 이 대조가 본 대상 수(판정 행의 `checked` 에 더한다).
+    """
+    harvested, skipped = harvest_numeric_facts(ctx.spec, rules=rules)
+
+    expected: dict[tuple, dict] = {}
+    for fact in harvested:
+        key = identity_key(fact, rules)
+        if key is not None:
+            expected[key] = fact
+
+    actual: dict[tuple, dict] = {}
+    for fact in facts:
+        # ★ 범위는 **정답지의 정의**와 같다(규칙 파일 `numeric_harvest.answer_scope` —
+        #   l0-format §9 `answer_sources.frozen_facts` 와 대조로 묶인다). 철회·대체된 항목은
+        #   정답지가 아니므로 대조 대상이 아니다. 상태를 무시하면 append-only 규율을 지킨
+        #   명세가 반드시 실패한다(2026-08-18 총괄 검수 적발).
+        if not rules.in_answer_scope(fact):
+            continue
+        key = identity_key(fact, rules)
+        if key is None:
+            continue
+        if key in actual:
+            # 같은 좌표에 두 항목 — 하나는 반드시 수확기가 내지 않은 것이다.
+            _add_parity_finding(row, "추가", fact, None)
+            continue
+        actual[key] = fact
+
+    for key in sorted(expected.keys() - actual.keys(), key=_key_text):
+        _add_parity_finding(row, "누락", None, expected[key])
+    for key in sorted(actual.keys() - expected.keys(), key=_key_text):
+        _add_parity_finding(row, "추가", actual[key], None)
+    for key in sorted(expected.keys() & actual.keys(), key=_key_text):
+        if parity_key(actual[key], rules) != parity_key(expected[key], rules):
+            _add_parity_finding(row, "변조", actual[key], expected[key])
+
+    row.extras["numeric_inventory"] = _numeric_inventory(
+        ctx.spec, index, facts, skipped, rules
+    )
+    row.extras["harvest_skipped"] = skipped
+    return len(expected.keys() | actual.keys())
+
+
+def _add_parity_finding(
+    row: CheckRow,
+    kind: str,
+    spec_fact: dict | None,
+    harvested_fact: dict | None,
+) -> None:
+    """누락·추가·변조를 각각 좌표와 함께 낸다."""
+    reference = spec_fact or harvested_fact or {}
+    source = reference.get("source") or {}
+    locus = source.get("locator") or (reference.get("bib_source") or {}).get("field") or "?"
+    quote = source.get("quote") or ""
+    span = source.get("value_span") or {}
+    where = f"{locus}"
+    if span:
+        where = f"{locus}[{span.get('start')},{span.get('end')})"
+    # ★ "추가"의 원인을 하나로 단정하지 않는다(2026-08-18 총괄 검수 지적). 구 문언은
+    #   "레인이 만들었거나 심은 값이다"라고 단정했는데, 접지 밖 인용처럼 **그 자체로 정당한
+    #   신고 사유**가 따로 있었다. 결함 메시지는 무엇이 어긋났는지를 말하고, 왜 그런지는
+    #   사람이 좌표를 보고 판정한다.
+    messages = {
+        "누락": (
+            "수확기가 낸 수치가 명세에 없다 — 전수 수확에서 값이 빠졌다"
+            "(항목이 철회되었더라도 접지 인용 안의 수치는 계속 요구된다)"
+        ),
+        "추가": (
+            "수확기가 낸 적 없는 수치가 명세의 정답지에 있다 — 원인은 셋 중 하나다: "
+            "① 레인이 만들었거나 심은 값 ② 접지 밖(청구항 등)에서 끌어온 값 "
+            "③ 인용문이 접지 인용과 다르게 잘린 값"
+        ),
+        "변조": "좌표는 같은데 값이 다르다(값 불일치) — 실재하는 인용문 옆의 변조 수치다",
+    }
+    row.add(
+        "value.harvest-parity",
+        f"{spec_fact.get('id', '?')}.value_raw" if spec_fact else f"harvest:{where}",
+        (spec_fact or {}).get("value_raw") or "(없음)",
+        (harvested_fact or {}).get("value_raw") or "(수확 결과에 없음)",
+        f"[{kind}] {messages[kind]} — 인용 {where}: {quote}",
+    )
+
+
+def _key_text(key: tuple) -> str:
+    """결함 순서를 결정론으로 만들기 위한 정렬 키(집합 반복 순서에 기대지 않는다)."""
+    return " | ".join(str(part) for part in key)
+
+
+def _numeric_inventory(
+    spec: dict,
+    index: SpecIndex,
+    facts: list,
+    skipped: list,
+    rules: Rules,
+) -> dict:
+    """`convergence.json#numeric_inventory` 본문(재정 P-B).
+
+    중요분은 LLM 의 중요도 판단이 아니라 **역참조**로 도출된다 — 함의·포지셔닝이 실제로
+    `numeric_refs` 에 적은 것이 참조분이고 나머지가 미참조분이다. 둘을 함께 세는 이유는
+    CP1 이 전량 카운트를 상시 표기하고 미참조분을 접되 **숨기지 않기** 때문이다.
+
+    범위는 parity 와 **같은 `answer_scope`** 다(정답지 정의 = l0-format §9). 두 곳이 다른
+    범위를 쓰면 "수확 3건"과 "인벤토리 4건"이 한 보고서 안에서 어긋나고, CP1 의 전량 카운트가
+    정답지가 아닌 수를 세게 된다.
+    """
+    referenced: set[str] = set()
+    for item in index.items.values():
+        for ref in item.get("numeric_refs") or []:
+            if isinstance(ref, str):
+                referenced.add(ref)
+    harvested_ids = [
+        fact.get("id")
+        for fact in facts
+        if rules.in_answer_scope(fact) and isinstance(fact.get("id"), str)
+    ]
+    inside = [item_id for item_id in harvested_ids if item_id in referenced]
+    outside = [item_id for item_id in harvested_ids if item_id not in referenced]
+    return {
+        "total": len(harvested_ids),
+        "referenced": sorted(set(inside), key=_material_order),
+        "unreferenced": sorted(set(outside), key=_material_order),
+        "skipped": list(skipped),
+    }
+
+
+def _material_order(item_id: str) -> tuple:
+    """`M2` 가 `M10` 보다 앞에 오도록 숫자로 정렬한다(문자열 정렬은 M10 을 앞에 둔다)."""
+    digits = item_id[1:]
+    return (0, int(digits)) if digits.isdigit() else (1, 0, item_id)
 
 
 def _check_en_slots(row: CheckRow, ctx: CheckContext, index: SpecIndex) -> int:

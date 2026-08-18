@@ -19,7 +19,15 @@ from .spec_io import SpecIndex
 CHECK_ID = "read.pointer-resolve"
 
 # 참조 그래프의 간선을 만드는 필드(스키마 $comment (8) 의 비순환 대상).
-GRAPH_FIELDS = ("derivation.inputs[].ref", "derived_from[]", "superseded_by", "grounding.component")
+# `numeric_refs[]` 는 재정 P-B 로 신설된 역참조다 — 함의·포지셔닝이 근거로 삼은 수치를
+# 가리키며, 대상 kind 제약은 `fact` 다. 자기참조·비순환 규율은 다른 간선과 같다.
+GRAPH_FIELDS = (
+    "derivation.inputs[].ref",
+    "derived_from[]",
+    "numeric_refs[]",
+    "superseded_by",
+    "grounding.component",
+)
 
 
 def check(ctx: CheckContext) -> CheckRow:
@@ -91,6 +99,18 @@ def check(ctx: CheckContext) -> CheckRow:
                 f"{owner} 이외의 항목",
                 "자기 자신을 참조한다(재정 N9 · 스키마 $comment (8))",
             )
+
+    def resolve_numeric_refs(item_id: str, item: dict) -> None:
+        """`numeric_refs[]` — 함의·포지셔닝이 근거로 삼은 수치의 역참조(재정 P-B).
+
+        kind 제약은 **`fact`** 다. 이 참조가 해소되지 않으면 중요분 도출식 자체가 무의미해진다
+        — 수확은 전수이고 고르는 일 전체가 이 역참조 하나에 걸려 있기 때문이다.
+        """
+        for position, ref in enumerate(item.get("numeric_refs") or []):
+            locus = f"{item_id}.numeric_refs[{position}]"
+            resolve_item(locus, ref, "fact", owner=item_id)
+            if isinstance(ref, str):
+                edges.setdefault(item_id, []).append((ref, "numeric_refs[]"))
 
     def resolve_structural(locus: str, ref, table: dict, expected: str) -> None:
         nonlocal checked
@@ -180,6 +200,9 @@ def check(ctx: CheckContext) -> CheckRow:
                 resolve_item(locus, ref, None, owner=item_id)
                 if isinstance(ref, str):
                     edges.setdefault(item_id, []).append((ref, "derived_from[]"))
+            resolve_numeric_refs(item_id, item)
+        elif kind == "positioning":
+            resolve_numeric_refs(item_id, item)
         elif kind == "figure_note":
             resolve_structural(
                 f"{item_id}.figure", item.get("figure"), index.figures, "figures[].id"

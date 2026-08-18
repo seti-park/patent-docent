@@ -38,6 +38,10 @@ REQUIRED_BLOCKS = (
     "item_lifecycle",
     "value_grammar",
     "convergence",
+    # 재정 2026-08-18 P-B(전수 수치 수확) · P-2 ⓐ(서지 확장 대조)로 신설된 블록.
+    # 없으면 `reader/lib/harvest.py`·`bibliography.py` 가 조용히 공허해지므로 로드에서 막는다.
+    "numeric_harvest",
+    "bibliography",
 )
 
 
@@ -101,6 +105,16 @@ class Rules:
     def figure_captions(self) -> dict:
         return self.raw["figure_captions"]
 
+    @property
+    def numeric_harvest(self) -> dict:
+        """전수 수치 수확 규칙(재정 P-B)."""
+        return self.raw["numeric_harvest"]
+
+    @property
+    def bibliography(self) -> dict:
+        """서지 확장 대조 규칙(재정 P-2 ⓐ)."""
+        return self.raw["bibliography"]
+
     # -- 컴파일 -------------------------------------------------------------
 
     def _compile(self) -> None:
@@ -109,6 +123,8 @@ class Rules:
         self._compile_value_grammar()
         self._compile_convergence()
         self._compile_figure_captions()
+        self._compile_numeric_harvest()
+        self._compile_bibliography()
 
     def _compile_figure_captions(self) -> None:
         """도면 캡션 패턴. 탐지 패턴은 코드가 아니라 규칙 파일에 산다(SPEC §4.8 격리 요건 2항)."""
@@ -147,6 +163,7 @@ class Rules:
 
     def _compile_dependency(self) -> None:
         block = self.dependency_citation
+        self._compile_structure_markers(block)
         forms = block.get("forms") or []
         if not forms:
             raise RulesError("dependency_citation.forms 가 비어 있다")
@@ -163,6 +180,35 @@ class Rules:
                 }
             )
         self.dependency_forms = tuple(compiled)
+
+    def _compile_structure_markers(self, block: dict) -> None:
+        """구조 표지 어형(재정 P-1 · 2026-08-18 총괄 정정).
+
+        ★ **파서가 아니다.** 구조를 파싱하는 것이 아니라 **있는지 보는** 것이며, 그 구별이
+        재정 P-1 의 "typed operator 신설은 N14 범위에서 제외한다"를 지키는 자리다. 그래서
+        여기서 뽑는 것은 `(구조 이름, 컴파일된 패턴)` 뿐이고 그룹 포획을 두지 않는다.
+        """
+        markers = block.get("unclassified", {}).get("structure_markers") or {}
+        flags = re.IGNORECASE if markers.get("case_insensitive") else 0
+        compiled = []
+        for entry in markers.get("forms") or []:
+            structure = entry.get("structure")
+            for pattern in entry.get("patterns") or []:
+                compiled.append((str(structure), re.compile(pattern, flags)))
+        if not compiled:
+            raise RulesError(
+                "dependency_citation.unclassified.structure_markers.forms 가 비어 있다 — "
+                "표지 어형이 없으면 parse.unclassified-not-an-escape 가 전건을 실패시킨다"
+            )
+        self.structure_markers = tuple(compiled)
+
+    def structure_markers_in(self, text: str) -> tuple:
+        """본문에서 발견된 구조 이름 목록(중복 제거·발견 순). 없으면 빈 튜플."""
+        found: list[str] = []
+        for structure, pattern in self.structure_markers:
+            if structure not in found and pattern.search(text or ""):
+                found.append(structure)
+        return tuple(found)
 
     def _compile_value_grammar(self) -> None:
         block = self.value_grammar
@@ -191,6 +237,7 @@ class Rules:
             entry["compiled"] = re.compile(source)
             compiled.append(entry)
         self.value_forms = tuple(compiled)
+        self._compile_scan_forms(block, compiled)
         render = block.get("render") or {}
         if not render.get("forms"):
             raise RulesError("value_grammar.render.forms 가 없다")
@@ -199,6 +246,32 @@ class Rules:
         self.number_normalization = tuple(
             render.get("number_normalization") or ()
         )
+
+    def _compile_scan_forms(self, block: dict, compiled: list) -> None:
+        """어형 패턴의 **스캔용 파생**(앵커 제거)을 만든다 — `numeric_harvest.scan`.
+
+        §4 의 어형 패턴은 값 문자열 전체를 판정하므로 `^…$` 앵커가 걸려 있다. 수확은 문장
+        안에서 찾는 일이라 앵커가 있으면 아무것도 찾지 못하고, 그래서 초판이 낱개 십진만
+        훑다가 복합 어형(range·inequality·tolerance·set)을 통째로 잃었다(2026-08-18 총괄
+        검수 실측). 패턴을 두 벌 적지 않고 **같은 패턴에서 파생**한다.
+        """
+        scan = (self.raw.get("numeric_harvest") or {}).get("scan") or {}
+        excluded = set(scan.get("exclude_kinds") or ())
+        forms = []
+        for form in compiled:
+            if form.get("kind") in excluded:
+                continue
+            source = form["compiled"].pattern
+            if scan.get("anchors") == "strip":
+                if source.startswith("^"):
+                    source = source[1:]
+                if source.endswith("$"):
+                    source = source[:-1]
+            entry = dict(form)
+            entry["scan"] = re.compile(source)
+            forms.append(entry)
+        # rank 순 정렬은 `_compile_value_grammar` 가 이미 했다 — 그 순서가 곧 소비 우선순위다.
+        self.value_scan_forms = tuple(forms)
 
     def _compile_preprocess(self, block: dict) -> None:
         """`value_grammar.preprocess` 를 순서대로 컴파일한다.
@@ -270,6 +343,143 @@ class Rules:
         if not axes:
             raise RulesError("convergence.axes 가 비어 있다")
         self.convergence_axes = tuple(axes)
+        # ★ 축별 정책(재정 P-3). 정책 정의는 `convergence.policies` 가 정본이고, 코드는
+        #   status 어휘·임계 요구 여부를 그 표에서 읽는다 — 어느 축이 법이고 어느 축이
+        #   계기인지를 코드가 고르면 그 순간 검사가 자기 입법이 된다(D7).
+        policies = self.convergence.get("policies") or []
+        if not policies:
+            raise RulesError("convergence.policies 가 비어 있다(재정 P-3)")
+        table: dict[str, dict] = {}
+        for policy in policies:
+            policy_id = policy.get("id")
+            if not policy_id:
+                raise RulesError("convergence.policies 에 id 없는 항목이 있다")
+            table[str(policy_id)] = policy
+        self.convergence_policies = table
+        for axis in self.convergence_axes:
+            axis_policy = axis.get("policy")
+            if axis_policy not in table:
+                raise RulesError(
+                    f"convergence.axes[{axis.get('id')}] 의 policy 가 정의되지 않았다: "
+                    f"{axis_policy!r} (재정 P-3 — 축마다 policy 는 필수다)"
+                )
+        self.convergence_profile = self.convergence.get("profile") or {}
+
+    def _compile_numeric_harvest(self) -> None:
+        """수확 규칙(재정 P-B). 단위 후보 패턴은 규칙 파일이 정본이다."""
+        block = self.numeric_harvest
+        detection = block.get("unit_detection") or {}
+        pattern = detection.get("pattern")
+        if not pattern:
+            raise RulesError("numeric_harvest.unit_detection.pattern 이 없다")
+        boundary = detection.get("boundary")
+        if not boundary:
+            raise RulesError("numeric_harvest.unit_detection.boundary 가 없다")
+        # 경계는 패턴 뒤에 붙는 전방탐색이다 — 긴 낱말의 앞머리가 단위로 읽히는 것을 막는다.
+        self.harvest_unit_pattern = re.compile(pattern + boundary)
+        self.harvest_unit_max_length = int(detection.get("max_length", 0))
+        if self.harvest_unit_max_length <= 0:
+            raise RulesError("numeric_harvest.unit_detection.max_length 가 없다")
+        # 토큰 경계 — 영숫자 토큰 **내부**의 숫자를 수치로 읽지 않는다(`cm3` 의 `3`).
+        # 입법이 아니라 토큰화 규율이므로 단위표와 무관하다(규칙 파일 `token_boundary`).
+        boundaries = block.get("token_boundary") or {}
+        left = boundaries.get("left_forbidden")
+        right = boundaries.get("right_letter")
+        if not left or not right:
+            raise RulesError("numeric_harvest.token_boundary 가 없다")
+        self.harvest_left_forbidden = re.compile(left)
+        self.harvest_right_letter = re.compile(right)
+        vocabulary = detection.get("vocabulary")
+        if not vocabulary:
+            raise RulesError("numeric_harvest.unit_detection.vocabulary 가 비어 있다")
+        # 인식 어휘 — 정규화 표(`UNIT_ALIASES`)와 역할이 다르다(규칙 파일 `accept_why`).
+        self.harvest_unit_vocabulary = frozenset(
+            str(unit).lower() for unit in vocabulary
+        )
+        label = block.get("label_template")
+        if not label:
+            raise RulesError("numeric_harvest.label_template 이 없다")
+        self.harvest_label_template = str(label)
+        bib_label = block.get("bibliographic_label_template")
+        if not bib_label:
+            raise RulesError("numeric_harvest.bibliographic_label_template 이 없다")
+        self.harvest_bib_label_template = str(bib_label)
+        fields = block.get("bibliographic_fields") or []
+        if not fields:
+            raise RulesError("numeric_harvest.bibliographic_fields 가 비어 있다")
+        self.harvest_bib_fields = tuple(
+            {
+                "field": str(entry.get("field")),
+                "path": tuple(entry.get("path") or ()),
+                "expect_kind": entry.get("expect_kind"),
+            }
+            for entry in fields
+        )
+        for entry in self.harvest_bib_fields:
+            if not entry["path"] or not entry["expect_kind"]:
+                raise RulesError(
+                    f"numeric_harvest.bibliographic_fields[{entry['field']}] 에 "
+                    "path 또는 expect_kind 가 없다"
+                )
+        template = str(block.get("id_template") or "")
+        if "{n}" not in template:
+            raise RulesError("numeric_harvest.id_template 에 {n} 자리가 없다")
+        self.harvest_id_template = template
+        parity = block.get("parity_key") or {}
+        if not parity.get("quoted") or not parity.get("bibliographic"):
+            raise RulesError("numeric_harvest.parity_key 에 두 갈래가 다 있어야 한다")
+        self.harvest_parity_key = {
+            origin: tuple(paths) for origin, paths in parity.items()
+        }
+        identity = block.get("identity_key") or ()
+        if not identity:
+            raise RulesError("numeric_harvest.identity_key 가 없다")
+        self.harvest_identity_key = tuple(identity)
+        # 대조 범위 — 정답지의 정의(`l0-format §9 answer_sources`)와 같은 범위여야 한다.
+        # 코드가 `"active"` 를 리터럴로 들면 정답지의 정의가 바뀔 때 이쪽만 낡는다.
+        scope = block.get("answer_scope") or {}
+        if not scope.get("status") or not scope.get("origin") or not scope.get("kind"):
+            raise RulesError("numeric_harvest.answer_scope 가 없다(kind·origin·status 필수)")
+        self.harvest_answer_scope = {
+            "kind": str(scope["kind"]),
+            "origin": tuple(scope["origin"]),
+            "status": str(scope["status"]),
+        }
+        # 배제 규칙(도면부호 등) — 조건은 코드가 알고 **어느 규칙이 켜져 있는지**는 파일이 안다.
+        exclusions = block.get("exclusions") or []
+        self.harvest_exclusions = tuple(exclusions)
+
+    def in_answer_scope(self, item: dict) -> bool:
+        """항목이 **정답지 범위**에 드는가(kind·origin·status 3조건).
+
+        철회·대체된 항목은 정답지가 아니다 — append-only 규율상 그 항목들은 명세에 남아
+        있으므로, 상태를 보지 않으면 규율을 지킨 명세가 반드시 실패한다.
+        """
+        scope = self.harvest_answer_scope
+        return (
+            item.get("kind") == scope["kind"]
+            and item.get("origin") in scope["origin"]
+            and item.get("status") == scope["status"]
+        )
+
+    def harvest_exclusion(self, exclusion_id: str) -> dict | None:
+        """배제 규칙 1건. 파일에서 지우면 그 배제가 사라진다(코드가 아니라 계약이 켜고 끈다)."""
+        for entry in self.harvest_exclusions:
+            if entry.get("id") == exclusion_id:
+                return entry
+        return None
+
+    def _compile_bibliography(self) -> None:
+        """서지 대조 규칙(재정 P-2 ⓐ)."""
+        block = self.bibliography
+        rules = block.get("rules") or []
+        if not rules:
+            raise RulesError("bibliography.rules 가 비어 있다")
+        self.bibliography_rules = tuple(rules)
+        targets = block.get("source_substring_targets") or []
+        if not targets:
+            raise RulesError("bibliography.source_substring_targets 가 비어 있다")
+        self.bibliography_substring_targets = tuple(str(item) for item in targets)
 
     # -- 파생 조회 ----------------------------------------------------------
 
@@ -292,3 +502,24 @@ class Rules:
             if axis.get("id") == axis_id:
                 return axis
         raise RulesError(f"convergence.axes 에 {axis_id} 축이 없다")
+
+    def policy_of(self, axis: dict) -> dict:
+        """축의 정책 정의(재정 P-3). 로드 시 존재가 보장되어 있다."""
+        return self.convergence_policies[axis.get("policy")]
+
+    def dependency_rule_ids(self) -> tuple:
+        """`dependency_citation.rules` 의 id 목록(규칙 수 = ruleset_size 의 근거)."""
+        return tuple(
+            entry.get("id") for entry in (self.dependency_citation.get("rules") or ())
+        )
+
+    def bibliography_rule_ids(self) -> tuple:
+        return tuple(entry.get("id") for entry in self.bibliography_rules)
+
+    def unclassified_value(self) -> str:
+        """구조 미분류 표지 값(재정 P-1). 코드에 문자열을 박지 않는다."""
+        block = self.dependency_citation.get("unclassified") or {}
+        value = block.get("value")
+        if not value:
+            raise RulesError("dependency_citation.unclassified.value 가 없다(재정 P-1)")
+        return str(value)

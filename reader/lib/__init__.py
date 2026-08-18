@@ -13,6 +13,12 @@ patent-historian 이 `reader/` 만 스냅샷해도 그대로 동작해야 하기
 
 from __future__ import annotations
 
+from .harvest import (
+    HARVESTED_ORIGINS,
+    harvest_numeric_facts,
+    identity_key,
+    parity_key,
+)
 from .normalize import (
     UNIT_ALIASES,
     NormalizeError,
@@ -36,6 +42,7 @@ from .value_grammar import ValueGrammarError, parse_value, render_value
 
 __all__ = [
     "CHECK_REGISTRY",
+    "HARVESTED_ORIGINS",
     "CheckContext",
     "CheckRow",
     "FREEZE_CHECK_IDS",
@@ -48,11 +55,14 @@ __all__ = [
     "UNIT_ALIASES",
     "ValueGrammarError",
     "format_decimal",
+    "harvest_numeric_facts",
+    "identity_key",
     "load_schema",
     "load_spec",
     "match_key",
     "normalize_number",
     "normalize_unit",
+    "parity_key",
     "parse_value",
     "render_value",
     "run_freeze_checks",

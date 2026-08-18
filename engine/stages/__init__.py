@@ -3,6 +3,11 @@
 
 여기 있는 함수는 전부 **결정론**이며 판단하지 않는다. 판단은 레인(LLM)과 Owner 의 몫이고,
 러너는 계약이 정한 자리에 계약이 정한 형태로 산출물을 놓고 검사 결과를 그대로 보고한다.
+
+★ 진입 지문 검사(재정 P-C). 일반 원리 = **"모든 스테이지는 진입 시 선언된 입력의 지문을
+검증한다"**. 그 검사 목록의 소유자는 코드가 아니라 계약(`checks_on_entry`)이며, 여기 있는
+것은 계약이 부른 검사 id 의 **구현**뿐이다 — 목록을 코드가 들면 계약이 검사를 늘려도 러너가
+따라오지 않고, 반대로 코드가 검사를 늘리면 계약이 모르는 검사가 생긴다. 양방향 다 결함이다.
 """
 
 from __future__ import annotations
@@ -21,6 +26,15 @@ DIGEST_PREFIX = "sha256:"
 
 class StageError(Exception):
     """러너 자신의 계약 위반(입력 부재·산출 자리 충돌·보고 서식 위반)."""
+
+
+class StageEnvironmentError(StageError):
+    """선언된 입력의 지문이 어긋났다 — **환경 오류**이며 품질 결함이 아니다(재정 P-C).
+
+    그러므로 이 예외는 **재시도·수정 루프의 대상이 아니다.** 러너는 즉시 멈추고 진단
+    (파일·기대·실측)을 문자열로 싣는다. 원천 자체가 바뀐 경우의 처분은 부분 복구가 아니라
+    새 런이다(재정 P-U2).
+    """
 
 
 def sha256_bytes(payload: bytes) -> str:
@@ -112,9 +126,266 @@ def failure_entry(contract: dict, needle: str) -> dict:
     raise StageError(f"계약의 failure 목록에 '{needle}' 조건이 없다")
 
 
+# ---------------------------------------------------------------------------
+# 진입 지문 검사 (재정 P-C)
+# ---------------------------------------------------------------------------
+
+
+def figures_manifest_digest(entries) -> str:
+    """도면 세트 **매니페스트 지문**(재정 P-U2).
+
+    `sha256("\\n".join(f"{filename}\\t{digest}"))` 이며 파일명으로 정렬한다. 원천은
+    `patent.md` 하나가 아니라 **도면 세트 전체**이고, 세트의 변경(파일 추가·삭제·교체)은
+    파일 하나의 지문으로는 드러나지 않는다 — 그 공백을 메우는 값이다.
+
+    `entries` = `(filename, digest)` 쌍의 나열. `digest` 는 이 모듈의 `sha256_bytes` 산출
+    형태(`sha256:<hex>`)를 **그대로** 쓴다. 산출자(`source`)와 대조자(`read`)가 같은 함수를
+    부르므로 표기가 갈릴 자리가 없다.
+    """
+    body = "\n".join(f"{name}\t{digest}" for name, digest in sorted(entries))
+    return sha256_bytes(body.encode("utf-8"))
+
+
+def _figure_digests(figures_dir: str) -> list[tuple[str, str]]:
+    """도면 원본 디렉터리의 `(파일명, 지문)` 목록(파일명 정렬)."""
+    if not os.path.isdir(figures_dir):
+        return []
+    out: list[tuple[str, str]] = []
+    for name in sorted(os.listdir(figures_dir)):
+        path = os.path.join(figures_dir, name)
+        if os.path.isfile(path):
+            out.append((name, sha256_file(path)))
+    return out
+
+
+def _require_file(row: CheckRow, check_id: str, path: str, label: str) -> bool:
+    """선언된 입력의 실재 확인. 부재도 환경 오류다(대조할 대상이 없다)."""
+    if os.path.isfile(path):
+        return True
+    row.add(
+        check_id,
+        label,
+        "(파일 없음)",
+        path,
+        "선언된 입력이 실재하지 않는다 — 지문을 대조할 대상 자체가 없다",
+    )
+    return False
+
+
+def _compare(row: CheckRow, check_id: str, locus: str, found: str, expected: str, message: str) -> None:
+    if found != expected:
+        row.add(check_id, locus, found or "(없음)", expected or "(없음)", message)
+
+
+def _entry_read_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) -> None:
+    """`read.input-digest` — 원천 텍스트 4자리 + 도면 세트 매니페스트 지문의 대조."""
+    check_id = str(entry.get("id"))
+    if not _require_file(row, check_id, paths.patent_md, "00-source/patent.md"):
+        return
+    with open(paths.patent_md, "rb") as handle:
+        actual = sha256_bytes(handle.read())
+    row.checked += 1
+
+    if _require_file(row, check_id, paths.patent_sha256, "00-source/patent.sha256"):
+        row.checked += 1
+        # 실측(현재 원천) ↔ 기대(그 자리가 신고한 값). 좌표가 "어디가 신고했는가"를 말한다.
+        _compare(
+            row, check_id, "00-source/patent.sha256",
+            actual, read_text(paths.patent_sha256).strip(),
+            "핀된 다이제스트가 원천의 실측과 다르다 — 원천이 도중에 바뀐 런이다(재정 P-U2)",
+        )
+    if _require_file(row, check_id, paths.run_yaml, "run.yaml"):
+        row.checked += 1
+        declared = str((load_yaml(paths.run_yaml).get("patent") or {}).get("source_sha256", ""))
+        _compare(
+            row, check_id, "run.yaml#patent.source_sha256", actual, declared,
+            "런 메타가 신고한 원천 다이제스트가 실측과 다르다",
+        )
+    if _require_file(row, check_id, paths.source_report, "00-source/source-report.json"):
+        report = load_json(paths.source_report)
+        row.checked += 1
+        _compare(
+            row, check_id, "00-source/source-report.json#source.canonical_sha256",
+            actual, str((report.get("source") or {}).get("canonical_sha256", "")),
+            "source 스테이지가 기록한 정본 다이제스트가 실측과 다르다",
+        )
+        # 도면 세트는 파일 하나가 아니라 **세트**가 원천이다(재정 P-U2).
+        row.checked += 1
+        actual_manifest = figures_manifest_digest(_figure_digests(paths.figures_raw))
+        _compare(
+            row, check_id, "00-source/figures-raw/ (매니페스트 지문)",
+            actual_manifest, str(report.get("figures_manifest_digest", "")),
+            "도면 세트가 source 보고와 다르다 — 파일 추가·삭제·교체는 매니페스트 지문에만 드러난다",
+        )
+        row.checked += 1
+        recorded_manifest = figures_manifest_digest(
+            (str(figure.get("filename", "")), str(figure.get("sha256", "")))
+            for figure in report.get("figures") or []
+        )
+        _compare(
+            row, check_id, "00-source/source-report.json#figures[].sha256",
+            recorded_manifest, str(report.get("figures_manifest_digest", "")),
+            "보고서 안에서 도면 행과 매니페스트 지문이 어긋난다",
+        )
+
+
+def _entry_source_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) -> None:
+    """`source.input-digest` — 외부 투입물의 실재·지문 기록 + 원천 변경 감지(재정 P-U2).
+
+    `source` 는 파이프라인의 첫 스테이지라 대조할 상류 지문이 없다. 대신 ⓐ 투입물이 실재하는지
+    보고 ⓑ 런 작업장에 이미 `00-source/` 가 있으면 그 지문과 대조한다. 투입물 경로는 계약이
+    아니라 호출자가 안다 — 그래서 `inputs` 로 받는다.
+    """
+    check_id = str(entry.get("id"))
+    patent_path = str(inputs.get("source_patent_path", ""))
+    figures_dir = str(inputs.get("figures_dir", ""))
+    if not _require_file(row, check_id, patent_path, "Owner 투입물(원문 파일)"):
+        return
+    row.checked += 1
+    with open(patent_path, "rb") as handle:
+        original_digest = sha256_bytes(handle.read())
+    row.extras["input_digest"] = {
+        "source_patent_path": os.path.abspath(patent_path),
+        "original_sha256": original_digest,
+        "figures": [
+            {"filename": name, "sha256": digest}
+            for name, digest in _figure_digests(figures_dir)
+        ],
+    }
+    row.checked += 1
+
+    # 기존 00-source/ 가 없으면 대조할 것이 없다(첫 봉인).
+    if not os.path.isfile(paths.patent_md):
+        return
+    canonical = str(inputs.get("canonical_digest", ""))
+    row.checked += 1
+    with open(paths.patent_md, "rb") as handle:
+        pinned = sha256_bytes(handle.read())
+    if canonical and canonical != pinned:
+        row.add(
+            check_id,
+            "00-source/patent.md",
+            canonical,
+            pinned,
+            "새 투입물의 정본 지문이 기존 봉인과 다르다 — 덮어쓰지 않는다. 처분은 새 런이다(재정 P-U2)",
+        )
+    row.checked += 1
+    new_manifest = figures_manifest_digest(_figure_digests(figures_dir))
+    pinned_manifest = figures_manifest_digest(_figure_digests(paths.figures_raw))
+    if new_manifest != pinned_manifest:
+        row.add(
+            check_id,
+            "00-source/figures-raw/ (매니페스트 지문)",
+            new_manifest,
+            pinned_manifest,
+            "도면 세트가 기존 봉인과 다르다 — 부분 재사용은 바이트 오프셋 특성상 정확성 위반이다(재정 P-U2)",
+        )
+
+
+def _entry_freeze_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) -> None:
+    """`freeze.input-digest` — 재료 명세·판독본의 실재와 승인 시점 대상의 불변."""
+    check_id = str(entry.get("id"))
+    if not _require_file(row, check_id, paths.material_spec_json, "10-read/material-spec.json"):
+        return
+    row.checked += 1
+    spec_digest = sha256_file(paths.material_spec_json)
+    _require_file(row, check_id, paths.material_spec_md, "10-read/material-spec.md")
+    row.checked += 1
+
+    if _require_file(row, check_id, paths.patent_sha256, "00-source/patent.sha256"):
+        row.checked += 1
+        spec = load_json(paths.material_spec_json)
+        _compare(
+            row, check_id, "10-read/material-spec.json#patent.source_digest",
+            read_text(paths.patent_sha256).strip(),
+            str((spec.get("patent") or {}).get("source_digest", "")),
+            "동결하려는 재료가 이 런의 원천 위에서 만들어지지 않았다",
+        )
+
+    # 봉투는 **있을 때만** 본다. 부재의 처분은 출구 검사(freeze.approval-valid)의 몫이고,
+    # 봉투가 재료 아닌 것을 가리키는 경우(신원 위조)도 마찬가지다 — 그것은 환경이 아니라
+    # 봉투의 정체 문제이며 층이 다르다(freeze.yaml checks_on_entry 주석).
+    approval_path = inputs.get("approval_path")
+    if not approval_path or not os.path.isfile(str(approval_path)):
+        return
+    envelope = _envelope_frontmatter(str(approval_path))
+    target = envelope.get("target") or {}
+    expected_target = os.path.relpath(paths.material_spec_json, paths.run_root).replace(
+        os.sep, "/"
+    )
+    if str(target.get("path", "")) != expected_target:
+        return
+    row.checked += 1
+    _compare(
+        row, check_id, f"{os.path.basename(str(approval_path))}#target.digest",
+        str(target.get("digest", "")), spec_digest,
+        "승인 시점 대상과 현재 재료가 다르다 — 봉투는 자동 실효한다(재정 R8)",
+    )
+
+
+def _envelope_frontmatter(path: str) -> dict:
+    """봉투 md 의 YAML 프런트매터만 얕게 판다(진입 검사용 최소 해석).
+
+    본 해석기는 `engine/stages/freeze.py#parse_envelope` 이며 여기서는 서식 위반을 판정하지
+    않는다 — 진입 검사가 봉투의 형식을 판정하면 출구 검사의 관할을 침범한다.
+    """
+    text = read_text(path)
+    if not text.startswith("---\n"):
+        return {}
+    end = text.find("\n---", 4)
+    if end < 0:
+        return {}
+    data = yaml.safe_load(text[4:end])
+    return data if isinstance(data, dict) else {}
+
+
+_ENTRY_CHECKS = {
+    "read.input-digest": _entry_read_input_digest,
+    "source.input-digest": _entry_source_input_digest,
+    "freeze.input-digest": _entry_freeze_input_digest,
+}
+
+
+def verify_declared_inputs(paths, contract: dict, stage_id: str, *, inputs: dict | None = None) -> CheckRow:
+    """계약의 `checks_on_entry` 를 읽어 실행한다(재정 P-C).
+
+    반환 = 판정 행 1건(계약이 검사 여럿을 선언하면 한 행에 합산한다 — 진입 검사는 "환경이
+    서 있는가" 하나의 물음이다). 불일치가 있으면 행을 돌려주지 않고 `StageEnvironmentError`
+    를 던지며, 진단 문자열에 **파일·기대·실측**을 싣는다. 재시도 대상이 아니기 때문이다.
+
+    `inputs` = 계약이 알 수 없는 스테이지별 부수 입력(외부 투입물 경로·봉투 경로 등).
+    """
+    declared = contract.get("checks_on_entry") or []
+    row = CheckRow(check_id=f"{stage_id}.input-digest", checked=0)
+    if declared:
+        # 계약이 진입 검사를 선언했으면 행 id 는 그 선언을 따른다(코드가 이름을 정하지 않는다).
+        row.check_id = str(declared[0].get("id") or row.check_id)
+    for entry in declared:
+        check_id = str(entry.get("id", ""))
+        handler = _ENTRY_CHECKS.get(check_id)
+        if handler is None:
+            raise StageError(
+                f"{stage_id} 계약이 선언한 진입 검사 {check_id!r} 의 구현이 러너에 없다 — "
+                "계약이 모르는 검사도, 구현이 없는 선언도 결함이다"
+            )
+        handler(row, paths, entry, inputs or {})
+    if row.findings:
+        diagnosis = "; ".join(
+            f"{finding.locus}: 실측 {finding.found} ≠ 기대 {finding.expected} ({finding.message})"
+            for finding in row.findings
+        )
+        raise StageEnvironmentError(
+            f"[환경 오류] {stage_id} 진입 지문 불일치 {len(row.findings)}건 — {diagnosis}"
+        )
+    return row
+
+
 __all__ = [
     "DIGEST_PREFIX",
+    "StageEnvironmentError",
     "StageError",
+    "figures_manifest_digest",
+    "verify_declared_inputs",
     "dump_yaml",
     "failed_rows",
     "failure_entry",

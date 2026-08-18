@@ -5,7 +5,9 @@
 
 ★ `freeze.approval-valid` 은 스키마 밖 3항을 **추가로** 본다(M0.6 재감수 M-01 잔여의 처분).
 
-① `drop_signal.verdict == "drop-proposed"` 면 `drop_decision` 필수
+① `extensions.docent.drop_signal.verdict == "drop-proposed"` 면 `drop_decision` 필수
+   (경로 정정 — 층 분리로 drop 은 docent 확장 블록에 산다: 재정 P-2 ⓑ. 확정 재정의 자리는
+   CP1 한 곳이다: 재정 P-A)
 ② `derived_fact_ack[]` 집합 == `origin: "derived"` 항목 집합 (부분집합이 아니라 **정확히 일치**)
 ③ `manual_verification_ack[]` 집합 == `origin: "figure-sourced"` 항목 집합
 
@@ -50,6 +52,7 @@ from . import (
     load_yaml,
     read_text,
     sha256_file,
+    verify_declared_inputs,
     worst_status,
 )
 from ..paths import RunPaths
@@ -134,18 +137,98 @@ def _compare_ack(
         )
 
 
-def _render_parity(row: CheckRow, spec: dict, rendered: str) -> None:
-    """`material-spec.md` 에 모든 `items[].id` 가 1회 이상 등장하는가."""
+# 판독본이 **값 그대로** 실어야 하는 필드(재정 P-U5 · freeze.yaml#freeze.render-parity).
+# 항목 kind 별 단일 문자열 필드와 배열 필드를 따로 적는다.
+PARITY_TEXT_FIELDS = (
+    "label_en",
+    "statement_en",
+    "what_it_shows_en",
+    "background_problem",
+    "asserted_effect",
+    "delta",
+    "text_verbatim",
+    "caption_quote",
+)
+# ★ `search_note` 는 대상이 아니다 — KR 규정 필드이며 계약이 든 대조 목록에 없다
+#   (`freeze.yaml#freeze.render-parity`). 판독본은 그것을 렌더하지만 검사 관할은 EN 값이다.
+PARITY_LIST_FIELDS = ("evidence_quotes", "quotes")
+
+
+def _parity_values(spec: dict) -> list[tuple[str, str, str]]:
+    """판독본에 바이트 그대로 있어야 하는 `(좌표, 필드, 값)` 전량.
+
+    ★ 대상은 **ID 가 아니라 값**이다(재정 P-U5). 구 구현은 `items[].id` 가 문서에 1회
+    등장하는지만 봤고, 그래서 판독본이 값을 잃어도(요약·의역·절단) 통과했다. 판독본은
+    KR 틀 + EN 값이므로 검사 대상은 그 값이며, 파생 번역이 값을 대체하면 이 대조가 잡는다.
+    """
+    out: list[tuple[str, str, str]] = []
+
+    def note(locus: str, field: str, value) -> None:
+        if isinstance(value, str) and value:
+            out.append((locus, field, value))
+
     for item in spec.get("items") or []:
         item_id = str(item.get("id"))
-        pattern = re.compile(rf"(?<![A-Za-z0-9]){re.escape(item_id)}(?![0-9])")
-        if not pattern.search(rendered):
+        for field in PARITY_TEXT_FIELDS:
+            note(f"items#{item_id}", field, item.get(field))
+        for field in PARITY_LIST_FIELDS:
+            for position, value in enumerate(item.get(field) or []):
+                note(f"items#{item_id}", f"{field}[{position}]", value)
+        for position, ref in enumerate(item.get("spec_refs") or []):
+            note(f"items#{item_id}", f"spec_refs[{position}].quote", (ref or {}).get("quote"))
+        for position, ref in enumerate(item.get("figure_refs") or []):
+            note(
+                f"items#{item_id}",
+                f"figure_refs[{position}].caption_quote",
+                (ref or {}).get("caption_quote"),
+            )
+        source = item.get("source") or {}
+        note(f"items#{item_id}", "source.quote", source.get("quote"))
+
+    claims = spec.get("claims") or {}
+
+    def walk(elements, claim_id: str) -> None:
+        for element in elements or []:
+            note(f"claims#{claim_id}/{element.get('id')}", "text_verbatim", element.get("text_verbatim"))
+            walk(element.get("children") or [], claim_id)
+
+    for claim in claims.get("independent") or []:
+        claim_id = str(claim.get("id"))
+        note(f"claims#{claim_id}", "text_verbatim", claim.get("text_verbatim"))
+        walk(claim.get("elements") or [], claim_id)
+    for claim in claims.get("dependents") or []:
+        claim_id = str(claim.get("id"))
+        note(f"claims#{claim_id}", "text_verbatim", claim.get("text_verbatim"))
+        for addition in claim.get("additions") or []:
+            note(
+                f"claims#{claim_id}/{addition.get('id')}",
+                "text_verbatim",
+                addition.get("text_verbatim"),
+            )
+    for position, interest in enumerate(claims.get("applicant_interest") or []):
+        note(f"claims#applicant_interest[{position}]", "signal", interest.get("signal"))
+
+    for figure in spec.get("figures") or []:
+        note(f"figures#{figure.get('id')}", "caption_quote", figure.get("caption_quote"))
+    return out
+
+
+def _render_parity(row: CheckRow, spec: dict, rendered: str) -> None:
+    """판독본에 각 항목의 **EN 값이 바이트 그대로 존재**하는가(재정 P-U5).
+
+    ★ 폐기: 구 판정 "모든 `items[].id` 가 1회 이상 등장". ID 존재만 보면 판독본이 값을
+    잃어도 통과하며, 그것이 CP1 표면의 완결성을 보증한다는 말은 실제보다 넓은 주장이었다.
+    """
+    values = _parity_values(spec)
+    row.checked = len(values)
+    for locus, field, value in values:
+        if value not in rendered:
             row.add(
                 "freeze.render-parity",
-                f"10-read/material-spec.md#{item_id}",
-                "(등장 없음)",
-                f"{item_id} 1회 이상",
-                "KR 판독본이 항목을 빠뜨렸다 — CP1 검토 표면이 불완전하다",
+                f"10-read/material-spec.md ← {locus}.{field}",
+                "(값 부재)",
+                value,
+                "CP1 판독본에 이 값이 바이트 그대로 없다 — 요약·의역이 값을 대체했거나 절이 빠졌다",
             )
 
 
@@ -163,6 +246,17 @@ def run(
     paths = RunPaths(run_root, repo)
     contract = paths.contracts[STAGE_ID]
     paths.ensure_frozen_dir()
+
+    # ★ 진입 지문 검사(재정 P-C). 출구의 freeze.approval-valid 와 겹쳐 보이지만 층이 다르다 —
+    #   진입은 **환경 전제**(선언 입력이 실재하고 승인 시점 이후 조용히 바뀌지 않았는가)를
+    #   보고, 출구는 봉투의 **신원과 항목 대조**(어느 관문의·어느 런의·무엇에 대한 승인인가)를
+    #   본다. 봉투 부재·신원 위조는 여기서 판정하지 않는다(그 처분은 출구 검사의 몫이다).
+    verify_declared_inputs(
+        paths,
+        contract,
+        STAGE_ID,
+        inputs={"approval_path": paths.approval(spec_version)},
+    )
 
     frozen_path = paths.frozen_spec(spec_version)
     rows: list[CheckRow] = []
@@ -291,7 +385,10 @@ def run(
             )
 
     # ④ 스키마 밖 3항
-    drop_signal = spec.get("drop_signal") or {}
+    # ★ 경로 정정(재정 P-2 ⓑ): drop 은 공유 코어가 아니라 docent 확장 블록에 산다.
+    #   구 경로(최상위 `drop_signal`)를 보던 판은 층 분리 이후 **언제나 빈 값**을 읽어
+    #   drop 제안이 처분 없이 승인되는 통로가 된다.
+    drop_signal = ((spec.get("extensions") or {}).get("docent") or {}).get("drop_signal") or {}
     if drop_signal.get("verdict") == "drop-proposed" and not envelope.get("drop_decision"):
         approval_row.add(
             "approval.drop-decision",

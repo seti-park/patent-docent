@@ -7,6 +7,19 @@
 
 파싱 불능은 **실패**다(`parse.no-silent-pass`). 읽지 못한 어형을 통과시키면 다중 종속의
 논리 형태가 조용히 사라지고, 그것이 구 스칼라 표기가 만들던 손실 그 자체다(재정 R1).
+
+★ 예외는 하나 — `dependency_type: "unclassified"`(구조 미분류, 재정 P-1). Markush·조건부·
+수단항·카테고리 전환은 typed operator 신설이 N14 범위에서 **제외**되면서 "틀린 형태"가
+아니라 **읽을 규칙이 없는 구조**가 되었다. 그런 종속항을 판정 대상에 남기면 규칙의 공백이
+실제 결함과 같은 모양으로 계상된다. 그래서 셋을 한다: 판정에서 빼고, `checked` 에서 빼고,
+**목록에는 전건 남긴다**(`extras["unclassified"]`). 셋 중 마지막이 침묵을 막는 자리다.
+
+미분류가 면제를 주므로 그 면제는 무조건일 수 없다 — 본문에 **구조 표지 어형이 하나도 없는데**
+미분류를 선언하면 `parse.unclassified-not-an-escape` 가 실패시킨다(회피 통로 봉쇄).
+어형 목록은 `reader-rules.yaml#dependency_citation.unclassified.structure_markers` 가 든다.
+
+★ 그 판정은 **구조를 파싱하지 않고 있는지만 본다.** 재정 P-1 이 typed operator 신설을 N14
+범위에서 제외했으므로, 표지 어형에 그룹 포획과 전개를 붙이는 순간 그 제외가 무효가 된다.
 """
 
 from __future__ import annotations
@@ -90,7 +103,6 @@ def _expand(form: dict, match: "re.Match[str]") -> set[int]:
 def check(ctx: CheckContext) -> CheckRow:
     """종속항 전량에 대해 파싱 집합·논리 형태를 대조한다."""
     rules: Rules = ctx.rules
-    block = rules.dependency_citation
     row = CheckRow(
         check_id=CHECK_ID,
         ruleset="reader-rules#dependency_citation",
@@ -99,7 +111,13 @@ def check(ctx: CheckContext) -> CheckRow:
     )
     index = SpecIndex.build(ctx.spec)
     dependents = index.dependents
-    row.checked = len(dependents)
+    unclassified_value = rules.unclassified_value()
+
+    # 미분류 표지는 판정 대상에서 빠지되 목록에서는 빠지지 않는다(재정 P-1).
+    # `checked` 는 아래에서 판정 대상만 센다 — 전 종속항이 미분류면 checked == 0 이 되고
+    # 판정 행이 `vacuous: "empty-target"` 으로 자동 날인된다(그것이 정상 동작이다).
+    unclassified: list[str] = []
+    row.checked = 0
 
     for dependent in dependents:
         claim_id = dependent.get("id", "?")
@@ -107,6 +125,29 @@ def check(ctx: CheckContext) -> CheckRow:
         declared = [str(value) for value in (dependent.get("depends_on") or [])]
         declared_type = dependent.get("dependency_type")
         parsed = parse_citations(text, rules)
+
+        if declared_type == unclassified_value:
+            unclassified.append(claim_id)
+            # 회피 통로 봉쇄 — 판정 기준은 **본문의 구조 표지 유무**다.
+            #
+            # ★ 구 기준(인용 어형의 파싱 가능성)은 폐기되었다(2026-08-18 총괄 정정).
+            #   재정 P-1 은 "이 4구조를 **만나면** 표지"라고 적었으므로 표지의 대상은
+            #   청구항 **본문의 구조**인데, 구 가드는 인용 어형을 봤다. 두 기준이 다르므로
+            #   `of claim 1` 로 정상 인용하는 Markush 종속항이 **재정을 따르면 반드시
+            #   실패**했다 — 재정이 명한 사용을 벌하는 규칙이었다.
+            markers = rules.structure_markers_in(text)
+            if not markers:
+                row.add(
+                    "parse.unclassified-not-an-escape",
+                    f"{claim_id}.dependency_type",
+                    unclassified_value,
+                    "본문에 구조 표지 어형(Markush·조건부·수단항·카테고리 전환) 1건 이상",
+                    "구조 표지가 없는 종속항에 미분류를 선언했다 — 표지는 규칙이 못 읽는 "
+                    f"구조를 위한 것이지 읽기 귀찮은 구조를 위한 것이 아니다: {text}",
+                )
+            continue
+
+        row.checked += 1
 
         if not parsed.parsed:
             row.add(
@@ -137,4 +178,7 @@ def check(ctx: CheckContext) -> CheckRow:
                 f"어형이 함의하는 논리 형태와 선언값이 다르다: {text}",
             )
 
+    # 미분류 목록 — CP1 표면과 `convergence.json#unclassified_dependents` 가 이것을 렌더한다.
+    # 판정에서 뺀 것을 보고에서까지 빼면 그것이 침묵이다(재정 P-1).
+    row.extras["unclassified"] = unclassified
     return row

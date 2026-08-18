@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
-"""CP1 주 표면 — `material-spec.json` → `material-spec.md`(KR 골격 · EN 값).
+"""**CP1 판독본 (KR 틀 · EN 값)** — `material-spec.json` → `material-spec.md`.
 
 이 문서가 M1 의 **사용자 대면 산출물**이다. 헌장은 "체크포인트 1 의 재료 검토가 Owner
 이해층을 겸한다 — 별도 브리핑은 두지 않는다"고 재정했으므로(D6), 이 파일 하나가 하류
 기계의 정답지이자 Owner 의 이해 문서다. 따라서 품질 기준은 문체가 아니라 **완결성**이다:
 빠진 항목은 곧 Owner 가 볼 수 없는 항목이다.
 
-언어 정책(재정 R2) — 문서 골격·절 제목·검토 안내·drop 사유는 KR, **재료 항목의 값은 EN
-원문 그대로**. 값을 번역하는 순간 하류 대조가 원문과 어긋난다.
+★ 명명(재정 P-U5): 구 명명 "KR 인간 판독본"은 폐기되었다. 판독본은 **KR 틀 + EN 값**이며,
+번역본이 아니다 — 장 제목·안내·라벨만 KR 이고 인용·해설·함의의 값은 EN 원문 그대로다.
+**파생 번역(EN 값의 KR 요약·의역)을 만드는 코드 경로를 두지 않는다.** 요약이 값을 대체하면
+`freeze.render-parity` 가 그 사실을 잡는다(그 검사는 ID 존재가 아니라 **값의 바이트 존재**를
+본다 — 재정 P-U5). KR 지원이 필요하면 검토 중 대화로 한다.
 
-강조 노출 3종(재정 R1·R3·N9) — 수치 3분류 · `manual_verification_required[]` ·
-`grounding_exceptions[]`. 전부 "기계가 무엇을 보증했고 무엇을 보증하지 못했는가"의 목록이며,
-감춰진 예외는 예외가 아니라 은폐다.
+강조 노출 7종 — 수치 3분류(재정 N9) · `manual_verification_required[]`(재정 R1) ·
+`grounding_exceptions[]`(재정 R3) · **미분류 종속 구조**(재정 P-1) · **맹검 스크리닝 메모
+2건 병기**(재정 P-A·P-U4) · **수치 인벤토리**(재정 P-B) · **수렴 프로파일**(재정 P-3).
+전부 "기계가 무엇을 보증했고 무엇을 보증하지 못했는가"의 목록이며, 감춰진 예외는 예외가
+아니라 은폐다.
 """
 
 from __future__ import annotations
@@ -93,7 +98,10 @@ def render(
         lines.append(text)
 
     # -- 0. 표제와 체크포인트 안내 -----------------------------------------
-    out(f"# 재료 명세 검토본 — `{spec.get('run_id', '')}` (판 {spec.get('spec_version', '')})")
+    out(
+        f"# CP1 판독본 (KR 틀 · EN 값) — `{spec.get('run_id', '')}` "
+        f"(판 {spec.get('spec_version', '')})"
+    )
     out()
     out(
         f"상태 `{spec.get('status', '')}` · 스키마 `{spec.get('schema', '')}` · "
@@ -126,22 +134,65 @@ def render(
     out()
 
     # -- 1. 특허 -----------------------------------------------------------
+    # ★ 서지 확장 6필드를 렌더한다(재정 P-2 ⓐ · 총괄 처분 2026-08-18).
+    #   근거 둘. ⓐ 판독본의 품질 기준은 완결성이다(SPEC §1.5 — "Owner 가 원천 특허를 다시
+    #   열지 않고 판정할 수 있는가"). ⓑ 재정 P-2 ⓐ 가 이 필드를 넣은 근거가 **C18 최우선일의
+    #   정확성 요건**인데, 최우선일이 옳은지는 우선권 목록을 나란히 보아야 판정된다 — 기계가
+    #   산식으로 한 번(`read.bibliography#bib.earliest-priority`), 사람이 표면에서 한 번 보는
+    #   이중 구조이며 표면이 없으면 뒤의 한 번이 사라진다.
+    #   목록형 필드(inventors·applicants·priority_claims)를 단수로 접지 않는다 — 접는 순간
+    #   P-2 ⓐ 가 폐기한 "assignee 단수 하나로 뭉갠" 구조로 되돌아간다.
+    #   값 언어 규율 그대로: 틀은 KR, 값은 EN 원문이며 번역·요약하지 않는다(재정 P-U5).
     patent = spec.get("patent") or {}
     dates = patent.get("dates") or {}
+    priority_claims = patent.get("priority_claims") or []
+    classifications = patent.get("classifications") or {}
     out("## 1. 특허")
     out()
     out("| 항목 | 값 |")
     out("|---|---|")
     out(f"| 번호 | {patent.get('number', '')} |")
     out(f"| 제목 | {patent.get('title', '')} |")
-    out(f"| 출원인 | {patent.get('assignee', '')} |")
+    out(
+        f"| 관할 · 공보 종별 | `{patent.get('jurisdiction', '')}` · "
+        f"`{patent.get('kind_code', '')}` |"
+    )
+    out(f"| 출원인 (런 ID 유래 단수) | {patent.get('assignee', '')} |")
+    out(f"| 출원인 목록 | {' · '.join(patent.get('applicants') or []) or '_없음_'} |")
+    out(f"| 발명자 목록 | {' · '.join(patent.get('inventors') or []) or '_없음_'} |")
     out(
         f"| 날짜 | 우선 {dates.get('priority', '')} · 출원 {dates.get('filing', '')} · "
         f"공개 {dates.get('publication', '')} |"
     )
+    if not priority_claims:
+        # 누락과 '없음'을 구별한다 — 행을 지우면 "우선권을 보지 않았다"와 구별되지 않는다.
+        out("| 우선권 주장 | _없음_ |")
+    for position, claim in enumerate(priority_claims, start=1):
+        out(
+            f"| 우선권 주장 {position} | {claim.get('number', '')} · "
+            f"{claim.get('date', '')} · `{claim.get('jurisdiction', '')}` |"
+        )
+    out(f"| 분류 IPC | {' · '.join(classifications.get('ipc') or []) or '_없음_'} |")
+    out(f"| 분류 CPC | {' · '.join(classifications.get('cpc') or []) or '_없음_'} |")
     out(f"| 원천 | `{patent.get('source_path', '')}` |")
     out(f"| 원천 다이제스트 | `{patent.get('source_digest', '')}` |")
     out()
+    # 최우선일 대조 — 기계가 무엇을 보증했는가를 사람이 눈으로 재확인하는 자리.
+    if priority_claims:
+        earliest = min(str(claim.get("date", "")) for claim in priority_claims)
+        agreement = "일치" if str(dates.get("priority", "")) == earliest else "**불일치**"
+        out(
+            f"**최우선일 대조** — `dates.priority` {dates.get('priority', '')} ↔ "
+            f"우선권 목록 최소 {earliest} → {agreement}"
+        )
+        out()
+        out("이 대조는 `read.bibliography#bib.earliest-priority` 가 산식으로 이미 판정했다.")
+        out("여기 다시 놓는 이유는 CP1 이 **기계가 무엇을 보증했는가**를 사람이 재확인하는")
+        out("자리이기 때문이다(C18 최우선일의 정확성 요건 — 재정 P-2 ⓐ).")
+        out()
+    else:
+        out("**최우선일 대조** — 우선권 주장이 없어 대조할 목록이 없다(대조 불가이며 결함이 아니다).")
+        out()
 
     # -- 2. 청구항 골격 -----------------------------------------------------
     claims = spec.get("claims") or {}
@@ -351,17 +402,177 @@ def render(
     out()
 
     # -- 9. drop 신호 -------------------------------------------------------
-    drop = spec.get("drop_signal") or {}
-    out("## 9. drop 신호 (D4)")
+    # ★ 경로 정정(재정 P-2 ⓑ): drop 은 사실이 아니라 편집 판단이므로 공유 코어가 아니라
+    #   docent 확장 블록에 산다. 최상위 `drop_signal` 을 보던 구 경로는 폐기한다.
+    drop = ((spec.get("extensions") or {}).get("docent") or {}).get("drop_signal") or {}
+    out("## 9. drop 신호 (D4 — 최종)")
     out()
     out(f"- 단계: `{drop.get('stage', '')}` · 판정: `{drop.get('verdict', '')}`")
     out(f"- 사유: {drop.get('reason', '')}")
     if drop.get("verdict") == "drop-proposed":
         out("- ★ `drop-proposed` 이므로 봉투에 `drop_decision`(`go` | `drop`)이 **필수**다.")
+        out("- 확정 재정의 자리는 **여기 CP1 한 곳**이다(재정 P-A). 조기 판단은 아래 §11 의")
+        out("  맹검 메모로만 남아 있고, 그 자체로는 어떤 구속력도 갖지 않았다.")
     out()
 
-    # -- 10. 도면 ----------------------------------------------------------
-    out("## 10. 도면")
+    # -- 10. 미분류 종속 구조 (재정 P-1) ------------------------------------
+    unclassified = convergence.get("unclassified_dependents") or []
+    out("## 10. ★ 미분류 종속 구조 (재정 P-1)")
+    out()
+    out("Markush·조건부·수단항·카테고리 전환은 typed operator 입법을 범위에서 **제외**했고,")
+    out("대신 `unclassified` 표지 + 이 목록 + 판정 행 계수 셋으로 침묵을 막는다.")
+    out("**이 목록의 항목은 결함이 아니다** — 구조 미분류라는 사실의 표지이며, 종속 형태")
+    out("판정(`parse.set-equals`·`parse.type-agrees`)의 대상에서 빠졌다는 뜻이다. 전문은")
+    out("이미 보존되어 있으므로(재정 R1) 여기서 사람 눈이 마지막 심급이 된다.")
+    out()
+    if not unclassified:
+        out("_미분류 종속항 없음 — 전 종속항이 5종 어형으로 파싱되었다._")
+        out()
+    for entry in unclassified:
+        out(f"- **`{entry.get('claim', '')}`** (`{entry.get('dependency_type', '')}`)")
+        out(f"  - 전문: “{entry.get('text_verbatim', '')}”")
+    out()
+
+    # -- 11. 맹검 스크리닝 메모 (재정 P-A · P-U4) ---------------------------
+    memos = convergence.get("screening_memos") or []
+    out("## 11. ★ 맹검 스크리닝 메모 — 두 실행 병기 (재정 P-A · P-U4)")
+    out()
+    out("분해 직후 `read-a`·`read-b` 가 **각자** 적은 1차 판단이다. 상신이 아니었고 런을")
+    out("세우지 않았으며, 최종 서사 평가 레인에는 비공개였다(앵커링 방지). 둘 다 싣는 이유는")
+    out("**두 독립 관찰의 일치/불일치 자체가 신호**이기 때문이다 — 한 건으로 합치면 그 신호가")
+    out("소멸한다.")
+    out()
+    out("| 실행 | 방향 | 근거 요지 |")
+    out("|---|---|---|")
+    if not memos:
+        out("| _없음_ | _없음_ | 분해 레인이 메모를 내지 않았다 |")
+    for memo in memos:
+        out(
+            f"| `{memo.get('read_run', '')}` | `{memo.get('direction', '')}` | "
+            f"{memo.get('note', '')} |"
+        )
+    out()
+    directions = {memo.get("direction") for memo in memos}
+    if len(directions) > 1:
+        out("★ 두 관찰의 **방향이 갈렸다.** 갈림은 결함이 아니라 신호이며, drop 의 확정 재정은")
+        out("이 표와 위 §9 를 함께 놓고 이 자리에서 1회 내려진다.")
+    elif memos:
+        out(f"두 관찰의 방향이 `{sorted(directions)[0]}` 로 일치했다.")
+    out()
+
+    # -- 12. 수치 인벤토리 (재정 P-B) ---------------------------------------
+    inventory = convergence.get("numeric_inventory") or {}
+    referenced = inventory.get("referenced") or []
+    unreferenced = inventory.get("unreferenced") or []
+    total = inventory.get("total", len(referenced) + len(unreferenced))
+    skipped = inventory.get("skipped") or []
+    out("## 12. ★ 수치 인벤토리 — 전수 수확 (재정 P-B)")
+    out()
+    out("수치는 접지 스팬과 서지면에서 **전수 기계 수확**되었고, 중요분은 LLM 의 중요도")
+    out("판단이 아니라 함의·포지셔닝이 실제로 참조했는가(`numeric_refs`)로 **역참조 도출**된다.")
+    out()
+    out(
+        f"**전체 {total}건 — 참조 {len(referenced)}건 표시, "
+        f"미참조 {len(unreferenced)}건 접힘**"
+    )
+    out()
+    out("_카운트를 상시 표기하는 이유: 카운트가 없으면 미참조분 접힘이 은폐가 된다._")
+    out()
+    out("### 12.1 참조된 수치 (함의·포지셔닝의 근거)")
+    out()
+    if not referenced:
+        out("_참조된 수치 없음._")
+        out()
+    for item_id in referenced:
+        item = index.get(item_id) or {}
+        out(f"- {_fact_line(item)}")
+        source = item.get("source") or {}
+        if source:
+            out(f"  - 원천 `{source.get('locator', '')}`: “{source.get('quote', '')}”")
+        out(f"  - 이 수치를 참조한 항목: {', '.join(_referrers(spec, item_id)) or '(없음)'}")
+    out()
+    out(f"### 12.2 미참조 수치 {len(unreferenced)}건 (접힘 — 숨김이 아니다)")
+    out()
+    out("<details>")
+    out(f"<summary>미참조 {len(unreferenced)}건 펼치기</summary>")
+    out()
+    if not unreferenced:
+        out("_미참조 수치 없음 — 수확분 전량이 함의·포지셔닝의 근거로 쓰였다._")
+        out()
+    for item_id in unreferenced:
+        item = index.get(item_id) or {}
+        out(f"- {_fact_line(item)}")
+        source = item.get("source") or {}
+        if source:
+            out(f"  - 원천 `{source.get('locator', '')}`: “{source.get('quote', '')}”")
+    out()
+    out("</details>")
+    out()
+    out("★ 미참조 수치를 본문이 처음 인용하면 CP2 에 **\"미검토 수치 사용\" 플래그**가 자동")
+    out("첨부된다(재정 P-B). 무검토 게시 경로는 없다 — 모든 수치는 CP1 검토 또는 사용 시 검토다.")
+    out()
+    if skipped:
+        out(f"### 12.3 수확하지 못한 토큰 {len(skipped)}건")
+        out()
+        out("값 문법으로 파싱되지 않아 수확에서 빠진 토큰이다. 시끄럽게 실패하되 스테이지를")
+        out("죽이지 않는다 — 수확은 검사가 아니다.")
+        out()
+        out("| 위치 | 토큰 | 사유 |")
+        out("|---|---|---|")
+        for entry in skipped:
+            out(
+                f"| `{entry.get('locator', '')}` | `{entry.get('token', '')}` | "
+                f"{entry.get('reason', '')} |"
+            )
+        out()
+
+    # -- 13. 수렴 프로파일 (재정 P-3) ---------------------------------------
+    report = convergence.get("convergence_report") or {}
+    axes = report.get("axes") or []
+    escalations = report.get("escalations") or []
+    divergences = report.get("divergences") or []
+    out("## 13. 독해 프로파일 — 수렴 (재정 P-3)")
+    out()
+    out("**이 절은 결함 후보 목록이 아니다.** 두 독립 분해가 어떻게 갈렸는가의 기술이며,")
+    out("갈림 자체가 실패를 뜻하지 않는다. 축은 세 층으로 읽는다 — `exact-match`(구조 사실:")
+    out("법) · `escalation-trigger`(해석 여지: 미달 = 실패가 아니라 상신) · `measure-only`")
+    out("(판정 제외·측정 전용).")
+    out()
+    out("| 축 | 정책 | 값 | 임계 | 상태 |")
+    out("|---|---|---|---|---|")
+    if not axes:
+        out("| _없음_ | - | - | - | 수렴 검사가 돌지 않았다 |")
+    for axis in axes:
+        jaccard = axis.get("jaccard")
+        threshold = axis.get("threshold")
+        out(
+            f"| `{axis.get('id', '')}` | `{axis.get('policy', '')}` | "
+            f"{'-' if jaccard is None else f'{jaccard:.4f}'} | "
+            f"{'-' if threshold is None else threshold} | `{axis.get('status', '')}` |"
+        )
+    out()
+    if escalations:
+        out("### 13.1 상신 축 — Owner 판단 대상")
+        out()
+        for entry in escalations:
+            out(
+                f"- `{entry.get('axis', '')}` — 실측 {entry.get('jaccard')} "
+                f"< 임계 {entry.get('threshold')}"
+            )
+        out()
+    if divergences:
+        out("### 13.2 갈린 항목")
+        out()
+        for entry in divergences:
+            out(f"- `{entry.get('axis', '')}`")
+            for value in entry.get("only_in_canonical") or []:
+                out(f"  - 정본에만: {value}")
+            for value in entry.get("only_in_peer") or []:
+                out(f"  - 비교본에만: {value}")
+        out()
+
+    # -- 14. 도면 ----------------------------------------------------------
+    out("## 14. 도면")
     out()
     figures = spec.get("figures") or []
     if not figures:
@@ -379,8 +590,8 @@ def render(
         )
     out()
 
-    # -- 11. 항목 색인 ------------------------------------------------------
-    out("## 11. 항목 색인 (전량)")
+    # -- 15. 항목 색인 ------------------------------------------------------
+    out("## 15. 항목 색인 (전량)")
     out()
     out("| 항목 | 종류 | 상태 | 승계 |")
     out("|---|---|---|---|")
@@ -392,17 +603,37 @@ def render(
         )
     out()
 
-    # -- 12. 절차 이력 ------------------------------------------------------
+    # -- 16. 절차 이력 ------------------------------------------------------
     provenance = spec.get("provenance") or {}
-    out("## 12. 절차 이력")
+    out("## 16. 절차 이력")
     out()
     out("| 항목 | 값 |")
     out("|---|---|")
+    selection = convergence.get("canonical_selection") or {}
     out(f"| 독립 실행 | {', '.join(provenance.get('read_runs') or [])} |")
+    out(f"| 정본 실행 | `{selection.get('read_run', '')}` |")
+    out(f"| 정본 지정 규칙 | `{selection.get('rule', '')}` · 내용맹 `{selection.get('content_blind', '')}` |")
     out(f"| 산출 시각 | {provenance.get('produced_at', '')} |")
     out(f"| 엔진 커밋 | `{provenance.get('engine_commit', '')}` |")
     out()
-    out("정본 재료는 첫 실행(`read-a`)의 산출이며, 둘째 실행(`read-b`)은 **수렴 비교 전용**이다.")
-    out("두 실행은 서로의 산출을 보지 않는다 — 같은 세션의 재생성은 독립 실행이 아니다.")
+    out("분해는 **두 독립 실행**이 돌았고, 접지 이후는 **정본 1개**만 돌았다(재정 P-4).")
+    out("정본 지정은 선언 순서이며 **내용을 보지 않는다** — 수렴 통과는 두 독해가 동치라는")
+    out("선언이므로 정본 선택에 판정자가 없고, 남는 요구는 재현성뿐이기 때문이다. 두 실행은")
+    out("서로의 산출을 보지 않는다 — 같은 세션의 재생성은 독립 실행이 아니다.")
     out()
     return "\n".join(lines)
+
+
+def _referrers(spec: dict, fact_id: str) -> list[str]:
+    """이 수치를 `numeric_refs` 로 가리킨 함의·포지셔닝 항목의 ID(재정 P-B).
+
+    역참조를 **양방향으로** 보여주는 이유: "이 수치가 왜 중요분인가"의 답은 그것을 근거로
+    삼은 항목이며, 그 연결이 표면에 없으면 Owner 는 중요분 선정을 검증할 수 없다.
+    """
+    out: list[str] = []
+    for item in spec.get("items") or []:
+        if item.get("kind") not in ("implication", "positioning"):
+            continue
+        if fact_id in (item.get("numeric_refs") or []):
+            out.append(str(item.get("id")))
+    return out
