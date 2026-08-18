@@ -80,7 +80,8 @@
 | 게이트 판정 행 서식 | `contracts/schemas/verdict-check-row.schema.json` |
 | 두 장부 | `ledgers/anchors/`(앵커) · `ledgers/regression/`(회귀) |
 | 섀도 원장 | `ledgers/shadow/screening.jsonl` — 맹검 스크리닝 메모. **재료 명세 계약면 밖**이며 런 디렉터리가 아니라 리포 루트에 누적된다(재정 P-U4). 두 장부와 층이 다르다: 앵커·회귀는 생성계의 사료이고 이것은 **스크리닝 판단의 사료**다 |
-| 런 결박 도구 | `tools/run_worktree.py` — `create`(커밋 핀 + 격리 체크아웃) · `expiry`(만료 통지, 종료 코드 0/3/2). 재정 P-U1·P-8 |
+| **런 결박 판정** | `engine/gitpin.py` — 깨끗함·HEAD·worktree 여부 판정의 **단일 진원**. 러너(`engine/stages/source.py#_engine_pin`)와 도구가 **같은 함수**에서 값을 받는다(두 벌이 생기면 한 벌은 반드시 낡는다). 재정 P-U1·P-8 |
+| 런 결박 도구 | `tools/run_worktree.py` — `create`(격리 체크아웃) · `expiry`(만료 통지, 종료 코드 0/3/2). **판정의 정본이 아니라 소비자다** — `run.yaml` 핀은 러너가 쓴다 |
 | 계약 파일 현황(무엇이 실물인가) | `docs/SPEC.md` §6.7 — 검사기 `tools/check_spec_refs.py`가 대조 |
 
 ## 6. 구현 상태
