@@ -28,6 +28,18 @@ from ..paths import load_stage_contract, repo_root
 
 APPROVAL_SCHEMA = ("contracts", "schemas", "approval-envelope.schema.json")
 
+# ★ 수치 인벤토리 계수의 **범위 표지**(2026-08-18 통주 2 처분).
+# 구 표면은 "전체 34건 — 참조 3건 표시"라고만 적었고, 그 런의 실제 역참조 대상은 4였다
+# (하나가 `figure-sourced` 라 정답지 밖이었다). 두 수가 어긋난 것이 아니라 **어느 범위의
+# 계수인지가 적혀 있지 않았던 것**이며, 범위를 밝히지 않은 수치는 이 리포가 M-04 로 벌한
+# 바로 그 형태다.
+#
+# 정본은 `reader/reader-rules.yaml#numeric_harvest.answer_scope` 이고 이 문자열은 사본이
+# 아니라 **대조로 묶인 표면 문언**이다 — 렌더러는 이식 단위(`reader/`)를 import 하지 않는
+# 것이 이 모듈의 규율이라 값을 읽어 올 수 없고, 대신 tests 의 대조 시험이 두 문언의 동치를
+# 집행한다(정규화 표가 `contracts/l0-format.yaml` 과 묶인 방식과 같다).
+ANSWER_SCOPE_TEXT = "kind fact · origin ∈ {quoted, bibliographic} · status active"
+
 KIND_LABELS = {
     "component": "구성요소",
     "grounding": "3중 접지",
@@ -471,12 +483,27 @@ def render(
     out("수치는 접지 스팬과 서지면에서 **전수 기계 수확**되었고, 중요분은 LLM 의 중요도")
     out("판단이 아니라 함의·포지셔닝이 실제로 참조했는가(`numeric_refs`)로 **역참조 도출**된다.")
     out()
+    # ★ 계수의 범위를 밝힌다(2026-08-18 통주 2 처분). 구 문언은 "전체 34건 — 참조 3건"이라
+    #   적었는데 그 런의 실제 역참조 대상은 4였다(하나는 `figure-sourced` 라 정답지 밖이다).
+    #   범위를 밝히지 않은 수치가 이 리포가 M-04 로 벌한 형태이며, 같은 형태를 우리 표면이
+    #   짓고 있었다. 이제 무엇을 세는 계수인지가 헤드라인 안에 있다.
     out(
-        f"**전체 {total}건 — 참조 {len(referenced)}건 표시, "
+        f"**수확 정답지 {total}건({ANSWER_SCOPE_TEXT}) — 참조 {len(referenced)}건 표시, "
         f"미참조 {len(unreferenced)}건 접힘**"
     )
     out()
     out("_카운트를 상시 표기하는 이유: 카운트가 없으면 미참조분 접힘이 은폐가 된다._")
+    out()
+    # 역참조는 정답지 밖 항목(도면 유래·파생)도 가리킬 수 있다. 그 차이를 적지 않으면
+    # "역참조 N건"과 "참조 M건 표시"가 한 문서 안에서 어긋난 채로 남는다.
+    refs_all = _numeric_ref_targets(spec)
+    outside = [ref for ref in refs_all if ref not in set(referenced) | set(unreferenced)]
+    out(
+        f"역참조 총 {len(refs_all)}건 중 **{len(outside)}건이 이 정답지 밖**이다"
+        + (f" — {', '.join(outside)}" if outside else "")
+        + ". 정답지 밖 참조는 수확기 소유가 아닌 수치(`derived`·`figure-sourced`)이거나"
+    )
+    out("철회·대체된 항목이며, 위 계수에 들지 않는다.")
     out()
     out("### 12.1 참조된 수치 (함의·포지셔닝의 근거)")
     out()
@@ -511,20 +538,45 @@ def render(
     out("★ 미참조 수치를 본문이 처음 인용하면 CP2 에 **\"미검토 수치 사용\" 플래그**가 자동")
     out("첨부된다(재정 P-B). 무검토 게시 경로는 없다 — 모든 수치는 CP1 검토 또는 사용 시 검토다.")
     out()
-    if skipped:
-        out(f"### 12.3 수확하지 못한 토큰 {len(skipped)}건")
-        out()
-        out("값 문법으로 파싱되지 않아 수확에서 빠진 토큰이다. 시끄럽게 실패하되 스테이지를")
-        out("죽이지 않는다 — 수확은 검사가 아니다.")
-        out()
-        out("| 위치 | 토큰 | 사유 |")
-        out("|---|---|---|")
-        for entry in skipped:
-            out(
-                f"| `{entry.get('locator', '')}` | `{entry.get('token', '')}` | "
-                f"{entry.get('reason', '')} |"
-            )
-        out()
+    # ★ 12.3 은 **조건 없이** 렌더한다(2026-08-18 통주 2 처분). 구 코드는 `if skipped:` 였고,
+    #   그래서 "빠진 토큰 없음"과 "이 절을 만들지 않았음"이 표면에서 같은 모습이었다 —
+    #   누락과 없음의 구별은 이 리포의 상시 규율이다.
+    out(f"### 12.3 수확하지 못한 토큰 {len(skipped)}건 (숨기지 않고 센다)")
+    out()
+    out("수확 전 단계에서 갈린 자리를 **전부** 싣는다. 세 갈래에서 온다 — ① 좌표 표현 봉투")
+    out("배제(FP 3항 표기·비트 슬라이스·도면/표 번호·아래첨자 인덱스) ② 토큰 경계 기각")
+    out("(`cm3` 의 `3` 처럼 영숫자 토큰 내부) ③ 값 문법 파싱 실패. 시끄럽게 실패하되")
+    out("스테이지를 죽이지 않는다 — 수확은 검사가 아니다.")
+    out()
+    out("사유 라벨의 정본은 `reader/reader-rules.yaml#numeric_harvest` 의")
+    out("`exclusions[].reason_label` 과 `token_boundary.rejection_labels` 다.")
+    out()
+    out("★ **배제 구간 수와 사라진 수치 수는 다르다.** 봉투 하나가 여러 수확을 막을 수 있다")
+    out("(예: `Act 0 <6:3>` 한 구간이 `0`·`<6`·`3` 셋을 막는다). 아래 소계는 **구간**을 센다.")
+    out()
+    out("| 사유 | 건수 |")
+    out("|---|---|")
+    tally = _skip_tally(skipped)
+    if not tally:
+        out("| _없음_ | 0 |")
+    for reason, count in tally:
+        out(f"| `{reason}` | {count} |")
+    out()
+    out("<details>")
+    out(f"<summary>전건 {len(skipped)}건 펼치기</summary>")
+    out()
+    out("| 위치 | 토큰 | 사유 |")
+    out("|---|---|---|")
+    if not skipped:
+        out("| _없음_ | _없음_ | 수확 전 단계에서 갈린 자리가 없다 |")
+    for entry in skipped:
+        out(
+            f"| `{entry.get('locator', '')}` | `{entry.get('token', '')}` | "
+            f"{entry.get('reason', '')} |"
+        )
+    out()
+    out("</details>")
+    out()
 
     # -- 13. 수렴 프로파일 (재정 P-3) ---------------------------------------
     report = convergence.get("convergence_report") or {}
@@ -622,6 +674,34 @@ def render(
     out("서로의 산출을 보지 않는다 — 같은 세션의 재생성은 독립 실행이 아니다.")
     out()
     return "\n".join(lines)
+
+
+def _numeric_ref_targets(spec: dict) -> list[str]:
+    """`numeric_refs` 가 가리킨 항목 ID 전량(중복 제거 · 등장 순).
+
+    수확 정답지 계수와 함께 실어야 하는 값이다 — 역참조는 정답지 **밖**(도면 유래·파생·
+    철회분)도 가리킬 수 있고, 그 차이를 적지 않으면 "역참조 4건"과 "참조 3건 표시"가 한
+    문서 안에서 어긋난 채로 남는다. 통주 2 판독본이 실제로 그 상태였다.
+    """
+    out: list[str] = []
+    for item in spec.get("items") or []:
+        for ref in item.get("numeric_refs") or []:
+            if isinstance(ref, str) and ref not in out:
+                out.append(ref)
+    return out
+
+
+def _skip_tally(skipped: list) -> list[tuple[str, int]]:
+    """수확하지 못한 자리를 **사유별로** 센다(건수 내림차순 · 동수는 라벨 순).
+
+    전건 목록만 두면 "무엇이 얼마나 빠졌는가"를 사람이 손으로 세야 하고, 그러면 표가 길어질수록
+    아무도 세지 않는다. 소계가 없는 목록은 숨기지 않았을 뿐 보이지도 않는다.
+    """
+    tally: dict[str, int] = {}
+    for entry in skipped:
+        reason = str(entry.get("reason", ""))
+        tally[reason] = tally.get(reason, 0) + 1
+    return sorted(tally.items(), key=lambda pair: (-pair[1], pair[0]))
 
 
 def _referrers(spec: dict, fact_id: str) -> list[str]:
