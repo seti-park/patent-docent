@@ -381,7 +381,9 @@ def test_request_files_are_not_rewritten_when_unchanged(tmp_path) -> None:
     """
     root = os.path.join(str(tmp_path), "lanes")
     adapter = FileLaneAdapter(root, REPO)
-    request = m2.plan_decompose("read-a", ReadView(m2.SOURCE, m2.RULES), lane_profiles(REPO))[0]
+    request = m2.plan_decompose(
+        "read-a", ReadView(m2.SOURCE, m2.RULES), lane_profiles(REPO), repo=REPO
+    )[0]
 
     directory = adapter.write_request(request)
     paths = [os.path.join(directory, name) for name in ("request.json", "request.md")]
@@ -406,6 +408,7 @@ def test_request_files_are_not_rewritten_when_unchanged(tmp_path) -> None:
         0,
         [{"check": "read.convergence", "rule": "dependent-set", "locus": "CL-2",
           "message": "갈렸다", "found": "0.88", "expected": "1.0"}],
+        repo=REPO,
     )[0]
     if changed.input_digest == request.input_digest:
         pytest.fail("지시문을 바꿨는데 지문이 그대로다 — 대조군이 성립하지 않는다")

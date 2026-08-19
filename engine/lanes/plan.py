@@ -26,7 +26,7 @@ ID 를 `numeric_refs` 로 되가리키므로 번호가 겹치면 그 참조의 �
 from __future__ import annotations
 
 from .contract import LaneContractError, LaneRequest
-from ..paths import load_stage_contract
+from ..paths import load_stage_contract, repo_root
 
 # 한 배치의 최대 요청 수. "30 미만"이므로 29 다.
 MAX_FANOUT = 29
@@ -609,7 +609,15 @@ def _request(
     profiles: dict,
     instructions: str,
     slices: dict,
+    repo: str | None = None,
 ) -> LaneRequest:
+    """요청 1건. `repo` 는 **절차 본문을 어느 트리에서 인라인하는가**다(재정 2026-08-19 S4).
+
+    지문이 렌더된 요청서 본문의 함수가 되면서 절차 트리는 요청의 일부가 되었다 — 값이 없으면
+    요청이 완전히 지정되지 않는다. 지정이 없을 때 리포 루트로 되돌아가는 것은 이 모듈의 다른
+    계약 독해(`lane_profiles` · `load_stage_contract`)와 같은 관용구이며, `LaneRequest` 자신은
+    빈 값을 받지 않는다(계약 위반으로 던진다).
+    """
     profile = profiles[task]
     return LaneRequest(
         lane_id=lane_id_for(read_run, task, batch, attempt),
@@ -619,6 +627,7 @@ def _request(
         effort=profile["effort"],
         prompt_path=PROCEDURE_DOCS[task],
         instructions=instructions,
+        repo_root=repo or repo_root(),
         slices=slices,
         response_schema=RESPONSE_SCHEMAS[task],
         batch=batch,
@@ -632,6 +641,8 @@ def plan_decompose(
     profiles: dict,
     attempt: int = 0,
     defects: list[dict] | None = None,
+    *,
+    repo: str | None = None,
 ) -> list[LaneRequest]:
     """D5 ①② — 청구항 구간 전체를 한 레인이 본다(트리는 쪼개면 트리가 아니다)."""
     instructions = (
@@ -652,6 +663,7 @@ def plan_decompose(
             profiles=profiles,
             instructions=instructions,
             slices=view.slices_for("decompose"),
+            repo=repo,
         )
     ]
 
@@ -663,6 +675,8 @@ def plan_grounding(
     profiles: dict,
     attempt: int = 0,
     defects: list[dict] | None = None,
+    *,
+    repo: str | None = None,
 ) -> list[LaneRequest]:
     """D5 ③ — 구성요소별 3중 접지. 독립·종속을 다른 레인으로 나누고 배치로 쪼갠다."""
     requests: list[LaneRequest] = []
@@ -694,6 +708,7 @@ def plan_grounding(
                     profiles=profiles,
                     instructions=instructions,
                     slices=view.slices_for(task),
+                    repo=repo,
                 )
             )
     return requests
@@ -750,6 +765,8 @@ def plan_synthesis(
     defects: list[dict] | None = None,
     groundings: list[dict] | None = None,
     harvest: list[dict] | None = None,
+    *,
+    repo: str | None = None,
 ) -> list[LaneRequest]:
     """D5 ④⑤ — 유기적 통합·포지셔닝·수치 사실·최종 drop 신호.
 
@@ -792,5 +809,6 @@ def plan_synthesis(
             profiles=profiles,
             instructions=instructions,
             slices=view.slices_for("synthesize"),
+            repo=repo,
         )
     ]

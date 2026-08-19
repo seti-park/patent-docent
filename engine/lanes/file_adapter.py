@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 
@@ -69,10 +70,10 @@ class FileLaneAdapter:
         그것을 "응답 뒤에 요청이 바뀌었다"로 읽는다. 바이트가 같은데 시각만 흔드는 쓰기는
         기록을 늘리지 않고 사료만 흐린다.
 
-        ★ 이것은 **관찰 좌표의 신설이 아니다.** 요청 파일 쪽 지문을 레인 로그에 더하는 안
-        (응답 쪽 `response_digest` 의 거울상)은 판정 관할의 확장이므로 **재정 사항**이며
-        총괄이 상신했다 — 여기서 하지 않는다. 여기서 한 것은 "쓸 필요가 없을 때 쓰지 않는다"
-        하나이고, 요청 내용이 실제로 바뀌면 파일도 지문도 그대로 바뀐다.
+        ★ 상신되어 있던 그 확장은 **재정 2026-08-19 S4(Q8 ③ 승인)로 집행되었다** — 요청 파일
+        쪽 지문(응답 쪽 `response_digest` 의 거울상)이 레인 로그의 판정 항목이 되었고, 그 값을
+        내는 자리가 아래 `request_md_digest` 다. 여기 이 재기록 중지는 그것과 층이 다르다:
+        쓸 필요가 없을 때 쓰지 않을 뿐이며, 요청 내용이 바뀌면 파일도 지문도 그대로 바뀐다.
         """
         directory = lane_dir(self.root, request.lane_id)
         os.makedirs(directory, exist_ok=True)
@@ -84,6 +85,23 @@ class FileLaneAdapter:
             os.path.join(directory, REQUEST_MD), render_request_md(request, self.repo)
         )
         return directory
+
+    def request_md_digest(self, request: LaneRequest) -> str:
+        """레인이 **실제로 읽는** 요청서 파일 바이트의 sha256(재정 2026-08-19 S4 · Q8 ③).
+
+        `request.json` 이 아니라 `request.md` 를 재는 이유 셋. ① 레인이 읽는 것이 이 파일이다.
+        ② 새 `input_digest` 가 결속하는 대상도 이 파일의 본문이다. ③ 사람이
+        `sha256sum request.md` 로 곧장 대조할 수 있다 — 응답 쪽 `response_digest` 와 정확히
+        같은 층위의 값이며, 그래서 로그의 두 값이 왕복의 양끝을 같은 방식으로 지목한다.
+        `request.json` 은 같은 값들의 기계 색인이므로 따로 재지 않는다.
+
+        ★ 이 지문은 `LaneRequest.input_digest` 와 다른 값이다(전자는 지문 행을 **포함한** 파일
+        전체, 후자는 그 행을 뺀 본문). 둘의 관계는 계약이 선언하고
+        (`read.yaml#lane.round_trip_binding`) 제3자는 `grep -v` 한 줄로 후자를 복원한다.
+        """
+        path = os.path.join(lane_dir(self.root, request.lane_id), REQUEST_MD)
+        with open(path, "rb") as handle:
+            return hashlib.sha256(handle.read()).hexdigest()
 
 
 def _write_if_changed(path: str, text: str) -> bool:

@@ -10,14 +10,25 @@
    레인 기록에 `mismatch: true` 를 남기고 결함으로 보고한다(같은 규율 4).
 ③ **블로킹 금지.** 응답이 없으면 기다리지 않고 `LanePending` 을 던진다. 대기는 오케스트레이터의
    일이며, 러너가 잠들면 체크포인트 무응답이 시간 초과 자동 진행으로 미끄러진다(재정 R8).
-④ **시점 결속**(재정 P-12). 요청은 자기 내용의 지문(`input_digest`)을 싣고, 응답은 그 지문을
-   반향하며, 러너는 반향이 어긋난 응답을 **거부**한다. 파일 지문 규율(런 결박 · 봉투 결속)의
-   레인 왕복 확장이다 — 왕복에 시점이 없으면 "같은 요청에 두 응답"이 존재해도 런이 어느 쪽을
-   소비했는지 스스로 증명하지 못한다(2026-08-18 감수 OOS-01·OOS-02 에서 실제로 일어났다).
+④ **시점 결속**(재정 P-12 · 재정 2026-08-19 S4). 요청은 자기 내용의 지문(`input_digest`)을
+   싣고, 응답은 그 지문을 반향하며, 러너는 반향이 어긋난 응답을 **거부**한다. 파일 지문 규율
+   (런 결박 · 봉투 결속)의 레인 왕복 확장이다 — 왕복에 시점이 없으면 "같은 요청에 두 응답"이
+   존재해도 런이 어느 쪽을 소비했는지 스스로 증명하지 못한다(2026-08-18 감수 OOS-01·OOS-02
+   에서 실제로 일어났다).
 
 ★ ④가 필드가 아니라 **파생값**인 이유. 요청이 지문을 필드로 들면 그 필드는 요청 내용과 함께
 갱신되지 않을 수 있고, 갱신되지 않은 지문은 없느니만 못하다(맞다고 말하는 거짓 증거). 지문은
 요청 내용의 함수여야 잊거나 위조할 수 없다.
+
+★ **지문이 무엇의 함수인가**(재정 2026-08-19 S4 — 규격 개정). 구 판은 요청 필드 10개의 정규
+JSON 을 쟀고, 그중 절차 문서는 `prompt_path` 라는 **경로 문자열**로만 들어갔다. 그래서 절차
+문서 본문이 바뀌어도 지문이 그대로였고, **서로 다른 실제 프롬프트가 같은 지문을 공유**했다
+(2026-08-19 감수 D 실측: 보관 요청문 29,046 B ↔ 같은 필드로 재렌더한 39,152 B, 지문은 동일).
+그 창으로 구 응답이 통과한다. 지금 지문이 재는 것은 **렌더된 요청서 본문 전체**이며 지문 행
+자신만 빠진다 — 레인이 실제로 읽는 그 바이트가 곧 지문의 원본이고, 파일 하나만 있으면
+제3자가 셸 한 줄로 재계산한다:
+
+    grep -v '^| 입력 지문 |' request.md | sha256sum
 """
 
 from __future__ import annotations
@@ -37,12 +48,16 @@ RESPONSE_JSON = "response.json"
 # 응답이 요청 지문을 반향하는 자리(응답 JSON 최상위 키).
 INPUT_DIGEST_KEY = "input_digest"
 
-# ★ 지문 산정 대상 필드(재정 P-12). 정본 선언 = `read.yaml#lane.round_trip_binding`.
-#   `to_dict()` 가 싣는 필드 전량이며 지문 자신만 빠진다 — 즉 **요청 파일을 받은 사람이
-#   그 파일만으로 지문을 다시 계산할 수 있다.** `accepted_models` 가 여기 없는 것도 같은
-#   이유다: 그 값은 계약에서 파생되어 `request.json` 에 실리지 않으므로, 지문에 넣으면
-#   파일만 보고는 재계산이 불가능해져 대조가 코드의 특권이 된다.
-BINDING_FIELDS: tuple[str, ...] = (
+# ★ `request.json` 이 싣는 필드 목록. **지문 산정 대상 목록이 아니다**(재정 2026-08-19 S4).
+#
+#   이름이 구 판(BINDING_FIELDS [폐기])에서 바뀐 이유가 그 구별이다 — 지문의 규격은 이제 이
+#   튜플이 아니라 **렌더된 요청서 본문**(`render_request_body`)이 정한다. 이름을 그대로 두면
+#   다음 사람이 지문 규격을 여기서 읽고, 실제 결속과 어긋난 이해를 계약으로 착각한다.
+#
+#   `accepted_models` 가 여기 없는 이유는 그대로다: 계약에서 파생되는 값이라 요청 파일에
+#   실리지 않으며(따라서 요청서 본문에도 없고 지문에도 들어가지 않는다), 파일에 없는 값을
+#   지문에 넣으면 대조가 코드의 특권이 된다(총괄 재량 H2 의 원칙).
+REQUEST_JSON_FIELDS: tuple[str, ...] = (
     "lane_id",
     "read_run",
     "task",
@@ -54,6 +69,16 @@ BINDING_FIELDS: tuple[str, ...] = (
     "response_schema",
     "batch",
 )
+
+# ★ 요청서 표의 지문 행 접두. 지문 산정에서 **이 접두로 시작하는 줄만** 빠진다
+#   (재정 2026-08-19 S4). 값이 자기 자신을 재는 순환을 끊는 유일한 예외이며, 예외가 하나뿐인
+#   덕에 제3자가 `grep -v` 한 줄로 같은 원본을 복원할 수 있다.
+DIGEST_ROW_PREFIX = "| 입력 지문 |"
+
+# 지문 행이 들어가는 자리 = 이 행 **바로 다음**. 삽입은 순수한 한 줄 삽입이어야 하며(다른
+# 바이트를 함께 건드리면 위 `grep -v` 복원이 성립하지 않는다) 앵커가 사라지면 렌더가 조용히
+# 바뀐 것이므로 계약 위반으로 던진다.
+DIGEST_ROW_ANCHOR = "| 절차 문서 |"
 
 
 class LaneContractError(Exception):
@@ -104,6 +129,14 @@ class LaneRequest:
 
     `lane_id` 는 요청·응답 파일의 좌표이자 레인 기록의 키다
     (예: `read-a/ground-independent/batch-2`).
+
+    ★ `repo_root` 가 필수인 이유(재정 2026-08-19 S4). 요청서는 `prompt_path` 가 가리키는 절차
+    문서의 **본문을 인라인**하며 지문은 그 본문의 함수다. 따라서 **어느 절차 트리의 본문을
+    싣는지가 정해지지 않으면 요청이 완전히 지정되지 않는다** — 경로 문자열만으로는 같은
+    요청이 트리마다 다른 프롬프트가 되고, 구 판에서 그 차이가 지문에 닿지 않아 서로 다른
+    프롬프트가 같은 지문을 공유했다. 이 값은 `request.json` 에 싣지 않는다: 환경 경로일 뿐
+    이고, 그것이 만든 **본문**은 `request.md` 가 든다. 같은 절차 본문이면 두 리포에서 같은
+    지문이 나오는 것이 옳은 동작이다(지문은 본문의 함수이지 경로의 함수가 아니다).
     """
 
     lane_id: str
@@ -113,6 +146,7 @@ class LaneRequest:
     effort: str
     prompt_path: str
     instructions: str
+    repo_root: str = ""
     slices: dict = field(default_factory=dict)
     response_schema: dict = field(default_factory=dict)
     batch: int = 0
@@ -123,11 +157,20 @@ class LaneRequest:
 
     def __post_init__(self) -> None:
         # 모델·effort 미지정 요청은 만들어지지 않는다(규율 ①).
-        for name in ("lane_id", "read_run", "task", "model", "effort", "prompt_path"):
+        for name in (
+            "lane_id",
+            "read_run",
+            "task",
+            "model",
+            "effort",
+            "prompt_path",
+            # 절차 트리도 필수다 — 어느 절차 본문을 인라인하는지가 요청의 일부다(재정 S4).
+            "repo_root",
+        ):
             value = getattr(self, name)
             if not isinstance(value, str) or not value.strip():
                 raise LaneContractError(
-                    f"레인 요청의 {name} 이 비어 있다 — 모델·effort·절차 문서는 "
+                    f"레인 요청의 {name} 이 비어 있다 — 모델·effort·절차 문서·절차 트리는 "
                     f"요청마다 명시한다(lane_id={self.lane_id!r})"
                 )
         if not isinstance(self.response_schema, dict) or not self.response_schema:
@@ -138,30 +181,24 @@ class LaneRequest:
         if not isinstance(self.batch, int) or self.batch < 0:
             raise LaneContractError(f"레인 요청 {self.lane_id} 의 batch 가 음수·비정수다")
 
-    def _binding_body(self) -> dict:
-        """지문 산정 대상 그대로의 본문(`BINDING_FIELDS` 순서)."""
-        return {name: getattr(self, name) for name in BINDING_FIELDS}
+    def _request_json_body(self) -> dict:
+        """`request.json` 본문 그대로(`REQUEST_JSON_FIELDS` 순서)."""
+        return {name: getattr(self, name) for name in REQUEST_JSON_FIELDS}
 
     @property
     def input_digest(self) -> str:
-        """요청 내용의 sha256 — 재료 버전과 원문 조각이 함께 들어간다(재정 P-12).
+        """**렌더된 요청서 본문**의 sha256 — 지문 행 자신만 빠진다(재정 2026-08-19 S4).
 
-        수확 목록이 바뀌면 `instructions` 가 바뀌고, 다른 원문 조각을 주면 `slices` 가
-        바뀌므로 지문이 따라 바뀐다. 그것이 "어느 재료 버전·어느 원문 조각에 대한 요청인가"를
-        한 값에 담는 방식이다.
+        재료 버전(`instructions` 의 수확 목록)도 원문 조각(`slices`)도 절차 문서 **본문**도
+        전부 그 본문에 실려 있으므로, 무엇 하나가 바뀌면 지문이 따라 바뀐다. 구 판이 절차
+        본문을 경로 문자열로만 들어 서로 다른 프롬프트가 같은 지문을 공유했던 창이 여기서
+        닫힌다.
 
-        직렬화가 고정된 이유는 **결정론**이다 — 같은 요청이 두 지문을 가지면 대조가 무너진다.
-        정렬 키 · `ensure_ascii=False`(한글을 이스케이프해 표기를 갈라 놓지 않는다) ·
-        공백 없는 구분자 셋이 그 고정이며, 이 세 값은 계약이 선언한다
-        (`read.yaml#lane.round_trip_binding.canonical_json`).
+        값이 **파일의 함수**라는 점이 규격의 요점이다 — 요청서 하나만 받은 제3자가
+        `grep -v '^| 입력 지문 |' request.md | sha256sum` 으로 같은 값을 낸다. 파일에 실리지
+        않는 값을 지문에 넣으면 대조가 코드의 특권이 된다(총괄 재량 H2 의 원칙).
         """
-        blob = json.dumps(
-            self._binding_body(),
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        )
-        return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+        return compute_input_digest(render_request_body(self, self.repo_root))
 
     def to_dict(self) -> dict:
         """`request.json` 본문. 키 순서는 고정이며 값은 그대로 싣는다.
@@ -170,7 +207,7 @@ class LaneRequest:
         파일에 없으면 레인은 그것을 다시 계산해야 하고, 계산 규약이 갈리는 순간 정직한 레인이
         거부당한다(모델 신원 대조에서 이미 한 번 일어난 실패다).
         """
-        body = self._binding_body()
+        body = self._request_json_body()
         body[INPUT_DIGEST_KEY] = self.input_digest
         return body
 
@@ -222,14 +259,43 @@ class LaneAdapter(Protocol):
     def dispatch(self, requests: list[LaneRequest]) -> list[LaneResponse]: ...
 
 
-def render_request_md(request: LaneRequest, repo_root: str) -> str:
-    """사람·레인이 그대로 읽는 완성 프롬프트.
+def _resolve_repo_root(request: LaneRequest, repo_root: str | None) -> str:
+    """렌더가 쓸 절차 트리를 정한다 — 요청이 결속한 트리와 다르면 던진다(재정 S4).
 
-    절차 문서(`reader/procedure/*.md`)의 본문을 **인라인으로 실어** 이 파일 하나로 레인이
-    작업할 수 있게 한다. 절차를 링크로만 주면 레인마다 열람 여부가 갈리고, 그 순간 두
-    독립 실행이 같은 절차를 따랐다는 보장이 사라진다(수렴 검사의 전제).
+    두 값이 갈리면 **파일에 적힌 지문과 그 파일 본문이 어긋난다**: 지문은 요청이 든
+    `repo_root` 로 계산되는데 본문은 다른 트리의 절차를 실어 나르기 때문이다. 그 산출은
+    제3자 재계산에서 즉시 불일치를 내며, 그때 의심받는 것은 렌더가 아니라 응답이다.
     """
-    procedure_path = os.path.join(repo_root, *request.prompt_path.split("/"))
+    if repo_root is None or not str(repo_root).strip():
+        return request.repo_root
+    if os.path.realpath(repo_root) != os.path.realpath(request.repo_root):
+        raise LaneContractError(
+            f"요청 {request.lane_id} 이 결속한 절차 트리와 다른 트리로 렌더하려 한다 — "
+            f"요청 {request.repo_root} ≠ 렌더 {repo_root}. 지문은 요청이 결속한 트리의 절차 "
+            "본문으로 계산되므로, 다른 트리로 렌더하면 파일이 든 지문과 본문이 갈린다"
+            "(재정 2026-08-19 S4)"
+        )
+    return request.repo_root
+
+
+def render_request_body(request: LaneRequest, repo_root: str | None = None) -> str:
+    """지문 행이 **없는** 요청서 본문 — 절차 문서 본문을 인라인한 완성 프롬프트다.
+
+    이것이 지문의 원본이다(재정 2026-08-19 S4). 사람·레인이 읽는 파일(`render_request_md`)은
+    여기에 지문 행 한 줄만 끼워 넣은 것이며, 그래서 그 한 줄을 다시 지우면 정확히 이 문자열이
+    복원된다.
+
+    절차 문서를 **인라인으로 싣는** 이유는 그대로다 — 이 파일 하나로 레인이 작업할 수 있어야
+    한다. 절차를 링크로만 주면 레인마다 열람 여부가 갈리고, 그 순간 두 독립 실행이 같은 절차를
+    따랐다는 보장이 사라진다(수렴 검사의 전제). 구 판의 결함은 그렇게 실어 놓고도 **지문은
+    경로만 재고 있었다**는 것이다.
+
+    `response_schema` 도 여기 싣는다. 요청 필드 전량이 본문에 있어야 "본문의 지문 = 요청의
+    지문"이 성립하고, 덧붙여 레인이 응답 계약을 보려고 `request.json` 을 따로 열 필요가 없어
+    진다(자기완결 — 재정 2026-08-19 Q8 ①과 같은 취지).
+    """
+    root = _resolve_repo_root(request, repo_root)
+    procedure_path = os.path.join(root, *request.prompt_path.split("/"))
     try:
         with open(procedure_path, encoding="utf-8") as handle:
             procedure = handle.read()
@@ -246,8 +312,7 @@ def render_request_md(request: LaneRequest, repo_root: str) -> str:
     lines.append(f"| 모델 | `{request.model}` |")
     lines.append(f"| effort | `{request.effort}` |")
     lines.append(f"| 배치 | `{request.batch}` |")
-    lines.append(f"| 절차 문서 | `{request.prompt_path}` |")
-    lines.append(f"| 입력 지문 | `{request.input_digest}` |")
+    lines.append(f"{DIGEST_ROW_ANCHOR} `{request.prompt_path}` |")
     lines.append("")
     lines.append("**응답 규약.** 이 디렉터리에 `response.json` 을 쓴다. 형태는")
     lines.append(
@@ -255,14 +320,27 @@ def render_request_md(request: LaneRequest, repo_root: str) -> str:
         "\"input_digest\": ..., \"payload\": {...}}` 이고,"
     )
     lines.append("`model`·`effort` 에는 **실제로 돌아간 값**을 적는다 — 요청과 다르면 러너가")
-    lines.append("레인 기록에 결함으로 남긴다(조용한 대체 금지). `payload` 는 `request.json` 의")
-    lines.append("`response_schema` 를 통과해야 하며, 위반은 응답 자체가 거부된다.")
+    lines.append("레인 기록에 결함으로 남긴다(조용한 대체 금지). `payload` 는 아래 응답 계약을")
+    lines.append("통과해야 하며, 위반은 응답 자체가 거부된다.")
     lines.append("")
     lines.append("**★ 입력 지문 반향(필수 · 재정 P-12).** `input_digest` 에는 위 표의 값을")
     lines.append("**그대로** 적는다. 계산하지 말고 옮겨 적어라 — 이 값은 네가 실제로 읽은 요청이")
     lines.append("어느 판이었는지를 가리키는 시점 표지다. 요청이 갱신되면 지문이 바뀌므로, 옛")
     lines.append("응답을 그대로 두면 러너가 그것을 **낡은 응답으로 거부한다**. 지문이 다르거나")
     lines.append("빠진 응답은 소비되지 않으며, 거부 사실은 레인 기록에 남는다.")
+    lines.append("")
+    lines.append("**★ 지문의 규격(재정 2026-08-19 S4).** 위 표의 값은 **이 요청서 본문 전체**의")
+    lines.append("sha256 이며 지문 행 자신만 빠진다. 절차 문서 본문도 원문 조각도 여기 실려 있으므로")
+    lines.append("전부 지문에 들어간다. 이 파일만으로 다시 계산할 수 있다 —")
+    lines.append("`grep -v '^| 입력 지문 |' request.md | sha256sum`.")
+    lines.append("")
+    lines.append("## 응답 계약 (response_schema)")
+    lines.append("")
+    lines.append("```json")
+    lines.append(
+        json.dumps(request.response_schema, ensure_ascii=False, sort_keys=True, indent=2)
+    )
+    lines.append("```")
     lines.append("")
     lines.append("## 이 요청의 지시")
     lines.append("")
@@ -281,6 +359,59 @@ def render_request_md(request: LaneRequest, repo_root: str) -> str:
     lines.append("")
     lines.append(procedure.rstrip())
     lines.append("")
+
+    body = "\n".join(lines)
+
+    # ★ 지문 행 접두와 충돌하는 줄이 본문에 있으면 제외 규칙이 **한 줄을 지목하지 못한다** —
+    #   제3자의 `grep -v` 는 그 줄까지 지우므로 재계산이 갈린다. 조용히 갈리게 두면 정직한
+    #   레인이 위조 의심을 받으므로, 여기서 크게 실패한다(재정 2026-08-19 S4).
+    #   판정을 **join 뒤의 실제 줄**로 하는 이유: 지시문·원문 조각·응답 계약은 여러 줄을 담은
+    #   한 덩어리로 들어오므로, 덩어리 단위로 보면 그 안쪽 줄의 충돌을 놓친다.
+    collision = [line for line in body.split("\n") if line.startswith(DIGEST_ROW_PREFIX)]
+    if collision:
+        raise LaneContractError(
+            f"요청 본문에 지문 행과 같은 접두({DIGEST_ROW_PREFIX})로 시작하는 줄이 있다 — "
+            f"제외 규칙이 한 줄을 지목하지 못해 제3자 재계산이 갈린다: {collision[0][:80]!r} "
+            f"(lane_id={request.lane_id!r})"
+        )
+    return body
+
+
+def digest_source(rendered: str) -> str:
+    """렌더된 요청서에서 지문 행을 지운 나머지 = 지문의 원본(재정 2026-08-19 S4).
+
+    셸 `grep -v '^| 입력 지문 |'` 와 **같은 뜻**이어야 한다 — 그것이 이 규격의 존재 이유이기
+    때문이다(파일만 받은 사람이 코드 없이 재계산한다). 그래서 접두로 시작하는 줄을 **전부**
+    지우며, 그런 줄이 둘 이상 생길 수 없다는 보장은 `render_request_body` 가 든다.
+    """
+    kept = [line for line in rendered.split("\n") if not line.startswith(DIGEST_ROW_PREFIX)]
+    return "\n".join(kept)
+
+
+def compute_input_digest(body: str) -> str:
+    """요청서 본문(지문 행 제외)의 sha256. 사람이 손으로 낸 `sha256sum` 과 같아야 한다."""
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+def render_request_md(request: LaneRequest, repo_root: str | None = None) -> str:
+    """사람·레인이 그대로 읽는 완성 프롬프트 = 본문 + 지문 행 한 줄.
+
+    삽입은 **순수한 한 줄 삽입**이다. 다른 바이트를 함께 건드리면
+    `compute_input_digest(digest_source(render_request_md(r)))  ==  r.input_digest` 가 깨지고,
+    그 불변식이 깨지는 순간 "파일만으로 재계산한다"는 규격이 거짓이 된다(재정 2026-08-19 S4).
+    """
+    body = render_request_body(request, repo_root)
+    row = f"{DIGEST_ROW_PREFIX} `{compute_input_digest(body)}` |"
+    lines = body.split("\n")
+    for index, line in enumerate(lines):
+        if line.startswith(DIGEST_ROW_ANCHOR):
+            lines.insert(index + 1, row)
+            break
+    else:
+        raise LaneContractError(
+            f"요청서에 지문 행의 앵커({DIGEST_ROW_ANCHOR})가 없다 — 렌더가 바뀌었고 지문 행이"
+            f" 설 자리를 잃었다(lane_id={request.lane_id!r})"
+        )
     return "\n".join(lines)
 
 

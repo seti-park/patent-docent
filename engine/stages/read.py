@@ -109,15 +109,32 @@ class LaneJournal:
     """전 요청·응답의 배정 기록. `10-read/lanes/lane-log.json` 의 본문이 된다.
 
     행이 드는 것은 두 켤레다. **모델·effort 병기**(요청 ↔ 실호출)가 조용한 대체를 드러내고,
-    **지문 3종**(요청 지문 ↔ 반향 ↔ 응답 파일 지문)이 시점 결속을 드러낸다(재정 P-12). 뒤엣것은
-    앞엣것의 확장이지 대체가 아니다 — 두 병기가 답하는 질문이 다르다: "누가 답했는가"와
-    "무엇에 대해 답했으며 그 답이 지금도 그 파일인가".
+    **지문 4종**(요청 지문 ↔ 반향 ↔ 요청 파일 지문 ↔ 응답 파일 지문)이 시점 결속을 드러낸다
+    (재정 P-12 · 재정 2026-08-19 S4). 뒤엣것은 앞엣것의 확장이지 대체가 아니다 — 두 병기가
+    답하는 질문이 다르다: "누가 답했는가"와 "무엇에 대해 답했으며 그 답이 지금도 그 파일인가".
+
+    ★ `request_digest`(재정 2026-08-19 S4 · Q8 ③ 승인)는 `response_digest` 의 **거울상**이다.
+    응답 쪽만 파일 바이트를 재던 동안, 왕복의 다른 끝인 요청서는 사후에 대조할 근거가 없었다 —
+    레인이 읽은 요청서가 지금 그 자리의 파일과 같은지 로그가 말하지 못했다. 값은
+    `sha256(request.md)` 이며 사람이 `sha256sum request.md` 로 곧장 맞춰 본다.
     """
 
     def __init__(self) -> None:
         self.rows: list[dict] = []
 
-    def record(self, request: LaneRequest, response: LaneResponse | None) -> None:
+    def record(
+        self,
+        request: LaneRequest,
+        response: LaneResponse | None,
+        *,
+        request_digest: str | None = None,
+    ) -> None:
+        """왕복 1건. `request_digest` = 레인이 읽은 `request.md` **파일 바이트**의 sha256.
+
+        `None` 은 "요청 파일이 없는 어댑터로 돌았다"는 사실이다(재생 어댑터 — 응답 트리만 읽고
+        요청을 쓰지 않는다). 그 사실을 지어내지 않고 그대로 적으며, 판정
+        (`lane-log.request-file-digest`)은 그 행을 대상에서 빼되 **몇 건을 뺐는지 산출에 남긴다**.
+        """
         mismatch = response is not None and response.mismatches(request)
         digest_ok = response is not None and response.input_digest == request.input_digest
         self.rows.append(
@@ -135,6 +152,8 @@ class LaneJournal:
                 # 값이 갈리면 소비 이후 그 파일이 바뀐 것이다(감수 OOS-02 가 실증한 사고).
                 "input_digest": request.input_digest,
                 "echoed_digest": response.input_digest if response else None,
+                # 요청 파일 바이트의 지문(재정 2026-08-19 S4 · Q8 ③) — 응답 쪽의 거울상이다.
+                "request_digest": request_digest,
                 "response_digest": response.response_digest if response else None,
                 "digest_ok": digest_ok,
                 "rejected": False,
@@ -144,7 +163,14 @@ class LaneJournal:
             }
         )
 
-    def record_rejected(self, request: LaneRequest, *, echoed: str, reason: str) -> None:
+    def record_rejected(
+        self,
+        request: LaneRequest,
+        *,
+        echoed: str,
+        reason: str,
+        request_digest: str | None = None,
+    ) -> None:
         """러너가 **거부한** 응답의 행(재정 P-12 ③④).
 
         거부는 소비하지 않은 사건이므로 실호출 모델도 응답 지문도 없다 — 남는 것은 "무엇을
@@ -163,6 +189,7 @@ class LaneJournal:
                 "actual_effort": None,
                 "input_digest": request.input_digest,
                 "echoed_digest": echoed,
+                "request_digest": request_digest,
                 "response_digest": None,
                 "digest_ok": False,
                 "rejected": True,
@@ -176,25 +203,54 @@ class LaneJournal:
         return [row for row in self.rows if row["mismatch"]]
 
 
+def _request_file_digest(adapter, request: LaneRequest) -> str | None:
+    """어댑터가 쓴 `request.md` 파일 바이트의 지문 — 없는 어댑터면 `None`(재정 2026-08-19 S4).
+
+    능력 조회(`getattr`)로 묻는 이유: 요청을 **쓰지 않는** 어댑터가 있다(재생 어댑터는 미리
+    준비된 응답 트리만 읽는다). 그 경로에 요청 파일 지문을 요구하면 없는 파일을 지어내야 하고,
+    지어낸 지문은 없느니만 못하다. 값이 없다는 사실은 `None` 으로 그대로 적히며 판정이 그
+    행을 대상에서 뺀다 — 무엇을 뺐는지는 판정 산출에 남는다.
+    """
+    probe = getattr(adapter, "request_md_digest", None)
+    if probe is None:
+        return None
+    try:
+        return probe(request)
+    except OSError:
+        # 파일이 없다·읽을 수 없다는 것도 사실이며, 여기서 던지면 그 사실이 로그에 닿기 전에
+        # 런이 죽는다. 값을 비우면 판정이 대상에서 빼되 건수를 남긴다.
+        return None
+
+
 def _dispatch(adapter, requests: list[LaneRequest], journal: LaneJournal) -> list[LaneResponse]:
     """배치 1개를 보내고 배정 기록을 남긴다. 응답 순서는 요청 순서에 맞춘다.
 
     낡은 응답은 **기록한 뒤 다시 던진다**(재정 P-12 ④). 던지기만 하면 런이 죽으면서 거부
     사실이 함께 사라지고, 기록만 하면 오염된 응답이 조립까지 흘러간다. `run()` 의 `finally`
     가 레인 로그를 쓰므로 이 행은 런 폴더에 남는다.
+
+    요청 파일 지문은 **어댑터에서 얻는다**(재정 2026-08-19 S4). 그 값을 아는 것은 파일을 쓴
+    당사자뿐이며, 러너가 경로를 다시 조립해 재면 두 곳이 같은 규칙을 두 벌 갖게 된다.
     """
     try:
         responses = adapter.dispatch(requests)
     except LaneStaleResponseError as exc:
         stale = {request.lane_id: request for request in requests}.get(exc.lane_id)
         if stale is not None:
-            journal.record_rejected(stale, echoed=exc.actual, reason=str(exc))
+            journal.record_rejected(
+                stale,
+                echoed=exc.actual,
+                reason=str(exc),
+                request_digest=_request_file_digest(adapter, stale),
+            )
         raise
     by_id = {response.lane_id: response for response in responses}
     ordered: list[LaneResponse] = []
     for request in requests:
         response = by_id.get(request.lane_id)
-        journal.record(request, response)
+        journal.record(
+            request, response, request_digest=_request_file_digest(adapter, request)
+        )
         if response is None:
             raise StageError(f"레인 응답이 요청과 짝지어지지 않았다: {request.lane_id}")
         ordered.append(response)
@@ -660,6 +716,7 @@ def _execute_decompose(
     journal: LaneJournal,
     lane_attempt: int,
     defects: list[dict] | None,
+    repo: str | None = None,
 ) -> dict:
     """② 분해 1회. **두 실행이 도는 구간은 여기까지다**(재정 P-4 · E 지시).
 
@@ -676,7 +733,11 @@ def _execute_decompose(
     되고 러너는 멈추지 않는다 — 확정 재정의 자리는 CP1 한 곳이다.
     """
     return _dispatch(
-        adapter, plan_decompose(read_run, view, profiles, lane_attempt, defects), journal
+        adapter,
+        # `repo` 를 넘기는 이유: 요청 지문이 **절차 본문**까지 결속하므로 어느 절차 트리에서
+        # 인라인하는지가 요청의 일부다(재정 2026-08-19 S4).
+        plan_decompose(read_run, view, profiles, lane_attempt, defects, repo=repo),
+        journal,
     )[0].payload
 
 
@@ -709,7 +770,7 @@ def _execute_canonical_tail(
     """
     claims = decompose.get("claims") or {}
     grounding_requests = plan_grounding(
-        read_run, claims, view, profiles, lane_attempt, defects
+        read_run, claims, view, profiles, lane_attempt, defects, repo=repo
     )
     groundings = [
         response.payload for response in _dispatch(adapter, grounding_requests, journal)
@@ -737,7 +798,15 @@ def _execute_canonical_tail(
         # 않으면 두 레인 사이에 아무도 책임지지 않는 구간이 남는다(실특허 스모크 적발).
         # 수확 목록을 함께 넘기는 이유는 재정 P-B — 수치를 다시 지어내지 않게 하기 위해서다.
         plan_synthesis(
-            read_run, claims, view, profiles, lane_attempt, defects, groundings, harvested
+            read_run,
+            claims,
+            view,
+            profiles,
+            lane_attempt,
+            defects,
+            groundings,
+            harvested,
+            repo=repo,
         ),
         journal,
     )[0].payload
@@ -918,9 +987,17 @@ def check_lane_log_shape(
     진행했다"는 사실은 로그에 **없음으로** 증명되며, 그 부재를 아무도 보지 않으면 재정
     P-4 의 절반(접지 이후 1회)이 관습으로만 남는다.
 
-    **시점 결속** 2항(재정 P-12): ⓓ 모든 행이 요청 지문을 든다 ⓔ 응답이 도착한 행은 응답
-    지문을 들고 반향이 일치한다. 여기서 보는 것도 같은 종류의 사실이다 — 결속이 코드에만
-    있고 로그에 남지 않으면, 다음 개정이 그것을 지워도 산출물은 아무 말도 하지 않는다.
+    **시점 결속** 3항: ⓓ 모든 행이 요청 지문을 든다(재정 P-12) ⓔ 응답이 도착한 행은 응답
+    지문을 들고 반향이 일치한다(재정 P-12) ⓕ 모든 행이 **요청 파일 지문**을 든다
+    (재정 2026-08-19 S4 · Q8 ③ — 판정 관할의 확장이므로 재정이 근거다). 여기서 보는 것도 같은
+    종류의 사실이다 — 결속이 코드에만 있고 로그에 남지 않으면, 다음 개정이 그것을 지워도
+    산출물은 아무 말도 하지 않는다.
+
+    ★ ⓕ의 대상 제외 하나: `request_digest` 가 **명시적으로 `None`** 인 행(요청 파일을 쓰지
+    않는 재생 어댑터의 왕복)은 요구하지 않는다. 제외 건수는 `request_digest_exempt` 로 산출에
+    남으므로 조용한 통과가 아니다. 반면 **키 자체가 없는 행**은 결함이다 — 그것은 "요청 파일이
+    없었다"가 아니라 "러너가 아무것도 적지 않았다"이며, 구 서식으로의 퇴행이 정확히 그 모습을
+    한다.
 
     ★ 수확 슬롯은 판정 대상이 아니다. 결정론 실행이라 `lane.sub_lanes`(LLM 레인 배정의
     정본)에 등재되지 않으며 레인 로그에도 나타나지 않는다(`read.yaml` 의 같은 검사 note).
@@ -964,11 +1041,34 @@ def check_lane_log_shape(
             "정본 실행이 통합에 닿지 않았다 — 조립할 산출이 없다",
         )
 
-    # ⓓⓔ 시점 결속(재정 P-12). 응답이 도착하지 않은 행(미충족·짝 없음)은 응답 지문을 가질 수
+    # ⓓⓔⓕ 시점 결속. 응답이 도착하지 않은 행(미충족·짝 없음)은 응답 지문을 가질 수
     # 없으므로 ⓔ의 대상이 아니고, **거부 행**은 대상이다 — 거부는 "응답이 있었으나 물렸다"는
     # 사건이며 그 사실이 판정에서 빠지면 거부가 조용한 통과가 된다.
+    exempt = 0
     for entry in journal.rows:
         locus = f"10-read/lanes/{entry.get('lane_id')}"
+        # ⓕ 요청 파일 지문(재정 2026-08-19 S4 · Q8 ③).
+        if "request_digest" not in entry:
+            row.add(
+                "lane-log.request-file-digest",
+                locus,
+                "(요청 파일 지문 칸 없음)",
+                "sha256(request.md)",
+                "요청 파일 지문이 없는 왕복이다 — 레인이 읽은 요청서가 지금 그 자리의 파일과 "
+                "같은지 사후에 판정할 근거가 로그에 없다(재정 S4 · Q8 ③)",
+            )
+        elif entry.get("request_digest") is None:
+            # 요청 파일을 쓰지 않는 어댑터의 왕복 — 대상에서 뺀다(건수는 아래 extras 에 남는다).
+            exempt += 1
+        elif not str(entry.get("request_digest")).strip():
+            row.add(
+                "lane-log.request-file-digest",
+                locus,
+                f"요청 파일 지문 {entry.get('request_digest')!r}",
+                "sha256(request.md)",
+                "요청 파일 지문이 빈 값이다 — 레인이 읽은 요청서가 지금 그 자리의 파일과 "
+                "같은지 사후에 판정할 근거가 로그에 없다(재정 S4 · Q8 ③)",
+            )
         if not str(entry.get("input_digest") or ""):
             row.add(
                 "lane-log.request-digest",
@@ -990,6 +1090,9 @@ def check_lane_log_shape(
                 "소비한 응답의 지문·반향 일치가 로그에 없다 — 같은 자리에 응답이 두 번 "
                 "쓰이면 런이 정본을 증명하지 못한다(재정 P-12 ②③)",
             )
+    # 제외를 산출에 남긴다 — 몇 건을 무엇 때문에 빼고 통과시켰는지가 보이지 않으면, 그 제외는
+    # 판정이 아니라 사각지대가 된다(재정 2026-08-19 S4).
+    row.extras["request_digest_exempt"] = exempt
     return row
 
 
@@ -1106,6 +1209,7 @@ def run(
                     journal=journal,
                     lane_attempt=decompose_attempt,
                     defects=early_defects,
+                    repo=repo,
                 )
                 memos.append(screening_memo(read_run, decomposes[read_run]))
 

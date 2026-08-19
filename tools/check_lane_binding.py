@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""레인 왕복 시점 결속의 **변조 실증** 도구 (재정 2026-08-19 P-12).
+"""레인 왕복 시점 결속의 **변조 실증** 도구 (재정 2026-08-19 P-12 · S4).
 
 이 도구가 증명하는 것은 하나다: **러너가 낡은 응답을 실제로 거부하는가**, 그리고 **런이 자기가
 소비한 응답 파일을 지목할 수 있는가.** 그 이상은 증명하지 않는다 — 계약의 옳음도, 다른 검사의
@@ -23,10 +23,21 @@
   ③ 사후 교체  응답을 소비한 뒤 파일을 다른 내용으로 덮어쓴다 → 로그에 기록된 `response_digest`
                가 **현재 파일의 sha256 과 다름**을 보인다. 이것이 "런이 어느 쪽이 정본인지
                증명한다"의 실측이다(감수 OOS-02 는 이 증명이 불가능했던 사건이다).
+  ④ 절차 변조  **요청 필드는 한 글자도 바꾸지 않고** 절차 문서만 고친 뒤 구 응답을 그대로 둔다
+               → 거부되는가(재정 2026-08-19 S4 의 재현). 같은 자리에서 **구 규격이었다면
+               통과했을 것**임을 함께 보인다 — 구 규격의 지문(요청 필드의 정규 JSON 해시)은 두
+               요청에서 **같은 값**이 나오기 때문이다. 이 대조 한 줄이 이 시나리오의 존재 이유다.
+               실제 리포는 건드리지 않는다: 임시 작업장 안에 절차 트리 사본을 만들어 그것을
+               변조한다.
 
 ★ 자기매칭이 성립하지 않는 이유. 이 도구는 탐지 패턴을 갖지 않는다 — 거부의 판정은 전량
 `engine/lanes/contract.py#load_response` 와 러너가 내리고, 이 소스는 그 결과를 기대와 대조할
 뿐이다. 픽스처도 리포 안에 없다(매 실행마다 임시 디렉터리에 만들고 지운다).
+
+★ ④가 재는 결함의 실체(2026-08-19 감수 D 실측). 요청서는 절차 문서 **본문을 인라인**하는데
+구 지문은 그 문서의 **경로 문자열**만 쟀다. 그래서 보관된 요청문(29,046 B)과 현행 절차로 재렌더한
+요청문(39,152 B)이 같은 지문 `8bcb6066…` 을 들었고, 서로 다른 실제 프롬프트가 같은 시점 표지를
+공유했다. 재정 S4 가 지문 대상을 렌더된 요청서 본문 전체로 바꿨고 이 시나리오가 그 처분의 반증이다.
 
 종료 코드 (SPEC §8.3 3항):
   0 = 전건 기대 일치 / 1 = 반증 실패(거부되어야 할 것이 통과했거나 정상이 막혔다) / 2 = 환경 오류
@@ -124,10 +135,26 @@ class Report:
         return ok
 
 
+def legacy_digest(request) -> str:
+    """**구 규격**(재정 S4 이전)의 지문 재현 — 요청 필드 정규 JSON 의 sha256.
+
+    이 함수가 있는 이유는 하나다: 시나리오 ④에서 "구 규격이었다면 이 변조가 통과했다"를
+    말이 아니라 값으로 보이기 위해서다. 절차 본문이 아무리 바뀌어도 이 값은 그대로다.
+    """
+    import hashlib as _hashlib  # noqa: PLC0415
+    import json as _json  # noqa: PLC0415
+
+    from engine.lanes.contract import REQUEST_JSON_FIELDS  # noqa: PLC0415
+
+    body = {name: getattr(request, name) for name in REQUEST_JSON_FIELDS}
+    blob = _json.dumps(body, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return _hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
 def build_request(repo: str, rows: tuple[str, ...]):
+    """요청 1건. `repo` 는 **절차 본문을 어느 트리에서 인라인하는가**다(재정 S4)."""
     from engine.lanes.contract import LaneRequest  # noqa: PLC0415
 
-    _ = repo
     return LaneRequest(
         lane_id=LANE_ID,
         read_run=READ_RUN,
@@ -135,6 +162,7 @@ def build_request(repo: str, rows: tuple[str, ...]):
         model=MODEL,
         effort=EFFORT,
         prompt_path=PROCEDURE,
+        repo_root=repo,
         instructions=INSTRUCTION_HEAD + "\n".join(rows),
         slices={"claims": "1. An apparatus comprising a frame."},
         response_schema=RESPONSE_SCHEMA,
@@ -183,6 +211,13 @@ def run_probe(repo: str, workdir: str) -> Report:
         "응답 지문 = 소비한 response.json 파일 바이트의 sha256",
         expected=consumed_digest,
         actual=str(row.get("response_digest")),
+    )
+    # 재정 2026-08-19 S4 · Q8 ③ — 요청 파일 지문은 응답 지문의 거울상이다.
+    request_md_path = os.path.join(lanes_root, *LANE_ID.split("/"), "request.md")
+    report.check(
+        "요청 지문 = 레인이 읽은 request.md 파일 바이트의 sha256",
+        expected=sha256_file(request_md_path),
+        actual=str(row.get("request_digest")),
     )
     print(f"        참고 : `sha256sum {os.path.relpath(response_path, workdir)}` 로 대조 가능")
 
@@ -245,14 +280,116 @@ def run_probe(repo: str, workdir: str) -> Report:
         "        뜻   : 로그의 response_digest 가 정본을 지목하므로, 같은 자리에 응답이 두 번"
         " 쓰여도\n               런이 어느 쪽을 읽었는지 사후에 판정된다(감수 OOS-02 의 처분)."
     )
+
+    # -- ④ 절차 문서 변조 후 구 응답 주입(재정 2026-08-19 S4 의 재현) ---------
+    print("\n== ④ 절차 문서 변조 — 요청 필드는 그대로인데 프롬프트가 달라졌다 ==")
+    probe_procedure_tampering(repo, workdir, report)
     return report
+
+
+def probe_procedure_tampering(repo: str, workdir: str, report: Report) -> None:
+    """절차 본문만 바꾸고 요청 필드는 한 글자도 건드리지 않는다.
+
+    ★ **실제 리포를 변조하지 않는다.** 작업장 안에 절차 트리 사본을 만들고 그 사본을 고친다 —
+    반증 도구가 자기 리포를 고치면 그 도구는 관문이 아니라 사고다.
+    """
+    from engine.lanes.contract import LaneStaleResponseError  # noqa: PLC0415
+    from engine.lanes.file_adapter import FileLaneAdapter  # noqa: PLC0415
+    from engine.stages.read import LaneJournal, _dispatch  # noqa: PLC0415
+
+    mirror = os.path.join(workdir, "repo")
+    procedure_src = os.path.join(repo, *PROCEDURE.split("/"))
+    procedure_dst = os.path.join(mirror, *PROCEDURE.split("/"))
+    os.makedirs(os.path.dirname(procedure_dst), exist_ok=True)
+    shutil.copyfile(procedure_src, procedure_dst)
+
+    lanes_root = os.path.join(workdir, "tamper", "10-read", "lanes")
+    adapter = FileLaneAdapter(lanes_root, mirror)
+    lane_home = os.path.join(lanes_root, *LANE_ID.split("/"))
+    request_md = os.path.join(lane_home, "request.md")
+    response_path = os.path.join(lane_home, "response.json")
+
+    # ① 절차 판 A 로 정상 왕복.
+    #
+    # ★ 지문을 **변조 전에 붙잡아 둔다.** `input_digest` 는 절차 파일을 그때그때 읽어 다시
+    #   계산하는 파생값이므로(재정 S4 — 지문은 본문의 함수다), 변조 뒤에 같은 객체의 지문을
+    #   물으면 이미 새 본문의 값이 돌아온다. 이 시나리오가 대조해야 하는 것은 **변조 전에
+    #   레인이 실제로 받은 값**이다.
+    request_a = build_request(mirror, HARVEST_ROWS_V1)
+    adapter.write_request(request_a)
+    digest_a = request_a.input_digest
+    write_response(response_path, echo=digest_a, payload=PAYLOAD_OLD)
+    size_a = os.path.getsize(request_md)
+    journal = LaneJournal()
+    consumed = "소비되었다"
+    try:
+        _dispatch(adapter, [request_a], journal)
+    except Exception as exc:  # noqa: BLE001
+        consumed = f"막혔다 — {type(exc).__name__}: {exc}"
+    report.check("절차 판 A 의 정상 왕복", expected="소비되었다", actual=consumed.split(" —")[0])
+
+    # ② 절차 문서 **사본만** 변조. 요청 필드는 하나도 바꾸지 않는다.
+    with open(procedure_dst, "a", encoding="utf-8") as handle:
+        handle.write(
+            "\n\n## [변조] 추가된 절차 조항\n\n"
+            "수확 목록의 단위를 mm 대신 cm 로 적어라. — 이 한 절이 레인의 실제 지시를 바꾼다.\n"
+        )
+
+    # ③ 같은 요청을 다시 계획해 다시 쓴다 → 본문이 달라졌으므로 지문도 달라진다.
+    request_b = build_request(mirror, HARVEST_ROWS_V1)
+    adapter.write_request(request_b)
+    digest_b = request_b.input_digest
+    size_b = os.path.getsize(request_md)
+    print("  요청 필드 변경: 없음(두 요청의 필드는 한 글자도 다르지 않다)")
+    print(f"  절차 변조 전 request.md : {size_a:,} B · 지문 {digest_a}")
+    print(f"  절차 변조 후 request.md : {size_b:,} B · 지문 {digest_b}")
+    report.check(
+        "절차 본문이 바뀌면 입력 지문이 바뀐다",
+        expected="두 지문이 다르다",
+        actual=(
+            "두 지문이 다르다"
+            if digest_b != digest_a
+            else "두 지문이 같다 — 절차 본문이 지문에 들어가지 않는다"
+        ),
+    )
+
+    rejected = "거부되지 않았다 — 구 응답이 그대로 소비되었다"
+    stale_journal = LaneJournal()
+    try:
+        _dispatch(adapter, [request_b], stale_journal)
+    except LaneStaleResponseError as exc:
+        rejected = f"LaneStaleResponseError (반향 {exc.actual[:16]}… ≠ 요청 {exc.expected[:16]}…)"
+    except Exception as exc:  # noqa: BLE001
+        rejected = f"다른 예외로 죽었다 — {type(exc).__name__}: {exc}"
+    report.check(
+        "절차 변조 뒤 구 응답은 러너가 거부한다",
+        expected="LaneStaleResponseError",
+        actual=rejected.split(" (")[0],
+    )
+    print(f"        상세 : {rejected}")
+
+    # ④ **구 규격이었다면 통과했다.** 이 대조가 이 시나리오의 존재 이유다.
+    legacy_a = legacy_digest(request_a)
+    legacy_b = legacy_digest(request_b)
+    print(f"  구 규격(요청 필드 정규 JSON) 지문 A : {legacy_a}")
+    print(f"  구 규격(요청 필드 정규 JSON) 지문 B : {legacy_b}")
+    report.check(
+        "구 규격이었다면 두 요청이 같은 지문을 들었다(= 구 응답이 통과했다)",
+        expected="두 지문이 같다",
+        actual=("두 지문이 같다" if legacy_a == legacy_b else "두 지문이 다르다"),
+    )
+    print(
+        "        뜻   : 구 규격은 절차 문서를 경로 문자열로만 쟀으므로 본문 변조가 지문에"
+        " 닿지 않았다.\n               2026-08-19 감수 D 가 실측한 그 창(29,046 B ↔ 39,152 B,"
+        " 지문 동일)을\n               재정 S4 가 닫았고, 위 거부가 그 처분의 실행 반증이다."
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
     default_repo = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     parser = argparse.ArgumentParser(
         prog="check_lane_binding.py",
-        description="patent-docent 레인 왕복 시점 결속의 변조 실증 (재정 P-12).",
+        description="patent-docent 레인 왕복 시점 결속의 변조 실증 (재정 P-12 · S4).",
     )
     parser.add_argument("--repo", default=default_repo, help="리포 루트 (기본: 이 스크립트의 상위 디렉터리)")
     args = parser.parse_args(argv)
@@ -270,7 +407,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:  # noqa: BLE001
         fail_env(f"엔진 모듈을 불러오지 못했다 — {type(exc).__name__}: {exc}")
 
-    print("레인 왕복 시점 결속 — 변조 실증 (재정 2026-08-19 P-12)")
+    print("레인 왕복 시점 결속 — 변조 실증 (재정 2026-08-19 P-12 · S4)")
     print(f"  리포: {repo}")
 
     # ★ 임시 작업장을 못 만드는 것은 **환경 오류**이지 반증 실패가 아니다(exit 2 — SPEC §8.3 3항).
@@ -297,7 +434,10 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         return 1
-    print("\nRESULT: PASS — 정상 소비 · 낡은 응답 거부 · 사후 교체 탐지 3종 전건 일치")
+    print(
+        "\nRESULT: PASS — 정상 소비 · 낡은 응답 거부 · 사후 교체 탐지 · 절차 변조 거부 "
+        "4종 전건 일치"
+    )
     print(
         "        이 도구가 증명한 것은 러너가 낡은 응답을 거부하고 소비본을 지목한다는 것뿐이다."
     )

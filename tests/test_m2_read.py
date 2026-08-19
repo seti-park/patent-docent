@@ -1019,6 +1019,9 @@ def test_lane_request_declares_model_and_effort() -> None:
             model="",
             effort="max",
             prompt_path="reader/procedure/10-decompose.md",
+            # 절차 트리는 채워 둔다 — 이 시험이 재는 빈 값은 model 하나다(재정 S4 로 repo_root
+            # 도 필수가 되었으므로, 비워 두면 무엇 때문에 던졌는지가 흐려진다).
+            repo_root=REPO,
             instructions="",
             slices={},
             response_schema={"type": "object"},
