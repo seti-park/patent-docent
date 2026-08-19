@@ -831,6 +831,24 @@ def test_source_report_precedes_read(tmp_path) -> None:
         pytest.fail(f"도면 수 기대 6, 실제 {report['figure_count']}")
 
 
+# ★ 재정 P-5 가 명한 **세 처분의 내용**(2026-08-19 보수 — 감수 C′-2 NEW BLOCKER ③).
+#
+#   구 시험은 `len(resolutions) == 3` 과 필드의 truthiness 까지만 봤다. 감수 문언 그대로 —
+#   *"세 처분을 임의의 다른 세 문장으로 바꿔도 통과하므로 해당 요구를 실제로 반증하지
+#   못한다."* 개수는 재정의 내용이 아니다. 그래서 여기에 **무엇을 어떻게 처분했는가**를
+#   못 박는다: 파일 단위 · 다각도 각각 · 흐름도 포함.
+#
+#   ★ 이 상수는 시험이 지어낸 값이 아니다. 아래 `test_p5_resolutions_match_the_ruling_ledger`
+#   가 **재정 원장 원문**과 대조하므로, 상수가 원장에서 벗어나면 그 시험이 운다. 원장이
+#   상류이고 계약·코드·시험이 하류라는 규율(CLAUDE.md §0)을 시험 층에서 지키는 형태다.
+P5_RESOLUTIONS = (
+    {"question_needle": "서브도면", "ruling_needle": "파일 단위로 센다"},
+    {"question_needle": "다른 각도", "ruling_needle": "각각 센다"},
+    {"question_needle": "흐름도", "ruling_needle": "흐름도 포함"},
+)
+P5_RULING = os.path.join(REPO, "docs", "decisions", "ruling-20260818-03-P1-P11.md")
+
+
 def test_source_report_records_recompute_basis(tmp_path) -> None:
     """도면별 행과 산정 근거가 없으면 재정 후 원천을 다시 읽어야 한다(재감수 M-04).
 
@@ -838,6 +856,10 @@ def test_source_report_records_recompute_basis(tmp_path) -> None:
     세 논점이 더는 잠정이 아니므로 이름에서 '잠정'이 빠졌고, 그 대신 재정 좌표
     (`adjudicated_in`)와 채택률 관찰 지표(`observation_metric`)가 함께 실린다. `[가설]` 태그는
     유지된다 — 재정이 명시로 그렇게 정했다(산정식은 승인됐고 수치의 타당성은 관찰 대상이다).
+
+    ★ 2026-08-19 조임 — 세 처분의 **내용**을 명시 비교한다(감수 C′-2 NEW BLOCKER ③).
+    개수만 세던 구 형태는 처분을 임의의 다른 세 문장으로 바꿔도 통과했고, 그러면 이 시험이
+    반증하는 것은 "리스트가 셋이다"뿐이지 재정이 아니다.
     """
     root, _ = run_source(tmp_path)
     report = load_json(RunPaths(root).source_report)
@@ -856,8 +878,26 @@ def test_source_report_records_recompute_basis(tmp_path) -> None:
         pytest.fail("폐기된 키 `provisional_resolutions` 가 남아 있다(재정 P-5 개명)")
     if exhibit["tag"] != "[가설]":
         pytest.fail(f"산정식 태그 기대 [가설], 실제 {exhibit['tag']}")
-    if len(exhibit["resolutions"]) != 3:
-        pytest.fail(f"처분 3논점 기대 3건, 실제 {len(exhibit['resolutions'])}건")
+    if len(exhibit["resolutions"]) != len(P5_RESOLUTIONS):
+        pytest.fail(
+            f"처분 {len(P5_RESOLUTIONS)}논점 기대, 실제 {len(exhibit['resolutions'])}건"
+        )
+    # ★ 내용 대조 — 순서까지 본다(재정이 셋을 나열한 순서가 곧 논점의 순서다).
+    for index, (actual, expected) in enumerate(zip(exhibit["resolutions"], P5_RESOLUTIONS)):
+        question = str(actual.get("question") or "")
+        ruling = str(actual.get("ruling") or "")
+        if expected["question_needle"] not in question:
+            pytest.fail(
+                f"처분 {index + 1} 의 논점이 재정과 다르다 — "
+                f"`{expected['question_needle']}` 가 없다: {question!r}"
+            )
+        if expected["ruling_needle"] not in ruling:
+            pytest.fail(
+                f"처분 {index + 1} 의 결론이 재정과 다르다 — "
+                f"`{expected['ruling_needle']}` 가 없다: {ruling!r}"
+            )
+        if not str(actual.get("rationale") or "").strip():
+            pytest.fail(f"처분 {index + 1} 에 사유가 없다: {actual}")
     if "ruling-20260818-03-P1-P11.md#P-5" not in str(exhibit["adjudicated_in"]):
         pytest.fail(f"재정 좌표가 원장을 가리키지 않는다: {exhibit['adjudicated_in']!r}")
     if exhibit["observation_metric"].get("id") != "exhibit-adoption-ratio":
@@ -869,6 +909,23 @@ def test_source_report_records_recompute_basis(tmp_path) -> None:
     recomputed = sum(row["counted_as"] for row in report["figures"])
     if recomputed != exhibit["count"]:
         pytest.fail(f"소급 재계산 {recomputed} != 보고값 {exhibit['count']}")
+
+
+def test_p5_resolutions_match_the_ruling_ledger() -> None:
+    """★ 위 시험의 기대 상수가 **원장에서 왔음**을 기계가 확인한다(CLAUDE.md §0 — 원장이 상류).
+
+    이 시험이 없으면 `P5_RESOLUTIONS` 는 시험이 지어낸 값과 구별되지 않는다. 계약과 시험이
+    같이 틀리면 둘의 대조는 아무것도 증명하지 못하므로, 대조의 한쪽 끝은 **원장 원문**이어야
+    한다. 재정 P-5 원문의 문언은 *"단위=도면 파일(서브도면은 파일 단위·다각도 각각·흐름도
+    포함)"* 이다.
+    """
+    if not os.path.isfile(P5_RULING):
+        pytest.fail(f"재정 원장이 없다: {P5_RULING} — 대조의 상류가 사라졌다")
+    with open(P5_RULING, encoding="utf-8") as handle:
+        ledger = handle.read()
+    for needle in ("파일 단위", "다각도 각각", "흐름도 포함"):
+        if needle not in ledger:
+            pytest.fail(f"재정 원장에 `{needle}` 문언이 없다 — 기대 상수가 원장을 벗어났다")
 
 
 def test_source_records_canonicalization_provenance(tmp_path) -> None:

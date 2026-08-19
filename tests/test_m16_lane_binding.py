@@ -522,6 +522,64 @@ def test_file_adapter_round_trip_records_the_request_file_digest(tmp_path) -> No
         pytest.fail(f"파일 어댑터 왕복이 제외로 새어 나갔다: {shape.extras}")
 
 
+def test_a_capable_adapter_that_cannot_read_the_request_is_not_exempt(tmp_path) -> None:
+    """★ 면제의 뜻은 **능력의 부재 하나뿐이다**(2026-08-19 보수 — 감수 C′-2 NEW BLOCKER ①).
+
+    이 시험이 없으면 `_request_file_digest` 의 `except OSError: return None` 이 되돌아온다.
+    그 형태에서는 파일 어댑터가 쓴 `request.md` 가 **사라져도** 판정이 한 건도 울지 않았다 —
+    `None` 을 판정이 면제로 세기 때문이며, 즉 면제의 뜻이 "이 어댑터는 요청 파일을 쓰지
+    않는다"에서 "요청 파일을 못 읽었다"로 조용히 넓어져 있었다. 소실은 정확히 이 검사가
+    잡아야 할 사건인데 이 검사가 그것을 면제로 셌다.
+    """
+    from engine.lanes.file_adapter import FileLaneAdapter  # noqa: PLC0415
+
+    lanes_root = os.path.join(str(tmp_path), "lanes")
+
+    class VanishingRequestAdapter(FileLaneAdapter):
+        """요청서를 쓰고 응답을 돌려준 **뒤** 그 파일이 사라진 상태를 재현한다.
+
+        어댑터의 능력(`request_md_digest`)은 그대로 있다 — 사라진 것은 파일이다. 그 구별이
+        이 시험의 전부다: 능력이 없으면 면제이고, 능력이 있는데 못 읽으면 결함이다.
+        """
+
+        def dispatch(self, requests):
+            responses = super().dispatch(requests)
+            for entry in requests:
+                os.remove(os.path.join(lanes_root, entry.lane_id, "request.md"))
+            return responses
+
+    adapter = VanishingRequestAdapter(lanes_root, REPO)
+    request = probe_request()
+    directory = adapter.write_request(request)
+    write_probe_response(
+        os.path.join(directory, "response.json"),
+        request=request,
+        echo=request.input_digest,
+    )
+
+    journal = read_stage.LaneJournal()
+    read_stage._dispatch(adapter, [request], journal)
+    row = journal.rows[-1]
+    if "request_digest" not in row:
+        pytest.fail(f"요청 파일 지문 칸 자체가 없다: {row}")
+    if row["request_digest"] is None:
+        pytest.fail(
+            "요청 파일을 쓰는 어댑터의 읽기 실패가 None(면제)으로 접혔다 — "
+            "면제의 뜻이 능력의 부재에서 읽기 실패로 넓어졌다"
+        )
+    if row["request_digest"] != "":
+        pytest.fail(f"읽기 실패의 기록이 빈 값이 아니다: {row['request_digest']!r}")
+
+    shape = read_stage.check_lane_log_shape(
+        journal, read_runs=("read-a",), canonical="read-a"
+    )
+    rules = [finding.rule for finding in shape.findings]
+    if rules.count("lane-log.request-file-digest") != 1:
+        pytest.fail(f"요청 파일 지문 결함 1건 기대, 실제 {rules}")
+    if shape.extras.get("request_digest_exempt") != 0:
+        pytest.fail(f"읽기 실패가 제외로 새어 나갔다: {shape.extras}")
+
+
 # ===========================================================================
 # ⑤ 섀도 원장 — 러너 재진입 다회에도 run_id 당 1행
 # ===========================================================================

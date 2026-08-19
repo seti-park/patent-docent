@@ -142,6 +142,10 @@ lane:
       사람은 `sha256sum request.md` · `sha256sum response.json` 으로 그 자리에서 대조한다.
       요청 파일을 쓰지 않는 어댑터(재생 어댑터)의 왕복은 request_digest 가 null 이며, 판정은
       그 행을 대상에서 빼되 제외 건수를 산출(request_digest_exempt)에 남긴다.
+      ★ null 이 뜻하는 것은 **능력의 부재 하나뿐이다**(2026-08-19 보수). 요청 파일을 쓰는
+      어댑터가 그 파일을 읽지 못하면 값은 null 이 아니라 빈 문자열이고, 그것은 면제가 아니라
+      결함으로 판정에 걸린다 — 구 구현은 읽기 실패(OSError)까지 null 로 접어 면제로 셌고,
+      그래서 파일 어댑터가 쓴 request.md 가 사라져도 판정이 한 건도 울지 않았다.
     on_mismatch: reject            # 러너가 응답을 소비하지 않고 거부 행을 남긴 뒤 던진다
     on_missing_echo: reject        # 반향 부재 = 계약 위반(LaneContractError)
     implemented_by: engine/lanes/contract.py    # render_request_body · digest_source · compute_input_digest
@@ -405,7 +409,9 @@ checks_before_exit:
       **요청 파일 지문**도 같은 층에서 본다(재정 2026-08-19 S4 · Q8 ③): 모든 행이
       request_digest 칸을 들고 그 값이 비어 있지 않다(lane-log.request-file-digest). 값이
       명시적으로 null 인 행 — 요청 파일을 쓰지 않는 재생 어댑터의 왕복 — 만 대상에서 빠지며,
-      제외 건수는 판정 산출 request_digest_exempt 에 남는다. 칸 자체가 없는 행은 결함이다.
+      제외 건수는 판정 산출 request_digest_exempt 에 남는다. 칸 자체가 없는 행은 결함이고,
+      **빈 문자열도 결함이다**(요청 파일을 쓰는 어댑터가 그 파일을 읽지 못한 자리 — 면제의
+      뜻은 능력의 부재 하나뿐이다, 2026-08-19 보수).
     implemented_by: engine/stages/read.py
     introduced_by: "재정 2026-08-18 P-U3"
     note: >-

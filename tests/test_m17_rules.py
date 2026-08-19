@@ -487,20 +487,34 @@ def test_the_conditional_golden_carries_both_directions() -> None:
 
 NEW_EXCLUSIONS = ("figure-or-table-number-list", "row-column-coordinate")
 
+# ★ 재정 S7 이 신설한 둘은 **형태가 갈린다**(2026-08-19 후속 보수). `figure-or-table-number-list`
+#   는 봉투(`match: enclosing-pattern`)로 남았고, `row-column-coordinate` 는 **토큰 조건 규칙**
+#   이 되었다 — 봉투가 구간과 겹치는 진짜 값(`a column 12 mm wide` 의 `12 mm`)을 함께 삼키는
+#   것이 감수 C′-1·D 에서 독립으로 실증되었기 때문이다. 재정이 승인한 것은 "M87~M89 를 건별로
+#   배제한다"이지 특정 정규식이 아니므로 형태 교체는 이행 충실화다(재정 S2 의 판별선).
+ENVELOPE_EXCLUSIONS = ("figure-or-table-number-list",)
+CONDITION_EXCLUSIONS = ("row-column-coordinate",)
+
 
 def harvest_exclusion_entries() -> list[dict]:
+    """규칙 파일의 배제 항목 전량(봉투 + 토큰 조건)."""
+    return list(RULES_RAW["numeric_harvest"]["exclusions"])
+
+
+def envelope_exclusion_entries() -> list[dict]:
     return [
         entry
-        for entry in RULES_RAW["numeric_harvest"]["exclusions"]
+        for entry in harvest_exclusion_entries()
         if entry.get("match") == "enclosing-pattern"
     ]
 
 
-def test_the_two_new_envelope_exclusions_are_legislated_with_their_ruling() -> None:
+def test_the_two_new_exclusions_are_legislated_with_their_ruling() -> None:
     """근거 없이 값 공간을 좁히면 그것은 재정 없는 입법이다(재정 S2 의 판별 기준).
 
     ★ `basis` 에 이번 재정이 적혀 있는지를 기계가 본다 — 다음 사람이 "왜 이 배제가 있는가"를
     물었을 때 답이 코드 밖 대화에만 있으면 그 배제는 근거 없는 배제와 구별되지 않는다.
+    형태(봉투 / 토큰 조건)가 갈려도 요구하는 근거는 같다.
     """
     entries = {entry["id"]: entry for entry in harvest_exclusion_entries()}
     for exclusion_id in NEW_EXCLUSIONS:
@@ -512,20 +526,46 @@ def test_the_two_new_envelope_exclusions_are_legislated_with_their_ruling() -> N
         basis = str(entry.get("basis") or "")
         if "재정 2026-08-19 S7" not in basis:
             pytest.fail(f"`{exclusion_id}` 의 basis 가 이번 재정을 근거로 들지 않는다: {basis!r}")
-        for field in ("pattern", "reason_label", "why", "open_question"):
+        for field in ("reason_label", "why", "open_question"):
             if not entry.get(field):
                 pytest.fail(f"`{exclusion_id}` 에 `{field}` 가 없다 — 기존 4종과 형태가 다르다")
 
-    # 로더가 실제로 여섯을 든다(선언과 실물이 갈리면 규칙 파일은 설명서일 뿐이다).
+    # 형태별 필수 필드 — 어느 쪽이든 "무엇으로 판정하는가"가 파일에 있어야 한다.
+    for exclusion_id in ENVELOPE_EXCLUSIONS:
+        entry = entries[exclusion_id]
+        if entry.get("match") != "enclosing-pattern" or not entry.get("pattern"):
+            pytest.fail(f"`{exclusion_id}` 가 봉투 형태가 아니다: {entry.get('match')!r}")
+    for exclusion_id in CONDITION_EXCLUSIONS:
+        entry = entries[exclusion_id]
+        if entry.get("match") == "enclosing-pattern":
+            pytest.fail(f"`{exclusion_id}` 가 아직 봉투다 — 봉투는 진짜 값을 함께 삼킨다")
+        if not entry.get("preceding_pattern") or not entry.get("condition"):
+            pytest.fail(
+                f"`{exclusion_id}` 에 preceding_pattern 또는 condition 이 없다 — "
+                "판정 근거가 파일에 없으면 코드가 자기 법을 갖는다(D7)"
+            )
+        if not entry.get("form_change"):
+            pytest.fail(
+                f"`{exclusion_id}` 에 form_change 가 없다 — 봉투에서 조건으로 바뀐 사유가 "
+                "파일에 없으면 다음 사람이 되돌린다"
+            )
+
+    # 로더가 실제로 그만큼 든다(선언과 실물이 갈리면 규칙 파일은 설명서일 뿐이다).
     loaded = [entry["id"] for entry in RULES.harvest_envelope_patterns]
-    if len(loaded) != len(entries):
-        pytest.fail(f"로드된 봉투 수가 선언과 다르다: {loaded} != {sorted(entries)}")
-    for exclusion_id in NEW_EXCLUSIONS:
+    declared = [entry["id"] for entry in envelope_exclusion_entries()]
+    if sorted(loaded) != sorted(declared):
+        pytest.fail(f"로드된 봉투가 선언과 다르다: {sorted(loaded)} != {sorted(declared)}")
+    for exclusion_id in ENVELOPE_EXCLUSIONS:
         if exclusion_id not in loaded:
-            pytest.fail(f"신설 배제가 로드되지 않았다: {loaded}")
+            pytest.fail(f"신설 봉투가 로드되지 않았다: {loaded}")
+    for exclusion_id in CONDITION_EXCLUSIONS:
+        if exclusion_id in loaded:
+            pytest.fail(f"토큰 조건 배제가 봉투로 로드됐다: {loaded}")
+        if RULES.harvest_preceding_pattern(exclusion_id) is None:
+            pytest.fail(f"토큰 조건 배제의 선행 문맥 패턴이 로드되지 않았다: {exclusion_id}")
 
 
-def test_the_new_envelope_patterns_are_not_parsers() -> None:
+def test_the_new_exclusion_patterns_are_not_parsers() -> None:
     """전개를 붙이면 수확기가 좌표 표기법의 의미론을 재정 없이 입법하게 된다(D7)."""
     for entry in RULES.harvest_envelope_patterns:
         if entry["id"] not in NEW_EXCLUSIONS:
@@ -534,6 +574,13 @@ def test_the_new_envelope_patterns_are_not_parsers() -> None:
             pytest.fail(
                 f"봉투 패턴 {entry['id']} 에 이름 있는 그룹이 있다: "
                 f"{sorted(entry['pattern'].groupindex)}"
+            )
+    for exclusion_id in CONDITION_EXCLUSIONS:
+        pattern = RULES.harvest_preceding_pattern(exclusion_id)
+        if pattern is not None and pattern.groupindex:
+            pytest.fail(
+                f"선행 문맥 패턴 {exclusion_id} 에 이름 있는 그룹이 있다: "
+                f"{sorted(pattern.groupindex)}"
             )
 
 

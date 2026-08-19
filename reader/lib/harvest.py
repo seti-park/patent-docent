@@ -114,6 +114,10 @@ def harvest_numeric_facts(
     seen: set[tuple] = set()
     numerals = _figure_numerals(spec)
     numeral_rule = rules.harvest_exclusion("figure-numeral")
+    # 행·열 좌표는 **토큰 조건 규칙**이다(봉투가 아니다 — 규칙 파일 `form_change`).
+    # 봉투는 구간과 겹치는 진짜 값을 함께 삼켰다: `a column 12 mm wide` 의 `12 mm`.
+    coordinate_rule = rules.harvest_exclusion("row-column-coordinate")
+    coordinate_pattern = rules.harvest_preceding_pattern("row-column-coordinate")
 
     candidates, rejections = _quoted_candidates(spec, rules)
     for entry in candidates:
@@ -135,6 +139,19 @@ def harvest_numeric_facts(
                     "locator": entry["locator"],
                     "token": entry["value_raw"],
                     "reason": str(numeral_rule.get("reason_label")),
+                }
+            )
+            continue
+        coordinate = _row_column_coordinate_token(entry, coordinate_rule, coordinate_pattern)
+        if coordinate is not None:
+            # 행·열 좌표는 자리이지 값이 아니다(재정 2026-08-19 S7). 침묵으로 줄이지 않고
+            # 봉투 시절과 **같은 사유 라벨·같은 기록 폭**으로 남긴다 — CP1 §12.3 의 계수
+            # 어휘가 곧 계약이며, 형태가 바뀌어도 기록은 바뀌지 않아야 한다.
+            skipped.append(
+                {
+                    "locator": entry["locator"],
+                    "token": coordinate,
+                    "reason": str(coordinate_rule.get("reason_label")),
                 }
             )
             continue
@@ -351,6 +368,44 @@ def _is_figure_numeral(entry: dict, numerals: frozenset, rule: dict | None) -> b
     if not token.isdigit():
         return False
     return token in numerals
+
+
+def _row_column_coordinate_token(entry: dict, rule: dict | None, pattern) -> str | None:
+    """배제 조건 3항 — 정수 ∧ 단위 없음 ∧ 선행 문맥이 행·열 낱말(규칙 파일 `exclusions`).
+
+    `Row 0` · `Col 0` 은 CIM 매크로 안의 **자리**이지 값이 아니다. 도면부호 배제가 닿지 않는
+    이유는 `0` 이 `figures[].numerals` 에 없기 때문이고, 경계 기각이 닿지 않는 이유는 앞이
+    공백이라 토큰 내부가 아니기 때문이다 — 두 기존 방어 사이의 틈이다.
+
+    ★ **이것은 봉투가 아니다**(2026-08-19 보수 — 규칙 파일 `form_change`). 봉투였을 때는
+    낱말부터 수까지의 구간을 표시하고 그 구간과 겹치는 수확을 전부 버렸으므로,
+    `a column 12 mm wide` 에서 진짜 `12 mm` 가 통째로 사라졌다(감수 C′-1·D 독립 실증).
+    조건 규칙은 후보 하나만 보고 **단위를 든 후보를 애초에 제외**하므로 그 손실이 없다.
+
+    ★ 단위표를 여기에 복제하지 않는다 — 수확기가 이미 `unit` 을 판정했고 이 함수는 그
+    결과를 읽을 뿐이다. 복제하면 두 벌 중 한 벌은 반드시 낡는다.
+
+    ★ **복합 어형은 걸리지 않는다.** `Rows 0 and 1.` 은 `set` 어형이 `0 and 1` 을 한 값으로
+    거두므로 첫 조건(정수)에서 빠진다. 그것을 열려면 조건이 복합 어형의 구성원을 들여다봐야
+    하는데, 그것은 규칙 파일 `not_a_parser` 가 금한 자리이므로 재정 사항이다. 남은 구멍은
+    반례 golden `rc-0005` 의 `hx-10` 이 기대값으로 못 박아 기록한다.
+    """
+    if rule is None or pattern is None:
+        return None
+    if entry.get("unit") is not None:
+        return None
+    if not str(entry.get("value_raw") or "").isdigit():
+        return None
+    quote = str(entry.get("quote") or "")
+    start = int(entry["value_span"]["start"])
+    match = pattern.search(quote[:start])
+    if match is None:
+        return None
+    # 기록하는 것은 낱말까지 포함한 **좌표 라벨 전문**이다(`Row 0`). 값 토큰만 적으면
+    # CP1 §12.3 에 `0` 만 남아 무엇이 왜 빠졌는지가 읽는 사람에게 사라진다 — 봉투 시절의
+    # 기록 폭을 그대로 잇는다(`enclosing_exclusions.recording` 과 같은 원칙: 기록의 단위는
+    # 잃은 **자리**다).
+    return quote[match.start() : int(entry["value_span"]["end"])]
 
 
 def _unit_after(quote: str, position: int, rules: Rules) -> tuple[int, str | None]:

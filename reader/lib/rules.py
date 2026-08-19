@@ -462,6 +462,7 @@ class Rules:
         exclusions = block.get("exclusions") or []
         self.harvest_exclusions = tuple(exclusions)
         self._compile_harvest_envelopes(block, exclusions)
+        self._compile_harvest_conditions(exclusions)
 
     def _compile_harvest_envelopes(self, block: dict, exclusions) -> None:
         """봉투 배제 — 좌표 표현 **구간**을 먼저 표시하는 패턴들(2026-08-18 통주 2 처분).
@@ -470,12 +471,12 @@ class Rules:
         든 정규식에 걸리는 구간은 값이 아니라 자리다" 하나뿐이며, 무엇이 좌표 표현인지는
         전적으로 파일이 든다(D7 — 코드가 자기 법을 갖지 않는다).
 
-        ★ 부재는 통과가 아니라 오류다. 여섯(2026-08-18 넷 + 재정 2026-08-19 S7 둘) 중
-        하나를 지우는 것만으로 배제가 조용히 꺼지면 통주 2 가 실측한 23건이 아무 신호 없이
-        정답지로 돌아온다. 같은 회차의 `bibliography.priority_window` 가 세운 선례를 그대로
-        따른다. **세는 것은 개수가 아니라 존재다** — 특정 수를 요구하면 재정이 항목을 더할
-        때마다 로더가 함께 낡는다. 현재 계수의 정본은 규칙 파일
-        `numeric_harvest.enclosing_exclusions.required_why` 다.
+        ★ 부재는 통과가 아니라 오류다. 봉투가 **전부** 사라지면 통주 2 가 실측한 23건이
+        아무 신호 없이 정답지로 돌아온다. 같은 회차의 `bibliography.priority_window` 가
+        세운 선례를 그대로 따른다. **세는 것은 개수가 아니라 존재다** — 특정 수를 요구하면
+        재정이 항목을 더할 때마다 로더가 함께 낡는다. 그러므로 이 함수가 죽는 조건은
+        **전부 부재** 하나뿐이며, 개별 항목의 부재는 잡지 않는다. 현재 계수의 정본은
+        규칙 파일 `numeric_harvest.enclosing_exclusions.census` 다(강제가 아니라 기록).
         """
         declaration = block.get("enclosing_exclusions") or {}
         if declaration.get("required") is not True:
@@ -507,6 +508,46 @@ class Rules:
                 "(봉투 배제가 꺼졌다 — 좌표 오파싱이 정답지로 돌아온다)"
             )
         self.harvest_envelope_patterns = tuple(compiled)
+
+    def _compile_harvest_conditions(self, exclusions) -> None:
+        """토큰 조건 배제의 **선행 문맥 패턴**을 컴파일한다(2026-08-19 보수).
+
+        봉투(`match: enclosing-pattern`)와 갈리는 자리다. 봉투는 낱말부터 수까지의 **구간**을
+        표시하고 그 구간과 겹치는 수확을 전부 버리므로, `a column 12 mm wide` 에서 진짜
+        `12 mm` 를 함께 삼켰다(감수 C′-1·D 독립 실증). 조건 규칙은 **수확 후보 하나**를 보고,
+        그 후보가 단위를 들었으면 애초에 좌표가 아니다 — 그래서 같은 손실이 원리적으로 없다.
+
+        코드가 아는 것은 조건의 **형태**뿐이고(정수 ∧ 단위 없음 ∧ 선행 문맥 일치), 무엇이
+        행·열 낱말인지는 전적으로 규칙 파일이 든다(D7 — 코드가 자기 법을 갖지 않는다).
+
+        ★ 부재는 통과가 아니라 오류다. 선행 문맥 패턴을 든 항목이 **하나도 없으면** 죽는다 —
+        `preceding_pattern` 한 줄을 지우는 것만으로 좌표 배제가 조용히 꺼지기 때문이다.
+        세는 것은 여기서도 **개수가 아니라 존재**이며, 근거는 `_compile_harvest_envelopes`
+        와 같다.
+        """
+        compiled: dict = {}
+        for entry in exclusions:
+            if entry.get("match") == "enclosing-pattern":
+                continue
+            raw = entry.get("preceding_pattern")
+            if raw is None:
+                continue
+            if not entry.get("reason_label"):
+                raise RulesError(
+                    f"numeric_harvest.exclusions[{entry.get('id')}] 에 reason_label 이 없다"
+                    "(토큰 조건 배제 — 사유 없는 배제는 조용한 배제다)"
+                )
+            compiled[str(entry.get("id"))] = re.compile(str(raw))
+        if not compiled:
+            raise RulesError(
+                "numeric_harvest.exclusions 에 preceding_pattern 을 든 토큰 조건 배제가 "
+                "하나도 없다(행·열 좌표 배제가 꺼졌다 — 좌표 라벨이 정답지로 돌아온다)"
+            )
+        self.harvest_preceding_patterns = compiled
+
+    def harvest_preceding_pattern(self, exclusion_id: str):
+        """토큰 조건 배제 1건의 선행 문맥 패턴. 파일에서 지우면 로드가 죽는다(위)."""
+        return self.harvest_preceding_patterns.get(exclusion_id)
 
     def in_answer_scope(self, item: dict) -> bool:
         """항목이 **정답지 범위**에 드는가(kind·origin·status 3조건).

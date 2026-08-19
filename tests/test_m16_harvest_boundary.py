@@ -17,6 +17,11 @@
 
 ★ 2026-08-19 (재정 S7) — 계열이 **둘 늘었다**(`figure-or-table-number-list` ·
 `row-column-coordinate`). 이 파일의 "넷"은 **통주 2 시점의 사실**이며 현재의 계수가 아니다.
+같은 날 후속 보수로 `row-column-coordinate` 는 봉투가 아니라 **토큰 조건 규칙**이 되었다 —
+봉투가 구간과 겹치는 진짜 값(`a column 12 mm wide` 의 `12 mm`)을 함께 삼키는 것이 감수
+C′-1·D 에서 독립으로 실증되었기 때문이다. 그래서 지금 `match: enclosing-pattern` 은 **5종**
+이고, 이 파일의 봉투 반증(`test_removing_the_envelope_patterns_kills_the_load`)이 덮지 못하게
+된 자리는 `test_removing_the_preceding_pattern_kills_the_load` 가 새로 진다.
 신설 둘의 반증대는 `tests/test_m17_rules.py` 와 반례 golden
 `ledgers/regression/golden/rc-0005-harvest-exclusion-counterexamples` 에 있고, 이 파일이
 지는 몫은 **그 신설이 이 핀 런의 계수를 건드리지 않았다는 실측**이다(아래 사유별 전량 등식).
@@ -261,6 +266,21 @@ def test_removing_the_envelope_patterns_kills_the_load(tmp_path) -> None:
         for entry in raw["numeric_harvest"]["exclusions"]
         if entry.get("match") != "enclosing-pattern"
     ]
+    with pytest.raises(RulesError):
+        load_rules_from(raw, tmp_path)
+
+
+def test_removing_the_preceding_pattern_kills_the_load(tmp_path) -> None:
+    """부재가 통과로 읽히면 한 줄을 지우는 것만으로 **행·열 좌표 배제**가 조용히 꺼진다.
+
+    ★ 이 자리는 2026-08-19 에 생겼다. `row-column-coordinate` 가 봉투에서 **토큰 조건 규칙**
+    으로 바뀌었고(봉투가 `a column 12 mm wide` 의 진짜 `12 mm` 를 함께 삼켰다 — 감수 C′-1·D
+    독립 실증), 그 순간 위 `test_removing_the_envelope_patterns_kills_the_load` 의 보호
+    범위에서 빠졌다. 형태를 바꾸면서 안전판을 하나 지우면 그것은 교체가 아니라 후퇴다.
+    """
+    raw = rules_document()
+    for entry in raw["numeric_harvest"]["exclusions"]:
+        entry.pop("preceding_pattern", None)
     with pytest.raises(RulesError):
         load_rules_from(raw, tmp_path)
 
