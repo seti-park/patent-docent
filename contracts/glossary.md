@@ -34,7 +34,7 @@
 | 축 | 예 | 어디에 | 언제 오르는가 |
 |---|---|---|---|
 | 계약 라인 | `material-spec/v0` | 인스턴스 `schema` 필드 | 하위호환 파괴. **단 `0.x` 미동결 기간은 예외** — 자유이며 기록만 남긴다(재정 N15) |
-| 구현 버전 | `reader_version: "0.7.0"` | 인스턴스 필드 + `reader/READER-VERSION` | 필드 추가·검사 강화 = minor · 버그 수정 = patch |
+| 구현 버전 | `reader_version: "0.8.0"` | 인스턴스 필드 + `reader/READER-VERSION` | 필드 추가·검사 강화 = minor · 버그 수정 = patch |
 | 인스턴스 버전 | `spec_version: 2` | 인스턴스 필드 | 동결 스탬프. 개정 시 +1 단조 증가 |
 
 ---
@@ -174,7 +174,7 @@
 | `attaches_to`가 무엇을 가리키는가 | **항상 element id.** 종속의 종속이라도 최종적으로 독립항 element를 가리킨다 |
 | `figures[].asset_path` | 동결본에서 **영구히 `null`**. 도면↔자산 매핑의 정본은 `30-figures/assets/manifest.json` 하나(M0 감수 M21) |
 | `figures[].numerals`가 숫자 대조 대상인가 | **아니다.** 도면부호는 본문에 등장할 이유가 없다. 쓰려면 `fact` 항목으로 별도 등재 |
-| `FIG. 60`의 `60`도 도면부호 배제로 걸리는가 | **아니다 — 다른 배제다.** 도면부호(`figures[].numerals`)는 **부품**을 가리키고 도면·표 번호는 **그림 자체**를 가리키므로, 전자는 `figure-numeral`(집합 소속 3조건)이 잡고 후자는 봉투 배제 `figure-or-table-number`(`match: enclosing-pattern`)가 잡는다. 구 판은 후자를 잡지 못해 `FIG. 60`의 `60`이 스칼라 수치로 정답지에 올랐다(2026-08-18 통주 2 실측 4건). 사유 라벨의 정본 = `reader/reader-rules.yaml#numeric_harvest.exclusions[].reason_label` |
+| `FIG. 60`의 `60`도 도면부호 배제로 걸리는가 | **아니다 — 다른 배제다.** 도면부호(`figures[].numerals`)는 **부품**을 가리키고 도면·표 번호는 **그림 자체**를 가리키므로, 전자는 `figure-numeral`(집합 소속 3조건)이 잡고 후자는 봉투 배제 `figure-or-table-number`(`match: enclosing-pattern`)가 잡는다. 구 판은 후자를 잡지 못해 `FIG. 60`의 `60`이 스칼라 수치로 정답지에 올랐다(2026-08-18 통주 2 실측 4건). **한 지시가 두 번호를 드는 나열**(`Tables 1 and 2`)의 **뒤 항**은 또 다른 어형이라 그 봉투에 들지 않았고, **행·열 좌표**(`Row 0`·`Col 0`)는 도면부호 집합에도 토큰 경계에도 걸리지 않는 **두 방어 사이의 틈**이었다 — 그 셋이 재정 2026-08-19 S7의 건별 배제 대상(M87~M89)이며 `figure-or-table-number-list`와 `row-column-coordinate`가 신설되었다(사유 라벨은 앞의 것이 `figure-or-table-number`를 공유한다 — 잃은 자리의 **사유**가 같기 때문이다). 봉투 배제는 현재 **6종**이다. 사유 라벨의 정본 = `reader/reader-rules.yaml#numeric_harvest.exclusions[].reason_label` |
 | `vacuous`를 손으로 적는가 | **아니다.** `ruleset_size`·`checked`에서 파생된다 |
 | `superseded_by`가 `active`를 가리켜야 하는가 | **아니다(M1에서 교체됨).** 사슬을 따라간 **종단**이 `active`면 된다. 구 규칙은 2차 승계에서 동결본 수정을 강요했다(SPEC §9.27) |
 | 값 언어 | **EN 단일.** 예외 2곳뿐 — `drop_signal.reason`·`grounding.search_note`(KR) |
