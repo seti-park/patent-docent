@@ -15,6 +15,12 @@
 **진짜 수치를 먹으면 그것이 더 큰 결함**이므로, 같은 시험에서 살아남아야 할 일곱 어형
 (`2, 3, 4, or 5` · `5, 4, 3 or 2` · `12 columns` · `4, 3, and 2`)을 함께 본다.
 
+★ 2026-08-19 (재정 S7) — 계열이 **둘 늘었다**(`figure-or-table-number-list` ·
+`row-column-coordinate`). 이 파일의 "넷"은 **통주 2 시점의 사실**이며 현재의 계수가 아니다.
+신설 둘의 반증대는 `tests/test_m17_rules.py` 와 반례 golden
+`ledgers/regression/golden/rc-0005-harvest-exclusion-counterexamples` 에 있고, 이 파일이
+지는 몫은 **그 신설이 이 핀 런의 계수를 건드리지 않았다는 실측**이다(아래 사유별 전량 등식).
+
 `assert` 를 쓰지 않는다 — 불일치는 `pytest.fail()` 로 명시 비교와 함께 보고한다
 (CLAUDE.md §3 · `tests/test_m1_reader.py` 와 같은 규율).
 """
@@ -76,7 +82,7 @@ def reasons(skipped: list[dict]) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
-# ① 배제 — 좌표 표현 4계열이 정답지에 오르지 않는다
+# ① 배제 — 좌표 표현 4계열이 정답지에 오르지 않는다 (2026-08-18 시점의 넷 · 현재 목록은 6종)
 # ---------------------------------------------------------------------------
 
 # 통주 2 의 **실물 문자열**이다. 손으로 다듬은 표본을 쓰면 "우리가 만든 판에서만 도는" 규칙이
@@ -362,15 +368,25 @@ def test_real_patent_quoted_harvest_splits_into_eleven_and_the_excluded() -> Non
     tally: dict = {}
     for entry in skipped:
         tally[entry["reason"]] = tally.get(entry["reason"], 0) + 1
-    expected_envelopes = {
-        "coordinate-triple": 9,
+    # ★ 2026-08-19 (재정 S7) — 구 판은 **네 계열만 골라** 셌다(`{key: tally.get(key, 0) …}`).
+    #   그 형태는 배제가 하나 늘어도 조용히 통과한다. 봉투 배제를 넓히는 라운드에서 그것은
+    #   정확히 잘못된 침묵이므로 **사유별 전량 등식**으로 바꾼다 — 신설 배제가 이 런에 닿으면
+    #   여기서 반드시 드러난다.
+    #
+    #   ★ 그리고 실제로 닿지 않았다. 재정 S7 이 신설한 둘(`figure-or-table-number-list` ·
+    #   `row-column-coordinate`)이 겨눈 자리는 통주 **3** 의 아티팩트 M87~M89 이고, 이 핀 런
+    #   (통주 2)의 접지 인용에는 그 세 자리가 없다. 개정 전후로 이 표가 **한 칸도 바뀌지
+    #   않았다는 것**이 "신설 배제가 이 런의 진짜 값을 먹지 않았다"의 직접 증거다.
+    expected_tally = {
         "bit-slice": 3,
+        "boundary-left": 26,
+        "coordinate-triple": 9,
+        "figure-numeral": 33,
         "figure-or-table-number": 4,
         "subscript-index": 2,
     }
-    actual = {key: tally.get(key, 0) for key in expected_envelopes}
-    if actual != expected_envelopes:
-        pytest.fail(f"계열별 봉투 배제가 실측과 다르다: {actual} != {expected_envelopes}")
+    if tally != expected_tally:
+        pytest.fail(f"사유별 배제 계수가 실측과 다르다: {tally} != {expected_tally}")
     # 경계 기각은 이 개정 전에는 **한 건도 기록되지 않았다**. 0 이 되면 그 침묵이 돌아온 것이다.
     if tally.get("boundary-left", 0) == 0:
         pytest.fail(f"왼쪽 경계 기각이 다시 침묵했다: {tally}")

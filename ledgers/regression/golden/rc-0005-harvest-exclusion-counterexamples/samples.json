@@ -1,0 +1,64 @@
+{
+  "golden_id": "rc-0005-harvest-exclusion-counterexamples",
+  "subject": "numeric_harvest.exclusions[match=enclosing-pattern] — figure-or-table-number-list · row-column-coordinate",
+  "ruling": "재정 2026-08-19 S7 = ⓑ — 순도는 P-B 요건 밖. 알려진 아티팩트 M87~M89 는 건별 배제로 처리하되 반례 golden 을 동반한다",
+  "expectation_note": "expect_values 는 harvest_numeric_facts() 가 낸 origin=quoted 항목의 (value_raw, unit) 을 등장 순으로 적은 값이고, expect_skipped 는 같은 실행의 skipped[] 중 이 인용문의 (token, reason) 을 등장 순으로 적은 값이다. 기대값은 이 파일이 들고 시험은 이 파일을 읽는다.",
+  "samples": [
+    {
+      "id": "hx-01",
+      "role": "보존(반례)",
+      "quote": "between 1 and 2",
+      "expect_values": [["1 and 2", null]],
+      "expect_skipped": [],
+      "why": "★ 재정 S7 이 이름으로 지목한 반례다. 'and' 로 이어진 두 정수라는 표면만 보면 신설 꼬리 어형과 같아 보이지만, 앞에 도면·표 지시가 없으므로 봉투가 서지 않는다. 값은 range 어형 하나로 온전히 남는다 — 배제가 넓어지면 가장 먼저 사라질 자리다."
+    },
+    {
+      "id": "hx-02",
+      "role": "보존(반례)",
+      "quote": "the gap is between 1 and 2 mm in the assembled state",
+      "expect_values": [["1 and 2 mm", "mm"]],
+      "expect_skipped": [],
+      "why": "hx-01 에 단위를 붙인 자리다. 단위가 붙어도 봉투가 서지 않아야 한다 — 단위까지 스팬에 드는 값이 통째로 사라지는 것이 배제 과광화의 전형적 손실 형태다."
+    },
+    {
+      "id": "hx-03",
+      "role": "보존(반례 · 실특허 실물)",
+      "quote": "the common cell **220** can include 60 columns and 60 rows",
+      "expect_values": [["220", null], ["60", null], ["60", null]],
+      "expect_skipped": [],
+      "why": "★ row-column-coordinate 의 핵심 안전판이다. 감수 C′-1 이 M91·M92 를 GENUINE 으로 판정한 바로 그 문장이며(통주 3 [0189]), 여기서 60 은 좌표가 아니라 개수다. 수가 낱말 앞에 오므로 걸리지 않는다 — 어순 하나가 좌표와 개수를 가른다. 이 표본이 깨지면 신설 배제가 진짜 값을 먹은 것이다. (220 은 이 최소 명세에 figures[].numerals 가 없어 수확된다. 실런에서는 도면부호 배제가 별도로 그것을 걷어 간다 — 이 표본이 재는 것은 60 두 건이다.)"
+    },
+    {
+      "id": "hx-04",
+      "role": "보존(반례)",
+      "quote": "the seam is shown in FIG. 3 and 4 mm of clearance remains",
+      "expect_values": [["4 mm", "mm"]],
+      "expect_skipped": [["FIG. 3", "figure-or-table-number"]],
+      "why": "★ 구 open_question 이 예고한 바로 그 위험이다 — 나열 꼬리를 무조건 열면 이 문장의 '4 mm' 가 도면 번호와 함께 삼켜진다. 꼬리 가드(수 뒤에 글자·단위 기호·곱셈 기호가 오면 봉투에 들지 않는다)가 그것을 막는다. 도면 번호 3 은 기존 봉투가 그대로 걷어 간다."
+    },
+    {
+      "id": "hx-05",
+      "role": "배제(대조군)",
+      "quote": "beyond those listed in Tables 1 and 2. For example",
+      "expect_values": [],
+      "expect_skipped": [["Tables 1 and 2", "figure-or-table-number"]],
+      "why": "★ M87 의 실물이다(통주 3 [0186] · value_span 117:118). 구 봉투는 'Tables 1' 까지만 잡아 뒤 항 2 가 스칼라로 샜다. 이제 꼬리까지 한 봉투로 들며, 기록은 겹침 규율상 긴 쪽 한 줄이다 — 사유 라벨은 figure-or-table-number 를 공유한다(잃은 자리의 사유가 같다)."
+    },
+    {
+      "id": "hx-06",
+      "role": "배제(대조군)",
+      "quote": "a column cell **340**, e.g., in Row 0 and Col 0 of the CIM macro **101**",
+      "expect_values": [["340", null], ["101", null]],
+      "expect_skipped": [["Row 0", "row-column-coordinate"], ["Col 0", "row-column-coordinate"]],
+      "why": "★ M88·M89 의 실물이다(통주 3 [0140] · value_span 36:37 과 46:47). 행·열 좌표 둘이 각각 한 봉투로 든다. Col 0 뒤에 'of' 가 오는데도 걸리는 것이 요점이다 — 이 어형의 가드는 뒤가 아니라 앞(낱말이 수 앞에 온다)에 있다. (340·101 은 이 최소 명세에 도면 목록이 없어 남는다 — 실런에서는 도면부호 배제가 걷어 간다.)"
+    },
+    {
+      "id": "hx-07",
+      "role": "남은 구멍(정직한 기록)",
+      "quote": "FIGS. 3 and 4 illustrate the column cell",
+      "expect_values": [["4", null]],
+      "expect_skipped": [["FIGS. 3", "figure-or-table-number"]],
+      "why": "★ 숨기지 않는다 — 꼬리 뒤에 낱말이 오는 어형에서는 둘째 번호가 여전히 샌다. 가드가 그 자리를 일부러 포기했기 때문이다(열면 hx-04 의 '4 mm' 가 같이 열린다). 새는 것은 도면 번호이므로 순도의 손실이고, 여는 것은 전수성의 손실이다. 재정 S7 이 둘 중 앞엣것을 골랐고, 이 표본이 그 선택의 대가를 기록한다."
+    }
+  ]
+}

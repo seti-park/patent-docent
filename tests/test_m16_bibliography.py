@@ -25,6 +25,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+import re
 import sys
 
 import pytest
@@ -99,26 +100,100 @@ def run_all_read(spec: dict, source: str) -> list:
 #   방향**이다 — 옛 수확본과 현행 수확기가 다르다는 것. 그래서 예외를 방향으로 좁히던
 #   기존 조건을 **두 방향으로** 넓히되, [변조]는 **여전히 예외가 아니다**: 좌표가 같은데
 #   값이 다른 것은 표류가 아니라 위조이며, 그것까지 눈감으면 예외가 곧 은폐가 된다.
+#
+#   ★ 2026-08-19 (재정 S3·S7 라운드) — **예외를 개수와 좌표로 조였다.** 구 헬퍼는 임의의
+#   `[추가]`·`[누락]` 을 **전부** 면제했고, C′-2 감수가 그것을 *"시험 oracle 의 과도한
+#   일반화 … 향후 무관한 drift 도 이 suite 에서 숨길 수 있다"* 고 판정했다. 판정은 옳다 —
+#   "이 표류는 알려진 것이다"라는 주장은 **무엇이 표류하는지 세어 놓았을 때만** 참이다.
+#   그래서 면제 대상을 아래 `PINNED_HARVEST_DRIFT_EXEMPTIONS` 에 **좌표·값까지 못 박고**,
+#   목록에 없는 표류가 하나라도 섞이면 예외는 성립하지 않는다.
 PINNED_HARVEST_DRIFT = "read.value-derivation"
+PARITY_RULE = "value.harvest-parity"
+
+# 표류 갈래의 표지. `[변조]` 는 **의도적으로 목록에 없다** — 좌표가 같은데 값이 다른 것은
+# 법의 개정으로 설명되지 않으므로 면제 대상이 아니다(구 헬퍼의 규율을 그대로 잇는다).
+DRIFT_KIND = re.compile(r"^\[(추가|누락|변조)\]")
+
+# ★ 면제 목록 — 실측으로 채웠다. 근거는 둘로 갈린다.
+#
+#   · **[추가] 23건** = 이 핀 커밋의 동결 명세가 든 좌표 오파싱 아티팩트다. 런이 결박된
+#     커밋(2026-08-18 봉투 배제 **이전**)의 수확기는 `FP8 (1-5-2)` · `Act 0 <6:3>` ·
+#     `FIG. 60` · `Table 2` · `C.sub.j−1` 을 수치로 읽었고, 지금의 수확기는 읽지 않는다.
+#     23이라는 수는 감수 C′-1 의 독립 재계수와 일치한다(*"통주 2 의 quoted 30 중 M87–M109 가
+#     아티팩트 23건, M110–M116 이 진짜 7건"*).
+#   · **[누락] 4건** = 반대 방향이다. 재정 2026-08-19 Q4 가 단위 어휘에 `b`(bits)를 열면서
+#     `[0189]` 의 `5b, 4b, 3b, 2b` 넷이 이제 수확되는데, 핀 커밋의 명세에는 그 넷이 없다.
+#
+#   ★ 이 라운드(재정 S7 의 봉투 배제 2종 신설)는 **이 목록을 바꾸지 않았다.** 신설 배제가
+#   겨눈 `Tables 1 and 2` 의 뒤 항 · `Row 0` · `Col 0` 은 통주 **3** 의 아티팩트이고, 이 핀
+#   런(통주 2)의 명세에는 그 세 자리가 없다. 개정 전후로 27건이 동일함을 실측했다 —
+#   그것이 "신설 배제가 이 런의 진짜 값을 먹지 않았다"의 직접 증거다.
+#
+#   갱신 방법(다음 사람에게): 목록을 손으로 늘리지 마라. 먼저 이 런에 `run_all_read` 를
+#   돌려 `read.value-derivation` 행의 결함을 전부 뽑고, **왜 그것이 표류인지**를 커밋에
+#   적은 다음 그 실측값을 옮겨 적는다. 근거 없이 한 줄을 더하는 순간 이 목록은 다시
+#   C′-2 가 짚은 그 은폐 장치가 된다.
+PINNED_HARVEST_DRIFT_EXEMPTIONS: frozenset = frozenset(
+    {
+        # (갈래, locus, found(=명세가 든 값), expected(=수확기가 낸 값))
+        ("누락", "harvest:[0189][120,122)", "(없음)", "5b"),
+        ("누락", "harvest:[0189][124,126)", "(없음)", "4b"),
+        ("누락", "harvest:[0189][128,130)", "(없음)", "3b"),
+        ("누락", "harvest:[0189][134,136)", "(없음)", "2b"),
+        ("추가", "M87.value_raw", "1-5", "(수확 결과에 없음)"),
+        ("추가", "M88.value_raw", "1-4", "(수확 결과에 없음)"),
+        ("추가", "M89.value_raw", "1-3", "(수확 결과에 없음)"),
+        ("추가", "M90.value_raw", "1-3", "(수확 결과에 없음)"),
+        ("추가", "M91.value_raw", "1-2", "(수확 결과에 없음)"),
+        ("추가", "M92.value_raw", "1-2", "(수확 결과에 없음)"),
+        ("추가", "M93.value_raw", "1-1", "(수확 결과에 없음)"),
+        ("추가", "M94.value_raw", "2", "(수확 결과에 없음)"),
+        ("추가", "M95.value_raw", "60", "(수확 결과에 없음)"),
+        ("추가", "M96.value_raw", "1-4", "(수확 결과에 없음)"),
+        ("추가", "M97.value_raw", "1-3", "(수확 결과에 없음)"),
+        ("추가", "M98.value_raw", "3", "(수확 결과에 없음)"),
+        ("추가", "M99.value_raw", "0", "(수확 결과에 없음)"),
+        ("추가", "M100.value_raw", "<6", "(수확 결과에 없음)"),
+        ("추가", "M101.value_raw", "3", "(수확 결과에 없음)"),
+        ("추가", "M102.value_raw", "0", "(수확 결과에 없음)"),
+        ("추가", "M103.value_raw", "<4", "(수확 결과에 없음)"),
+        ("추가", "M104.value_raw", "2", "(수확 결과에 없음)"),
+        ("추가", "M105.value_raw", "<4", "(수확 결과에 없음)"),
+        ("추가", "M106.value_raw", "2", "(수확 결과에 없음)"),
+        ("추가", "M107.value_raw", "1", "(수확 결과에 없음)"),
+        ("추가", "M108.value_raw", "1", "(수확 결과에 없음)"),
+        ("추가", "M109.value_raw", "1", "(수확 결과에 없음)"),
+    }
+)
+
+
+def drift_signature(finding) -> tuple | None:
+    """결함 1건의 면제 지문. 표류 표지가 없으면 None(= 면제 대상이 아니다)."""
+    kind = DRIFT_KIND.match(str(finding.message or ""))
+    if kind is None:
+        return None
+    return (kind.group(1), finding.locus, finding.found, finding.expected)
 
 
 def is_pinned_harvest_drift(row) -> bool:
-    """이 실패가 "핀 커밋의 옛 수확본 ↔ 현행 수확기" 표류인가.
+    """이 실패가 "핀 커밋의 옛 수확본 ↔ 현행 수확기" 의 **알려진** 표류인가.
 
-    표류가 아닌 결함(값 파싱·산식 재계산·정규화 불일치)이 하나라도 섞이면 False 다 —
-    예외의 폭이 넓어지면 예외가 곧 은폐가 된다.
+    구 판은 갈래 표지(`[추가]`·`[누락]`)만 보고 전부 면제했다. 지금은 **좌표와 값까지**
+    대조해 `PINNED_HARVEST_DRIFT_EXEMPTIONS` 에 실린 것만 면제한다 — 목록 밖의 표류가
+    하나라도 섞이면 False 이고, 그러면 이 suite 는 그 실패를 숨기지 않고 낸다.
 
-    방향은 둘 다 표류다: [추가] = 옛 명세가 든 값을 지금 수확기가 내지 않는다 ·
-    [누락] = 지금 수확기가 내는 값을 옛 명세가 들지 않는다. **[변조]는 표류가 아니다** —
-    좌표가 같은데 값이 다른 것은 법의 개정으로 설명되지 않는다.
+    셋 다 만족해야 참이다: ① 검사가 `read.value-derivation` 이고 결함이 있다
+    ② 모든 결함의 규칙이 `value.harvest-parity` 다 ③ 모든 결함의 지문이 목록에 있다.
+    **[변조]는 여전히 예외가 아니다** — 목록에 한 줄도 없으므로 ③에서 걸린다.
     """
     if row.check_id != PINNED_HARVEST_DRIFT or not row.findings:
         return False
-    return all(
-        finding.rule == "value.harvest-parity"
-        and ("[추가]" in finding.message or "[누락]" in finding.message)
-        for finding in row.findings
-    )
+    for finding in row.findings:
+        if finding.rule != PARITY_RULE:
+            return False
+        if drift_signature(finding) not in PINNED_HARVEST_DRIFT_EXEMPTIONS:
+            return False
+    return True
 
 
 def rule_tally(row) -> dict:
@@ -385,3 +460,121 @@ def test_corpus_manifest_registers_the_two_new_mutants() -> None:
             f"래칫이 실제 케이스 수와 다르다: min_cases={manifest['floors']['min_cases']} · "
             f"cases={len(manifest['cases'])}"
         )
+
+
+# ---------------------------------------------------------------------------
+# ⑦ 면제 목록 자체의 반증대 (재정 2026-08-19 라운드 · C′-2 판정의 처분)
+#
+#   면제는 시험을 통과시키는 장치가 아니라 **주장**이다 — "이 실패는 알려진 표류다."
+#   주장이므로 반증대가 따라야 한다. 아래 둘이 그것이며, 앞엣것은 목록이 **실측과 같은가**를
+#   재고 뒤엣것은 목록 **밖의 표류가 정말 걸리는가**를 잰다.
+# ---------------------------------------------------------------------------
+
+
+def pinned_drift_row():
+    """무변조 핀 런의 `read.value-derivation` 행 하나."""
+    for row in run_all_read(RUN_SPEC_DATA, RUN_SOURCE_TEXT):
+        if row.check_id == PINNED_HARVEST_DRIFT:
+            return row
+    pytest.fail(f"{PINNED_HARVEST_DRIFT} 행이 없다 — 검사 목록이 무너졌다")
+
+
+def test_the_pinned_drift_is_exactly_the_recorded_set() -> None:
+    """개수와 좌표를 고정하지 않으면 "알려진 표류"라는 주장은 셀 수 없는 주장이다.
+
+    ★ 양방향 등식이다 — 목록에 없는 표류가 **생기면** 실패하고, 목록에 있는 표류가
+    **사라져도** 실패한다. 뒤엣것을 함께 재는 이유는 낡은 면제가 조용히 남으면 다음 사람이
+    "이만큼은 원래 표류한다"고 믿게 되기 때문이다.
+    """
+    row = pinned_drift_row()
+    actual = {drift_signature(finding) for finding in row.findings}
+    if len(row.findings) != len(PINNED_HARVEST_DRIFT_EXEMPTIONS):
+        pytest.fail(
+            f"핀 런의 표류 개수가 면제 목록과 다르다 — 실측 {len(row.findings)}건, "
+            f"목록 {len(PINNED_HARVEST_DRIFT_EXEMPTIONS)}건"
+        )
+    if actual != PINNED_HARVEST_DRIFT_EXEMPTIONS:
+        unknown = sorted(actual - PINNED_HARVEST_DRIFT_EXEMPTIONS, key=str)
+        stale = sorted(PINNED_HARVEST_DRIFT_EXEMPTIONS - actual, key=str)
+        pytest.fail(f"면제 목록이 실측과 어긋난다 — 목록 밖 {unknown} · 낡은 면제 {stale}")
+
+    # 갈래별 계수도 못 박는다(23 + 4 = 27). 두 방향이 같은 사건의 두 얼굴이라는 서술이
+    # 계수로 뒷받침되지 않으면 그 서술은 검증되지 않은 주석이다.
+    kinds: dict = {}
+    for signature in actual:
+        kinds[signature[0]] = kinds.get(signature[0], 0) + 1
+    if kinds != {"추가": 23, "누락": 4}:
+        pytest.fail(f"표류의 갈래별 계수가 실측과 다르다: {kinds} (기대 {{'추가': 23, '누락': 4}})")
+
+
+def test_an_unlisted_drift_is_not_exempt() -> None:
+    """★ C′-2 판정의 직접 처분 — 목록 밖 표류가 면제되면 이 suite 가 무관한 결함을 숨긴다.
+
+    셋을 잰다. ① 값을 갈아 끼운 **[변조]** ② 목록에 없는 좌표의 **[누락]**
+    ③ 목록에 없는 항목의 **[추가]**. 구 헬퍼는 ②·③을 갈래 표지만 보고 면제했고 ①만 잡았다.
+
+    ★ False 라는 결과만 보지 않는다 — 옆 규칙이 함께 울어도 False 가 나오므로, 그것만 보면
+    이 시험은 **엉뚱한 이유로 통과**할 수 있다. 그래서 기대한 지문이 **목록 밖 표류로 실제
+    등장했는가**를 함께 확인한다.
+    """
+    baseline = pinned_drift_row()
+    if not is_pinned_harvest_drift(baseline):
+        pytest.fail("무변조 핀 런이 이미 면제 대상이 아니다 — 아래 반증의 기준선이 없다")
+
+    # ① [변조] — 실재하는 인용문 옆의 값만 갈아 끼운다(좌표는 그대로).
+    forged = run_spec_copy()
+    for item in forged["items"]:
+        if item.get("id") == "M110":
+            item["value_raw"] = "2, 3, 4, or 6"
+            break
+    else:
+        pytest.fail("핀 런에 M110 이 없다 — 이 반증의 피검체가 사라졌다")
+    _reject_unlisted(
+        forged, ("변조", "M110.value_raw", "2, 3, 4, or 6", "2, 3, 4, or 5"),
+        "[변조] 가 면제되었다 — 좌표가 같은데 값이 다른 것은 표류가 아니다",
+    )
+
+    # ② [누락] — 진짜 수확 1건을 명세에서 통째로 들어낸다(목록에 없는 좌표가 하나 생긴다).
+    dropped = run_spec_copy()
+    dropped["items"] = [item for item in dropped["items"] if item.get("id") != "M116"]
+    _reject_unlisted(
+        dropped, ("누락", "harvest:[0189][112,123)", "(없음)", "4, 3, and 2"),
+        "목록에 없는 [누락] 이 면제되었다 — oracle 이 여전히 과도하게 일반적이다",
+    )
+
+    # ③ [추가] — 수확기가 낸 적 없는 좌표에 값을 심는다.
+    planted = run_spec_copy()
+    seed = copy.deepcopy(next(i for i in planted["items"] if i.get("id") == "M110"))
+    seed["id"] = "M900"
+    seed["source"]["value_span"] = {"start": 0, "end": 3}
+    seed["value_raw"] = "999"
+    seed["value_normalized"] = "999"
+    seed["value_type"] = {"kind": "scalar", "value": "999"}
+    planted["items"].append(seed)
+    _reject_unlisted(
+        planted, ("추가", "M900.value_raw", "999", "(수확 결과에 없음)"),
+        "목록에 없는 [추가] 가 면제되었다 — 심은 값이 예외 뒤에 숨는다",
+    )
+
+
+def _reject_unlisted(spec: dict, signature: tuple, message: str) -> None:
+    """변조본이 **그 지문을** 목록 밖 표류로 내고, 그래서 면제가 깨지는지 함께 본다."""
+    row = _derivation_row(spec)
+    unlisted = {
+        drift_signature(finding)
+        for finding in row.findings
+        if finding.rule == PARITY_RULE
+    } - PINNED_HARVEST_DRIFT_EXEMPTIONS
+    if signature not in unlisted:
+        pytest.fail(
+            f"기대한 표류가 나오지 않았다 — 기대 {signature}, 목록 밖 실측 {sorted(unlisted, key=str)}"
+        )
+    if is_pinned_harvest_drift(row):
+        pytest.fail(message)
+
+
+def _derivation_row(spec: dict):
+    for row in run_all_read(spec, RUN_SOURCE_TEXT):
+        if row.check_id == PINNED_HARVEST_DRIFT:
+            return row
+    pytest.fail(f"{PINNED_HARVEST_DRIFT} 행이 없다")

@@ -470,9 +470,12 @@ class Rules:
         든 정규식에 걸리는 구간은 값이 아니라 자리다" 하나뿐이며, 무엇이 좌표 표현인지는
         전적으로 파일이 든다(D7 — 코드가 자기 법을 갖지 않는다).
 
-        ★ 부재는 통과가 아니라 오류다. 넷 중 하나를 지우는 것만으로 배제가 조용히 꺼지면
-        통주 2 가 실측한 23건이 아무 신호 없이 정답지로 돌아온다. 같은 회차의
-        `bibliography.priority_window` 가 세운 선례를 그대로 따른다.
+        ★ 부재는 통과가 아니라 오류다. 여섯(2026-08-18 넷 + 재정 2026-08-19 S7 둘) 중
+        하나를 지우는 것만으로 배제가 조용히 꺼지면 통주 2 가 실측한 23건이 아무 신호 없이
+        정답지로 돌아온다. 같은 회차의 `bibliography.priority_window` 가 세운 선례를 그대로
+        따른다. **세는 것은 개수가 아니라 존재다** — 특정 수를 요구하면 재정이 항목을 더할
+        때마다 로더가 함께 낡는다. 현재 계수의 정본은 규칙 파일
+        `numeric_harvest.enclosing_exclusions.required_why` 다.
         """
         declaration = block.get("enclosing_exclusions") or {}
         if declaration.get("required") is not True:

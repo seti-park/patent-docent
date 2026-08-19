@@ -1,0 +1,62 @@
+{
+  "golden_id": "rc-0004-conditional-marker-counterexamples",
+  "subject": "dependency_citation.unclassified.structure_markers.forms[structure=조건부]",
+  "ruling": "재정 2026-08-19 S3 = ⓑ 조건부 승인 — 10어형 승인, 앵커 결함 3건 교정",
+  "expectation_note": "expect_structures 는 Rules.structure_markers_in(text) 의 반환을 정렬 없이 그대로 적은 값이고, expect_escape_check 는 그 본문을 `unclassified` 로 선언했을 때 parse.unclassified-not-an-escape 가 우는가(fail)/조용한가(pass)다. 기대값은 이 파일이 들고 시험은 이 파일을 읽는다 — 시험에 값을 복제하면 반드시 한 벌이 낡는다.",
+  "samples": [
+    {
+      "id": "cm-01",
+      "role": "오탐 부재",
+      "targets": "responsive to",
+      "text": "The apparatus of claim 1, wherein the controller remains unresponsive to transient noise.",
+      "expect_structures": [],
+      "expect_escape_check": "fail",
+      "why": "★ 이 라운드가 겨눈 실측 결함이다. 앵커 없는 'responsive to' 는 unresponsive 안에서 부분 문자열로 매칭된다. 부정 접두사가 붙은 낱말이 조건부 표지로 읽히면, 표지가 판정 면제를 주는 구조에서 회피 통로가 하나 열린다 — 이 문장 하나로 어려운 종속항을 unclassified 로 적고 검사를 통과할 수 있었다."
+    },
+    {
+      "id": "cm-02",
+      "role": "오탐 부재",
+      "targets": "in response to",
+      "text": "The apparatus of claim 1, wherein the amplifier exhibits a flat gain response to the input signal.",
+      "expect_structures": [],
+      "expect_escape_check": "fail",
+      "why": "gain 의 꼬리 두 글자가 앞말과 붙어 'in response to' 를 만든다(ga|in response to). 'gain response' 는 증폭기 서술의 흔한 어형이며 조건절이 아니다. 앞쪽 \\b 가 없으면 이 문장이 조건부 표지를 낸다."
+    },
+    {
+      "id": "cm-03",
+      "role": "오탐 부재",
+      "targets": "provided that",
+      "text": "The apparatus of claim 1, wherein a roof is provided thatched with fibrous material.",
+      "expect_structures": [],
+      "expect_escape_check": "fail",
+      "why": "뒤쪽 경계의 반례다 — 'that' 이 thatched 의 앞 네 글자와 겹친다. ★ 정직하게 적는다: 셋 중 실물에서 관측된 누출은 cm-01 뿐이고 이 표본은 합성이다. 그럼에도 앵커를 단 이유는 원리 ①('낱말이 아니라 구문을 본다')이 세 어형에 똑같이 적용되기 때문이며, \\b 의 비용은 0이고 부재의 비용은 회피 통로 하나다."
+    },
+    {
+      "id": "cm-04",
+      "role": "미탐 부재(대조군)",
+      "targets": "in response to",
+      "text": "The apparatus of claim 1, wherein the controller opens the valve in response to a pressure signal.",
+      "expect_structures": ["조건부"],
+      "expect_escape_check": "pass",
+      "why": "★ 대조군이 없으면 이 표본은 '아무것도 안 잡는 규칙'과 구별되지 않는다. 정직한 조건부 종속항은 여전히 표지를 내고 unclassified 선언이 통과해야 한다 — 오탐 부재와 미탐 부재를 한 표본이 함께 진다."
+    },
+    {
+      "id": "cm-05",
+      "role": "미탐 부재(대조군)",
+      "targets": "responsive to",
+      "text": "The apparatus of claim 1, wherein the seal is responsive to the pressure signal.",
+      "expect_structures": ["조건부"],
+      "expect_escape_check": "pass",
+      "why": "cm-01 과 같은 어형의 정직한 사용이다. 교정이 어형을 죽인 것이 아니라 경계를 세운 것임을 이 한 줄이 증명한다."
+    },
+    {
+      "id": "cm-06",
+      "role": "미탐 부재(대조군)",
+      "targets": "provided that",
+      "text": "The apparatus of claim 1, wherein the seal holds provided that the pressure stays below a threshold.",
+      "expect_structures": ["조건부"],
+      "expect_escape_check": "pass",
+      "why": "cm-03 과 같은 어형의 정직한 사용이다."
+    }
+  ]
+}
