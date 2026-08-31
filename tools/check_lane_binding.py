@@ -29,6 +29,20 @@
                요청에서 **같은 값**이 나오기 때문이다. 이 대조 한 줄이 이 시나리오의 존재 이유다.
                실제 리포는 건드리지 않는다: 임시 작업장 안에 절차 트리 사본을 만들어 그것을
                변조한다.
+  ⑤ 위조값     레인 로그의 `request_digest` **값만** `ffff…ffff` 로 바꾼다(파일은 그대로)
+               → 신설 검사 `read.lane-log-digest-value` 가 거부하는가. 함께 **형태 검사는 이
+               위조를 지금도 통과시킨다**를 보인다(재정 2026-08-31 Q1 이 검사 id 를 나눈 근거).
+  ⑥ null 위장  요청 파일을 **실제로 쓴** 행의 지문을 `null` 로 바꾼다 → 제외로 새지 않는가.
+               **면제의 자격은 선언이 아니라 사실**이며, 요청 파일이 그 자리에 없을 때만
+               면제다. ⑥-b 가 그 뒤집기다 — 파일이 정말 없으면 면제는 **그대로 산다**
+               (재정 Q1 의 *"`None` 면제의 현행 축소분을 되돌리지 마라"*).
+  ⑦ 정상       정직한 왕복이 값 검사를 통과하고, 그 통과가 **공허하지 않다**(`digest_verified`
+               가 실제로 1). 아무것도 대조하지 않아도 `pass` 이므로 이 확인이 함께 선다.
+
+★ ⑤⑥⑦ 이 닫는 것(2026-08-19 감수 D 의 변조표 실측). M-D(값만 위조)와 M-E(`null` 위장)가
+**NOT DETECTED** 였고, M-C(소비 후 `request.md` 교체)는 **사람이 손으로 대조해야만** 드러났다.
+셋 다 기계 판정으로 옮겨졌으며, 그 판정은 형태 검사가 아니라 **별도 검사 id** 가 낸다 —
+재정 2026-08-31 Q1: *"한 검사가 둘을 지면 어느 쪽이 통과시켰는지 판정문에서 사라진다."*
 
 ★ 자기매칭이 성립하지 않는 이유. 이 도구는 탐지 패턴을 갖지 않는다 — 거부의 판정은 전량
 `engine/lanes/contract.py#load_response` 와 러너가 내리고, 이 소스는 그 결과를 기대와 대조할
@@ -284,7 +298,164 @@ def run_probe(repo: str, workdir: str) -> Report:
     # -- ④ 절차 문서 변조 후 구 응답 주입(재정 2026-08-19 S4 의 재현) ---------
     print("\n== ④ 절차 문서 변조 — 요청 필드는 그대로인데 프롬프트가 달라졌다 ==")
     probe_procedure_tampering(repo, workdir, report)
+
+    # -- ⑤⑥⑦ 지문 **값** 대조(재정 2026-08-31 Q1 의 반증) ---------------------
+    probe_digest_value(repo, workdir, report)
     return report
+
+
+def probe_digest_value(repo: str, workdir: str, report: Report) -> None:
+    """⑤ 위조값 FAIL · ⑥ `null` 위장 비제외 · ⑦ 정상 통과 (재정 2026-08-31 Q1).
+
+    ★ **세 시나리오 전부 실제 파일 · 실제 러너 경로다** — 로그 행을 손으로 지어내지 않고
+    `FileLaneAdapter` 로 요청을 쓰고 `_dispatch` 로 왕복을 돌린 뒤, **그 로그를 변조한다.**
+    변조 대상이 러너가 실제로 쓴 산출이어야 이 반증이 성립한다.
+
+    ★ **각 시나리오가 형제 검사(`read.lane-log-shape`)의 판정을 함께 보인다.** 그것이 재정 Q1
+    이 검사 id 를 나눈 이유의 실측이며, 이 절의 존재 이유다 — 값 검사가 FAIL 하는 것만 보이면
+    *"형태 검사가 이미 잡고 있지 않았나"* 에 답할 수 없다. 답은 **형태 검사가 지금도 통과시킨다**
+    이고, 2026-08-19 감수 D 가 `pass checked=5 violations=0` 으로 실측한 그 자리다.
+    """
+    from engine.lanes.file_adapter import FileLaneAdapter  # noqa: PLC0415
+    from engine.stages.read import (  # noqa: PLC0415
+        LaneJournal,
+        _dispatch,
+        check_lane_log_digest_value,
+        check_lane_log_shape,
+    )
+
+    lanes_root = os.path.join(workdir, "digest-value", "10-read", "lanes")
+    adapter = FileLaneAdapter(lanes_root, repo)
+    lane_home = os.path.join(lanes_root, *LANE_ID.split("/"))
+    request_md = os.path.join(lane_home, "request.md")
+    response_path = os.path.join(lane_home, "response.json")
+
+    request = build_request(repo, HARVEST_ROWS_V1)
+    adapter.write_request(request)
+    write_response(response_path, echo=request.input_digest, payload=PAYLOAD_OLD)
+    journal = LaneJournal()
+    try:
+        _dispatch(adapter, [request], journal)
+    except Exception as exc:  # noqa: BLE001
+        print(f"  [fail] 기준선 왕복이 막혔다 — {type(exc).__name__}: {exc}")
+        report.failures.append("⑤⑥⑦ 기준선 왕복")
+        return
+
+    def shape_digest_rules(rows) -> list[str]:
+        """형태 검사가 **지문 칸**에 대해 낸 결함만 고른다(다른 형태 결함은 관심사가 아니다)."""
+        probe = LaneJournal()
+        probe.rows = rows
+        row = check_lane_log_shape(probe, read_runs=(READ_RUN,), canonical=READ_RUN)
+        return sorted(
+            finding.rule
+            for finding in row.findings
+            if finding.rule.startswith("lane-log.request")
+        )
+
+    honest_rows = [dict(entry) for entry in journal.rows]
+
+    # -- ⑦ 정상 통과 --------------------------------------------------------
+    print("\n== ⑦ 정상 — 로그의 요청 지문이 그 자리의 파일과 같다 ==")
+    probe = LaneJournal()
+    probe.rows = [dict(entry) for entry in honest_rows]
+    row = check_lane_log_digest_value(probe, lanes_root=lanes_root)
+    print(f"  로그가 적은 지문 : {honest_rows[-1].get('request_digest')}")
+    print(f"  파일의 sha256    : {sha256_file(request_md)}")
+    report.check(
+        "정직한 왕복은 값 검사를 통과한다",
+        expected="pass",
+        actual=row.status,
+    )
+    report.check(
+        "통과가 공허하지 않다(값 대조를 실제로 했다)",
+        expected="digest_verified=1",
+        actual=f"digest_verified={row.extras.get('digest_verified')}",
+    )
+    print(
+        f"        참고 : `sha256sum {os.path.relpath(request_md, workdir)}` 로 제3자가"
+        " 같은 대조를 한다"
+    )
+
+    # -- ⑤ 위조값 ----------------------------------------------------------
+    print("\n== ⑤ 위조값 — 로그의 지문만 ffff…ffff 로 바꾼다(파일은 그대로) ==")
+    forged = [dict(entry) for entry in honest_rows]
+    forged[-1]["request_digest"] = "f" * 64
+    probe = LaneJournal()
+    probe.rows = forged
+    row = check_lane_log_digest_value(probe, lanes_root=lanes_root)
+    rules = sorted(finding.rule for finding in row.findings)
+    report.check(
+        "위조값은 값 검사가 거부한다",
+        expected="fail",
+        actual=row.status,
+    )
+    report.check(
+        "거부 사유가 값 불일치로 지목된다",
+        expected="['lane-log.digest-value-mismatch']",
+        actual=str(rules),
+    )
+    report.check(
+        "★ 같은 위조를 형태 검사는 지금도 통과시킨다(검사 id 를 나눈 근거)",
+        expected="[]",
+        actual=str(shape_digest_rules(forged)),
+    )
+    print(
+        "        뜻   : 2026-08-19 감수 D 의 M-D 가 `pass checked=5 violations=0` 으로"
+        " 통과했던 자리다.\n               형태와 값은 다른 주장이며, 한 행이 둘을 지면 어느"
+        " 쪽이 통과시켰는지 판정문에서 사라진다."
+    )
+
+    # -- ⑥ `null` 위장 ------------------------------------------------------
+    print("\n== ⑥ null 위장 — 요청 파일을 쓴 행의 지문을 null 로 바꾼다 ==")
+    disguised = [dict(entry) for entry in honest_rows]
+    disguised[-1]["request_digest"] = None
+    probe = LaneJournal()
+    probe.rows = disguised
+    row = check_lane_log_digest_value(probe, lanes_root=lanes_root)
+    rules = sorted(finding.rule for finding in row.findings)
+    print(f"  request.md 실재 여부 : {os.path.isfile(request_md)}")
+    report.check(
+        "null 위장은 제외로 새지 않는다",
+        expected="fail",
+        actual=row.status,
+    )
+    report.check(
+        "거부 사유가 면제 위장으로 지목된다",
+        expected="['lane-log.digest-null-disguise']",
+        actual=str(rules),
+    )
+    report.check(
+        "위장 행을 정당한 면제로 세지 않는다",
+        expected="exempt_verified=0",
+        actual=f"exempt_verified={row.extras.get('exempt_verified')}",
+    )
+    report.check(
+        "★ 같은 위장을 형태 검사는 지금도 면제로 센다(검사 id 를 나눈 근거)",
+        expected="[]",
+        actual=str(shape_digest_rules(disguised)),
+    )
+    print(
+        "        뜻   : 면제의 자격은 **선언이 아니라 사실**이다 — 요청 파일이 그 자리에"
+        " 없을 때만 면제다.\n               감수 D 의 M-E 는 `exempt` 계수만 하나 늘리고"
+        " 통과했다."
+    )
+
+    # -- ⑥-b 정당한 면제는 그대로 산다(되돌리지 않았음의 실증) ---------------
+    print("\n== ⑥-b 정당한 면제 — 요청 파일이 정말 없는 행은 통과한다 ==")
+    os.remove(request_md)
+    probe = LaneJournal()
+    probe.rows = [dict(entry) for entry in disguised]
+    row = check_lane_log_digest_value(probe, lanes_root=lanes_root)
+    report.check(
+        "요청 파일이 없는 행의 null 은 면제로 통과한다",
+        expected="pass",
+        actual=row.status,
+    )
+    print(
+        "        뜻   : 재정 2026-08-31 Q1 이 *\"`None` 면제의 현행 축소분을 되돌리지"
+        " 마라\"* 로 명한 자리다.\n               신설 검사는 면제를 없앤 것이 아니라 그"
+        " **자격을 사실로** 판정한다."
+    )
 
 
 def probe_procedure_tampering(repo: str, workdir: str, report: Report) -> None:
@@ -435,11 +606,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
     print(
-        "\nRESULT: PASS — 정상 소비 · 낡은 응답 거부 · 사후 교체 탐지 · 절차 변조 거부 "
-        "4종 전건 일치"
+        "\nRESULT: PASS — 정상 소비 · 낡은 응답 거부 · 사후 교체 탐지 · 절차 변조 거부 · "
+        "지문 위조 거부 · null 위장 거부 · 정당한 면제 보존 7종 전건 일치"
     )
     print(
-        "        이 도구가 증명한 것은 러너가 낡은 응답을 거부하고 소비본을 지목한다는 것뿐이다."
+        "        이 도구가 증명한 것은 러너가 낡은 응답을 거부하고 소비본을 지목한다는 것,"
+        " 그리고\n        레인 로그의 요청 지문이 그 자리의 파일을 지목한다는 것뿐이다."
+        " 그 밖은 증명하지 않는다."
     )
     return 0
 

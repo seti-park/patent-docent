@@ -1644,10 +1644,19 @@ def test_read_passes_every_deterministic_check(tmp_path) -> None:
     # 행 수를 리터럴로 적지 않는다 — 검사가 늘면 이 시험이 그 사실을 따라간다.
     #
     # ★ 구성이 셋으로 늘었다. 앞은 **진입 지문 검사**(재정 P-C — 환경이 서 있는가), 가운데는
-    #   이식 단위의 결정론 검사 전종, 뒤는 **레인 로그 형태**(재정 P-4·P-U3 — 정본 1개만
-    #   접지를 돌았는가). 세 층은 보는 대상이 다르므로 한 층만 세면 나머지가 조용히 빠진다.
+    #   이식 단위의 결정론 검사 전종, 뒤는 **엔진 소관 검사 전종**. 세 층은 보는 대상이
+    #   다르므로 한 층만 세면 나머지가 조용히 빠진다.
+    #
+    # ★ 2026-08-31 — 꼬리를 리터럴에서 **등재부 참조**로 바꿨다. 머리 문장이 *"검사가 늘면 이
+    #   시험이 그 사실을 따라간다"* 고 적는데 꼬리만은 `"read.lane-log-shape"` 를 손으로 적고
+    #   있었고, 그래서 재정 2026-08-31 Q1 이 검사를 하나 늘리자 이 시험이 **따라가지 못하고
+    #   깨졌다**. 선언과 실물이 갈린 자리이며, 이제 둘 다 `ENGINE_READ_CHECK_IDS` 를 본다.
     produced = [row.check_id for row in outcome["rows"]]
-    expected = ["read.input-digest", *READ_CHECK_IDS, "read.lane-log-shape"]
+    expected = [
+        "read.input-digest",
+        *READ_CHECK_IDS,
+        *read_stage.ENGINE_READ_CHECK_IDS,
+    ]
     if produced != expected:
         pytest.fail(f"검사 행 기대 {expected}, 실제 {produced}")
 

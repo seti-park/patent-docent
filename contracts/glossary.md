@@ -59,6 +59,7 @@
 | `read.claim-inventory` | `reader/lib/inventory.py` | 원천 청구항이 통째로 누락됨 |
 | `read.convergence` | `reader/lib/convergence.py` | 독해가 재현되지 않음(문언·트리·종속 구조) |
 | `read.lane-log-shape` | `engine/stages/read.py` | 레인 로그가 계약 실행 형태와 다름 — 비정본 실행이 접지·통합을 돌았음이 **로그의 있음**으로 드러난다(재정 P-4·P-U3) |
+| `read.lane-log-digest-value` | `engine/stages/read.py` | 레인 로그가 적은 **요청 파일 지문의 값**이 그 자리의 `request.md` 와 다름 — 값 위조 · 소비 후 요청 파일 교체 · **면제(`null`)의 위장**(요청 파일이 실재하는데 면제를 주장) (재정 2026-08-31 Q1). **★ 형제 검사 `read.lane-log-shape` 와 관할이 갈린다** — 앞의 것은 **형태**(칸의 있음·빈 값 아님·면제의 명시)를 주장하고 이것은 **값**(sha256 일치)을 주장한다. 한 검사가 둘을 지면 어느 쪽이 통과시켰는지 판정문에서 사라진다는 것이 분리의 근거다(`CLAUDE.md` §6 — *"네 도구는 각자 하나의 주장만 증명한다"*). 칸 부재·빈 문자열은 **여기서 세지 않는다**(형태 검사의 소관 · 건수는 `deferred_to_shape` 에 남는다) |
 | `freeze.id-monotonic` | `reader/lib/freeze_integrity.py` | 개정이 항목 ID를 지우거나 재번호 |
 | `freeze.payload-immutable` | `reader/lib/freeze_integrity.py` | 개정이 기존 항목의 **내용**을 조용히 바꿈 |
 | `source.input-digest` | `engine/stages/__init__.py` | 외부 투입물이 지문 기록 없이 런에 들어옴(재정 P-C) |

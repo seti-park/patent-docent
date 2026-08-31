@@ -293,14 +293,28 @@ def test_glossary_registers_every_check_id():
     그런데 그 규율을 **집행하는 것이 아무것도 없어서**, M1에서 `read.source-digest`를
     신설하고도 사전에 올리지 않은 채 지나갔다(총괄이 사후에 적발). 기억에 의존하는 규율은
     기억이 실패하는 만큼 실패한다.
+
+    ★ **2026-08-31 확장 — 엔진 소관 검사까지 훑는다(재정 Q1 의 집행).** 구 시험은 이식 단위
+    등재부(`CHECK_REGISTRY`)만 보았고, 그래서 **엔진이 발행하는 검사 id 는 사전에서 빠져도
+    아무도 울지 않았다.** 재정 2026-08-31 Q1 은 신설 검사를 *"`glossary.md` §2.1 목록과
+    `CHECK_REGISTRY` 에 동시에 등재한다(대조를 시험이 집행한다)"* 로 명했는데,
+    `CHECK_REGISTRY` 항목은 `CheckContext` 만 받아 파일 시스템을 보지 못하므로 디스크를 읽는
+    검사는 그 등재부에 들어갈 수 없다. 그래서 재정이 요구한 **효과**를 자리만 옮겨 세운다 —
+    엔진 소관 등재부 `engine.stages.read.ENGINE_READ_CHECK_IDS` 를 같은 대조에 넣었다.
+    **재정 문언의 축소가 아니라 확장이다**: 대조가 이제 엔진 검사 전체에 걸린다.
     """
     sys.path.insert(0, REPO)
+    from engine.stages.read import ENGINE_READ_CHECK_IDS  # noqa: PLC0415
     from reader.lib import run_checks  # noqa: PLC0415
 
     doc = open(
         os.path.join(REPO, "contracts", "glossary.md"), encoding="utf-8"
     ).read()
-    registered = set(run_checks.READ_CHECK_IDS) | set(run_checks.FREEZE_CHECK_IDS)
+    registered = (
+        set(run_checks.READ_CHECK_IDS)
+        | set(run_checks.FREEZE_CHECK_IDS)
+        | set(ENGINE_READ_CHECK_IDS)
+    )
     missing = sorted(check_id for check_id in registered if check_id not in doc)
     assert not missing, f"contracts/glossary.md 에 등재되지 않은 검사 id: {missing}"
 

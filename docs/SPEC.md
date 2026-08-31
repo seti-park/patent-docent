@@ -399,7 +399,7 @@ owner_checkpoint: { id: ..., surfaces: [...], confirm_file: ... }   # 있는 스
 | ⑥ | **접지 진입 게이트** | 판정서 존재 ∧ (통과 ∨ Owner '계속' 봉투). 봉투는 판정서 파일의 SHA-256에 결속된다 | 재정 P-U3 |
 | ⑦ | **접지 → 수확 → 통합** | **정본 1개만** D5 ③④⑤ 를 수행한다. 접지 스팬에서 수치를 전수 기계 수확하고, 통합 레인은 그 수확 목록을 지시로 받아 `numeric_refs`를 적는다(수치를 새로 지어내지 않는다) | 재정 P-4·P-B |
 | ⑧ | **조립 → 검사 전건** | 항목 재번호 후 결정론 검사를 돌려 `convergence.json`(`phase: "full"`)을 낸다 | D6 규율 ③ |
-| ⑨ | **출구 검사** | `read.lane-log-shape`가 레인 로그를 계약 실행 형태와 대조한다 — 분해는 두 실행 각 1건, 접지·통합은 **정본 실행에만** 존재하고 비정본 실행에는 **부재**하다. 더해 왕복의 **시점 결속**을 본다 — 모든 행이 요청 지문을 들고(`lane-log.request-digest`), 응답이 도착한 행은 응답 지문과 `digest_ok: true`를 들며(`lane-log.response-digest`), 모든 행이 **요청 파일 바이트의 지문**을 든다(`lane-log.request-file-digest` — 재정 2026-08-19 S4·Q8 ③. 요청 파일을 쓰지 않는 재생 어댑터의 왕복만 명시 `null`로 빠지고 그 건수는 `request_digest_exempt`에 남는다) | 재정 P-4·P-U3·P-12·S4 |
+| ⑨ | **출구 검사** | `read.lane-log-shape`가 레인 로그를 계약 실행 형태와 대조한다 — 분해는 두 실행 각 1건, 접지·통합은 **정본 실행에만** 존재하고 비정본 실행에는 **부재**하다. 더해 왕복의 **시점 결속**을 본다 — 모든 행이 요청 지문을 들고(`lane-log.request-digest`), 응답이 도착한 행은 응답 지문과 `digest_ok: true`를 들며(`lane-log.response-digest`), 모든 행이 **요청 파일 바이트의 지문**을 든다(`lane-log.request-file-digest` — 재정 2026-08-19 S4·Q8 ③. 요청 파일을 쓰지 않는 재생 어댑터의 왕복만 명시 `null`로 빠지고 그 건수는 `request_digest_exempt`에 남는다) **★ 값 대조는 이 검사가 하지 않는다** — 그 자리는 재정 2026-08-31 Q1 이 신설한 `read.lane-log-digest-value`이며, 로그가 적은 요청 파일 지문이 **그 자리의 파일과 같은지**를 파일을 직접 열어 판정한다(형태의 통과를 값의 증거로 쓰지 않는다) | 재정 P-4·P-U3·P-12·S4·2026-08-31 Q1 |
 | ⑩ | **CP1 상신물** | CP1 판독본 + 중간 산출물 | D6 |
 
 **정본 지정이 왜 내용맹인가.** 수렴 통과는 두 독해가 **동치라는 선언**이다. 동치인 둘 사이에서 "어느 쪽이 더 나은가"를 물으면 그 물음에 답할 판정자가 없고(있다면 수렴 검사가 아니라 그 판정자가 정본을 정했어야 한다), 남는 요구는 **재현성** 하나뿐이다. 그래서 규칙은 선언 순서이고 내용은 보지 않는다(재정 P-4). ⑨의 레인 로그 검사가 그 반대편을 집행한다 — 정본 1개만 진행했다는 사실은 **로그에 없음으로** 증명된다.
@@ -429,6 +429,7 @@ owner_checkpoint: { id: ..., surfaces: [...], confirm_file: ... }   # 있는 스
 | `read.claim-inventory` | 원천 청구항 인벤토리 ↔ 등재분 양방향 일치 + 청구항별 구간 내 verbatim(재정 N14 ①) | `retry(1)` → `escalate` |
 | `read.convergence` | 독립 2회 **분해** 비교 6축을 **축별 정책**으로 판정한다(아래 3층 의미론) | 정책별로 다름 — 아래 표 |
 | `read.lane-log-shape`(출구) | 분해는 두 실행 각 1건, 접지·통합은 정본 실행에만 존재하고 비정본 실행에는 부재(재정 P-4·P-U3) + 왕복의 시점 결속 **3항**(요청 지문 전건 · 응답 지문과 반향 일치 — 재정 P-12 · **요청 파일 지문 전건** — 재정 2026-08-19 S4·Q8 ③) | `escalate` |
+| `read.lane-log-digest-value`(출구) | 레인 로그가 적은 **요청 파일 지문의 값**이 그 자리의 `request.md` 와 일치한다(재정 2026-08-31 Q1) — 값 위조 · 소비 후 파일 교체 · **면제(`null`)의 위장**(요청 파일이 실재하는데 면제를 주장)을 잡는다. **★ 앞 행과 관할이 갈린다**: 앞은 **형태**(칸의 있음·빈 값 아님·면제의 명시), 이것은 **값**(sha256 일치). 칸 부재·빈 문자열은 여기서 세지 않는다(이중 계수 방지 · 건수는 `deferred_to_shape`) | `escalate` |
 
 **수렴 미달의 의미론은 세 층이다(재정 P-3).** 종전 6축은 전부 같은 무게의 pass/fail이었다. Owner 원리의 전사는 이렇다 — *"결정론적으로 유일해야 하는 구조 사실(개수·종속항 서명)은 완전 일치를 트리거로, 해석 여지가 있는 부분(구성요소 입도·트리 조직)은 결함이 아니라 각 독해의 특성으로 기록·관찰한다."*
 
@@ -462,6 +463,7 @@ owner_checkpoint: { id: ..., surfaces: [...], confirm_file: ... }   # 있는 스
 | **진입 지문 불일치**(`checks_on_entry: read.input-digest`) | `halt` — 사유 라벨 **`환경 오류`**. 재시도·수정 루프에 넣지 않는다(재정 P-C). 원천 자체가 바뀌었으면 부분 복구가 아니라 새 런이다(재정 P-U2) |
 | 원천 다이제스트가 `run.yaml` 기록과 불일치(`read.source-digest`) | `halt` — 원천이 도중에 바뀐 런은 폐기 대상 |
 | `read.lane-log-shape` 실패 | `escalate` — 비정본 실행이 접지·통합을 돌았거나 분해 실행 수가 계약과 다르다 |
+| `read.lane-log-digest-value` 실패 | `escalate` — 로그의 요청 지문이 그 자리의 파일과 다르거나(위조·사후 교체) 면제가 위장이다. **조치는 형제 검사와 같다** — 계약 `failure` 표에 전용 행을 두지 않았고 둘 다 기본 갈래(`retry(1)` → `escalate`)로 떨어진다(재정 2026-08-31 Q1 은 조치를 명하지 않았고, 형제와 다른 조치를 주는 것은 재정 밖 판단이다) |
 | 반려 수신(`material-defect.md`) | 재요리: `spec_version` + 1로 개정, 항목은 append-only(§1.6) |
 
 **폐기된 행: `drop-signal = drop-proposed` → `escalate`.** 재정 P-A가 조기 drop의 `escalate`를 폐지하고 확정 재정을 CP1에 통합했으므로, drop은 더 이상 이 표의 조치 대상이 아니다. drop의 처분 자리는 `owner_checkpoint`(CP1) 한 곳이다.
@@ -1827,6 +1829,7 @@ D6 규율 ③의 구현이다. 규율 원문이 이 절의 헌법이다: **"독�
 | `read.source-digest` | **전제 검사** — 불변식 I1(`sha256(원천) == patent.source_digest`) |
 | `read.input-digest` | **진입 검사**(`checks_on_entry`, 재정 P-C) — 선언 입력의 지문 |
 | `read.lane-log-shape` | **출구 검사**(재정 P-U3·P-12 · 2026-08-19 S4) — 레인 로그가 계약 실행 형태와 일치하고 왕복 지문 **3항**(요청 지문 · 응답 지문과 반향 · 요청 파일 지문)이 남아 있는가 |
+| `read.lane-log-digest-value` | **출구 검사**(재정 2026-08-31 Q1) — 그 지문들이 **가리키는 파일과 실제로 같은가**. 앞 행이 *"남아 있는가"*를 보고 이 행이 *"맞는가"*를 본다 |
 
 앞의 둘은 "독해가 무엇을 말했는가"를 보지 않고 **"이 판정들이 성립할 조건이 갖춰졌는가"**를 본다. I1이 깨지면 아래 검사가 전부 무효라고 §2.2가 적으므로, 그 전제를 확인하는 자리가 READ 안에 있어야 한다. 뒤의 둘은 산출물이 아니라 **실행 자체**를 본다 — 무엇을 읽고 들어왔는가, 그리고 계약이 정한 실행 형태대로 돌았는가. 검사 id 전체 목록의 정본은 `contracts/glossary.md` §2.1이고, 실행 순서의 정본은 `reader/lib/run_checks.py`의 `READ_CHECK_IDS`다.
 
@@ -4544,7 +4547,7 @@ if got != want:
   - 도구: `tools/check_validator_enforcement.py`(신설 — 검증기가 실제로 거부하는지의 실증), **`tools/run_worktree.py`**(신설 — 런 커밋 핀·worktree·만료 통지, 재정 P-U1+P-8), `tools/check_spec_refs.py`의 **K8**(신설 — 코어·확장 경계의 기계 집행, 재정 P-2 ⓑ)
   - 원장: **`ledgers/shadow/screening.jsonl`**(신설 — 맹검 메모 섀도 원장. 재료 명세 **계약면 밖**이며 런 폴더 밖이다, 재정 P-U4)
 - **DoD**
-  - §2.7의 예시 인스턴스가 스키마를 통과하고, `reader/lib`의 결정론 검사 **12종**을 전부 통과한다(§2.6) — READ 10종 + `freeze` 2종이며 등재의 단일 진원은 `reader/lib/run_checks.py`의 `CHECK_REGISTRY`다. P 계열에서 늘어난 것은 `read.bibliography` 1종이고(재정 P-2 ⓐ), 나머지 신설분은 엔진 소관이다(`read.input-digest`·`read.lane-log-shape`·`source.input-digest`·`source.figures-manifest-digest`·`freeze.input-digest`). `read` 스테이지 계약의 `checks_before_exit`는 그래서 **11행**이다(READ 10종 + `read.lane-log-shape`).
+  - §2.7의 예시 인스턴스가 스키마를 통과하고, `reader/lib`의 결정론 검사 **12종**을 전부 통과한다(§2.6) — READ 10종 + `freeze` 2종이며 등재의 단일 진원은 `reader/lib/run_checks.py`의 `CHECK_REGISTRY`다. P 계열에서 늘어난 것은 `read.bibliography` 1종이고(재정 P-2 ⓐ), 나머지 신설분은 엔진 소관이다(`read.input-digest`·`read.lane-log-shape`·`source.input-digest`·`source.figures-manifest-digest`·`freeze.input-digest`). `read` 스테이지 계약의 `checks_before_exit`는 그래서 **12행**이다(READ 10종 + 엔진 소관 2종 = `read.lane-log-shape` · `read.lane-log-digest-value`. 뒤엣것은 재정 2026-08-31 Q1 의 신설이며 **11행은 그 이전의 수**다).
   - 검사 12종 각각에 대해 **실패해야 하는 변조 인스턴스**가 준비되어 실제로 실패한다(합성 코퍼스 `tests/fixtures/reader/` — 현재 **42건**, 관문 = `tools/check_validator_enforcement.py` 가 매 실행 *변조본 42/42* 로 계수를 함께 보고한다. 구 표기 39건은 낡은 수였다).
   - `origin` 4종(`quoted`·`derived`·`figure-sourced`·`bibliographic`)의 조건부 필수가 집행되고, **`origin` 간 배타성**이 함께 집행된다 — 한 `origin`이 다른 `origin`의 부속 필드를 동시에 갖지 못한다(재감수 M-01). `figure-sourced`는 `machine_verifiable: false`로 `manual_verification_required[]`에 수집된다(재정 R1).
   - **파생 수치의 참조 그래프가 닫혀 있다**(재감수 M-01, 재정 N9) — 자기참조 금지 · 비순환 · **파생의 파생 금지(깊이 1: `derivation.inputs[].ref`가 가리키는 `fact`의 `origin`은 `derived`가 아니다)**. 스키마로 표현되지 않는 3항은 검증기 몫으로 명시된다(§2.8).

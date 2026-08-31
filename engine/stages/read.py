@@ -30,6 +30,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import os
 import re
@@ -58,6 +59,7 @@ from . import (
     write_text,
 )
 from ..lanes.contract import (
+    REQUEST_MD,
     LanePending,
     LaneRequest,
     LaneResponse,
@@ -88,6 +90,29 @@ CONVERGENCE_SCHEMA = ("contracts", "schemas", "convergence.schema.json")
 APPROVAL_SCHEMA = ("contracts", "schemas", "approval-envelope.schema.json")
 CONVERGENCE_CHECK_ID = "read.convergence"
 LANE_LOG_SHAPE_CHECK_ID = "read.lane-log-shape"
+LANE_LOG_DIGEST_VALUE_CHECK_ID = "read.lane-log-digest-value"
+
+# ★ 엔진 소관 검사 id 의 단일 목록(재정 2026-08-31 Q1 의 집행 형태).
+#
+#   재정 Q1 은 새 검사 id 를 *"`contracts/glossary.md` §2.1 목록과 `CHECK_REGISTRY` 에
+#   **동시에** 등재한다(대조를 시험이 집행한다)"* 로 명했다. 그런데 `CHECK_REGISTRY`
+#   (`reader/lib/run_checks.py`)는 **이식 단위의 등재부**이고 그 항목은
+#   `CheckContext(spec, peer_spec, rules)` 만 받는다 — 파일 시스템도 레인 디렉터리도 보지
+#   못한다. 신설 검사는 디스크의 `request.md` 를 **실제로 읽어야** 성립하므로 그 등재부에
+#   들어갈 수 없다(형제 검사 `read.lane-log-shape` 가 엔진 소관인 것과 같은 이유다).
+#
+#   그래서 재정이 요구한 **효과**(등재 누락을 시험이 잡는다)를 자리만 옮겨 세운다. 이 튜플이
+#   엔진 소관 검사의 등재부이고, `tests/test_m1_corpus.py::test_glossary_registers_every_check_id`
+#   가 `CHECK_REGISTRY` 와 **이 목록을 함께** 훑는다. 구 시험은 이식 단위 등재부만 보았으므로
+#   엔진 검사 id 는 사전에서 빠져도 아무도 울지 않았다 — 재정 문언의 축소가 아니라 확장이다.
+#
+#   ★ 여기 없는 엔진 검사는 `source.*`·`freeze.*` 다. 그 둘은 각자의 스테이지 모듈이 소유하며
+#   이 목록은 **READ 스테이지의 엔진 소관분**만 든다(`read.input-digest` 는 스테이지 공통
+#   진입 검사라 `engine/stages/__init__.py` 가 발행한다).
+ENGINE_READ_CHECK_IDS: tuple[str, ...] = (
+    LANE_LOG_SHAPE_CHECK_ID,
+    LANE_LOG_DIGEST_VALUE_CHECK_ID,
+)
 CONTINUE_CHECKPOINT = "convergence_continue"
 RETRY_PATTERN = re.compile(r"retry\((?P<count>\d+)\)")
 
@@ -1115,6 +1140,161 @@ def check_lane_log_shape(
     return row
 
 
+def _bare_sha256_file(path: str) -> str:
+    """파일 바이트의 sha256 을 **접두어 없는 맨 hex** 로 낸다 — 레인 지문의 층위다.
+
+    ★ **엔진의 `sha256_file` 을 쓰지 않는 이유가 여기 있고, 그것이 이 함수의 존재 이유다.**
+    이 리포에는 지문 표기가 두 층 있다. 하나는 계약면의 다이제스트로 `sha256:` 접두를 달고
+    (`contracts/glossary.md` §3 — `^sha256:[0-9a-f]{64}$`), 다른 하나는 **레인 로그의 왕복
+    지문**으로 맨 hex 다(`FileLaneAdapter.request_md_digest` · `LaneResponse.response_digest`
+    가 `hashlib.sha256(...).hexdigest()` 를 그대로 싣는다). 맨 hex 인 이유는 재정 S4 가 든
+    근거 그대로다 — **사람이 `sha256sum request.md` 로 곧장 대조할 수 있어야** 한다.
+
+    두 층을 섞으면 대조가 **항상 불일치**한다. 실제로 이 검사의 초판이 `sha256_file` 을 썼고
+    정직한 왕복에서 *"로그 `b8e85947…` ≠ 파일 `sha256:b8e85947…`"* 로 울었다 — 값은 같은데
+    표기가 달라서 난 거짓 양성이며, 시험이 그것을 개발 중에 잡았다. 여기서 층을 명시로
+    고정해 둔다.
+    """
+    with open(path, "rb") as handle:
+        return hashlib.sha256(handle.read()).hexdigest()
+
+
+def check_lane_log_digest_value(
+    journal: LaneJournal, *, lanes_root: str | None
+) -> CheckRow:
+    """⑨-b `read.lane-log-digest-value` — 로그가 적은 요청 지문이 **그 자리의 파일과 같은가**
+    (재정 2026-08-31 Q1).
+
+    **형제 검사와 무엇이 다른가.** `read.lane-log-shape` 는 로그의 **형태**를 주장한다 —
+    칸이 있는가, 비어 있지 않은가, 면제가 명시적인가. 이 검사는 **값**을 주장한다 — 그 칸에
+    적힌 64자리가 지금 그 자리의 `request.md` 를 sha256 한 값과 **같은가**. 둘은 다른 주장이며,
+    한 검사가 둘을 지면 **어느 쪽이 통과시켰는지 판정문에서 사라진다**(재정 Q1 의 근거이자 이
+    리포의 원리 — *"네 도구는 각자 하나의 주장만 증명한다"*, `CLAUDE.md` §6).
+
+    **무엇을 잡는가 — 2026-08-19 감수 D 가 실측한 두 구멍이 여기서 닫힌다.**
+
+      M-D  값만 위조   로그의 `request_digest` 를 `ffff…ffff` 로 바꾼다. 형태는 온전하므로
+                       `lane-log-shape` 는 `pass checked=5 violations=0` 이었다.
+                       → 여기서 `lane-log.digest-value-mismatch` 로 걸린다.
+      M-E  `null` 위장 `FileLaneAdapter` 가 **실제로 `request.md` 를 쓴** 행의 값을 `null` 로
+                       바꾼다. 형태 검사는 `null` 을 **무조건 제외**로 세므로
+                       `request_digest_exempt=1` 만 늘고 통과했다.
+                       → 여기서 `lane-log.digest-null-disguise` 로 걸린다. **면제의 자격은
+                       선언이 아니라 사실이다** — 요청 파일이 그 자리에 **없을 때만** 면제다.
+      M-C  사후 교체   소비 뒤 `request.md` 를 다른 내용으로 덮어쓴다. 직전 라운드에는
+                       **사람이 손으로 대조해야만** 드러났다(감수의 "DETECTED—로그↔파일 대조").
+                       → 여기서 기계가 잡는다. 같은 규칙(`digest-value-mismatch`)이며, 위조와
+                       교체는 **로그와 파일이 갈렸다**는 하나의 사실의 두 원인이다.
+
+    ★ **`None` 면제의 현행 축소분을 되돌리지 않는다**(재정 Q1 의 명시 조건). 직전 라운드가
+    `_request_file_digest` 에서 면제를 「능력 부재」 하나로 좁힌 것은 유효하며, 이 검사는 그
+    **위에** 값 대조를 얹는다. 좁힌 뒤에도 남아 있던 구멍이 *"능력이 있는 어댑터의 행을
+    누군가 `null` 로 고쳐 적으면?"* 이었고 그 자리를 파일의 실재로 판정한다.
+
+    ★ **어댑터에 다시 묻지 않는다.** 값을 낸 코드(`FileLaneAdapter.request_md_digest`)를 다시
+    불러 대조하면 같은 함수가 자기 출력을 승인하는 꼴이고, 그것은 아무것도 증명하지 않는다
+    (같은 형태의 결함을 감수가 `value.harvest-parity` 에서 지적했다 — 수확기가 정답 생성에
+    다시 쓰여 자기 손실을 못 본다). 그래서 **파일을 직접 열어 sha256 을 다시 낸다.**
+
+    ★ **이 검사가 증명하지 않는 것.** `lanes_root` 가 어디인가는 런 **구성**이지 증거가
+    아니다 — 이 검사는 "로그의 값이 그 루트 아래 파일과 같다"만 주장하고, 그 루트가 옳은
+    루트인지는 주장하지 않는다. 경계를 넓게 말하지 않기 위해 적어 둔다.
+
+    **판정 대상 밖 둘**(형태 검사의 소관이므로 여기서 이중으로 세지 않는다):
+    칸 자체가 없는 행 · 값이 **빈 문자열**인 행. 둘 다 `lane-log-shape` 가 이미 결함으로
+    잡으며, 여기서 또 잡으면 한 결함이 두 판정 행에서 두 번 울어 계수가 부풀려진다.
+    건수는 `deferred_to_shape` 로 산출에 남으므로 조용한 통과가 아니다.
+    """
+    row = CheckRow(
+        check_id=LANE_LOG_DIGEST_VALUE_CHECK_ID, checked=len(journal.rows)
+    )
+    verified = 0
+    exempt_verified = 0
+    deferred = 0
+
+    for entry in journal.rows:
+        lane_id = str(entry.get("lane_id"))
+        locus = f"10-read/lanes/{lane_id}"
+        if "request_digest" not in entry:
+            deferred += 1
+            continue
+        declared = entry.get("request_digest")
+        if declared is not None and not str(declared).strip():
+            deferred += 1
+            continue
+
+        request_md = (
+            None
+            if lanes_root is None
+            else os.path.join(lanes_root, *lane_id.split("/"), REQUEST_MD)
+        )
+        present = request_md is not None and os.path.isfile(request_md)
+
+        if declared is None:
+            # 면제 주장. 자격은 **요청 파일의 부재**이며 선언이 아니다.
+            if present:
+                row.add(
+                    "lane-log.digest-null-disguise",
+                    locus,
+                    "request_digest: null (그런데 request.md 가 그 자리에 있다)",
+                    "요청 파일이 있으면 sha256(request.md) 를 적는다",
+                    "요청 파일을 **쓰는** 왕복이 면제를 주장한다 — 면제의 뜻은 「능력의 부재」 "
+                    "하나뿐이고(재정 2026-08-19 S4 의 축소분), 파일이 실재하는 행의 null 은 "
+                    "능력 부재가 아니라 **기록의 삭제**다. 이 위장은 형태 검사에서 제외 계수만 "
+                    "늘리고 통과했다(2026-08-19 감수 D 의 M-E)",
+                )
+            else:
+                exempt_verified += 1
+            continue
+
+        # 값 주장. 파일을 직접 열어 다시 잰다.
+        if not present:
+            row.add(
+                "lane-log.digest-file-missing",
+                locus,
+                f"request_digest {str(declared)[:16]}… (그런데 request.md 가 없다)",
+                f"{locus}/{REQUEST_MD} 실재",
+                "로그가 요청 파일 지문을 드는데 그 파일이 없다 — 지문이 지목하는 대상이 "
+                "사라졌으므로 값 대조가 성립하지 않는다. 요청 파일을 쓰지 않는 어댑터라면 "
+                "값이 아니라 null 이어야 한다",
+            )
+            continue
+        try:
+            actual = _bare_sha256_file(request_md)
+        except OSError as exc:
+            row.add(
+                "lane-log.digest-file-unreadable",
+                locus,
+                f"{type(exc).__name__}: {exc}",
+                f"{locus}/{REQUEST_MD} 읽기 가능",
+                "요청 파일이 있는데 읽을 수 없다 — 값 대조가 성립하지 않는다. 여기서 예외를 "
+                "다시 던지지 않는 이유는 형태 검사와 같다: 던지면 그 사실이 판정에 닿기 전에 "
+                "런이 죽고 무엇이 왜 없었는지가 런 폴더에 남지 않는다",
+            )
+            continue
+        if actual != str(declared):
+            row.add(
+                "lane-log.digest-value-mismatch",
+                locus,
+                f"로그 {str(declared)[:16]}… ≠ 파일 {actual[:16]}…",
+                f"로그의 request_digest == sha256({REQUEST_MD})",
+                "레인 로그가 적은 요청 파일 지문이 지금 그 자리의 파일과 다르다 — 값이 "
+                "위조되었거나(감수 D 의 M-D) 소비 뒤 요청 파일이 교체되었다(M-C). 어느 "
+                "쪽이든 로그는 더 이상 레인이 실제로 읽은 요청서를 지목하지 못한다. "
+                f"사람이 `sha256sum {REQUEST_MD}` 로 곧장 같은 대조를 할 수 있다",
+            )
+            continue
+        verified += 1
+
+    # 무엇을 대조했고 무엇을 미뤘는지 전부 산출에 남긴다 — 보이지 않는 제외는 판정이 아니라
+    # 사각지대가 된다(재정 2026-08-19 S4 가 `request_digest_exempt` 를 남긴 것과 같은 규율).
+    row.extras["digest_verified"] = verified
+    row.extras["exempt_verified"] = exempt_verified
+    row.extras["deferred_to_shape"] = deferred
+    row.extras["lanes_root_present"] = lanes_root is not None
+    return row
+
+
 def _validate_convergence(payload: dict, repo: str | None) -> None:
     target = os.path.join(repo or repo_root(), *CONVERGENCE_SCHEMA)
     with open(target, encoding="utf-8") as handle:
@@ -1369,10 +1549,20 @@ def run(
                 + f" — 기록: {paths.lane_log}"
             )
 
-        # ⑨ 출구 검사 + 레인 로그 형태 판정.
-        rows = [entry_row, *rows, check_lane_log_shape(
-            journal, read_runs=read_runs, canonical=canonical_run
-        )]
+        # ⑨ 출구 검사 + 레인 로그 형태 판정 + 레인 로그 지문 **값** 판정.
+        #
+        # ★ 둘은 따로 보고된다(재정 2026-08-31 Q1) — 형태와 값은 다른 주장이고, 한 행이 둘을
+        #   지면 어느 쪽이 통과시켰는지 판정문에서 사라진다. 값 검사의 대조 대상은 어댑터가
+        #   요청 파일을 쓴 자리이며, 요청 파일을 쓰지 않는 어댑터(재생 어댑터)는 `root` 가
+        #   없으므로 `None` 이 간다 — 그 경우 전 행이 명시 `null` 이어야 정합이다.
+        rows = [
+            entry_row,
+            *rows,
+            check_lane_log_shape(journal, read_runs=read_runs, canonical=canonical_run),
+            check_lane_log_digest_value(
+                journal, lanes_root=getattr(adapter, "root", None)
+            ),
+        ]
 
         payload = to_convergence_payload(
             rows,
