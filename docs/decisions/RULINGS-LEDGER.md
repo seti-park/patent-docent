@@ -30,6 +30,7 @@
 
 | 일자 | 파일 | 안건 | 지위 | 주 반영처 |
 |---|---|---|---|---|
+| 2026-08-31 | `ruling-20260831-01-Q1-Q4.md` | Q1 ~ Q4 (4건) — 레인 로그 지문 **값 대조를 새 검사 id 로 신설**(관할 확장 · `lane-log-shape` 에 얹지 않는다) · `figure-or-table-number` 첫 번호 쪽 소수 결함 **「결함 아님」 상신 종결**(실측 2종) · **PD-M1.9 라운드 개시**(재감수 없는 종결 기각 · PD-M3 병행 보류) · **배제 봉투 6종 PD-M4 까지 동결**(좁히는 것도 넓히는 것도 금지 · 예외 = 실물 원천 어형에서 재현되는 선언·동작 어긋남만) | **원문** | `engine/stages/read.py` · `contracts/glossary.md` §2.1 · `contracts/stages/read.yaml` · `tools/check_lane_binding.py` · `reader/reader-rules.yaml#numeric_harvest.exclusions` · `docs/SPEC.md` · `CLAUDE.md` |
 | 2026-08-19 (후속) | `ruling-20260819-03-S1-S9.md` | S1 ~ S9 (9건) — 회수 lessons 커밋 · **H5·H6 위반 등재 + 값 공간 판별 기준 입법** · Q5 ② 초안 조건부 승인(앵커 3건 교정) · **지문을 요청서 본문에 결박**(+ Q8 ③ 승인) · 감수 사본 마커 제도 · 래퍼 CAP 폐지 · **P-B 해소**(전수성 > 순도) + 아티팩트 건별 배제 입법 · **P-11 부칙 4조**(회수 판정의 격) · 전역 원장 git 화 | **원문(선택지 기호)** + 재구성본 병기 | `CLAUDE.md` §1 규율 11 · `docs/SPEC.md` §8.3·§8.4 · `reader/reader-rules.yaml` · `engine/lanes/**` · `engine/stages/read.py` · `contracts/stages/read.yaml` · `tools/check_lane_binding.py` · `ledgers/regression/**` |
 | 2026-08-19 (후반) | `ruling-20260819-02-Q1-Q9-H1-H10.md` | Q1 ~ Q9 (9건 · Q5 는 하위 4건) + H1 ~ H10 일괄 추인 — Markush 어형 기각 · CP2 조각 M4 이관 · 핀 진단문 · 단위 `b` · 분해 규약 4건 · 픽스처 판 추인 · 레인 시도 카운터 · 요청서 자기완결 · **감수 격리 사본 쓰기 허용** · `check_lane_binding.py` 관문 승격 | **원문(세션 전사)** + 재구성본 병기 | `reader/**` · `contracts/l0-format.yaml` · `engine/**` · `SPEC.md` §8.3·§8.4·§9.33 · `CLAUDE.md` · `~/.claude/agents/sol-auditor.md` |
 | 2026-08-19 | `ruling-20260819-01-P12-P15.md` | P-12 ~ P-15 (4건) — 레인 왕복 시점 결속 · CP1 시점 · 기준선 청정 요건화 · P-9 관할 정정 | **원문** | `engine/lanes/**` · `engine/stages/read.py` · `contracts/stages/read.yaml` · `tools/check_lane_binding.py` · `SPEC.md` §8.2·§8.4 |
@@ -38,6 +39,12 @@
 | 2026-08-18 | `ruling-20260818-01-N1-N13.md` | N1 · N2 · N-D11 · N3 ~ N13 (13건) | **원문** | `CHARTER.md` v1.2 · `SPEC.md` v0.3 · `contracts/**` · `reader/schemas/**` |
 | 2026-08-17 | `ruling-20260817-01-R1-R12.md` | R1 ~ R12 (12건) | **재구성본** (요지 수준) | `CHARTER.md` v1.1 · `SPEC.md` v0.2 · `contracts/**` |
 | 2026-08-17 | `ruling-20260817-00-D1-D15.md` | D1 ~ D15 헌장 조항 | **재구성본** (포인터만 — 원 문언 미보존) | `CHARTER.md` |
+
+**★ 안건 문자 `Q` 가 두 번 쓰였다 — 개명하지 않는다.** `2026-08-19 (후반)` 의 `Q1~Q9` 와
+`2026-08-31` 의 `Q1~Q4` 는 **다른 계열**이며 둘 다 Owner 가 붙인 이름이다. 원장 규율 5(추가 전용)와
+규율 2(원문 위장 금지) 아래에서 개명은 문언의 변조이므로, 구별은 **일자 병기**로 한다 —
+`2026-08-19 Q1`(Markush 어형 기각) ≠ `2026-08-31 Q1`(지문 값 대조 검사 신설). 본문에서 인용할 때
+일자를 함께 적어라. 이 겹침을 적어 두는 이유는 하나다: `Q1` 만 보고 원장을 찾으면 두 파일이 나온다.
 
 ### 처분·이행 기록 (원장이 아니다 — 총괄 문서)
 
