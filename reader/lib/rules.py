@@ -132,7 +132,13 @@ class Rules:
         line = block.get("caption_line")
         if not line:
             raise RulesError("figure_captions.caption_line 이 없다")
-        self.figure_caption_line = re.compile(line, re.MULTILINE)
+        # 재정 2026-08-31 T7 — 대소문자 민감도는 규칙 파일이 선언한다(`case_insensitive`).
+        # 같은 파일의 dependency_citation·structure_markers 가 쓰는 것과 같은 관례이며,
+        # 플래그를 코드에 박지 않는 이유는 어형의 폭이 규칙 파일의 소관이기 때문이다.
+        flags = re.MULTILINE
+        if block.get("case_insensitive"):
+            flags |= re.IGNORECASE
+        self.figure_caption_line = re.compile(line, flags)
         strip = block.get("number_strip")
         self.figure_number_strip = re.compile(strip) if strip else None
         separator = block.get("id_separator")
