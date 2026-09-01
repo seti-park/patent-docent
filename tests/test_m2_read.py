@@ -188,6 +188,7 @@ def decompose_payload(
     element_two: str = E2_TEXT,
     note: str | None = None,
     dependency_type: str = "single",
+    claim_three_text: str | None = None,
 ) -> dict:
     """분해 레인 1회분.
 
@@ -223,7 +224,7 @@ def decompose_payload(
                     "id": "CL-3",
                     "depends_on": ["CL-1"],
                     "dependency_type": dependency_type,
-                    "text_verbatim": CLAIM_3,
+                    "text_verbatim": CLAIM_3 if claim_three_text is None else claim_three_text,
                     "additions": [
                         {
                             "id": "CL-3/a1",
@@ -480,6 +481,7 @@ def payload_set(
     element_two: str = E2_TEXT,
     note: str | None = None,
     dependency_type: str = "single",
+    claim_three_text: str | None = None,
 ) -> dict:
     return {
         "decompose": decompose_payload(
@@ -487,6 +489,7 @@ def payload_set(
             element_two=element_two,
             note=note,
             dependency_type=dependency_type,
+            claim_three_text=claim_three_text,
         ),
         "ground-independent": ground_independent_payload(),
         "ground-dependent": ground_dependent_payload(),
@@ -1877,13 +1880,19 @@ def test_screening_memo_is_withheld_from_synthesis_prompt(tmp_path) -> None:
 
 
 def test_convergence_failure_escalates_after_one_retry(tmp_path) -> None:
-    """무한 재시도되면 불안정 신호가 은폐된다(수렴 미달 = 절차 신호)."""
+    """무한 재시도되면 불안정 신호가 은폐된다(수렴 미달 = 절차 신호).
+
+    구 표본(`dependency_type="multiple-or"`)은 read-b 자체의 **규약 위반**이다. 재정 T16
+    부속 3 이 원인 검사(`read.dependency-parse`)를 수렴 앞에 세웠으므로 이제 원인이 먼저
+    잡히고 수렴은 보류된다. 이 시험이 재려던 것은 **수렴 미달의 재시도·상신**이므로 표본을
+    두 실행이 각자 성하지만 서로 갈리는 것으로 바꾼다.
+    """
     root, _ = run_source(tmp_path)
     payloads = {
         # ★ 갈라놓는 축은 `dependent-set`(exact-match · 임계 1.0)이다. element 문언을 가르던
         #   구 표본은 재정 P-3 이후 **상신 트리거**라 판정 행을 실패시키지 않는다.
         "read-a": payload_set(),
-        "read-b": payload_set(dependency_type="multiple-or"),
+        "read-b": payload_set(claim_three_text=CLAIM_3.rstrip(".")),
     }
     lanes_root = write_lane_responses(root, payloads_by_run=payloads)
     adapter = ReplayLaneAdapter(lanes_root)
@@ -1906,11 +1915,15 @@ def test_convergence_failure_escalates_after_one_retry(tmp_path) -> None:
 
 
 def test_retry_returns_defects_to_the_lane(tmp_path) -> None:
-    """결함 목록을 되돌려 주지 않으면 재시도가 같은 오류를 재생산한다."""
+    """결함 목록을 되돌려 주지 않으면 재시도가 같은 오류를 재생산한다.
+
+    구 규약 위반 표본은 T16 부속 3 에 따라 원인 검사에서 멎으므로, 각 실행은 성하지만 서로
+    갈리는 표본으로 수렴 결함의 되먹임을 잰다.
+    """
     root, _ = run_source(tmp_path)
     payloads = {
         "read-a": payload_set(),
-        "read-b": payload_set(dependency_type="multiple-or"),
+        "read-b": payload_set(claim_three_text=CLAIM_3.rstrip(".")),
     }
     lanes_root = write_lane_responses(root, payloads_by_run=payloads)
     adapter = ReplayLaneAdapter(lanes_root)

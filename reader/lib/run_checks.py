@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """전 검사 실행 오케스트레이터 + `10-read/convergence.json` 본문 조립.
 
-READ 스테이지의 `checks_before_exit`(SPEC §1.4)와 `freeze` 종료 전 검사(§1.6)를 한 자리에서
-돌린다. 등재는 `CHECK_REGISTRY` 한 곳이며, **등재만 하고 시험하지 않는 검사**를 막는 것은
-`tests/test_m1_reader.py::test_every_registered_check_has_a_failing_case` 다.
+READ 스테이지의 조기 청구항 소유 검사(T16)·`checks_before_exit`(SPEC §1.4)와 `freeze` 종료 전
+검사(§1.6)를 한 자리에서 돌린다. 등재는 `CHECK_REGISTRY` 한 곳이며, **등재만 하고 시험하지
+않는 검사**를 막는 것은 `tests/test_m1_reader.py::test_every_registered_check_has_a_failing_case` 다.
 
 산출 서식의 행은 재정 N5 의 `verdict-check-row/v0` 8키다 — 공허 2종(규칙 0항·대상 0건)이
 행마다 자동으로 드러난다.
@@ -45,6 +45,23 @@ READ_CHECK_IDS: tuple[str, ...] = (
     "read.convergence",
 )
 
+# ★ 조기 국면 등재부 (재정 2026-09-01 T16-ⓐ).
+#
+#   **정의는 하나이고 호출점이 둘이다.** 아래 두 검사는 `READ_CHECK_IDS` 에 **그대로 남는다** —
+#   두 국면이 보는 것이 다르기 때문이다.
+#
+#     조기 실패 = **분해 결함**(조기 예산 · 분해 재시도)
+#     출구 실패(조기 통과 후) = **국면 간 변이**(후속 예산 · 정본 후속 재시도)
+#
+#   출구 행을 지우면 그 계열은 「못 고치는 결함」이 아니라 **「탐지조차 안 되는 결함」**으로
+#   격하된다 — 조립기가 `copy.deepcopy` 직후 청구항 트리의 material_id 를 전량 재작성하고
+#   그 번호표는 접지·통합·수확 산출까지 포함해 만들어지므로, 그 오염은 분해 산출에
+#   나타나지 않는다(재정 T16 §2 ⒜).
+EARLY_CLAIM_CHECK_IDS: tuple[str, ...] = (
+    "read.claim-inventory",
+    "read.dependency-parse",
+)
+
 FREEZE_CHECK_IDS: tuple[str, ...] = (
     "freeze.id-monotonic",
     "freeze.payload-immutable",
@@ -64,6 +81,16 @@ CHECK_REGISTRY: dict[str, callable] = {
     "freeze.id-monotonic": freeze_integrity.check_id_monotonic,
     "freeze.payload-immutable": freeze_integrity.check_payload_immutable,
 }
+
+
+def run_early_claim_checks(ctx: CheckContext) -> list[CheckRow]:
+    """조기 국면의 청구항 소유 검사 — **분해 산출 하나** 위에서 돈다(재정 T16).
+
+    호출자는 `read_run` 마다 한 번씩 부른다. `ctx.spec` 은 그 실행의 분해 전용 명세
+    (`engine/stages/read.py#decompose_only_spec`)이고 `ctx.source_text`·`ctx.rules` 가 함께
+    온다 — 이 두 검사는 원천과 규칙 파일을 읽는다.
+    """
+    return [CHECK_REGISTRY[check_id](ctx) for check_id in EARLY_CLAIM_CHECK_IDS]
 
 
 def run_read_checks(ctx: CheckContext) -> list[CheckRow]:

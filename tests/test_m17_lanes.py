@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import copy
 import os
+import re
 import subprocess
 import sys
 import textwrap
@@ -68,6 +69,15 @@ def payloads_with_dangling_reference() -> dict:
     for item in payloads["synthesize"]["items"]:
         if item.get("kind") == "implication":
             item["derived_from"] = [*item.get("derived_from", []), DANGLING_ID]
+    return payloads
+
+
+def payloads_with_phantom_dependent() -> dict:
+    """분해의 청구항 원장 검사만 실패시키는 read-b payload 묶음."""
+    payloads = m2.payload_set()
+    phantom = copy.deepcopy(payloads["decompose"]["claims"]["dependents"][0])
+    phantom["id"] = "CL-9"
+    payloads["decompose"]["claims"]["dependents"].append(phantom)
     return payloads
 
 
@@ -151,60 +161,99 @@ def test_tail_lanes_are_not_labeled_retry_after_a_decompose_retry(tmp_path) -> N
 
 
 def test_retry_budget_is_unchanged_by_the_split(tmp_path) -> None:
-    """이 시험이 없으면 카운터 분리가 **재시도 총량을 조용히 늘려도** 드러나지 않는다(재정 Q7 ②).
+    """★ 개정 (재정 2026-09-01 T16) — 이 시험이 고정하던 현상을 재정이 **풀었다**.
 
-    예산(`failure[].action` 의 `retry(n)`)은 여전히 런 전역이다. 분해가 그 예산을 쓰면 정본
-    후속은 자기 회차가 0 이어도 **재시도하지 못한다** — 좌표를 나눈 것이 예산까지 나눈 것으로
-    미끄러지면 재시도 총량이 계약을 넘는다.
+    **구 docstring 원문(폐기)** — *"이 시험이 없으면 카운터 분리가 재시도 총량을 조용히 늘려도
+    드러나지 않는다(재정 Q7 ②). 예산(`failure[].action` 의 `retry(n)`)은 여전히 런 전역이다.
+    분해가 그 예산을 쓰면 정본 후속은 자기 회차가 0 이어도 **재시도하지 못한다** — 좌표를 나눈
+    것이 예산까지 나눈 것으로 미끄러지면 재시도 총량이 계약을 넘는다."*
+
+    **무엇이 왜 바뀌었나.** 그 문언은 재정 Q7 의 **범위 보존** 진술("카운터를 나눴다고 예산까지
+    몰래 늘리지 마라")을 **예산 배분의 독립 판단**으로 읽은 것이었다 — Q7 의 안건은 레인 id
+    어휘였고 세 선택지 어디에도 예산 배분이 없었다. 그 사이 재정 P-4 가 판정점을 하나에서 둘로
+    늘렸고, 전역 슬롯의 뜻이 「총비용 상한」에서 **「먼저 도착한 판정점의 우선권」**으로 조용히
+    미끄러졌다. 실물 런에서 **출구 검사 78건에 재시도 0회** — 그 구간에 되먹임 루프가 아예
+    **존재하지 않았다**. 재정 T16 이 예산을 **판정점별**(조기 = 레인별 1 · 출구 = 1)로 갈랐고,
+    아래 ⓑ 는 구 시험이 **금지하던 사실**을 이제 **요구한다**.
+
+    **Q7 이 지키려던 것은 여전히 지킨다.** 카운터를 나눈 것이 총량을 **몰래** 늘리는 것으로
+    미끄러지지 않는다 — **각 판정점의 상한은 계약이 정한 값이고 러너가 임의로 늘리지 않는다.**
+    ⓐ 가 계약 두 곳(`retry_budget.points[]` ↔ `failure[].action` 의 `retry(n)`)의 일치를 재고,
+    ⓒ 가 실측 재시도 수가 그 상한을 넘지 않음을 잰다. **몰래 늘어난 예산은 여기서 잡힌다.**
     """
     contract = load_stage_contract("read", None)
-    budget = 0
+    points = {
+        entry.get("id"): entry
+        for entry in (contract.get("retry_budget") or {}).get("points") or []
+        if isinstance(entry, dict)
+    }
+    if set(points) != {"early", "exit"}:
+        pytest.fail(f"판정점 기대 early·exit, 실제 {sorted(points)}")
+    for point_id, point in points.items():
+        if type(point.get("max_retries")) is not int:
+            pytest.fail(f"{point_id}.max_retries 가 정수가 아니다: {point.get('max_retries')!r}")
+
+    action_budgets: set[int] = set()
     for entry in contract.get("failure") or []:
         action = str(entry.get("action", ""))
-        if action.startswith("retry("):
-            budget = max(budget, int(action[len("retry(") : -1]))
-    if budget != 1:
-        pytest.fail(f"계약의 재시도 예산이 1 이 아니다: {budget} — 시험 전제를 다시 세워라")
+        match = re.fullmatch(r"retry\((\d+)\)", action)
+        if match:
+            action_budgets.add(int(match.group(1)))
+    for point_id, point in points.items():
+        if point["max_retries"] not in action_budgets:
+            pytest.fail(
+                "러너의 상한이 조치 표가 선언한 값 밖이다 — 코드가 예산을 늘렸거나 "
+                f"계약 두 곳이 갈렸다: {point_id}={point['max_retries']}, 조치={sorted(action_budgets)}"
+            )
+    if points["early"].get("scope") != "per-read-run":
+        pytest.fail(f"early scope 기대 per-read-run, 실제 {points['early'].get('scope')}")
+    if points["exit"].get("scope") != "run":
+        pytest.fail(f"exit scope 기대 run, 실제 {points['exit'].get('scope')}")
 
+    # ⓑ ★ 분해가 조기 예산을 썼어도 정본 후속은 자기 예산으로 재시도한다.
     broken = payloads_with_dangling_reference()
-
-    # ⓐ 대조군 — 분해가 예산을 쓰지 않으면 정본 후속이 그 예산으로 **한 번** 재시도한다.
-    control_root, control_outcome, control_adapter = run_with_attempts(
-        tmp_path / "control",
-        first={"read-a": broken, "read-b": copy.deepcopy(broken)},
-        second={"read-a": copy.deepcopy(broken), "read-b": copy.deepcopy(broken)},
-    )
-    control_ids = dispatched_ids(control_adapter)
-    control_retries = [lane_id for lane_id in tail_lane_ids(control_ids) if "/retry-" in lane_id]
-    if not control_retries:
-        pytest.fail(f"후속 검사가 실패했는데 재시도가 없다: {control_ids}")
-    if control_outcome["status"] == "ok":
-        pytest.fail("유령 참조가 실린 런이 ok 로 끝났다 — 시험의 피검체가 성립하지 않는다")
-    _ = control_root
-
-    # ⓑ 본시험 — 분해가 예산을 쓰면 정본 후속은 자기 회차가 0 이어도 재시도하지 않는다.
     root, outcome, adapter = run_with_attempts(
-        tmp_path / "spent",
+        tmp_path,
         first={
             "read-a": copy.deepcopy(broken),
-            "read-b": m2.payload_set(dependency_type="multiple-or"),
+            "read-b": payloads_with_phantom_dependent(),
         },
-        second={"read-a": copy.deepcopy(broken), "read-b": copy.deepcopy(broken)},
+        second={"read-a": m2.payload_set(), "read-b": m2.payload_set()},
     )
     lane_ids = dispatched_ids(adapter)
     if "read-b/decompose/retry-1/batch-0" not in lane_ids:
         pytest.fail(f"분해가 예산을 쓰지 않았다 — 시험 전제가 성립하지 않는다: {lane_ids}")
-    extra = [lane_id for lane_id in tail_lane_ids(lane_ids) if "/retry-" in lane_id]
-    if extra:
-        pytest.fail(f"예산이 소진됐는데 후속이 재시도했다(총량 초과): {extra}")
-    if outcome["status"] == "ok":
-        pytest.fail("유령 참조가 실린 런이 ok 로 끝났다")
+    tail_retries = [lane_id for lane_id in tail_lane_ids(lane_ids) if "/retry-" in lane_id]
+    if not tail_retries:
+        pytest.fail(f"분해 재시도 뒤에도 후속이 자기 예산으로 재시도하지 않았다: {lane_ids}")
+    if "read-a/decompose/retry-1/batch-0" in lane_ids:
+        pytest.fail(f"성한 read-a 분해까지 다시 돌았다: {lane_ids}")
+    if outcome["status"] != "ok":
+        pytest.fail(f"두 판정점의 재시도 뒤 status 기대 ok, 실제 {outcome['status']}")
 
-    # ⓒ 전역 예산의 계수는 종전 그대로다 — `convergence_detail.attempt` 는 레인 회차가
-    #   아니라 **런 전역 시도 횟수**(최초 + 재시도)이며 그 뜻이 바뀌면 판정서가 바뀐다.
+    # ⓒ 계약 상한보다 많은 회차를 발송하지 않는다.
+    if any("/retry-2/" in lane_id for lane_id in lane_ids):
+        pytest.fail(f"retry-2 좌표가 발송됐다: {lane_ids}")
+    for read_run in ("read-a", "read-b"):
+        retries = {
+            lane_id.split("/")[2]
+            for lane_id in lane_ids
+            if lane_id.startswith(f"{read_run}/decompose/retry-")
+        }
+        if len(retries) > points["early"]["max_retries"]:
+            pytest.fail(f"{read_run} 분해 재시도 {len(retries)}회가 조기 상한을 넘었다")
+    tail_attempts = {
+        lane_id.split("/")[2]
+        for lane_id in tail_lane_ids(lane_ids)
+        if "/retry-" in lane_id
+    }
+    if len(tail_attempts) > points["exit"]["max_retries"]:
+        pytest.fail(f"후속 재시도 {len(tail_attempts)}회가 출구 상한을 넘었다")
+
+    # ⓓ read-b 분해는 두 번 돌았지만 조기 수렴은 청구항 실패 뒤 **한 번만** 판정됐다.
     detail = load_json(RunPaths(root).convergence_early_json)["convergence_detail"]
-    if detail["attempt"] != 2:
-        pytest.fail(f"전역 시도 계수가 2 가 아니다: {detail['attempt']}")
+    if detail["attempt"] != 1:
+        pytest.fail(f"조기 판정점 실행 회차 기대 1, 실제 {detail['attempt']}")
 
 
 # ===========================================================================

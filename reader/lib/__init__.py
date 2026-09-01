@@ -31,8 +31,10 @@ from .report import CheckContext, CheckRow, Finding
 from .rules import Rules, RulesError
 from .run_checks import (
     CHECK_REGISTRY,
+    EARLY_CLAIM_CHECK_IDS,
     FREEZE_CHECK_IDS,
     READ_CHECK_IDS,
+    run_early_claim_checks,
     run_freeze_checks,
     run_read_checks,
     to_convergence_payload,
@@ -45,6 +47,7 @@ __all__ = [
     "HARVESTED_ORIGINS",
     "CheckContext",
     "CheckRow",
+    "EARLY_CLAIM_CHECK_IDS",
     "FREEZE_CHECK_IDS",
     "Finding",
     "NormalizeError",
@@ -65,6 +68,7 @@ __all__ = [
     "parity_key",
     "parse_value",
     "render_value",
+    "run_early_claim_checks",
     "run_freeze_checks",
     "run_read_checks",
     "to_convergence_payload",

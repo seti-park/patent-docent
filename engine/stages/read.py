@@ -3,13 +3,14 @@
 
 계약 = `contracts/stages/read.yaml`(정본 서술 = SPEC §1.4 + §1.5 CP1).
 
-실행 순서(재정 P-4 · P-A · P-C · P-U3 · P-U4 · P-B — SPEC §1.4).
+실행 순서(재정 P-4 · P-A · P-C · P-U3 · P-U4 · P-B · T16 — SPEC §1.4).
 
 ```
 ① 진입 지문 검사(P-C)                      → 불일치면 StageEnvironmentError(재시도 아님)
 ② read-a.decompose · read-b.decompose      → 분해 **2회**. 여기까지만 2회다.
 ③ 맹검 스크리닝 메모 2건 수집(P-A·P-U4)    → 섀도 원장(런 밖)에 한 행으로 등재
-④ 조기 수렴 검사(P-4)                      → 10-read/convergence-early.json (phase: "early")
+④-a 조기 청구항 소유 검사(T16, 실행별)      → claim-inventory · dependency-parse
+④-b 조기 수렴 검사(P-4·T16)                 → ④-a 실패 시 보류 · phase: "early"
 ⑤ 정본 지정(P-4)                           → read_runs[0]. 내용맹·결정론. 품질 비교 금지.
 ⑥ 접지 진입 게이트(P-U3)                   → 판정서 존재 ∧ (통과 ∨ Owner '계속' 봉투)
 ⑦ 접지 → 수확(P-B) → 통합                  → **정본 1개만**
@@ -24,6 +25,10 @@
 관습이 아니라 기계 강제로 만든다. 정본 1개만 진행했다는 사실은 **레인 로그에 없음으로**
 증명된다.
 
+★ 재시도 예산은 **판정점별**이다(재정 2026-09-01 T16): 조기는 read_run 별 1회이며 결함
+실행만 다시 분해하고, 출구는 런 전역 정본 후속 1회다. 구 판의 런 전역 슬롯은 먼저 도착한
+판정점이 뒤 판정점의 기회를 없애는 우선권으로 작동했으므로 폐기되었다.
+
 검사 구현은 여기 없다(이식 단위 `reader/lib` 안에 있다). 감춰진 예외는 예외가 아니라 은폐다.
 """
 
@@ -33,12 +38,16 @@ import copy
 import hashlib
 import json
 import os
-import re
 from datetime import datetime, timezone
 
 from jsonschema import Draft202012Validator
 
-from reader.lib import CHECK_REGISTRY, run_read_checks, to_convergence_payload
+from reader.lib import (
+    CHECK_REGISTRY,
+    run_early_claim_checks,
+    run_read_checks,
+    to_convergence_payload,
+)
 from reader.lib.harvest import harvest_numeric_facts
 from reader.lib.report import CheckContext, CheckRow
 from reader.lib.rules import Rules
@@ -114,7 +123,6 @@ ENGINE_READ_CHECK_IDS: tuple[str, ...] = (
     LANE_LOG_DIGEST_VALUE_CHECK_ID,
 )
 CONTINUE_CHECKPOINT = "convergence_continue"
-RETRY_PATTERN = re.compile(r"retry\((?P<count>\d+)\)")
 
 
 class LaneAssignmentError(StageError):
@@ -122,7 +130,7 @@ class LaneAssignmentError(StageError):
 
 
 class RunnerContractError(StageError):
-    """러너 산출이 자기 계약(`convergence/v0`)을 위반했다."""
+    """러너가 READ 계약의 예산·산출 서식을 이행할 수 없을 때 거부한다."""
 
 
 # ---------------------------------------------------------------------------
@@ -737,14 +745,46 @@ def write_drop_signal_md(paths: RunPaths, memos: list[dict], final: dict | None)
 # ---------------------------------------------------------------------------
 
 
-def _retry_budget(contract: dict) -> int:
-    """계약의 `failure[].action` 에서 `retry(n)` 을 회수한다(코드에 박지 않는다)."""
-    budget = 0
-    for entry in contract.get("failure") or []:
-        match = RETRY_PATTERN.search(str(entry.get("action", "")))
-        if match:
-            budget = max(budget, int(match.group("count")))
-    return budget
+def _retry_budget(contract: dict, point: str) -> int:
+    """판정점 `point` 의 재시도 상한 — 정본은 계약의 `retry_budget.points[]` 다(재정 T16).
+
+    구 판은 `failure[].action` 전건의 `retry(n)` 을 `max()` 로 뭉쳐 **런 전역 1회**를 냈다.
+    재정 P-4 가 판정점을 둘로 늘린 뒤 그 하나는 「총비용 상한」이 아니라 **「먼저 도착한
+    판정점의 우선권」**으로 작동했고, 실물 런에서 출구 검사 78건에 재시도 0회가 났다.
+
+    **코드가 상한을 지어내지 않는다.** 계약에 그 판정점이 없으면 기본값을 만들지 않고
+    거부한다 — 같은 규율이 `reader/lib/convergence.py` 의 `convergence.threshold-missing`
+    에 이미 서 있다(임계가 없으면 판정하지 말고 결함으로 낸다).
+    """
+    for entry in (contract.get("retry_budget") or {}).get("points") or []:
+        if isinstance(entry, dict) and entry.get("id") == point:
+            value = entry.get("max_retries")
+            if type(value) is int:
+                return value
+            raise RunnerContractError(
+                f"판정점 {point!r} 의 max_retries 가 정수가 아니다 — "
+                "계약: contracts/stages/read.yaml"
+            )
+    raise RunnerContractError(
+        f"판정점 {point!r} 이 retry_budget.points[] 에 없다 — "
+        "계약: contracts/stages/read.yaml"
+    )
+
+
+def _failure_signature(rows: list[CheckRow]) -> tuple[tuple[str, str, str], ...]:
+    """실패 판정 행의 **서명** — (check_id, rule, locus) 의 정렬 튜플(재정 T16 §6 ⑤).
+
+    값(`found`)을 서명에 넣지 않는 이유: 같은 코드 결함이 회차마다 조금씩 다른 실측값을
+    낼 수 있고(항목 ID 재번호가 그렇다), 그러면 재현이 재현으로 보이지 않는다. 무엇이
+    어디서 어떤 규칙으로 걸렸는가가 같으면 그것이 같은 실패다.
+    """
+    return tuple(
+        sorted(
+            (row.check_id, finding.rule, finding.locus)
+            for row in rows
+            for finding in row.findings
+        )
+    )
 
 
 def _execute_decompose(
@@ -939,11 +979,12 @@ def decompose_only_spec(
     repo: str | None,
     source_digest: str,
 ) -> dict:
-    """분해 산출만으로 만드는 조립본.
+    """분해 산출만으로 만드는 조립본(재정 P-4 · T16 부속 4).
 
-    수렴 6축은 전부 `claims` 위에서 계산되므로(구성요소 문언·트리 간선·종속항 서명·부착)
-    접지·통합 없이도 축이 전부 선다 — 그것이 수렴을 분해 직후로 옮길 수 있는 이유다
-    (재정 P-4). 이 조립본은 판정용이며 산출물로 남지 않는다.
+    구 판은 수렴 6축만을 목적으로 적었다. 이제 청구항 소유 검사도 같은 조립본에서 돈다 —
+    조립기를 따로 만들지 않고 출구와 같은 `assemble_spec` 에 접지·통합·수확 자리표시를
+    넘긴다. 수렴 6축과 두 소유 검사는 모두 `claims` 위에서 판정할 수 있으므로 접지·통합이
+    필요 없다. 이 조립본은 판정용이며 산출물로 남지 않는다.
     """
     return assemble_spec(
         run_meta=run_meta,
@@ -957,7 +998,7 @@ def decompose_only_spec(
 
 
 def early_convergence_row(*, canonical_spec: dict, peer_spec: dict | None, rules: Rules) -> CheckRow:
-    """④ 조기 수렴 검사 — 두 분해 산출만으로 6축을 계산한다(재정 P-4).
+    """④-b 조기 수렴 검사 — 두 분해 산출만으로 6축을 계산한다(재정 P-4 · T16).
 
     검사 구현은 이식 단위(`reader/lib/convergence.py`)에 있고 러너는 등재부를 거쳐 부른다.
     여기서 축을 다시 계산하면 구현이 두 벌이 되고, 두 벌 중 하나는 반드시 낡는다.
@@ -1358,7 +1399,8 @@ def run(
     profiles = lane_profiles(repo)
     journal = LaneJournal()
     schema = load_schema()
-    budget = _retry_budget(contract)
+    early_budget = _retry_budget(contract, "early")  # 레인별
+    tail_budget = _retry_budget(contract, "exit")  # 런 전역(정본 후속 구간)
 
     # ⑤ 정본 지정(재정 P-4) — **선언 순서**다. 내용맹이며 결정론이고, 어떤 품질 비교·판정도
     #   하지 않는다. 근거: 수렴 통과는 두 독해가 동치라는 선언이므로 정본 선택에 판정자가
@@ -1369,21 +1411,18 @@ def run(
 
     memos: list[dict] = []
     final_signal: dict | None = None
-    # ★ 두 카운터의 층이 다르다(재정 2026-08-19 Q7 ②).
+    # ★ 판정점별 예산과 레인 좌표(재정 2026-09-01 T16, Q7 ② 개정).
     #
-    #   `attempt` = **런 전역 재시도 예산**의 소진량이다. 분해 재시도와 정본 후속 재시도가
-    #   그 하나를 나눠 쓰고(`budget` 은 계약의 `retry(n)` 에서 온다), `convergence_detail.attempt`
-    #   가 싣는 것도 이 값이다. 예산을 레인별로 쪼개면 재시도 총량이 조용히 늘어나므로
-    #   **여기는 건드리지 않는다** — 재정이 고치라고 한 것은 예산이 아니라 좌표다.
+    #   ★ 폐기: 구 `attempt` 는 **런 전역 예산**을 분해와 정본 후속이 나눠 쓰고,
+    #   `convergence_detail.attempt` 도 그 소진량을 실었다. Q7 의 범위 보존 문언을 예산 배분의
+    #   독립 판단으로 잘못 읽은 결과였고, P-4 뒤에는 먼저 도착한 판정점의 우선권이 되었다.
     #
-    #   `decompose_attempt` · `tail_attempt` = **각 레인 자신의 시도 회차**이며 레인 id 발번에만
-    #   쓴다. 구 판은 레인 id 도 `attempt` 로 매겨서, 분해가 한 번 재시도하면 그 뒤의 접지·통합이
-    #   **첫 시도인데도** `retry-1/batch-0` 으로 서고 `batch-0` 은 아예 존재하지 않았다(통주 3
-    #   실측 — 접지 레인이 "첫 시도 기록이 남지 않은 것이 의도인가"를 물어 왔다). 재정 P-12 로
-    #   레인 로그의 증거력을 세운 직후이므로 같은 로그의 다른 필드가 오도하는 것을 두지 않는다.
-    attempt = 0
-    decompose_attempt = 0
-    tail_attempt = 0
+    #   이제 `decompose_attempt[read_run]` 은 그 레인의 발번과 **조기 예산 소진량**을 함께
+    #   나타내고, `tail_attempt` 은 정본 후속의 발번과 출구 예산 소진량을 나타낸다.
+    #   `early_convergence_attempt` 은 비교 판정점의 실행 회차다. 계약이 각 상한을 정하며
+    #   러너는 늘리지 않는다. `convergence_detail.attempt` 도 해당 판정점의 실행 회차를 싣는다.
+    decompose_attempt: dict[str, int] = {name: 0 for name in read_runs}
+    early_convergence_attempt = 0
     run_id = str(run_meta.get("run_id", ""))
 
     # ★ 원장 기입은 런이 **종결**될 때 한 번이다(재정 P-U4 의 "한 행" 문언 이행).
@@ -1394,24 +1433,25 @@ def run(
     #   **적지 않는다** — 아직 끝나지 않은 런은 기록할 관찰이 아니라 진행 중인 상태다.
     terminated = True
     try:
-        # ②③④ 분해 2회 → 맹검 메모 → 조기 수렴. 재시도가 일어나는 자리는 **여기 하나**다.
-        early_defects: list[dict] | None = None
+        # ②③④ 분해 → 맹검 메모 → 실행별 청구항 소유 검사 → 조기 수렴(재정 T16).
+        pending = list(read_runs)
+        decomposes: dict[str, dict] = {}
+        early_defects: dict[str, list[dict]] = {}
+        early_claim_rows: dict[str, list[CheckRow]] = {}
         while True:
-            decomposes: dict[str, dict] = {}
-            memos = []
-            for read_run in read_runs:
+            for read_run in pending:
                 decomposes[read_run] = _execute_decompose(
                     read_run=read_run,
                     adapter=adapter,
                     view=view,
                     profiles=profiles,
                     journal=journal,
-                    lane_attempt=decompose_attempt,
-                    defects=early_defects,
+                    lane_attempt=decompose_attempt[read_run],
+                    defects=early_defects.get(read_run),
                     repo=repo,
                 )
-                memos.append(screening_memo(read_run, decomposes[read_run]))
 
+            memos = [screening_memo(name, decomposes[name]) for name in read_runs]
             decompose_specs = {
                 name: decompose_only_spec(
                     run_meta=run_meta,
@@ -1422,49 +1462,108 @@ def run(
                 )
                 for name, payload in decomposes.items()
             }
-            early_row = early_convergence_row(
-                canonical_spec=decompose_specs[canonical_run],
-                peer_spec=decompose_specs[peer_run] if peer_run else None,
-                rules=rules,
-            )
+
+            # ④-a 청구항 소유 검사 — 실행별 판정이므로 실패한 실행만 표적 재시도한다.
+            early_claim_rows = {
+                name: run_early_claim_checks(
+                    CheckContext(
+                        spec=decompose_specs[name],
+                        source_text=source_text,
+                        rules=rules,
+                    )
+                )
+                for name in read_runs
+            }
+            claim_failures = {
+                name: [row for row in rows if row.status == "fail"]
+                for name, rows in early_claim_rows.items()
+            }
+            claim_failures = {name: rows for name, rows in claim_failures.items() if rows}
+
+            # ④-b 수렴은 청구항 원인 검사가 실패하면 보류한다(재정 T16 부속 3).
+            early_row = None
+            escalations = []
+            if not claim_failures:
+                early_convergence_attempt += 1
+                early_row = early_convergence_row(
+                    canonical_spec=decompose_specs[canonical_run],
+                    peer_spec=decompose_specs[peer_run] if peer_run else None,
+                    rules=rules,
+                )
+                escalations = escalation_entries(early_row)
+
+            early_rows = [entry_row, *early_claim_rows[canonical_run]]
+            if peer_run:
+                early_rows.extend(early_claim_rows[peer_run])
+            if early_row is not None:
+                early_rows.append(early_row)
+
             early_payload = to_convergence_payload(
-                [entry_row, early_row],
+                early_rows,
                 decompose_specs[canonical_run],
                 phase="early",
                 canonical_read_run=canonical_run,
                 screening_memos=memos,
             )
             if early_payload["convergence_detail"]["executed"]:
-                early_payload["convergence_detail"]["attempt"] = attempt + 1
+                early_payload["convergence_detail"]["attempt"] = early_convergence_attempt
             _validate_convergence(early_payload, paths.repo)
             write_json(paths.convergence_early_json, early_payload)
 
-            escalations = escalation_entries(early_row)
-            # exact-match 축 미달 = 판정 행 fail. 재시도는 **분해**를 다시 돌린다 — 접지
-            # 지출 이후로 미루지 않는다(재정 P-4). 상신 축 미달은 재시도 대상이 아니다:
-            # 해석 차이는 다시 돌린다고 줄지 않으며, 재정이 그것을 "실패가 아니라 상신"이라
-            # 정했다(재정 P-3).
-            if early_row.status == "fail" and attempt < budget:
-                early_defects = findings_of([early_row])
-                # 예산(런 전역)과 좌표(이 레인)를 함께 올린다 — 분해 구간에서는 두 값이
-                # 같은 걸음으로 가지만, 뜻이 다르므로 두 이름으로 센다(재정 Q7 ②).
-                attempt += 1
-                decompose_attempt += 1
+            if claim_failures:
+                retryable = [
+                    name
+                    for name in read_runs
+                    if name in claim_failures and decompose_attempt[name] < early_budget
+                ]
+                if not retryable:
+                    break
+                # 회차마다 새로 만들고 각 실행 자신의 Finding 8키만 돌려준다(T16 부속 5).
+                early_defects = {
+                    name: findings_of(claim_failures[name]) for name in retryable
+                }
+                pending = retryable
+                for name in retryable:
+                    decompose_attempt[name] += 1
+                continue
+
+            if early_row is not None and early_row.status == "fail":
+                retryable = [
+                    name for name in read_runs if decompose_attempt[name] < early_budget
+                ]
+                if not retryable:
+                    break
+                # 수렴 행은 두 실행의 비교이므로 같은 소견만 양쪽에 보내며 payload 는 보내지 않는다.
+                early_defects = {
+                    name: findings_of([early_row]) for name in retryable
+                }
+                pending = retryable
+                for name in retryable:
+                    decompose_attempt[name] += 1
                 continue
             break
 
         # ⑥ 접지 진입 게이트(재정 P-U3) — 판정서 존재 ∧ (통과 ∨ Owner '계속' 봉투 유효).
-        early_passed = early_row.status == "pass" and not escalations
+        early_passed = (
+            not claim_failures
+            and early_row is not None
+            and early_row.status == "pass"
+            and not escalations
+        )
         envelope_ok, envelope_note = continue_envelope_state(paths)
         if not early_passed and not envelope_ok:
-            if early_row.status == "fail":
+            if claim_failures:
+                # 조기 청구항 실패 = 분해 결함. 조치는 계약의 첫 failure 행이 든다.
+                entry = failure_entry(contract, "claim-inventory")
+                status = str(entry.get("then", entry.get("action")))
+            elif early_row is not None and early_row.status == "fail":
                 entry = failure_entry(contract, "exact-match 축")
                 status = str(entry.get("then", entry.get("action")))
             else:
                 entry = failure_entry(contract, "상신 축")
                 status = str(entry.get("action"))
             return {
-                "rows": [entry_row, early_row],
+                "rows": early_rows,
                 "spec": None,
                 "convergence": early_payload,
                 "status": status,
@@ -1474,6 +1573,9 @@ def run(
 
         # ⑦ 접지 → 수확 → 통합. **정본 1개만** 여기 들어간다(재정 P-4).
         tail_defects: list[dict] | None = None
+        tail_attempt = 0
+        previous_signature = None
+        repeated_signature = False
         id_maps: dict[str, dict[str, str]] = {}
         while True:
             tail = _execute_canonical_tail(
@@ -1526,13 +1628,18 @@ def run(
                 )
             )
             failing = [row for row in rows if row.status == "fail"]
-            if not failing or attempt >= budget:
+            if not failing:
                 break
-            # 재시도는 결함 목록을 레인에 되돌려 준다 — 그러지 않으면 같은 오류를 재생산한다.
-            # 이 재시도는 **정본 후속**만 다시 돈다(분해는 이미 수렴 판정을 받았다).
+            signature = _failure_signature(failing)
+            if previous_signature is not None and signature == previous_signature:
+                # ★ 재현 자체가 진단이다 — 남은 예산을 태우지 않고 상신한다(재정 T16 §6 ⑤).
+                repeated_signature = True
+                break
+            if tail_attempt >= tail_budget:
+                break
+            # 재시도는 Finding 8키만 정본 후속에 돌려준다. 분해와 예산을 공유하지 않는다(T16).
             tail_defects = findings_of(failing)
-            # 예산은 분해와 공유하고(그래서 총량이 늘지 않는다) 좌표는 이 구간의 것만 센다.
-            attempt += 1
+            previous_signature = signature
             tail_attempt += 1
 
         write_json(os.path.join(paths.lanes_dir, ID_MAP_BASENAME), id_maps)
@@ -1573,7 +1680,8 @@ def run(
             skipped_tokens=tail["skipped"],
         )
         if payload["convergence_detail"]["executed"]:
-            payload["convergence_detail"]["attempt"] = attempt + 1
+            # 재정 T16: 전역 예산 소진량이 아니라 정본 후속 판정점의 실행 회차다.
+            payload["convergence_detail"]["attempt"] = tail_attempt + 1
         _validate_convergence(payload, paths.repo)
         write_json(paths.convergence_json, payload)
 
@@ -1583,7 +1691,9 @@ def run(
         if failing:
             # C5 — 검사가 하나라도 실패하면 산출을 확정하지 않는다. 판정 보고서와 drop 신호는
             # Owner 가 판단할 자료이므로 남기되, 재료 명세와 판독본은 쓰지 않는다.
-            status, reason_label = _failure_verdict(contract, failing)
+            status, reason_label = _failure_verdict(
+                contract, failing, repeated=repeated_signature
+            )
             return {
                 "rows": rows,
                 "spec": None,
@@ -1639,8 +1749,13 @@ def run(
         )
 
 
-def _failure_verdict(contract: dict, failing: list[CheckRow]) -> tuple[str, str | None]:
+def _failure_verdict(
+    contract: dict, failing: list[CheckRow], *, repeated: bool = False
+) -> tuple[str, str | None]:
     """검사 실패 → 조치. 재시도 예산은 이미 소진된 뒤 호출된다."""
+    if repeated:
+        entry = failure_entry(contract, "같은 실패 서명")
+        return str(entry["action"]), entry.get("reason_label")
     ids = {row.check_id for row in failing}
     if "read.schema" in ids:
         entry = failure_entry(contract, "read.schema 실패")
