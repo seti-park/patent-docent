@@ -39,3 +39,7 @@ engine:
   gate_version: ''
 reader_version: 0.8.0
 numeric_whitelist: []
+frozen:
+- spec_version: 1
+  path: 15-frozen/material-spec.v1.json
+  spec_digest: sha256:0909cc248ce342a84255dcb2ab3a19d35bf84d30a1630c7c7a675ff02c214534
