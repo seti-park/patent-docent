@@ -125,7 +125,6 @@ ENGINE_READ_CHECK_IDS: tuple[str, ...] = (
 CONTINUE_CHECKPOINT = "convergence_continue"
 PHASE_GATE_NONE = "none"
 PHASE_GATE_CLAIM_CHECKS = "claim-checks"
-PHASE_GATE_NO_VERDICT = "no-verdict"
 PHASE_GATE_EXACT_MATCH = "convergence-exact-match"
 ENVELOPE_SCOPE = ("convergence-escalation",)
 PHASE_GATE_ESCALATION = ENVELOPE_SCOPE[0]
@@ -1075,7 +1074,6 @@ def phase_gate_reason(
     labels = {
         PHASE_GATE_NONE: "조기 판정 전부 통과",
         PHASE_GATE_CLAIM_CHECKS: "조기 청구항 소유 검사 실패",
-        PHASE_GATE_NO_VERDICT: "조기 수렴 판정 없음",
         PHASE_GATE_EXACT_MATCH: "조기 수렴 exact-match 축 미달",
         PHASE_GATE_ESCALATION: "조기 수렴 상신 축 미달",
     }
@@ -1598,7 +1596,16 @@ def run(
         if claim_failures:
             blocked_by = PHASE_GATE_CLAIM_CHECKS
         elif early_row is None:
-            blocked_by = PHASE_GATE_NO_VERDICT
+            # 이 상태는 도달 가능한 분기로 만들 수 없다. claim_failures 가 비면 위 루프가
+            # early_convergence_row() 의 CheckRow 를 반드시 받는다는 불변식이 있기 때문이다.
+            # 그래서 감사 Y-4 가 벌한 「있는 척」 라벨을 지우고 계약 위반으로 소리 나게
+            # 멈춘다. no-verdict 는 어떤 런에서도 발행된 적이 없으므로 값 공간을 좁히는
+            # 변경도 아니다 — 여기 왔다면 조기 루프 또는 수렴 판정의 불변식이 깨진 것이다.
+            raise RunnerContractError(
+                "READ 조기 게이트 불변식 위반 — claim_failures가 비었는데 early_row가 없다. "
+                "early_convergence_row()가 CheckRow를 반환한다는 분해→수렴 불변식 또는 "
+                "조기 재시도 루프의 제어 흐름이 깨졌다"
+            )
         elif early_row.status == "fail":
             blocked_by = PHASE_GATE_EXACT_MATCH
         elif escalations:

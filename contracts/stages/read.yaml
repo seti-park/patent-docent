@@ -420,6 +420,15 @@ phase_gates:
       not_retroactive: >-
         WO 런의 봉투는 tree-edges 미달 하나를 넘겼으므로 유효하고 동결본 v1 은 그대로 선다
         (행위시법 P-U1).
+    blocked_by_vocabulary:
+      - value: none
+        meaning: "조기 청구항 검사와 수렴 판정이 전부 통과해 차단 사유가 없음"
+      - value: claim-checks
+        meaning: "조기 청구항 소유 검사 실패가 접지 진입을 차단함"
+      - value: convergence-exact-match
+        meaning: "조기 수렴 exact-match 축 미달이 접지 진입을 차단함"
+      - value: convergence-escalation
+        meaning: "조기 수렴 상신 축 미달이 접지 진입을 차단함(유효한 계속 봉투의 적용 대상)"
     verdict_artifact: 10-read/phase-gate.json
     verdict_artifact_note: >-
       게이트 판정을 조기 수렴 판정서(convergence-early.json)에 적지 않는다. 봉투가 그 파일의
@@ -437,6 +446,22 @@ phase_gates:
         적용 범위 안)·applied(실제 진입에 사용) — 와 결속 판정 메모
       reason: "사람이 읽는 진입·차단 사유와 처분"
       ruling: "게이트와 적용 범위를 정한 재정 목록"
+    binding_status:
+      ruling: "감사 Y-3 처분 (2026-09-01)"
+      runner_reads: [declared_input, continue_envelope]
+      test_bound:
+        - phase
+        - entry_condition
+        - envelope_binding
+        - envelope_scope
+        - blocked_by_vocabulary
+        - verdict_artifact
+        - verdict_artifact_keys
+      prose_only: [verdict_artifact_note]
+      why: >-
+        읽히지 않는 선언을 읽히는 것처럼 두지 않는다. 어느 칸이 러너 경로 해석에 쓰이고,
+        어느 칸이 실물 산출·행동 시험에 묶이며, 어느 칸이 사람을 위한 설명뿐인지 적지 않으면
+        선언과 실물이 다시 갈려도 같은 격의 새 구멍을 알아볼 수 없다.
 
 # D5 5단계 ↔ 산출물 대응 (SPEC §1.4).
 stage_artifacts:

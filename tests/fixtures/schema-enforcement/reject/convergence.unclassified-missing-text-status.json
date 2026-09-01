@@ -1,0 +1,61 @@
+{
+  "schema": "convergence/v0",
+  "run_id": "fixture-unclassified-missing-text-status",
+  "reader_version": "0.5.0",
+  "spec_version": 1,
+  "source_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "checks": [
+    {
+      "check_id": "fixture.schema-enforcement",
+      "ruleset": null,
+      "ruleset_version": null,
+      "ruleset_size": null,
+      "checked": 1,
+      "violations": 0,
+      "status": "pass",
+      "vacuous": "none"
+    }
+  ],
+  "vacuous_pass": [],
+  "findings": [],
+  "convergence_detail": {
+    "executed": false,
+    "attempt": 0,
+    "independent_count": [],
+    "dependent_count": [],
+    "axes": []
+  },
+  "fact_classification": {
+    "quoted_span": { "count": 0, "material_ids": [] },
+    "bibliographic_ids": [],
+    "derived": [],
+    "figure_sourced": []
+  },
+  "manual_verification_required": [],
+  "grounding_exceptions": [],
+  "phase": "early",
+  "canonical_selection": {
+    "read_run": "read-a",
+    "rule": "declaration-order",
+    "content_blind": true
+  },
+  "convergence_report": {
+    "axes": [],
+    "escalations": [],
+    "divergences": []
+  },
+  "unclassified_dependents": [
+    {
+      "claim": "CL-3",
+      "dependency_type": "unclassified",
+      "text_verbatim": "«문언 없음»"
+    }
+  ],
+  "numeric_inventory": {
+    "total": 0,
+    "referenced": [],
+    "unreferenced": [],
+    "skipped": []
+  },
+  "screening_memos": []
+}

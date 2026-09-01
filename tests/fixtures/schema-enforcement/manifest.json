@@ -265,6 +265,34 @@
       "expect": "reject",
       "series": "재감수 B-03 ruleset 3-튜플 동조",
       "basis": "ruleset 이 null 인데 ruleset_version·ruleset_size 가 non-null. 어느 목록의 몇 항목을 적용했는지가 서로 어긋나면 판정 근거를 재구성할 수 없다."
+    },
+    {
+      "file": "accept/convergence.unclassified-text-absent.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "accept",
+      "series": "T18·T21 미분류 문언 부재 정상형",
+      "basis": "재정 2026-09-01 T18·T21. text_status: absent 와 정확한 고정 토큰 «문언 없음»을 짝지은 convergence/v0 정상형 — 자리표시를 자유 문언이 아니라 선언 필드와 대조되는 값으로 고정한다."
+    },
+    {
+      "file": "reject/convergence.unclassified-absent-wrong-text.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "reject",
+      "series": "T18·T21 absent 선언과 문언 불일치",
+      "basis": "재정 2026-09-01 T18·T21. accept/convergence.unclassified-text-absent.json 에서 text_verbatim 만 «문언 없음» → N/A 로 바꾼 판. text_status: absent 선언은 정확한 고정 토큰하고만 결속되어야 한다."
+    },
+    {
+      "file": "reject/convergence.unclassified-verbatim-placeholder.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "reject",
+      "series": "T18·T21 verbatim 선언과 자리표시 충돌",
+      "basis": "재정 2026-09-01 T18·T21. accept/convergence.unclassified-text-absent.json 에서 text_status 만 absent → verbatim 으로 바꾼 판. 고정 토큰 «문언 없음»을 실제 원문이라고 선언할 수 없어야 한다."
+    },
+    {
+      "file": "reject/convergence.unclassified-missing-text-status.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "reject",
+      "series": "T18·T21 text_status 필수",
+      "basis": "재정 2026-09-01 T18·T21. accept/convergence.unclassified-text-absent.json 에서 text_status 키만 삭제한 판. 짝 필드가 없으면 자리표시인지 원문인지 선언되지 않으므로 거부해야 한다."
     }
   ]
 }

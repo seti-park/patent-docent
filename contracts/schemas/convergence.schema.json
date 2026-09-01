@@ -148,14 +148,38 @@
       "$comment": "구조 미분류 종속항 전건 (재정 P-1). Markush·조건부·수단항·카테고리 전환은 typed operator 입법을 N14 범위에서 제외했고, 대신 표지·목록·계수 셋으로 침묵을 막는다 — 이 배열이 그 '목록'이며 CP1 표면이 전건을 렌더한다. ★ 이 목록의 항목은 **결함이 아니다**. 판정(parse.set-equals·parse.type-agrees)의 대상에서 빠졌다는 사실을 드러내는 자리이며, 판정 행의 checked 에서도 빠진다. text_verbatim 을 함께 싣는 이유는 사람이 그 자리에서 구조를 읽어야 하기 때문이다 — ID 만 있으면 목록이 '무엇이 미분류인지'를 말하지 못한다.",
       "type": "array",
       "items": {
+        "$comment": "재정 2026-09-01 T18 + T21. 값 공간의 정본은 이 스키마다. ★ 보증의 소재 — 안전을 주는 것은 토큰의 희귀성이 아니라 text_status 다. 짝 필드가 어느 쪽인지 선언하고 스키마가 그 선언과 값을 대조한다. ★ 행위시법(재정 P-U1) — 이 키는 소급하지 않는다. runs/** 의 기존 산출물은 text_status 를 들지 않으며 그대로 선다. 새 규격은 다음 런부터다.",
         "type": "object",
         "additionalProperties": false,
-        "required": ["claim", "dependency_type", "text_verbatim"],
+        "required": ["claim", "dependency_type", "text_verbatim", "text_status"],
         "properties": {
           "claim": { "type": "string", "pattern": "^CL-[0-9]+$" },
           "dependency_type": { "const": "unclassified" },
-          "text_verbatim": { "type": "string", "minLength": 1 }
-        }
+          "text_verbatim": { "type": "string", "minLength": 1 },
+          "text_status": { "enum": ["verbatim", "absent"] }
+        },
+        "allOf": [
+          {
+            "if": {
+              "required": ["text_status"],
+              "properties": { "text_status": { "const": "absent" } }
+            },
+            "then": {
+              "properties": { "text_verbatim": { "const": "«문언 없음»" } }
+            }
+          },
+          {
+            "if": {
+              "required": ["text_status"],
+              "properties": { "text_status": { "const": "verbatim" } }
+            },
+            "then": {
+              "properties": {
+                "text_verbatim": { "not": { "const": "«문언 없음»" } }
+              }
+            }
+          }
+        ]
       }
     },
     "numeric_inventory": {

@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-"""재정 2026-09-01 T17 의 '계속' 봉투 적용 범위를 반증한다."""
+"""재정 2026-09-01 T17·T19 의 '계속' 봉투 적용 범위를 두 축에서 고정한다.
+
+재정 T17 조건 ②(역반증)의 본래 기능인 「좁힘이 과했는가」 탐지는 재정 T19 로 소진되었다.
+T19 ⒜ 가 exact-match 축 배제를 사후 추인했으므로 이 축에서 봉투가 막히는 것은 결함이 아니라
+기대값이다. 이 시험을 「봉투 범위가 과하지 않음의 역반증」으로 읽지 마라. 그렇게 읽고
+안심한 것이 정확히 감사 Y-2 가 잡은 일이다. 지금 지키는 것은 추인된 범위가 조용히 다시
+넓어지지 않는다는 것 하나다.
+"""
 
 from __future__ import annotations
 
@@ -116,6 +123,73 @@ def test_envelope_still_carries_the_escalation_axis(tmp_path) -> None:
     }
     if actual != expected:
         pytest.fail(f"상신 축 게이트 기대 {expected!r}, 실제 {actual!r}")
+
+
+def test_envelope_remains_blocked_on_the_exact_match_axis(tmp_path) -> None:
+    """추인된 exact-match 배제가 조용히 다시 넓어지지 않는지 지킨다.
+
+    재정 T17 조건 ②(역반증)의 본래 기능인 「좁힘이 과했는가」 탐지는 재정 T19 로 소진되었다.
+    T19 ⒜ 가 exact-match 축 배제를 사후 추인했으므로 이 축에서 봉투가 막히는 것은 결함이
+    아니라 기대값이다. 이 시험을 「봉투 범위가 과하지 않음의 역반증」으로 읽지 마라.
+    그렇게 읽고 안심한 것이 정확히 감사 Y-2 가 잡은 일이다.
+    """
+    payloads = {
+        "read-a": m2.payload_set(),
+        # 청구항 끝점만 갈라 dependent-set exact-match 축을 임계 0.95 미만으로 만든다.
+        "read-b": m2.payload_set(claim_three_text=m2.CLAIM_3.rstrip(".")),
+    }
+    _, _, outcome, adapter, gate = run_twice_with_envelope(
+        tmp_path, payloads_by_run=payloads
+    )
+    axes = {
+        str(axis.get("id")): axis
+        for axis in (outcome.get("convergence") or {}).get("convergence_detail", {}).get("axes", [])
+    }
+    dependent_set = axes.get("dependent-set") or {}
+    if dependent_set.get("status") != "fail" or not (
+        isinstance(dependent_set.get("jaccard"), (int, float))
+        and dependent_set["jaccard"] < 0.95
+    ):
+        pytest.fail(
+            "청구항 끝점 갈림 기대 dependent-set jaccard < 0.95 + fail, 실제 "
+            f"{dependent_set!r}"
+        )
+    spent = [task for task in adapter.tasks_dispatched() if task.startswith("ground")]
+    if spent:
+        pytest.fail(f"exact-match 범위 밖 봉투인데 접지 레인 기대 0건, 실제 {spent}")
+    expected = {
+        "blocked_by": "convergence-exact-match",
+        "present": True,
+        "valid": True,
+        "in_scope": False,
+        "applied": False,
+        "entered": False,
+    }
+    actual = {
+        "blocked_by": gate.get("blocked_by"),
+        "present": gate.get("envelope", {}).get("present"),
+        "valid": gate.get("envelope", {}).get("valid"),
+        "in_scope": gate.get("envelope", {}).get("in_scope"),
+        "applied": gate.get("envelope", {}).get("applied"),
+        "entered": gate.get("entered"),
+    }
+    if actual != expected:
+        pytest.fail(f"exact-match 차단 게이트 기대 {expected!r}, 실제 {actual!r}")
+    reason = str(gate.get("reason", ""))
+    missing = [
+        token
+        for token in ("exact-match 축 미달", "T17", "조기 수렴 재시도")
+        if token not in reason
+    ]
+    if missing:
+        pytest.fail(
+            f"exact-match 사유 기대 차단·T17 근거·처분, 누락 {missing}, 실제 {reason!r}"
+        )
+    if outcome.get("gate_note") != reason:
+        pytest.fail(
+            f"러너 gate_note 기대 산출 reason 과 동일 {reason!r}, "
+            f"실제 {outcome.get('gate_note')!r}"
+        )
 
 
 def test_phase_gate_records_why_the_envelope_did_not_apply(tmp_path) -> None:

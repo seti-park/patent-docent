@@ -39,6 +39,10 @@ from .spec_io import SpecIndex
 
 CHECK_ID = "read.dependency-parse"
 
+UNCLASSIFIED_TEXT_ABSENT = "«문언 없음»"
+UNCLASSIFIED_TEXT_STATUS_VERBATIM = "verbatim"
+UNCLASSIFIED_TEXT_STATUS_ABSENT = "absent"
+
 _NUMBER = re.compile(r"\d+")
 
 
@@ -160,11 +164,22 @@ def check(ctx: CheckContext) -> CheckRow:
             # 두 실행의 행을 함께 받게 되면서, 거기서 ID 를 정본 명세 하나에 조회하면 비정본의
             # ID 가 빈 문언이 되어 convergence/v0 의 `minLength: 1` 을 깬다(감사 지적 X-2).
             # 명세를 아는 자리가 문언도 읽는다.
+            #
+            # ★ 빈 문언이어도 목록에서 빼지 않는다. 레인이 유령 청구항을 지어냈다는 사실 자체가
+            #   신호이므로 지우지 않는다(재정 T18 ⒝). 자리표시는 문언이 아니라 문언의 부재를
+            #   신고하는 값이다. 스키마의 `minLength: 1` 도 풀지 않는다 — 풀면 빈칸이 판정서
+            #   서식 전반에서 합법이 되고, 다른 자리도 조용히 비게 된다(재정 T18 ⒝ 기각표).
+            text_absent = not text
             unclassified_detail.append(
                 {
                     "claim": claim_id,
                     "dependency_type": unclassified_value,
-                    "text_verbatim": dependent.get("text_verbatim") or "",
+                    "text_verbatim": UNCLASSIFIED_TEXT_ABSENT if text_absent else text,
+                    "text_status": (
+                        UNCLASSIFIED_TEXT_STATUS_ABSENT
+                        if text_absent
+                        else UNCLASSIFIED_TEXT_STATUS_VERBATIM
+                    ),
                 }
             )
             # 회피 통로 봉쇄 — 판정 기준은 **본문의 구조 표지 유무**다.

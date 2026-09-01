@@ -437,12 +437,27 @@ def render(
     out("판정(`parse.set-equals`·`parse.type-agrees`)의 대상에서 빠졌다는 뜻이다. 전문은")
     out("이미 보존되어 있으므로(재정 R1) 여기서 사람 눈이 마지막 심급이 된다.")
     out()
+    out("★ **실행 귀속 한계 고지** — 재정 T14 가 명한 「감수하고 넘어가는 것의 명기」를")
+    out("이행한다. 이 목록은 `read-a`·`read-b` 두 실행 신고의 합집합이며, 같은 청구항의")
+    out("문언이 실행 사이에서 갈리면 두 행으로 선다.")
+    out("수렴 스키마의 `additionalProperties: false` 제약 때문에 어느 실행의 신고인지는 이")
+    out("목록이 말하지 못한다. 실행 귀속 필드의 신설은 재정 사항이며 현재 상신 중이다.")
+    out()
     if not unclassified:
         out("_미분류 종속항 없음 — 전 종속항이 5종 어형으로 파싱되었다._")
         out()
     for entry in unclassified:
         out(f"- **`{entry.get('claim', '')}`** (`{entry.get('dependency_type', '')}`)")
-        out(f"  - 전문: “{entry.get('text_verbatim', '')}”")
+        if entry.get("text_status") == "absent":
+            out(
+                "  - 전문 부재 신고: 레인이 `text_verbatim` 을 비웠거나 키를 내지 않았다 "
+                "(재정 2026-09-01 T18)."
+            )
+            out("  - 문언의 부재 자체가 신호이므로 이 항목은 목록에 남는다.")
+        else:
+            # 행위시법 P-U1 — 기존 runs/** 산출에는 text_status 가 없다. 키 부재는 구 판의
+            # verbatim 렌더를 그대로 유지하며, 소급해서 absent 로 재해석하지 않는다.
+            out(f"  - 전문: “{entry.get('text_verbatim', '')}”")
     out()
 
     # -- 11. 맹검 스크리닝 메모 (재정 P-A · P-U4) ---------------------------
