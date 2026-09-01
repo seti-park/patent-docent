@@ -162,6 +162,13 @@ PCT 공보가 즐겨 쓰는 `any of the preceding claims` 계열이다. 위 표�
 
 Markush(`selected from the group consisting of …`)·조건부(**명확 구문만** — `in response to`·`only if` 등)·수단항(`means for`·`step for`)·**카테고리 전환**(인용 대상과 청구 카테고리가 갈리는 종속) 넷은 **본문의 구조**가 위 4어형 체계 밖이다. 이 넷을 만나면 `dependency_type: "unclassified"`를 선언한다.
 
+**★ 카테고리 전환이 선행 청구항 전부를 인용하면 `all-preceding`이 이긴다**(재정 2026-09-01 **T13**). 장치·매체·컴퓨터프로그램제품 청구항이 `the operations comprising the method of any of the preceding claims`처럼 적혀 있으면 `dependency_type`은 **`all-preceding`**이다 — `unclassified`를 쓰지 마라.
+
+- **왜인가.** 미분류는 **인용을 읽지 못하는** 구조를 위한 표지인데(위 문단의 "판정 대상에 남기면 규칙의 공백이 실제 결함과 같은 모양으로 계상된다"), 이 인용은 재정 T11-ⓒ 이후 **읽힌다.** 읽히는 인용에 미분류를 붙이면 `depends_on`이 아무 검사도 받지 않게 된다.
+- **실측(2026-09-01).** WO2026-128750A1의 CL-23·24·25가 이 형태이며, 셋 다 **구조 표지 어형이 0건**이라 `unclassified` 선언은 애초에 `parse.unclassified-not-an-escape`에 걸린다(문두가 `One or more non-transitory…`·`A computing system, comprising:`·`A computer program product…`이고 현행 카테고리 전환 표지 2종은 US 형태다). **표지 목록을 넓히지 않기로 한 것이 이 재정이다** — 넓히면 회피 통로가 함께 넓어진다.
+- **잃는 것을 적어 둔다.** 이 셋은 CP1의 미분류 목록에 오르지 않는다. 다만 잃는 것은 **태그이지 정보가 아니다** — 전문은 `text_verbatim`에 남고 판독본이 청구항을 싣는다.
+- **강제되지 않는다.** 구조 표지가 있는데 미분류를 선언하지 **않은** 것을 잡는 검사는 없다(역방향 가드 부재 — Markush도 같다). 이 지침은 문서 지침이며, 강제 범위를 실제보다 넓게 말하지 않기 위해 그 사실을 함께 적는다.
+
 **★ 조건부는 명확 구문으로만 인정한다 — 맨 `when`·`if`는 표지가 아니다**(재정 2026-08-19 Q5 ② = ⓑ). 구 문언은 조건부를 *"(`if`·`when`·`in response to`)"*로 예시했고, 그 둘은 재정으로 표지 목록에서 **빠졌다**. 위 괄호의 둘은 **대표 예**일 뿐이며 **목록의 정본은 `reader/reader-rules.yaml#dependency_citation.unclassified.structure_markers`다** — 이 문서에 목록을 복제하지 않는다(사본은 반드시 낡는다).
 
 - **근거(실측 · 통주 3의 CL-9).** 그 청구항의 구조는 조건부 종속이 아니라 **동시성 한정**인데 `when` 표지가 실재했다. 그 한 자리 때문에 두 독립 실행이 **규율을 어기지 않고 갈렸다** — 한쪽은 표지를 보고 `unclassified`를, 다른 쪽은 구조를 보고 종속 어형을 선언했고 둘 다 계약대로였다. `dependent-set`이 **0.8889**로 미달했다가 재분해 후 **1.0000**으로 수렴했으며, **갈린 자리는 CL-9 하나**였다. 나표지는 표지가 아니라 낱말이었다.
