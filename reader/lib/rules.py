@@ -181,6 +181,7 @@ class Rules:
                     "rank": form.get("rank"),
                     "id": form.get("id"),
                     "implies_type": form.get("implies_type"),
+                    "expands": form.get("expands"),
                     "requires_literal": form.get("requires_literal"),
                     "pattern": re.compile(form["pattern"], flags),
                 }

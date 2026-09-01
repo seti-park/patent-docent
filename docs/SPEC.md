@@ -1552,7 +1552,7 @@ claims
 | `elements[].material_id` | `^M[0-9]+$` | ✔ | 반드시 `kind: "component"` 항목을 가리킨다 |
 | `elements[].children[]` | element[] | ✔(빈 배열 허용) | 구성요소 내부 하위 한정 |
 | `dependents[].depends_on` | `array<claim_id>`, minItems 1, uniqueItems | ✔ | **배열**(재정 R1). 다중 종속을 손실 없이 담는다 |
-| `dependents[].dependency_type` | enum `single`\|`multiple-and`\|`multiple-or`\|`unclassified` | ✔ | 다중 종속의 **논리 형태**(재정 R1) 또는 **구조 미분류** 표지(재정 P-1) |
+| `dependents[].dependency_type` | enum `single`\|`multiple-and`\|`multiple-or`\|`all-preceding`\|`unclassified` | ✔ | 다중 종속의 **논리 형태**(재정 R1), **선행 전부 인용** 표지(재정 T11-ⓒ), 또는 **구조 미분류** 표지(재정 P-1) |
 | `dependents[].text_verbatim` | string, minLength 1 | ✔ | **종속항 원문 전문**(재정 R1). `read.dependency-parse`의 파싱 대상 |
 | `dependents[].additions` | array, **`minItems: 1`** | ✔ | 종속항은 반드시 1개 이상의 부가 한정으로 분해된다(재감수 B-02). 빈 배열을 허용하면, 전문이 있는 종속항을 `additions: []`로 두는 것만으로 커버리지 검사가 **아무것도 세지 않고** 통과해 "전 구성요소 접지"(D5 ③)가 공허해진다 |
 | `additions[].id` | `^CL-[0-9]+/a[0-9]+$` | ✔ | 부가 한정 단위 |
@@ -1595,7 +1595,12 @@ claims
 | `single` | "The module of claim 1, wherein…" | 1 |
 | `multiple-and` | "…of claims 1 and 2" | ≥ 2 |
 | `multiple-or` | "…of claims 1 or 2" / "any one of claims 1-3" | ≥ 2 |
+| `all-preceding` | "…of any (one) of the preceding claims"(PCT 관행) | 제약 없음 |
 | `unclassified` | **구조 미분류** — Markush · 조건부 · 수단항 · 카테고리 전환 | 제약 없음 |
+
+**`all-preceding`은 재정 2026-09-01 T11-ⓒ의 신설이다**(원장 = `docs/decisions/ruling-20260901-02-T11.md`). 계기는 실측이다 — WO2026-128750A1(PCT 공보)이 `any of the preceding claims`를 **15회** 쓰는데 구 5어형이 **전부 패턴에 `\d`를 요구**해 **주 어형이 규칙 밖**이었고, 그 한 자리가 `read.dependency-parse` 위반 15건과 `read.claim-inventory` 위반 15건(같은 15개 청구항을 원천 파서가 **독립항으로 오판**)의 유일한 원인이었다. `'854`에서 한 번도 발동하지 않은 이유는 US 관행이 전부 `of claim N`을 쓰기 때문이다.
+
+**★ 이 어형에는 길이 제약도, 정확 집합 일치도 걸지 않는다.** 본문이 숫자를 말하지 않으므로 기계가 `1..n-1`로 확정 전개하면 **본문이 말하지 않은 것을 기계가 주장**하게 된다 — 실물이 그 위험을 보인다: 청구항 24는 `the operations comprising **the method** of any of the preceding claims`이고, 앞에 장치항이 섞여 있으면 "the method of"가 **방법항만** 가리킨다. 일괄 전개는 장치항까지 인용한 것으로 지어낸다. 검사의 일은 뜻을 계산하는 것이 아니라 **침묵 통과를 막는 것**이므로, 판정은 아래 `parse.preceding-subset`이 진다(재정 T11-ⓒ ⒞가 기각한 안 = 기계의 확정 전개 · 어형만 인식하고 미분류 허용).
 
 불변식: `dependency_type == "single"` ⟹ `len(depends_on) == 1`. 역방향(`len(depends_on) == 1` ⟹ `single`)은 **성립하지 않는다** — `unclassified`가 단일 종속일 수 있기 때문이며, 그래서 스키마에 넣지 않았다. `unclassified`에는 길이 제약을 두지 않는다: 미분류는 형태를 모른다는 표지이므로 길이를 단정할 근거가 없다. 종속의 종속(claim 7 → claim 5 → claim 1)은 `depends_on: ["CL-5"]`로 적고 `attaches_to`는 최종적으로 독립항 element를 가리킨다 — 즉 `attaches_to`의 값 공간은 **항상 element id**다.
 
@@ -1626,10 +1631,12 @@ claims
 | 3 | `claims <a> or <b>` | `{a,b}` |
 | 4 | `any one of claims <a>-<b>` / `any of claims <a> to <b>` | `{a..b}` |
 | 5 | `the … of claim <n>` | `{n}` |
+| 6 | `any (one) of the preceding claims` (재정 T11-ⓒ) | **번호를 내지 않는다** — 자기 번호 `n`에서 선행 집합 `{1..n-1}`을 **판정의 허용 범위로만** 세운다 |
 
-- 판정: 파싱 집합 == `depends_on` 집합(순서 무시). 불일치 = **실패**.
-- **파싱 불능**(위 5규칙 어디에도 매칭 없음)도 실패로 처리하고 결함 메시지에 원문을 첨부한다 — 침묵 통과 금지.
-- `dependency_type` 정합: `or`/`any one of` 어형 → `multiple-or`, `and` 어형 → `multiple-and`, 단일 → `single`. 불일치 = 실패.
+- 판정: 파싱 집합 == `depends_on` 집합(순서 무시). 불일치 = **실패**. **단 어형 6에는 적용하지 않는다**(아래).
+- **파싱 불능**(위 어느 어형에도 매칭 없음)도 실패로 처리하고 결함 메시지에 원문을 첨부한다 — 침묵 통과 금지.
+- **어형 6의 판정 = `parse.preceding-subset`**(재정 T11-ⓒ). `depends_on`이 선행 청구항 집합 `{CL-1 … CL-(n-1)}`의 **부분집합**이고 **비어 있지 않으면** 통과, 선행 범위 **밖**의 번호(자기 자신·후행 청구항 포함)가 하나라도 있거나 **빈 배열**이면 실패다. `parse.set-equals`를 재사용하지 않는 이유는 판정문이 **어느 규칙이 걸렸는지 정직하게 말해야** 하기 때문이다. 이 청구항들도 `checked`에 **포함된다** — 판정에서 빠지는 것은 `unclassified`뿐이다.
+- `dependency_type` 정합: `or`/`any one of claims <a>-<b>` 어형 → `multiple-or`, `and` 어형 → `multiple-and`, 단일 → `single`, `any (one) of the preceding claims` → `all-preceding`. 불일치 = 실패.
 - **`unclassified` 종속항은 위 두 판정의 대상이 아니다**(재정 P-1) — 판정에서 빠지고 별도 계수·CP1 노출로 간다. 다만 **본문에 구조 표지 어형이 하나도 없는데** 그 값을 선언했으면 **실패**다(`parse.unclassified-not-an-escape`). 인용 어형이 잘 읽히는지는 이 판정의 기준이 아니다(2026-08-18 정정).
 
 ### §2.4 items[] — 인용 단위
@@ -1856,7 +1863,7 @@ D6 규율 ③의 구현이다. 규율 원문이 이 절의 헌법이다: **"독�
 | 2 | **포인터 해소** | `claim_ref`·`material_id`·`component`·`attaches_to`·`derived_from[]`·**`numeric_refs[]`**·`figure`·`superseded_by`·`applicant_interest.claim`·`derivation.inputs[].ref` | 존재하지 않는 대상을 참조하는 유령 링크, 오타 ID, **역참조가 해소되지 않아 중요분 도출이 무의미해진 것**(재정 P-B) | 각 참조가 실재 대상으로 해소 + **kind 제약** 충족(아래 표) | 실패 참조 목록 반환, READ 재작업 |
 | 3 | **커버리지** | 독립항 트리의 모든 element(재귀) **+ 종속항 `additions[]` 전량** | 청구항 일부를 **읽지 않고 넘어간 것**, 접지 1건이 여러 구성요소를 덮는 것 | ① 각 element·addition의 `material_id`(component 항목)를 `grounding.component`로 참조하는 항목이 **1개 이상** ② element·addition의 `material_id`는 **1:1**이다 — 두 element가 같은 component 항목을 공유할 수 없다 ③ `component.claim_ref`는 자기를 가리킨 element·addition의 id와 **역방향으로 일치**한다(②③ = 재감수 B-02) | 미접지·중복·역참조 불일치 목록 반환. 필수 실패 |
 | 4 | **재독해 수렴** | 독립 2회 **분해**의 청구항 트리(접지 전 — 재정 P-4) | 독해가 **재현되지 않는 것**(1회성 추론) | 개수 축(`independent-count`·`dependent-count`)은 `exact-match`, `element-set`은 `escalation-trigger`(임계 0.95) | 정책별로 갈린다 — 아래 검사 8 및 §1.4의 3층 표 |
-| 5 | **종속 인용 파싱**(`read.dependency-parse`) | 종속항 `text_verbatim` ↔ `depends_on[]`·`dependency_type` | 다중 종속의 **논리 형태를 잃거나 잘못 적은 것**, **미분류 표지를 회피 통로로 쓴 것**(재정 P-1) | §2.3의 파싱 규칙 5종으로 얻은 집합 == `depends_on` 집합, 어형 ↔ `dependency_type` 정합. 파싱 불능도 실패. `unclassified`는 판정 대상에서 제외하고 별도 계수하되, **본문에 구조 표지 어형이 하나도 없는** 종속항에 선언하면 실패(기준은 인용 어형의 파싱 가능성이 아니라 본문 구조 — 2026-08-18 정정) | 불일치 목록 + 원문 첨부, READ 재작업 |
+| 5 | **종속 인용 파싱**(`read.dependency-parse`) | 종속항 `text_verbatim` ↔ `depends_on[]`·`dependency_type` | 다중 종속의 **논리 형태를 잃거나 잘못 적은 것**, **미분류 표지를 회피 통로로 쓴 것**(재정 P-1) | §2.3의 파싱 어형으로 얻은 집합 == `depends_on` 집합, 어형 ↔ `dependency_type` 정합. 파싱 불능도 실패. `all-preceding` 어형은 정확 일치 대신 **선행 집합의 비어 있지 않은 부분집합**으로 판정한다(`parse.preceding-subset` · 재정 T11-ⓒ). `unclassified`는 판정 대상에서 제외하고 별도 계수하되, **본문에 구조 표지 어형이 하나도 없는** 종속항에 선언하면 실패(기준은 인용 어형의 파싱 가능성이 아니라 본문 구조 — 2026-08-18 정정) | 불일치 목록 + 원문 첨부, READ 재작업 |
 | 6 | **수치 파생 대조**(`read.value-derivation`) | 전 `fact` 항목 | 인용문 옆에 **날조한 수치**를 적어 넣은 것, 정규화값을 잘못 적은 것, 파생 사슬로 원천을 흐린 것, **범위·부등호를 스칼라로 뭉갠 것** | origin별: `quoted` = `value_raw == quote[span]` 바이트 동일 / `derived` = 산식 재계산 == `value_normalized` / `bibliographic` = `patent` 필드와 일치 / `figure-sourced` = 검증 면제하되 수집. **전 origin 공통** = `value_normalized == normalize(value_raw)`. **파생 그래프 추가 조건**(재정 N9) = 비순환 · 자기참조 금지 · **깊이 1**(`inputs[].ref`가 가리키는 항목의 `origin == "quoted"` — 원문 스팬만이 원천이다, 재감수 M-01). **`_en` 필드 언어 검사**(재감수 M-02)도 이 검사에 함께 실린다 — 스키마(`$defs/en_text`)가 1차로 거부하고, 검사가 집행 대상 필드(§2.4) 전건에 한글 문자가 없음을 **스크립트로** 재확인한다. **더해 `value.harvest-parity`**(재정 P-B) — `origin ∈ {quoted, bibliographic}` 집합이 수확기 재실행 결과와 **정확히 일치**해야 하며 누락·추가·변조를 각각 별도 결함으로 낸다 | 불일치 목록 반환, READ 재작업 |
 | 7 | **청구항 인벤토리**(`read.claim-inventory`) | `00-source/patent.md`의 청구항 구간 ↔ `claims` 등재분 | 청구항 하나가 **통째로 빠진 것**(현행 커버리지는 등재된 것들 **사이의** 접지만 본다), 원천에 없는 청구항을 지어낸 것, 독립/종속 분류가 원천과 어긋난 것 | 파싱 규칙 = `reader/reader-rules.yaml#claim_inventory`. ① 등재 양방향 일치(취소 청구항 제외) ② 독립/종속 분류가 종속 인용 파싱과 정합 ③ 각 청구항 `text_verbatim`이 **자기 구간 안의** 부분문자열 ④ **파싱 0건 = 실패** | 누락·유령·분류 불일치 목록 반환, READ 재작업 |
 | 8 | **재독해 수렴 — 구조 축**(검사 4의 확장, 같은 검사 id) | 두 독립 분해의 트리 간선·종속항 서명·부가 한정 부착 | 같은 문자열 집합이 **서로 다른 계층으로 조립된 것**, 종속 구조가 흔들린 것 | `#convergence.axes`의 6축을 **축별 정책**으로 판정한다(재정 P-3) — `dependent-set`은 `exact-match` **1.0**(0.95에서 승격), `tree-edges`는 `escalation-trigger` 0.95, `addition-attachment`는 `measure-only`(임계 없음이 정상). 구 문언 "6축 전부 통과"는 폐기 | 법 = fail · 계기 = `escalations[]` 등재 후 **Owner 상신** · 관찰 = 판정 없음. 상신물은 **독해 프로파일**(축별 값 + 갈린 항목) |

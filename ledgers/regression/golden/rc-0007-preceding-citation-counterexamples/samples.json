@@ -1,0 +1,128 @@
+{
+  "golden_id": "rc-0007-preceding-citation-counterexamples",
+  "subject": "dependency_citation — PCT `any (one) of the preceding claims` 어형의 인식과 비어 있지 않은 선행 부분집합 판정(재정 2026-09-01 T11-ⓒ). 새 어형의 적중, 기존 5어형의 보존, 부분집합 판정의 비공허성을 한 벌로 반증한다.",
+  "ruling": "재정 2026-09-01 T11-ⓒ — `all-preceding` 을 신설하고 정확 집합 일치 대신 선행 청구항 집합의 비어 있지 않은 부분집합만 판정한다. 원장 = docs/decisions/ruling-20260901-02-T11.md §3.",
+  "expectation_note": "expect_matched_forms 와 expect_rules 는 각각 실제 파서의 등장 순 form 목록과 실제 검사 findings의 정렬된 rule 목록이다. 기대값은 이 파일이 들고 시험이 이 파일을 읽어 실제 검사(reader.lib.dependency_parse.check)에 물린다 — 시험에 값을 복제하면 한 벌이 반드시 낡는다.",
+  "samples": [
+    {
+      "id": "pc-01",
+      "role": "적중(실물 · WO CL-5)",
+      "self_claim": 5,
+      "quote": "The method of any of the preceding claims, comprising:\n\nafter receiving an input during an interactive session, processing, by the machine-learned agent system, the input using a machine-learned model to generate one or more values; and \n\nbased on the generated one or more values indicating that at least a portion of the input is to be stored:\n\nextracting, by the machine-learned agent system, the portion; and\n\nstoring, by the machine-learned agent system, the portion as a memory value in a memory object in the interaction memory datastore.",
+      "declared": {"depends_on": ["CL-1", "CL-2", "CL-3", "CL-4"], "dependency_type": "all-preceding"},
+      "expect_matched_forms": ["all-preceding"],
+      "expect_rules": [],
+      "why": "이 표본이 없으면 재정의 계기가 된 WO CL-5 실물이 새 어형에 실제로 적중한다는 주장이 가공 문장 안에서만 성립해 공허해진다."
+    },
+    {
+      "id": "pc-02",
+      "role": "적중(가공 · `any one of`)",
+      "self_claim": 7,
+      "quote": "The apparatus of any one of the preceding claims, wherein the buffer is dual-ported.",
+      "declared": {"depends_on": ["CL-3"], "dependency_type": "all-preceding"},
+      "expect_matched_forms": ["all-preceding"],
+      "expect_rules": [],
+      "why": "이 표본이 없으면 괄호로 적힌 선택어 `one`을 포함하는 신설 어형의 두 번째 표면형이 선언에만 있고 집행되지 않아도 적중 주장이 공허해진다."
+    },
+    {
+      "id": "pc-03",
+      "role": "적중(실물 · WO CL-24 · 카테고리 전환형)",
+      "self_claim": 24,
+      "quote": "A computing system, comprising:\n\none or more processors; and\n\none or more non-transitory computer-readable media storing instructions that are executable by the one or more processors to cause the computing system to perform operations, the operations comprising the method of any of the preceding claims.",
+      "declared": {"depends_on": ["CL-1"], "dependency_type": "all-preceding"},
+      "expect_matched_forms": ["all-preceding"],
+      "expect_rules": [],
+      "why": "이 표본이 없으면 정확 집합 기각의 핵심인 카테고리 전환형 실물에서 장치항까지 기계가 지어내지 않고 부분집합을 받는다는 주장이 공허해진다."
+    },
+    {
+      "id": "pc-04",
+      "role": "적중(실물 · WO CL-25 · 카테고리 전환형)",
+      "self_claim": 25,
+      "quote": "A computer program product comprising instructions that are executable by one or more processors to cause a computing system to perform operations, the operations comprising the method of any of the preceding claims.",
+      "declared": {"depends_on": ["CL-1", "CL-13"], "dependency_type": "all-preceding"},
+      "expect_matched_forms": ["all-preceding"],
+      "expect_rules": [],
+      "why": "이 표본이 없으면 카테고리 전환형에서 한 원소뿐 아니라 여러 원소인 정당한 부분집합도 허용된다는 반증이 공허해진다."
+    },
+    {
+      "id": "pc-05",
+      "role": "보존(기존 어형 `single`)",
+      "self_claim": 3,
+      "quote": "The method of claim 1, wherein the buffer is dual-ported.",
+      "declared": {"depends_on": ["CL-1"], "dependency_type": "single"},
+      "expect_matched_forms": ["single"],
+      "expect_rules": [],
+      "why": "이 표본이 없으면 신설 어형이 기존 단일 인용의 소비 구간·형태 판정을 흔들지 않았다는 보존 주장이 공허해진다."
+    },
+    {
+      "id": "pc-06",
+      "role": "보존(기존 어형 `bare-range`)",
+      "self_claim": 6,
+      "quote": "The method of claims 1 to 3, wherein the buffer is dual-ported.",
+      "declared": {"depends_on": ["CL-1", "CL-2", "CL-3"], "dependency_type": "multiple-or"},
+      "expect_matched_forms": ["bare-range"],
+      "expect_rules": [],
+      "why": "이 표본이 없으면 숫자 범위 전개의 정확 집합 판정이 새 부분집합 예외에 잘못 흡수되지 않았다는 보존 주장이 공허해진다."
+    },
+    {
+      "id": "pc-07",
+      "role": "보존(기존 어형 `and-list`)",
+      "self_claim": 8,
+      "quote": "The method of claims 1 and 3, wherein the buffer is dual-ported.",
+      "declared": {"depends_on": ["CL-1", "CL-3"], "dependency_type": "multiple-and"},
+      "expect_matched_forms": ["and-list"],
+      "expect_rules": [],
+      "why": "이 표본이 없으면 기존 and 논리 형태와 숫자 열거의 정확 집합 판정이 그대로 남았다는 보존 주장이 공허해진다."
+    },
+    {
+      "id": "pc-08",
+      "role": "실패(선행 범위 밖 · 자기 자신)",
+      "self_claim": 6,
+      "quote": "The method of any of the preceding claims, wherein the buffer is dual-ported.",
+      "declared": {"depends_on": ["CL-3", "CL-6"], "dependency_type": "all-preceding"},
+      "expect_matched_forms": ["all-preceding"],
+      "expect_rules": ["parse.preceding-subset"],
+      "why": "이 표본이 없으면 자기 자신을 선행 청구항으로 선언해도 받는 공허한 부분집합 검사인지 반증할 수 없다."
+    },
+    {
+      "id": "pc-09",
+      "role": "실패(선행 범위 밖 · 후행 청구항)",
+      "self_claim": 6,
+      "quote": "The method of any of the preceding claims, wherein the buffer is dual-ported.",
+      "declared": {"depends_on": ["CL-9"], "dependency_type": "all-preceding"},
+      "expect_matched_forms": ["all-preceding"],
+      "expect_rules": ["parse.preceding-subset"],
+      "why": "이 표본이 없으면 후행 청구항을 넣는 명백한 범위 위반을 막는다는 주장이 자기 자신 사례 하나에 기대어 공허해진다."
+    },
+    {
+      "id": "pc-10",
+      "role": "실패(빈 배열)",
+      "self_claim": 6,
+      "quote": "The method of any of the preceding claims, wherein the buffer is dual-ported.",
+      "declared": {"depends_on": [], "dependency_type": "all-preceding"},
+      "expect_matched_forms": ["all-preceding"],
+      "expect_rules": ["parse.preceding-subset"],
+      "why": "이 표본이 없으면 최종 스키마의 minItems: 1에 기대지 않고 검사 스스로 빈 부분집합을 거부한다는 비공허성 주장이 공허해진다. 유효 인스턴스로는 도달하지 않아도 검사 층 자체의 방어를 따로 반증한다."
+    },
+    {
+      "id": "pc-11",
+      "role": "통과 대조군(정당한 부분집합)",
+      "self_claim": 12,
+      "quote": "The method of any of the preceding claims, wherein the buffer is dual-ported.",
+      "declared": {"depends_on": ["CL-1", "CL-11"], "dependency_type": "all-preceding"},
+      "expect_matched_forms": ["all-preceding"],
+      "expect_rules": [],
+      "why": "이 표본이 없으면 범위 밖 실패 표본만 남아 정당한 비연속 부분집합을 실제로 허용하는지 확인하지 못하므로 부분집합 판정 주장이 공허해진다."
+    },
+    {
+      "id": "pc-12",
+      "role": "실패(논리 형태 선언 불일치)",
+      "self_claim": 6,
+      "quote": "The method of any of the preceding claims, wherein the buffer is dual-ported.",
+      "declared": {"depends_on": ["CL-1"], "dependency_type": "multiple-or"},
+      "expect_matched_forms": ["all-preceding"],
+      "expect_rules": ["parse.type-agrees"],
+      "why": "이 표본이 없으면 새 어형이 부분집합만 맞으면 논리 형태 오선언까지 면제받는 미분류 통로가 아니라는 주장이 공허해진다."
+    }
+  ]
+}

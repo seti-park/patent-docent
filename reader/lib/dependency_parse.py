@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 """`read.dependency-parse` — 종속항 전문 ↔ `depends_on[]`·`dependency_type`.
 
-어형 정본 = `reader/reader-rules.yaml#dependency_citation.forms`(SPEC §2.3 의 5종을 데이터로
-옮긴 것). 우선순위 순으로 시도하고 **먼저 매칭된 구간은 소비한다** — `claims 1 to 3` 이
+어형 정본 = `reader/reader-rules.yaml#dependency_citation.forms`(SPEC §2.3 과 후속 재정을
+데이터로 옮긴 것). 우선순위 순으로 시도하고 **먼저 매칭된 구간은 소비한다** — `claims 1 to 3` 이
 `claim 1` 로 부서지지 않게 하는 유일한 장치가 이 소비 규칙이다.
+
+재정 T11-ⓒ 로 숫자 없는 PCT 어형 `all-preceding` 이 늘었다. 이 어형은 본문이 구체 번호를
+말하지 않으므로 `1..n-1` 과의 정확 일치를 요구하지 않는다 — 그러면 카테고리 전환형에서 앞의
+장치항까지 인용했다고 기계가 지어낸다. 대신 레인이 선언한 값이 선행 집합의 비어 있지 않은
+부분집합인지만 `parse.preceding-subset` 으로 판정한다.
 
 파싱 불능은 **실패**다(`parse.no-silent-pass`). 읽지 못한 어형을 통과시키면 다중 종속의
 논리 형태가 조용히 사라지고, 그것이 구 스칼라 표기가 만들던 손실 그 자체다(재정 R1).
@@ -43,6 +48,7 @@ class CitationParse:
     numbers: set[int] = field(default_factory=set)
     implied_types: set[str] = field(default_factory=set)
     matches: list[dict] = field(default_factory=list)
+    preceding: bool = False
 
     @property
     def parsed(self) -> bool:
@@ -57,8 +63,12 @@ def _overlaps(span: tuple[int, int], consumed: list[tuple[int, int]]) -> bool:
     return False
 
 
-def parse_citations(text: str, rules: Rules) -> CitationParse:
+def parse_citations(
+    text: str, rules: Rules, self_number: int | None = None
+) -> CitationParse:
     """전문에서 인용 청구항 번호를 결정론 파싱한다(어형 rank 순 · 구간 소비)."""
+    # 기본값 None 은 번호를 모르는 호출을 편의상 허용하려는 것이 아니라, 그런 호출에서
+    # 위치 기반 어형이 조용히 전개되는 것을 막기 위한 것이다.
     result = CitationParse()
     consumed: list[tuple[int, int]] = []
     for form in rules.dependency_forms:
@@ -69,9 +79,11 @@ def parse_citations(text: str, rules: Rules) -> CitationParse:
             literal = form.get("requires_literal")
             if literal and literal.lower() not in match.group(0).lower():
                 continue
-            numbers = _expand(form, match)
+            numbers = _expand(form, match, self_number)
             if not numbers:
                 continue
+            if form.get("expands") == "preceding":
+                result.preceding = True
             consumed.append(span)
             result.numbers.update(numbers)
             if form.get("implies_type"):
@@ -87,7 +99,13 @@ def parse_citations(text: str, rules: Rules) -> CitationParse:
     return result
 
 
-def _expand(form: dict, match: "re.Match[str]") -> set[int]:
+def _expand(
+    form: dict, match: "re.Match[str]", self_number: int | None
+) -> set[int]:
+    if form.get("expands") == "preceding":
+        if self_number is None or self_number < 2:
+            return set()
+        return set(range(1, self_number))
     groups = match.groupdict()
     if "lo" in groups and "hi" in groups:
         low = int(groups["lo"])
@@ -98,6 +116,11 @@ def _expand(form: dict, match: "re.Match[str]") -> set[int]:
     if "n" in groups and groups["n"] is not None:
         return {int(groups["n"])}
     return set()
+
+
+def _self_number(claim_id: str) -> int | None:
+    match = re.fullmatch(r"CL-(\d+)", claim_id or "")
+    return int(match.group(1)) if match else None
 
 
 def check(ctx: CheckContext) -> CheckRow:
@@ -124,7 +147,10 @@ def check(ctx: CheckContext) -> CheckRow:
         text = dependent.get("text_verbatim") or ""
         declared = [str(value) for value in (dependent.get("depends_on") or [])]
         declared_type = dependent.get("dependency_type")
-        parsed = parse_citations(text, rules)
+        self_number = _self_number(claim_id)
+        # 형식이 어긋난 id 를 조용히 보정하지 않는다. 번호가 없으면 위치 기반 어형은 전개되지
+        # 않고, 다른 어형도 없을 때 기존 경로인 parse.no-silent-pass 가 침묵을 막는다.
+        parsed = parse_citations(text, rules, self_number)
 
         if declared_type == unclassified_value:
             unclassified.append(claim_id)
@@ -154,20 +180,39 @@ def check(ctx: CheckContext) -> CheckRow:
                 "parse.no-silent-pass",
                 f"{claim_id}.text_verbatim",
                 text,
-                "5종 어형 중 하나에 매칭",
+                "인용 어형 중 하나에 매칭",
                 "종속 인용을 파싱하지 못했다 — 침묵 통과 금지(원문을 첨부한다)",
             )
             continue
 
-        parsed_ids = {f"CL-{number}" for number in parsed.numbers}
-        if parsed_ids != set(declared):
-            row.add(
-                "parse.set-equals",
-                f"{claim_id}.depends_on",
-                ", ".join(sorted(declared)) or "(빈 배열)",
-                ", ".join(sorted(parsed_ids)),
-                f"전문 파싱 집합과 depends_on 이 다르다: {text}",
-            )
+        declared_set = set(declared)
+        if parsed.preceding:
+            # preceding 이 참이면 _expand 가 성공했으므로 self_number 는 반드시 2 이상이다.
+            allowed = {f"CL-{number}" for number in range(1, self_number)}
+            outside = sorted(declared_set - allowed)
+            if not declared_set or outside:
+                message = (
+                    f"선행 인용인데 depends_on 이 비었다: {text}"
+                    if not declared_set
+                    else f"선행 범위 밖의 번호: {', '.join(outside)}: {text}"
+                )
+                row.add(
+                    "parse.preceding-subset",
+                    f"{claim_id}.depends_on",
+                    ", ".join(sorted(declared_set)) or "(빈 배열)",
+                    f"CL-1 … CL-{self_number - 1} 의 비어 있지 않은 부분집합",
+                    message,
+                )
+        else:
+            parsed_ids = {f"CL-{number}" for number in parsed.numbers}
+            if parsed_ids != declared_set:
+                row.add(
+                    "parse.set-equals",
+                    f"{claim_id}.depends_on",
+                    ", ".join(sorted(declared)) or "(빈 배열)",
+                    ", ".join(sorted(parsed_ids)),
+                    f"전문 파싱 집합과 depends_on 이 다르다: {text}",
+                )
 
         if declared_type not in parsed.implied_types:
             row.add(

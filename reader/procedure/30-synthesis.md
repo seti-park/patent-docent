@@ -61,6 +61,32 @@
 - `derivation.inputs[].ref`는 **`origin: "quoted"`인 fact만** 가리킬 수 있다(깊이 1). 파생의 파생은 거부된다 — 원문 스팬까지의 거리가 무한해지면 재계산 대조가 사슬 어딘가에서 끊긴다.
 - `formula`는 안전 산술식만 쓴다: 입력 이름 · 십진 리터럴 · `+ - * / ( )`.
 
+### ★ `value_raw`에는 수치만 들어간다 — 명사·설명은 `label_en`이 진다
+
+`value_raw`는 **`value_grammar`(`reader/reader-rules.yaml#value_grammar`)를 통과하는 형태**여야 한다. 문법이 아는 것은 십진 토큰과 그 위에 얹히는 어형(범위·부등호·공차·집합·날짜·식별자·`about` 표지·단위)뿐이고, **세는 대상의 이름은 문법의 어휘가 아니다.** 그 이름은 `label_en`이 든다.
+
+| | `'854`(통과) | WO(실패) |
+|---|---|---|
+| `value_raw` | `"8"` | **`"3 memory objects"`** |
+| `label_en` | `"operation modes tabulated in Table 2 of FIG. 60"` | **`None`** |
+
+**2026-09-01 실측.** WO2026-128750A1 READ 부분 시험에서 `read.value-derivation`의 `value.parse`가 3건을 잡았다 — `M146.value_raw = "3 memory objects"` · `M147 = "5 blocks"` · `M148 = "4 stages"`.
+
+**실물을 열어 보면 어긋난 자리가 둘이다**(레인 응답 `10-read/lanes/read-a/synthesize/batch-0/response.json` 의 `M3068`~`M3070`). ① 이름을 **`label`이라는 없는 키**에 적었다 — 계약의 필드명은 `label_en`이고 스키마는 `additionalProperties: false`이므로, 그 응답에서 `label_en`은 **부재**이고 `label`은 **거부**된다. ② 그러고도 세는 대상의 이름을 `value_raw`에 다시 넣었다(`value_normalized`는 `"3"`으로 옳게 적혀 있었다). **두 어긋남은 한 뿌리다** — 설명이 갈 자리를 레인이 갖지 못한 것이다.
+
+같은 자리에서 `'854`가 통과한 이유는 수가 더 쉬워서가 아니라 **수와 이름을 갈라 적었기 때문**이다: 값은 `value_raw: "8"`, 이름은 `label_en: "operation modes tabulated in Table 2 of FIG. 60"`(동결본 `M107` · `origin: figure-sourced` — WO의 셋과 **같은 갈래**다).
+
+**★ 문법은 옳게 거부했다 — 넓힐 자리가 아니다(재정 2026-09-01 T11 §4 D-2).** 총괄은 이것을 한 번 "소프트웨어 수치 어형을 문법에 편입하자"로 상신했다가 기각되었다. 문법을 넓혔다면 **레인의 기입 오류를 검사가 흡수하고 진짜 원인(`label_en`이 빈 것)이 가려졌을 것**이며, 그것은 재정 T10 ⓑ가 기각한 것과 같은 형태다. 그 상신이 틀렸던 사실을 여기 남기는 이유는, 같은 자리에서 다음 사람이 같은 처방을 다시 내지 않게 하기 위해서다.
+
+**그러므로 네가 할 일은 둘뿐이다.**
+
+| # | 규약 |
+|---|---|
+| ① | `value_raw`에는 **원문이 든 수치 표기 그대로**를 적는다(단위는 붙여도 된다 — `0.08 mm`는 통과한다). 세는 대상의 이름·수식어·설명을 함께 넣지 마라 |
+| ② | 그 수가 **무엇의 수인지**는 `label_en`에 EN으로 적는다. `fact` 항목에서 `label_en`은 **필수**이며 비울 수 없다. **필드명은 `label`이 아니라 `label_en`이다** — 스키마가 `additionalProperties: false`이므로 `label`은 없는 필드이고, 적으면 통째로 거부된다 |
+
+문법이 받지 못하는 값을 만나면 — 분수(`1/2`)·혼합 단위 범위(`1 mm to 2 cm`)처럼 — **조용히 근사하지 말고 그 값을 fact로 등재하지 마라**(아래 십진 표기 규율 끝줄과 같은 규율이다).
+
 ### `value_type` — 7분기 판별 유니온
 
 값의 표현 유형을 구조로 담는다. `value_raw`를 파싱한 결과와 같아야 하고, `value_normalized`는 그 렌더와 문자열로 같아야 한다.

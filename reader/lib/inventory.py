@@ -184,7 +184,8 @@ def check(ctx: CheckContext) -> CheckRow:
                 f"원천 청구항 {number} 이 재료 명세에 등재되지 않았다",
             )
             continue
-        citations = parse_citations(claim.body, rules)
+        # T11-ⓒ: 자기 번호를 넘겨야 선행 인용 15건을 독립항으로 오판한 자리가 닫힌다.
+        citations = parse_citations(claim.body, rules, claim.number)
         if citations.parsed and claim.claim_id not in dependent_ids:
             row.add(
                 "inventory.type-agrees",

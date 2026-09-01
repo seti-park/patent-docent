@@ -1,0 +1,9 @@
+{
+  "golden_id": "rc-0007-preceding-citation-counterexamples",
+  "case_id": "rc-0007",
+  "run_id": "example-xx0000000c7-preceding-citation",
+  "variant": "v1",
+  "spec_version": 1,
+  "spec_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+  "note": "PCT 선행 청구항 인용 어형을 신설한 재정 2026-09-01 T11-ⓒ 의 반례 golden(등재 근거 = 원장 docs/decisions/ruling-20260901-02-T11.md §3). 계기 실측은 WO2026-128750A1 원천이 `any of the preceding claims` 를 15회 쓰는데 현행 5어형 전부가 `\\d` 를 요구하여 주 어형이 규칙 밖이었고, 그 결과 `read.dependency-parse` viol 15 + `read.claim-inventory` viol 15가 같은 15개 종속항에서 발생했으며 레인 과실은 0이었다. ★ 정확 집합이 아니라 부분집합을 보는 이유는 재정 T11-ⓒ ⒞ 가 ⓐ를 기각한 사유와 같다: 본문이 숫자를 말하지 않는데 기계가 `1..n-1` 로 확정하면 `the method of any of the preceding claims` 에서 앞의 장치항까지 인용했다고 기계가 지어내므로, 레인이 선언한 `depends_on` 이 선행 집합의 비어 있지 않은 부분집합인지만 검사한다. 이 golden 은 세 방향을 함께 반증한다: 새 어형이 실물과 가공 표본에 적중하는가, 기존 숫자 어형이 그대로 보존되는가, 그리고 빈 배열·자기 자신·후행 번호·논리 형태 불일치를 무엇이든 통과시키지 않는가. 대응 변조본 없음 — 반례이므로 `must_detect: false` 다. pc-01·pc-03·pc-04 인용문은 WO2026-128750A1 원천 CL-5·CL-24·CL-25의 실물이고 나머지는 가공 표본이다. ★ 이 golden 은 카테고리 전환형 청구항(CL-23~25)을 레인이 `all-preceding` 으로 선언해야 하는지 `unclassified` 로 선언해야 하는지는 정하지 않는다 — 그것은 절차 문서의 문제이며 이 재정의 범위 밖이다. 여기서 반증하는 것은 `all-preceding` 으로 선언했을 때 검사가 옳게 판정하는가뿐이다."
+}

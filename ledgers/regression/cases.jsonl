@@ -4,3 +4,4 @@
 {"case_id":"rc-0004","base":"golden/rc-0004-conditional-marker-counterexamples/samples.json","mutation":null,"expect":{"detector":"parse.unclassified-not-an-escape","must_detect":false}}
 {"case_id":"rc-0005","base":"golden/rc-0005-harvest-exclusion-counterexamples/samples.json","mutation":null,"expect":{"detector":"value.harvest-parity","must_detect":false}}
 {"case_id":"rc-0006","base":"golden/rc-0006-figure-caption-case-counterexamples/samples.json","mutation":null,"expect":{"detector":"read.grounding-coverage","must_detect":false}}
+{"case_id":"rc-0007","base":"golden/rc-0007-preceding-citation-counterexamples/samples.json","mutation":null,"expect":{"detector":"parse.preceding-subset","must_detect":false}}

@@ -15,7 +15,23 @@
 
 ## 2. 구성요소 분해
 
-### 독립항 (`elements[]`)
+### 독립항 (`claims.independent[]`)
+
+**독립항 하나는 `{id, type, text_verbatim, elements}`를 전부 갖는다 — 넷 다 필수다.**
+
+```json
+{ "id": "CL-1",
+  "type": "independent",
+  "text_verbatim": "A stacked module comprising:",
+  "elements": [
+    { "id": "CL-1/e1", "text_verbatim": "a substrate having a first surface",
+      "material_id": "M1", "children": [] }
+  ] }
+```
+
+- **★ `type` 은 빠뜨릴 수 없다.** 스키마가 `const: "independent"` 로 **필수**를 집행하며(`reader/schemas/material-spec.schema.json#$defs.claims.properties.independent.items.required`), 빠지면 `read.schema`가 `'type' is a required property`로 응답 전체를 실패시킨다. 값은 언제나 문자열 `"independent"` 하나뿐이다 — 고를 것이 없으므로 **적기만 하면 된다.**
+- **★ 이 문서가 그 말을 하지 않아 실물 런이 죽었다(2026-09-01 실측).** WO2026-128750A1 READ 부분 시험에서 레인이 `type`을 채우지 않아 `read.schema`가 `claims.independent[0]`에서 실패했고, 그 아래 항목 결함들과 함께 위반 40건을 냈다. 직전 통주(`'854`)가 통과한 것은 **레인이 우연히 채웠기 때문**이며 절차가 그것을 요구한 적은 없다. 처분 = 재정 2026-09-01 T11 §4 D-1(`docs/decisions/ruling-20260901-02-T11.md`).
+- 종속항(`claims.dependents[]`)에는 `type`이 **없다.** 그쪽은 `dependency_type`이 그 자리를 진다 — 두 필드를 헷갈리지 마라.
 
 - 각 element는 `{id, text_verbatim, material_id, children}`.
 - `id` 문법은 `CL-1/e1`이고, 중첩되면 경로가 길어진다(`CL-1/e2/e1`).
@@ -124,6 +140,23 @@
 | `of claims 1 and 3` | `["CL-1", "CL-3"]` | `multiple-and` |
 | `of claim 1 or claim 5` | `["CL-1", "CL-5"]` | `multiple-or` |
 | `of claims 1 to 3` | `["CL-1","CL-2","CL-3"]` | `multiple-or` |
+| `of any (one) of the preceding claims` | **이 청구항이 실제로 인용하는 선행 청구항**(선행 범위 밖 금지 · 빈 배열 금지) | `all-preceding` |
+
+#### ★ `all-preceding` — 본문이 숫자를 말하지 않는 어형 (재정 2026-09-01 T11-ⓒ)
+
+PCT 공보가 즐겨 쓰는 `any of the preceding claims` 계열이다. 위 표의 구 어형은 **전부 숫자를 요구**했기 때문에 이 어형이 규칙 밖이었고, WO2026-128750A1 부분 시험에서 그 한 자리가 `read.dependency-parse` 위반 15건 + `read.claim-inventory` 위반 15건(같은 15개를 원천 파서가 **독립항으로 오판**)을 냈다. 원장 = `docs/decisions/ruling-20260901-02-T11.md`.
+
+**★ 기계는 `1..n-1`로 전개하지 않는다.** 본문이 숫자를 말하지 않는데 기계가 값을 만들면 그것은 **확인되지 않은 값을 정답지에 올리는 것**이다. 실물이 그 위험을 보인다 — 청구항 24는 `the operations comprising **the method** of any of the preceding claims`이고, 앞에 장치항이 섞여 있으면 "the method of"가 **방법항만** 가리킨다. 일괄 전개하면 장치항까지 인용한 것으로 **기계가 주장**한다.
+
+**그러므로 `depends_on`을 채우는 것은 너다.** 검사(`parse.preceding-subset`)가 보는 것은 둘뿐이다.
+
+| | 판정 |
+|---|---|
+| **통과** | `depends_on`이 `{CL-1 … CL-(n-1)}`의 **부분집합**이고 **비어 있지 않다** |
+| **실패** | 선행 범위 **밖**의 번호가 하나라도 있다(자기 자신 · 후행 청구항 포함), 또는 **빈 배열** |
+
+- 이 종속항들은 `unclassified`와 달리 **판정 대상에 그대로 남는다**(`checked`에 포함된다). 표지가 아니라 어형이다.
+- **판단이 서지 않는 자리는 규약을 자의로 넓히지 말고 상신하라**(경로 = 배치 리뷰). 특히 **카테고리 전환형**(장치·매체·프로그램 청구항이 `the method of any of the preceding claims`로 방법항을 되받는 형태)에서 이 어형과 아래 `unclassified` 표지가 **같은 청구항에 동시에 해당**한다 — 그때 무엇을 선언할지는 **아직 정해지지 않았다**(재정 T11은 어형만 신설했고 그 우선순위를 정하지 않았다). 자의로 고르지 말고 그 사실을 적어 올려라.
 
 #### ★ `unclassified` — 구조 미분류 표지 (재정 P-A 계열 P-1)
 

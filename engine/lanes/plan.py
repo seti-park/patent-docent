@@ -154,6 +154,39 @@ SYNTHESIS_SCHEMA: dict = {
             "items": {
                 "allOf": [
                     _ITEM,
+                    # ★ R-4(재정 T11 §4 D-3). 구 규격은 status·superseded_by·label_en 을
+                    #   요구하지 않아, 러너가 받아들인 응답이 그 뒤 read.schema 에서 죽었다
+                    #   (WO 부분 시험 실측: read.schema viol 40 의 대부분이 이 자리다).
+                    #   값 공간은 최종 재료 명세 스키마
+                    #   (reader/schemas/material-spec.schema.json#$defs.item_common)에서
+                    #   그대로 가져왔다 — **최종 스키마가 요구하는 것보다 더 요구하지 않는다.**
+                    {
+                        "required": ["status", "superseded_by"],
+                        "properties": {
+                            "status": {"enum": ["active", "retracted", "superseded"]},
+                            "superseded_by": {
+                                "oneOf": [
+                                    {"type": "string", "pattern": "^M[0-9]+$"},
+                                    {"type": "null"},
+                                ]
+                            },
+                        },
+                    },
+                    # ★ label_en 은 fact 에만 요구한다. implication·positioning·figure_note 는
+                    #   최종 스키마에서 label_en 을 갖지 않고(각각 statement_en ·
+                    #   background_problem/asserted_effect/delta · what_it_shows_en 을 쓴다),
+                    #   additionalProperties: false 이므로 label_en 을 넣으면 오히려 거부된다.
+                    #   전 항목에 요구하면 최종 스키마보다 **더** 요구하는 것이 된다.
+                    {
+                        "if": {
+                            "required": ["kind"],
+                            "properties": {"kind": {"const": "fact"}},
+                        },
+                        "then": {
+                            "required": ["label_en"],
+                            "properties": {"label_en": {"type": "string", "minLength": 1}},
+                        },
+                    },
                     {
                         "properties": {
                             "kind": {
