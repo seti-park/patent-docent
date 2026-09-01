@@ -2525,7 +2525,8 @@ def test_convergence_runs_before_grounding(tmp_path) -> None:
     root, _ = run_source(tmp_path)
     payloads = {
         "read-a": payload_set(),
-        "read-b": payload_set(dependency_type="multiple-or"),  # exact-match 축을 가른다
+        # 청구항 전문의 끝점만 갈라 원인 검사들은 통과시키고 exact-match 축을 가른다.
+        "read-b": payload_set(claim_three_text=CLAIM_3.rstrip(".")),
     }
     lanes_root = write_lane_responses(root, payloads_by_run=payloads)
     adapter = ReplayLaneAdapter(lanes_root)
@@ -2540,6 +2541,12 @@ def test_convergence_runs_before_grounding(tmp_path) -> None:
     early = load_json(RunPaths(root).convergence_early_json)
     if early["phase"] != "early":
         pytest.fail(f"조기 판정서의 phase 가 early 가 아니다: {early['phase']!r}")
+    detail = early.get("convergence_detail") or {}
+    if detail.get("executed") is not True:
+        pytest.fail(f"수렴 미달 표본에서 수렴이 실제로 돌지 않았다: {detail}")
+    check_ids = [row.get("check_id") for row in early.get("checks") or []]
+    if "read.convergence" not in check_ids:
+        pytest.fail(f"수렴 미달 표본의 판정서에 read.convergence 행이 없다: {check_ids}")
     for key in ("fact_classification", "numeric_inventory"):
         block = early[key]
         occupied = block.get("total") or block.get("quoted_span", {}).get("material_ids")

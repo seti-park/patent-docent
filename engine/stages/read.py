@@ -12,7 +12,7 @@
 ④-a 조기 청구항 소유 검사(T16, 실행별)      → claim-inventory · dependency-parse
 ④-b 조기 수렴 검사(P-4·T16)                 → ④-a 실패 시 보류 · phase: "early"
 ⑤ 정본 지정(P-4)                           → read_runs[0]. 내용맹·결정론. 품질 비교 금지.
-⑥ 접지 진입 게이트(P-U3)                   → 판정서 존재 ∧ (통과 ∨ Owner '계속' 봉투)
+⑥ 접지 진입 게이트(P-U3·T17)               → 판정서 존재 ∧ (통과 ∨ 상신 축 Owner '계속' 봉투)
 ⑦ 접지 → 수확(P-B) → 통합                  → **정본 1개만**
 ⑧ 조립 → 검사 전건 → convergence.json (phase: "full")
 ⑨ 출구 검사 + read.lane-log-shape          → 비정본 실행에 접지·통합 레인이 **없음**을 판정
@@ -123,6 +123,12 @@ ENGINE_READ_CHECK_IDS: tuple[str, ...] = (
     LANE_LOG_DIGEST_VALUE_CHECK_ID,
 )
 CONTINUE_CHECKPOINT = "convergence_continue"
+PHASE_GATE_NONE = "none"
+PHASE_GATE_CLAIM_CHECKS = "claim-checks"
+PHASE_GATE_NO_VERDICT = "no-verdict"
+PHASE_GATE_EXACT_MATCH = "convergence-exact-match"
+ENVELOPE_SCOPE = ("convergence-escalation",)
+PHASE_GATE_ESCALATION = ENVELOPE_SCOPE[0]
 
 
 class LaneAssignmentError(StageError):
@@ -1058,6 +1064,39 @@ def continue_envelope_state(paths: RunPaths) -> tuple[bool, str]:
     return True, "계속 봉투 유효(판정서 지문 결속 확인)"
 
 
+def phase_gate_reason(
+    *,
+    blocked_by: str,
+    envelope_ok: bool,
+    envelope_in_scope: bool,
+    envelope_note: str,
+) -> str:
+    """접지 진입·차단의 사람이 읽는 사유를 만든다(재정 2026-09-01 T17)."""
+    labels = {
+        PHASE_GATE_NONE: "조기 판정 전부 통과",
+        PHASE_GATE_CLAIM_CHECKS: "조기 청구항 소유 검사 실패",
+        PHASE_GATE_NO_VERDICT: "조기 수렴 판정 없음",
+        PHASE_GATE_EXACT_MATCH: "조기 수렴 exact-match 축 미달",
+        PHASE_GATE_ESCALATION: "조기 수렴 상신 축 미달",
+    }
+    label = labels.get(blocked_by, f"알 수 없는 차단 사유({blocked_by})")
+    if blocked_by == PHASE_GATE_NONE:
+        return f"{label} — 접지에 진입한다. {envelope_note}"
+    if envelope_ok and envelope_in_scope:
+        return f"{label} — Owner '계속' 봉투로 진입한다. {envelope_note}"
+    if envelope_ok and not envelope_in_scope:
+        dispositions = {
+            PHASE_GATE_CLAIM_CHECKS: "분해 재시도 — 조기 예산 소진 시 계약 실패표(escalate)",
+            PHASE_GATE_EXACT_MATCH: "조기 수렴 재시도 — 예산 소진 시 계약 실패표(escalate)",
+        }
+        disposition = dispositions.get(blocked_by, "접지 진입 차단")
+        return (
+            f"{label}이 접지 진입을 막았다. 재정 2026-09-01 T17에 따라 봉투는 조기 "
+            f"수렴의 상신 축 미달에만 적용된다. 처분: {disposition}. {envelope_note}"
+        )
+    return f"{label}로 접지 진입을 차단한다. {envelope_note}"
+
+
 def check_lane_log_shape(
     journal: LaneJournal, *, read_runs: tuple[str, ...], canonical: str
 ) -> CheckRow:
@@ -1543,20 +1582,65 @@ def run(
                 continue
             break
 
-        # ⑥ 접지 진입 게이트(재정 P-U3) — 판정서 존재 ∧ (통과 ∨ Owner '계속' 봉투 유효).
+        # ⑥ 접지 진입 게이트(재정 P-U3).
+        #
+        # 재정 T16 이 청구항 소유 검사를 조기 국면에 등재하면서 봉투가 그 실패까지 함께
+        # 넘기게 되었고(감사 지적 C-2), **T16 은 그 확대를 명하지 않았다**. 청구항이 틀린 것은
+        # 「갈림」이 아니라 「결함」이며 그 처분은 분해 재시도다 — 봉투로 넘기면 방금 만든
+        # 되먹임 경로를 우회하고 그 봉투가 만능 통행증이 된다(재정 T17). **소급하지 않는다** —
+        # WO 런의 봉투는 `tree-edges` 미달 하나를 넘겼으므로 이 좁힘 뒤에도 그대로 유효하다.
         early_passed = (
             not claim_failures
             and early_row is not None
             and early_row.status == "pass"
             and not escalations
         )
+        if claim_failures:
+            blocked_by = PHASE_GATE_CLAIM_CHECKS
+        elif early_row is None:
+            blocked_by = PHASE_GATE_NO_VERDICT
+        elif early_row.status == "fail":
+            blocked_by = PHASE_GATE_EXACT_MATCH
+        elif escalations:
+            blocked_by = PHASE_GATE_ESCALATION
+        else:
+            blocked_by = PHASE_GATE_NONE
         envelope_ok, envelope_note = continue_envelope_state(paths)
-        if not early_passed and not envelope_ok:
-            if claim_failures:
+        envelope_in_scope = blocked_by in ENVELOPE_SCOPE
+        envelope_applied = envelope_ok and envelope_in_scope
+        entered = early_passed or envelope_applied
+        gate_reason = phase_gate_reason(
+            blocked_by=blocked_by,
+            envelope_ok=envelope_ok,
+            envelope_in_scope=envelope_in_scope,
+            envelope_note=envelope_note,
+        )
+        write_json(
+            paths.phase_gate_json,
+            {
+                "phase": "grounding",
+                "declared_input": "10-read/convergence-early.json",
+                "entered": entered,
+                "early_passed": early_passed,
+                "blocked_by": blocked_by,
+                "envelope_scope": list(ENVELOPE_SCOPE),
+                "envelope": {
+                    "present": os.path.isfile(paths.convergence_continue_md),
+                    "valid": envelope_ok,
+                    "in_scope": envelope_in_scope,
+                    "applied": envelope_applied,
+                    "note": envelope_note,
+                },
+                "reason": gate_reason,
+                "ruling": ["재정 P-U3", "재정 2026-09-01 T17"],
+            },
+        )
+        if not entered:
+            if blocked_by == PHASE_GATE_CLAIM_CHECKS:
                 # 조기 청구항 실패 = 분해 결함. 조치는 계약의 첫 failure 행이 든다.
                 entry = failure_entry(contract, "claim-inventory")
                 status = str(entry.get("then", entry.get("action")))
-            elif early_row is not None and early_row.status == "fail":
+            elif blocked_by == PHASE_GATE_EXACT_MATCH:
                 entry = failure_entry(contract, "exact-match 축")
                 status = str(entry.get("then", entry.get("action")))
             else:
@@ -1568,7 +1652,7 @@ def run(
                 "convergence": early_payload,
                 "status": status,
                 "reason_label": entry.get("reason_label"),
-                "gate_note": envelope_note,
+                "gate_note": gate_reason,
             }
 
         # ⑦ 접지 → 수확 → 통합. **정본 1개만** 여기 들어간다(재정 P-4).
@@ -1753,19 +1837,28 @@ def _failure_verdict(
     contract: dict, failing: list[CheckRow], *, repeated: bool = False
 ) -> tuple[str, str | None]:
     """검사 실패 → 조치. 재시도 예산은 이미 소진된 뒤 호출된다."""
-    if repeated:
-        entry = failure_entry(contract, "같은 실패 서명")
-        return str(entry["action"]), entry.get("reason_label")
     ids = {row.check_id for row in failing}
     if "read.schema" in ids:
+        # `halt` 는 `escalate` 를 앞선다(감사 지적 C-3). 계약이 `read.schema` 실패에 halt 를
+        # 정했고 halt(런 상태 무효)와 escalate(정지 + 상신)는 **다른 처분**이다. 같은 서명의
+        # 재현은 「왜 멈췄는가」의 진단이지 처분의 격을 낮추는 사유가 아니다. 재정 T16 §6 ⑤
+        # 는 이 우선순위를 정하지 않았다.
         entry = failure_entry(contract, "read.schema 실패")
         return str(entry.get("then", entry.get("action"))), entry.get("reason_label")
     if "read.source-digest" in ids:
         # 계약이 두 층을 구별해 남겼다(재정 P-C) — 같은 불일치를 **진입 시점**에 잡는 자리는
         # checks_on_entry 의 read.input-digest(환경 오류)이고, 이 행은 그 **이후 구간**에서
         # 명세 위로 드러난 불일치의 조치를 정한다. 조치는 halt 다: 원천이 바뀐 런은 폐기 대상이다.
+        #
+        # 이 행도 `repeated` 를 앞선다 — 감사 지적 C-3 는 `read.schema` 를 지목했지만 결함은
+        # **계열**이었다(계약이 halt 를 정한 행이 escalate 뒤에 서 있는 것). 원천이 도중에
+        # 바뀐 런은 재시도로 같은 서명을 재현하든 아니든 폐기 대상이며, 재현 사실이 폐기를
+        # 상신으로 낮출 사유가 되지 못한다. 한쪽만 고치면 남은 절반이 「고쳐진 계열」로 보인다.
         entry = failure_entry(contract, "원천 다이제스트")
         return str(entry.get("then", entry.get("action"))), entry.get("reason_label")
+    if repeated:
+        entry = failure_entry(contract, "같은 실패 서명")
+        return str(entry["action"]), entry.get("reason_label")
     if CONVERGENCE_CHECK_ID in ids:
         # 계약 문언이 "read.convergence 미달"에서 "read.convergence 의 exact-match 축 미달"로
         # 바뀌었다(재정 P-3) — 상신 축 미달은 판정 행을 fail 로 만들지 않으므로 여기 오지 않는다.

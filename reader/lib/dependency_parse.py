@@ -17,7 +17,8 @@
 수단항·카테고리 전환은 typed operator 신설이 N14 범위에서 **제외**되면서 "틀린 형태"가
 아니라 **읽을 규칙이 없는 구조**가 되었다. 그런 종속항을 판정 대상에 남기면 규칙의 공백이
 실제 결함과 같은 모양으로 계상된다. 그래서 셋을 한다: 판정에서 빼고, `checked` 에서 빼고,
-**목록에는 전건 남긴다**(`extras["unclassified"]`). 셋 중 마지막이 침묵을 막는 자리다.
+**목록에는 전건 남긴다**(`extras["unclassified"]`·`extras["unclassified_detail"]`). 셋 중
+마지막이 침묵을 막는 자리다.
 
 미분류가 면제를 주므로 그 면제는 무조건일 수 없다 — 본문에 **구조 표지 어형이 하나도 없는데**
 미분류를 선언하면 `parse.unclassified-not-an-escape` 가 실패시킨다(회피 통로 봉쇄).
@@ -140,6 +141,7 @@ def check(ctx: CheckContext) -> CheckRow:
     # `checked` 는 아래에서 판정 대상만 센다 — 전 종속항이 미분류면 checked == 0 이 되고
     # 판정 행이 `vacuous: "empty-target"` 으로 자동 날인된다(그것이 정상 동작이다).
     unclassified: list[str] = []
+    unclassified_detail: list[dict] = []
     row.checked = 0
 
     for dependent in dependents:
@@ -154,6 +156,17 @@ def check(ctx: CheckContext) -> CheckRow:
 
         if declared_type == unclassified_value:
             unclassified.append(claim_id)
+            # 문언은 그 항목을 신고한 **자기 명세**에서 읽는다. 보고서 조립 층이 조기 국면에서
+            # 두 실행의 행을 함께 받게 되면서, 거기서 ID 를 정본 명세 하나에 조회하면 비정본의
+            # ID 가 빈 문언이 되어 convergence/v0 의 `minLength: 1` 을 깬다(감사 지적 X-2).
+            # 명세를 아는 자리가 문언도 읽는다.
+            unclassified_detail.append(
+                {
+                    "claim": claim_id,
+                    "dependency_type": unclassified_value,
+                    "text_verbatim": dependent.get("text_verbatim") or "",
+                }
+            )
             # 회피 통로 봉쇄 — 판정 기준은 **본문의 구조 표지 유무**다.
             #
             # ★ 구 기준(인용 어형의 파싱 가능성)은 폐기되었다(2026-08-18 총괄 정정).
@@ -226,4 +239,5 @@ def check(ctx: CheckContext) -> CheckRow:
     # 미분류 목록 — CP1 표면과 `convergence.json#unclassified_dependents` 가 이것을 렌더한다.
     # 판정에서 뺀 것을 보고에서까지 빼면 그것이 침묵이다(재정 P-1).
     row.extras["unclassified"] = unclassified
+    row.extras["unclassified_detail"] = unclassified_detail
     return row

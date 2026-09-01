@@ -383,7 +383,7 @@ owner_checkpoint: { id: ..., surfaces: [...], confirm_file: ... }   # 있는 스
 | `lane` | Opus 5 max — **분해 2회(독립) · 접지 이후 1회**(재정 P-4·E 지시) |
 | `execution` | `decompose_instances: 2` · `post_convergence_instances: 1` · `canonical_selection: {rule: declaration-order, content_blind: true}` |
 | `retry_budget` | **판정점별** 재시도 예산(재정 2026-09-01 T16) — `early`(조기 관문 · `scope: per-read-run` · `max_retries: 1` · 고치는 대상 = 분해) · `exit`(출구 관문 · `scope: run` · `max_retries: 1` · 고치는 대상 = 정본 후속). 더해 `escalate_on_repeat`(같은 실패 서명 재현 = 즉시 상신)과 `feedback_discipline`(되먹임은 검사 소견만) |
-| `early_phase_spec` | 「분해 전용 명세」 조립의 **파이프라인 소유** 선언(재정 T16 부속 4) — 소유자·조립기·싣는 필드·자리표시(`groundings: []` · `synthesis: {}` · `harvest: null`)·그 위에서 도는 검사를 계약이 든다 |
+| `early_phase_spec` | 「분해 전용 명세」 조립의 **파이프라인 소유** 선언(재정 T16 부속 4) — 소유자·조립기·싣는 필드·자리표시·그 위에서 도는 검사를 계약이 든다. 자리표시는 조립기에 넣는 인자(`assembler_inputs`: `groundings`·`synthesis`·`harvest`)와 산출 명세에 남는 실제 필드(`spec_fields`: `figures`·`extensions.docent.drop_signal`)를 나눠 선언한다 |
 | `checks_on_entry` | `read.input-digest` — 선언 입력 전건의 지문 대조(`patent.md` ↔ `patent.sha256` ↔ `run.yaml`의 원천 해시 ↔ `source-report.json`, 그리고 도면 세트 매니페스트 지문). 불일치 = **환경 오류**(재정 P-C) |
 | `inputs` | `00-source/patent.md`, `00-source/patent.sha256`, `00-source/figures-raw/`, `00-source/source-report.json`, `run.yaml`, **`10-read/convergence-early.json`**(접지 단계의 선언 입력, 재정 P-U3) |
 | `outputs` | `10-read/material-spec.json`(`status: draft`), `10-read/material-spec.md`(CP1 판독본), `10-read/claim-trees/`, `10-read/grounding.md`, `10-read/positioning.md`, `10-read/drop-signal.md`, **`10-read/convergence-early.json`**(`phase: "early"`), `10-read/convergence.json`(`phase: "full"`), `10-read/lanes/` — 수렴 보고서는 검사 결과 외에 **`manual_verification_required[]`**(재정 R1)·**`grounding_exceptions[]`**(재정 R3)·**`fact_classification`**(재정 N9)·**`canonical_selection`**·**`convergence_report`**(재정 P-3·P-4)·**`unclassified_dependents`**(재정 P-1)·**`numeric_inventory`**(재정 P-B)·**`screening_memos`**(재정 P-A·P-U4)를 함께 싣는다 |
@@ -412,9 +412,9 @@ owner_checkpoint: { id: ..., surfaces: [...], confirm_file: ... }   # 있는 스
 | ② | **분해 2회** | `read-a`·`read-b`가 독립적으로 D5 ①② 를 수행한다. 서로의 산출을 보지 않으며 같은 세션의 재생성은 독립 실행이 아니다 | D5, D6 규율 ③ |
 | ③ | **맹검 메모 2건** | 각 실행이 서사 우려를 기록만 한다. 상신 없음 · 진행 계속 · 최종 서사 평가 레인에 비공개. 섀도 원장(`ledgers/shadow/screening.jsonl`)에 한 행으로 등재 | 재정 P-A·P-U4 |
 | ④-a | **조기 청구항 소유 검사** | `read.claim-inventory`·`read.dependency-parse`를 **실행별로**(`read-a`·`read-b` 각각) 분해 전용 명세 위에서 돌린다. 실패 = **분해 결함**이며 **그 실행만** 표적 재시도한다(조기 예산 = 레인별 1회). 같은 두 검사가 ⑧의 출구 관문에서도 돈다 — **정의는 하나이고 호출점이 둘**이다 | 재정 2026-09-01 T16-ⓐ·부속 1·2 |
-| ④-b | **조기 수렴 검사** | 두 분해 산출만으로 6축을 계산해 `convergence-early.json`(`phase: "early"`)을 낸다. `exact-match` 축 미달 = `retry(1)` → `escalate`, `escalation-trigger` 축 미달 = `escalate`(사유 `독해 프로파일 상신`). **★ ④-a가 실패하면 수렴 판정은 재시도 뒤로 보류된다** — 원인 검사가 증상 검사보다 먼저다(재정 T16 부속 3). 직전 런에서 `read-b`의 규약 위반이 **수렴 붕괴라는 먼 증상**으로만 보였던 자리다 | 재정 P-4·P-3 · T16 부속 3 |
+| ④-b | **조기 수렴 검사** | 두 분해 산출만으로 6축을 계산해 `convergence-early.json`(`phase: "early"`)을 낸다. 같은 `read.convergence`가 ⑧에서도 돌아 정본이 전 단계를 마친 뒤의 최종 보고서 기록을 남긴다 — **정의 하나, 호출점 둘(`early`·`exit`)**이다. `exact-match` 축 미달 = `retry(1)` → `escalate`, `escalation-trigger` 축 미달 = `escalate`(사유 `독해 프로파일 상신`). **★ ④-a가 실패하면 수렴 판정은 재시도 뒤로 보류된다** — 원인 검사가 증상 검사보다 먼저다(재정 T16 부속 3). 직전 런에서 `read-b`의 규약 위반이 **수렴 붕괴라는 먼 증상**으로만 보였던 자리다 | 재정 P-4·P-3·P-U3 · T16 부속 3 |
 | ⑤ | **정본 지정** | 정본 = `read_runs[0]`(`read-a`). **내용맹·결정론**이며 어떤 품질 비교·판정도 하지 않는다. 비정본 산출은 폐기하지 않고 수렴 보고서에 보존한다 | 재정 P-4 |
-| ⑥ | **접지 진입 게이트** | 판정서 존재 ∧ (통과 ∨ Owner '계속' 봉투). 봉투는 판정서 파일의 SHA-256에 결속된다 | 재정 P-U3 |
+| ⑥ | **접지 진입 게이트** | 판정서 존재 ∧ (통과 ∨ Owner '계속' 봉투). 봉투는 판정서 파일의 SHA-256에 결속되며 **조기 수렴의 상신 축 미달 하나에만** 적용된다. 청구항 소유 검사 실패와 exact-match 축 미달은 봉투 범위 밖이다. 진입·차단과 그 사유는 별도 판정 기록 `10-read/phase-gate.json`에 남긴다 | 재정 P-U3·T17 |
 | ⑦ | **접지 → 수확 → 통합** | **정본 1개만** D5 ③④⑤ 를 수행한다. 접지 스팬에서 수치를 전수 기계 수확하고, 통합 레인은 그 수확 목록을 지시로 받아 `numeric_refs`를 적는다(수치를 새로 지어내지 않는다) | 재정 P-4·P-B |
 | ⑧ | **조립 → 검사 전건** | 항목 재번호 후 결정론 검사를 돌려 `convergence.json`(`phase: "full"`)을 낸다 | D6 규율 ③ |
 | ⑨ | **출구 검사** | `read.lane-log-shape`가 레인 로그를 계약 실행 형태와 대조한다 — 분해는 두 실행 각 1건, 접지·통합은 **정본 실행에만** 존재하고 비정본 실행에는 **부재**하다. 더해 왕복의 **시점 결속**을 본다 — 모든 행이 요청 지문을 들고(`lane-log.request-digest`), 응답이 도착한 행은 응답 지문과 `digest_ok: true`를 들며(`lane-log.response-digest`), 모든 행이 **요청 파일 바이트의 지문**을 든다(`lane-log.request-file-digest` — 재정 2026-08-19 S4·Q8 ③. 요청 파일을 쓰지 않는 재생 어댑터의 왕복만 명시 `null`로 빠지고 그 건수는 `request_digest_exempt`에 남는다) **★ 값 대조는 이 검사가 하지 않는다** — 그 자리는 재정 2026-08-31 Q1 이 신설한 `read.lane-log-digest-value`이며, 로그가 적은 요청 파일 지문이 **그 자리의 파일과 같은지**를 파일을 직접 열어 판정한다(형태의 통과를 값의 증거로 쓰지 않는다) | 재정 P-4·P-U3·P-12·S4·2026-08-31 Q1 |
@@ -488,9 +488,9 @@ owner_checkpoint: { id: ..., surfaces: [...], confirm_file: ... }   # 있는 스
 
 | 조건 | 조치 |
 |---|---|
-| `read.verbatim` / `pointer-resolve` / `coverage` / `dependency-parse` / `value-derivation` / `bibliography` / `claim-inventory` 실패 | `retry(1)` → 재실패 시 `escalate` |
-| `read.convergence`의 **`exact-match` 축** 미달 | `retry(1)` → 재실패 시 `escalate`(Owner 재정: 소재 변경 또는 절차 수정). 재시도 지점은 **조기 수렴 지점**(분해 직후)이며 접지 지출 이후로 미루지 않는다(재정 P-4) |
-| `read.convergence`의 **상신 축**(`escalation-trigger`) 미달 | `escalate` — 사유 라벨 **`독해 프로파일 상신`**. 실패가 아니라 상신이며, Owner가 '계속' 봉투를 내면 접지 진입 조건이 충족된다(재정 P-3·P-U3) |
+| `read.verbatim` / `pointer-resolve` / `coverage` / `dependency-parse` / `value-derivation` / `bibliography` / `claim-inventory` 실패 | `retry(1)` → 재실패 시 `escalate`. **조기 청구항 소유 검사 실패는 봉투 적용 범위 밖**이다(재정 T17) |
+| `read.convergence`의 **`exact-match` 축** 미달 | `retry(1)` → 재실패 시 `escalate`(Owner 재정: 소재 변경 또는 절차 수정). 재시도 지점은 **조기 수렴 지점**(분해 직후)이며 접지 지출 이후로 미루지 않는다(재정 P-4). **봉투 적용 범위 밖**이다(재정 T17) |
+| `read.convergence`의 **상신 축**(`escalation-trigger`) 미달 | `escalate` — 사유 라벨 **`독해 프로파일 상신`**. 실패가 아니라 상신이며, Owner가 '계속' 봉투를 내면 접지 진입 조건이 충족된다(재정 P-3·P-U3). **봉투가 적용되는 유일한 자리**다(재정 T17) |
 | **진입 지문 불일치**(`checks_on_entry: read.input-digest`) | `halt` — 사유 라벨 **`환경 오류`**. 재시도·수정 루프에 넣지 않는다(재정 P-C). 원천 자체가 바뀌었으면 부분 복구가 아니라 새 런이다(재정 P-U2) |
 | 원천 다이제스트가 `run.yaml` 기록과 불일치(`read.source-digest`) | `halt` — 원천이 도중에 바뀐 런은 폐기 대상 |
 | `read.lane-log-shape` 실패 | `escalate` — 비정본 실행이 접지·통합을 돌았거나 분해 실행 수가 계약과 다르다 |
@@ -561,6 +561,13 @@ owner_checkpoint:
 | 무엇에 결속되는가 | **재료가 아니라 판정서다.** `target.path`는 `10-read/convergence-early.json`에 고정되고 `target.digest`는 그 파일의 SHA-256이다 |
 | 왜 판정서인가 | 다른 두 봉투가 승인하는 것은 산출물(재료 명세·출하물)이지만, 이 봉투가 승인하는 것은 **진행 결정**이고 그 결정의 근거 문서는 조기 수렴 판정서다. 판정서가 바뀌면(재분해·재시도) 봉투가 자동 실효되어, 승인된 적 없는 판정 위에서 접지가 도는 경로가 닫힌다 |
 | 요구하지 않는 것 | 출하·재료 전용 필드(`selected_variant`·`manual_verification_ack` 등). 이 봉투는 재료를 승인하지 않는다 |
+
+**적용 범위(재정 2026-09-01 T17).** 이 봉투는 조기 수렴 판정의 **상신 축 미달에만** 적용된다.
+청구항 소유 검사 실패는 「독해가 갈렸다」가 아니라 고칠 레인이 있는 **분해 결함**이므로 봉투로
+넘기지 않고 분해 재시도 뒤 예산 소진 시 계약 실패표를 따른다. exact-match 축 미달도 배타 문언상
+범위 밖이며 조기 수렴 재시도 뒤 예산 소진 시 계약 실패표를 따른다. 성질이 다른 실패까지 같은
+봉투로 넘기면 봉투가 만능 통행증이 된다. 이 좁힘은 소급하지 않는다 — WO 런의 봉투는
+`tree-edges` 상신 축 미달 하나를 넘겼으므로 유효하고 동결본 v1 은 그대로 선다(행위시법 P-U1).
 
 정본 = `contracts/schemas/approval-envelope.schema.json`(규율 (10)) · `contracts/stages/read.yaml#phase_gates`.
 
@@ -1301,8 +1308,8 @@ owner_checkpoint:
 |---|---|---|---|---|
 | 1 | 원천 다이제스트 불일치 | `read`(진입), `freeze.digest-match` | `halt` — 원천이 바뀐 런은 폐기 | D6 규율 ③ |
 | 2 | 접지 검사 실패(독립·종속 전량) | `read.pointer-resolve`, `read.coverage` | `retry(1)` → `escalate` | D5·D6, 재정 R3 |
-| 2-b | **청구항 소유 검사 실패**(인벤토리·종속 파싱) | `read.claim-inventory`·`read.dependency-parse` — **두 국면**(분해 직후 실행별 / 출구) | `retry(1)` → `escalate`. **어느 국면에서 났는지가 조치의 방향을 정한다**: 조기 = **분해 결함**이므로 그 실행의 분해를 다시 돌리고, 출구(조기 통과 후) = **국면 간 변이**이므로 **정본 후속**을 다시 돌린다 | 재정 2026-09-01 T16-ⓐ·부속 1 |
-| 3 | 재독해 수렴 미달 | `read.convergence`(**분해 직후**) | 축 정책별로 갈린다 — `exact-match` 미달 = `retry(1)` → `escalate`(절차 신호) / `escalation-trigger` 미달 = `escalate`(사유 `독해 프로파일 상신`, 실패가 아니다) / `measure-only` = 판정 없음 | D6 규율 ③, 재정 P-3·P-4 |
+| 2-b | **청구항 소유 검사 실패**(인벤토리·종속 파싱) | `read.claim-inventory`·`read.dependency-parse` — **두 국면**(분해 직후 실행별 / 출구) | `retry(1)` → `escalate`. **어느 국면에서 났는지가 조치의 방향을 정한다**: 조기 = **분해 결함**이므로 그 실행의 분해를 다시 돌리고, 출구(조기 통과 후) = **국면 간 변이**이므로 **정본 후속**을 다시 돌린다. **조기 실패는 봉투 적용 범위 밖**이다 | 재정 2026-09-01 T16-ⓐ·부속 1, 재정 T17 |
+| 3 | 재독해 수렴 미달 | `read.convergence`(**분해 직후**) | 축 정책별로 갈린다 — `exact-match` 미달 = `retry(1)` → `escalate`(절차 신호, **봉투 적용 범위 밖**) / `escalation-trigger` 미달 = `escalate`(사유 `독해 프로파일 상신`, 실패가 아니며 **봉투가 적용되는 유일한 자리**) / `measure-only` = 판정 없음 | D6 규율 ③, 재정 P-3·P-4·T17 |
 | 3-b | **재시도가 같은 실패 서명을 재현** | `read`의 정본 후속 루프(서명 = 실패 판정 행의 `(check_id, rule, locus)` 집합) | `escalate` — 사유 라벨 `국면 간 변이 재현 — 코드 결함 의심`. **남은 예산을 태우지 않는다**: 변이가 레인 실수가 아니라 코드 결함이면 재시도는 같은 실패를 재현하고, **그 재현 자체가 진단**이다 | 재정 2026-09-01 T16 §6 ⑤ |
 | 4 | drop 신호 발생(2단) | `read` 조기(분해 직후) / 최종(포지셔닝 후) | **조기 = 조치 없음** — 맹검 메모로 기록만 하고 진행한다(상신 없음·최종 서사 평가 레인 비공개). **확정 = CP1 통합 재정** — 구속력 있는 결정은 재료 승인과 한 자리에서 1회 내려진다. 구 조치 "즉시 `escalate`, 하류 정지"는 **폐기** | D4(v1.3), 재정 P-A |
 | 4-b | 진입 지문 불일치(전 스테이지) | 각 스테이지의 `checks_on_entry` | `halt` — 사유 `환경 오류`. 품질 결함이 아니므로 재시도·수정 루프에 넣지 않는다 | 재정 P-C(C10) |
@@ -4150,6 +4157,7 @@ runs/<run-id>/
     drop-signal.md         # D4 2단 신호
     convergence-early.json # ★ 조기 수렴 판정서 (phase: "early") — 접지의 선언 입력 (재정 P-4·P-U3)
     convergence-continue.md # ★ Owner '계속' 봉투 — 판정서 지문에 결속. 작업 레인은 쓰지 않는다 (재정 P-U3)
+    phase-gate.json        # ★ 접지 진입·차단의 별도 판정 기록 (재정 T17)
     lanes/                 # ★ 레인 왕복 기록(요청·응답 + lane-log.json) — read.lane-log-shape 의 판정 대상
     convergence.json       # 재독해 수렴 검사 결과 (phase: "full")
   15-frozen/
@@ -4192,7 +4200,7 @@ runs/<run-id>/
 
 **같은 관계가 `thread.json`에도 걸린다(재감수 B-04, §9.0 E23).** 구조화 출하 객체의 정본은 `50-gate/<variant>/thread.json`이고 `70-ship/thread.json`은 그 복사본이다. `gate` 산출로 승격한 이유는 시점이다 — 최종 심급의 거부 사유 (c)(round-trip 무결)는 CP2 **이전**에 판정되는데, 구 계약에서는 검사 대상이 CP2 이후에야 생겼다(§1.10).
 
-**`10-read/`의 신설 3종(재정 P-4·P-U3).** `convergence-early.json`은 분해 직후에 두 독해만으로 산출하는 **판정서**이며(계약 = `convergence/v0`, `phase: "early"`), 접지 스테이지의 **선언 입력**이라는 지위를 갖는다 — 접지는 이 파일 없이 시작되지 않는다. `convergence-continue.md`는 판정 미달 시 접지를 여는 **Owner '계속' 봉투**이고, 재료가 아니라 **판정서 자체의 지문**에 결속된다(`target.digest` == 판정서 파일의 SHA-256). **작업 레인은 이 파일을 쓰지 않는다** — 진입 허가를 진입할 당사자가 발급할 수 있으면 게이트가 아니라 서식이 된다(§7.4). `lanes/`는 레인 요청·응답의 전량 기록이며, 정본 실행에만 접지·통합 레인이 있다는 사실을 **로그의 있음·없음으로** 증명하는 자리다(검사 `read.lane-log-shape`).
+**`10-read/`의 신설 4종(재정 P-4·P-U3·T17).** `convergence-early.json`은 분해 직후에 두 독해만으로 산출하는 **판정서**이며(계약 = `convergence/v0`, `phase: "early"`), 접지 스테이지의 **선언 입력**이라는 지위를 갖는다 — 접지는 이 파일 없이 시작되지 않는다. `convergence-continue.md`는 상신 축 미달 시 접지를 여는 **Owner '계속' 봉투**이고, 재료가 아니라 **판정서 자체의 지문**에 결속된다(`target.digest` == 판정서 파일의 SHA-256). **작업 레인은 이 파일을 쓰지 않는다** — 진입 허가를 진입할 당사자가 발급할 수 있으면 게이트가 아니라 서식이 된다(§7.4). `phase-gate.json`은 접지의 진입·차단과 봉투 적용 여부·사유를 양쪽 갈래 모두에 남기는 별도 판정 기록이다. 이 기록을 `convergence-early.json`에 적으면 봉투 발행 전후로 그 파일의 SHA-256이 달라져 결속이 스스로 깨지므로 반드시 분리한다. `lanes/`는 레인 요청·응답의 전량 기록이며, 정본 실행에만 접지·통합 레인이 있다는 사실을 **로그의 있음·없음으로** 증명하는 자리다(검사 `read.lane-log-shape`).
 
 **신설 3종의 성격.** `00-source/source-report.json`은 READ의 전량 접지 비용을 지출하기 전에 형식 전제를 확인하는 **조기 보고**이고(재정 N12), `50-gate/<v>/final-eyes-brief.json`은 최종 심급이 (a)·(b)를 실행하는 데 필요한 법의 **발췌본**이며(재정 N1), `50-gate/<v>/thread.json`은 위 정본 관계의 산물이다.
 

@@ -25,7 +25,6 @@ from . import (
     verbatim,
 )
 from .report import CheckContext, CheckRow
-from .spec_io import SpecIndex
 
 # ★ 순서에 뜻이 있다 — `read.source-digest` 가 `read.schema` 바로 다음이다. 불변식 I1 이
 #   "다이제스트가 어긋나면 결정론 검사 전부 무효"라고 적었으므로, 그 판정이 아래 검사들보다
@@ -53,10 +52,15 @@ READ_CHECK_IDS: tuple[str, ...] = (
 #     조기 실패 = **분해 결함**(조기 예산 · 분해 재시도)
 #     출구 실패(조기 통과 후) = **국면 간 변이**(후속 예산 · 정본 후속 재시도)
 #
-#   출구 행을 지우면 그 계열은 「못 고치는 결함」이 아니라 **「탐지조차 안 되는 결함」**으로
-#   격하된다 — 조립기가 `copy.deepcopy` 직후 청구항 트리의 material_id 를 전량 재작성하고
-#   그 번호표는 접지·통합·수확 산출까지 포함해 만들어지므로, 그 오염은 분해 산출에
-#   나타나지 않는다(재정 T16 §2 ⒜).
+#   **구 근거(반증됨)** — "조립기가 material_id 를 전량 재작성하므로 그 오염은 분해 산출에
+#   나타나지 않고 출구 행이 유일한 탐지기다"(재정 T16 §2 ⒜). 두 검사는 material_id 를 읽지
+#   않고, 그것을 뺀 조기·최종 claims 는 같으므로 오늘 출구 행의 탐지량은 **0**이다.
+#
+#   그래도 출구 행은 세 격으로 존치한다. ① 최종 판정서(convergence.json, CP1 표면)에 두 판정을
+#   기록한다. ② Owner '계속' 봉투 우회 경로에서 실패를 다시 보고한다(재정 T17 뒤 현재 사거리는
+#   상신 축 미달로 좁다). ③ 뒷날 assemble_spec 이 claims 문언을 건드릴 때를 대비한다. 정정 =
+#   `docs/decisions/D-20260901-01-pdm2-split.md` §10 · 감사 원문
+#   `docs/lessons/2026-09-01-opus-audit-g6-implementation.md` §2 E.
 EARLY_CLAIM_CHECK_IDS: tuple[str, ...] = (
     "read.claim-inventory",
     "read.dependency-parse",
@@ -123,8 +127,8 @@ def to_convergence_payload(
     읽지 않는다(이식 단위가 `contracts/` 를 참조하면 안 된다) — 동치는
     `tests/test_m1_reader.py::test_convergence_payload_validates_against_contract` 가 대조한다.
 
-    `spec` 은 실질적으로 필수다. `run_id`·`reader_version`·`spec_version`·`source_digest` 를
-    그 인스턴스에서 복사하며, 주지 않으면 계약을 만족하지 못하는 뼈대만 나온다.
+    `spec` 은 실질적으로 필수다. `run_id`·`reader_version`·`spec_version`·`source_digest` 와
+    정본 지정을 그 인스턴스에서 복사하며, 주지 않으면 계약을 만족하지 못하는 뼈대만 나온다.
     `vacuous_pass[]` 는 손으로 채우는 필드가 아니라 `checks[]` 에서 파생한다(재정 N5).
 
     신설 인자(전부 기본값이 있어 기존 호출부를 깨지 않는다):
@@ -162,9 +166,18 @@ def to_convergence_payload(
             "content_blind": True,
         },
         "checks": check_rows,
-        "vacuous_pass": [
-            entry["check_id"] for entry in check_rows if entry["vacuous"] != "none"
-        ],
+        # 조기 국면은 같은 검사를 **실행 수만큼** 싣는다(정의는 하나, 호출점은 둘 — 재정 T16).
+        # 그때 두 행이 함께 공허하면 파생값에 같은 id 가 두 번 들어가고 계약
+        # (`convergence.schema.json#vacuous_pass.uniqueItems`)이 그것을 거부해 **판정서가 아예
+        # 쓰이지 않는다**(감사 지적 X-1). 공허했다는 사실은 행 자체(`checks[].vacuous`)에
+        # 실행별로 남으므로 이 파생 목록에서 중복을 지워도 잃는 정보가 없다.
+        "vacuous_pass": list(
+            dict.fromkeys(
+                entry["check_id"]
+                for entry in check_rows
+                if entry["vacuous"] != "none"
+            )
+        ),
         "findings": findings,
         "convergence_detail": {
             "executed": False,
@@ -202,9 +215,29 @@ def to_convergence_payload(
                 inventory_block["skipped"] = list(skipped_tokens)
             payload["numeric_inventory"] = inventory_block
         if row.check_id == "read.dependency-parse":
-            payload["unclassified_dependents"] = _unclassified_rows(
-                source, row.extras.get("unclassified") or []
-            )
+            # 조기 국면에서는 두 실행의 `read.dependency-parse` 행이 함께 온다. 마지막 행으로
+            # 덮으면 **정본의 미분류 신고가 지워지고** 비정본의 ID 가 정본 문언을 달고 실린다
+            # (감사 지적 X-3). 이 칸은 스키마 `$comment` 가 「침묵을 막는 목록」이라 적은
+            # 자리이므로, 두 실행이 각자 신고한 것을 **합집합**으로 싣는다 — 같은 청구항을 같은
+            # 문언으로 신고했으면 한 행, 문언이 갈리면 두 행이다(정보를 지우지 않는다).
+            seen = {
+                (
+                    entry.get("claim"),
+                    entry.get("dependency_type"),
+                    entry.get("text_verbatim"),
+                )
+                for entry in payload["unclassified_dependents"]
+            }
+            for entry in row.extras.get("unclassified_detail") or []:
+                copied = dict(entry)
+                identity = (
+                    copied.get("claim"),
+                    copied.get("dependency_type"),
+                    copied.get("text_verbatim"),
+                )
+                if identity not in seen:
+                    payload["unclassified_dependents"].append(copied)
+                    seen.add(identity)
         if row.check_id == "read.convergence":
             executed = not row.extras.get("skipped", False)
             payload["convergence_detail"] = {
@@ -224,23 +257,3 @@ def to_convergence_payload(
                 "divergences": profile.get("divergences", []),
             }
     return payload
-
-
-def _unclassified_rows(spec: dict, claim_ids: list) -> list[dict]:
-    """미분류 종속항 목록(재정 P-1) — ID 만으로는 "무엇이 미분류인지"를 말하지 못한다.
-
-    전문을 함께 싣는 이유는 사람이 그 자리에서 구조를 읽어야 하기 때문이다. 이 목록의
-    항목은 **결함이 아니다** — 판정에서 빠졌다는 사실을 드러내는 자리다.
-    """
-    index = SpecIndex.build(spec)
-    rows: list[dict] = []
-    for claim_id in claim_ids:
-        claim = index.claims.get(claim_id) or {}
-        rows.append(
-            {
-                "claim": claim_id,
-                "dependency_type": "unclassified",
-                "text_verbatim": claim.get("text_verbatim", ""),
-            }
-        )
-    return rows

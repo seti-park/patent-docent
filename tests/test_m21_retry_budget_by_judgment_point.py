@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import copy
 import importlib
+import inspect
 import json
 import os
 import re
@@ -42,6 +43,7 @@ from reader.lib import (  # noqa: E402
 
 TAIL_TASKS = ("ground-independent", "ground-dependent", "synthesize")
 READ_RUNS = ("read-a", "read-b")
+REPAIR_TASKS = {"decompose": ("decompose",), "canonical-tail": TAIL_TASKS}
 
 
 def load_json(path: str) -> dict:
@@ -109,6 +111,33 @@ def point_budgets(repo: str | None = None) -> dict[str, int]:
     return points
 
 
+def retry_point(point_id: str) -> dict:
+    contract = load_stage_contract("read", None)
+    matches = [
+        entry
+        for entry in (contract.get("retry_budget") or {}).get("points") or []
+        if isinstance(entry, dict) and entry.get("id") == point_id
+    ]
+    if len(matches) != 1:
+        pytest.fail(f"retry_budget 판정점 {point_id!r} 기대 1개, 실제 {len(matches)}")
+    return matches[0]
+
+
+def expected_repair_tasks(point: dict) -> set[str]:
+    repair = point.get("repairs")
+    if repair not in REPAIR_TASKS:
+        pytest.fail(f"알 수 없는 retry_budget.repairs 선언: {repair!r}")
+    return set(REPAIR_TASKS[repair])
+
+
+def retried_tasks(lane_ids: list[str]) -> set[str]:
+    return {
+        lane_id.split("/")[1]
+        for lane_id in lane_ids
+        if "/retry-" in lane_id and len(lane_id.split("/")) > 1
+    }
+
+
 def retry_attempts(lane_ids: list[str], *, task: str | None = None) -> set[str]:
     selected = lane_ids
     if task is not None:
@@ -131,15 +160,25 @@ def test_v1a_early_failure_routes_to_decompose(tmp_path) -> None:
         },
     )
     lane_ids = dispatched_ids(adapter)
+    point = retry_point("early")
+    if point.get("scope") != "per-read-run":
+        pytest.fail(
+            "성한 실행 비재시도 단언의 계약 전제 scope=per-read-run 이 깨졌다: "
+            f"{point.get('scope')!r}"
+        )
     expected = "read-b/decompose/retry-1/batch-0"
     if expected not in lane_ids:
         pytest.fail(f"조기 실패의 분해 재시도 좌표가 없다: {lane_ids}")
     forbidden = "read-a/decompose/retry-1/batch-0"
     if forbidden in lane_ids:
         pytest.fail(f"성한 read-a 분해까지 재시도했다: {lane_ids}")
-    leaked = [lane_id for lane_id in tail_lane_ids(lane_ids) if "/retry-" in lane_id]
-    if leaked:
-        pytest.fail(f"조기 결함이 후속 재시도로 샜다: {leaked}")
+    expected_tasks = expected_repair_tasks(point)
+    actual_tasks = retried_tasks(lane_ids)
+    if actual_tasks != expected_tasks:
+        pytest.fail(
+            f"early repairs={point.get('repairs')!r} 기대 과업 {sorted(expected_tasks)}, "
+            f"실제 {sorted(actual_tasks)}"
+        )
     if outcome["status"] != "ok":
         pytest.fail(f"표적 재시도 뒤 status 기대 ok, 실제 {outcome['status']}")
     _ = root
@@ -156,6 +195,14 @@ def test_v1b_exit_failure_routes_to_canonical_tail(tmp_path) -> None:
         },
     )
     lane_ids = dispatched_ids(adapter)
+    point = retry_point("exit")
+    expected_tasks = expected_repair_tasks(point)
+    actual_tasks = retried_tasks(lane_ids)
+    if actual_tasks != expected_tasks:
+        pytest.fail(
+            f"exit repairs={point.get('repairs')!r} 기대 과업 {sorted(expected_tasks)}, "
+            f"실제 {sorted(actual_tasks)}"
+        )
     retried_tail = [lane_id for lane_id in tail_lane_ids(lane_ids) if "/retry-" in lane_id]
     if not retried_tail:
         pytest.fail(f"출구 실패가 후속 레인으로 돌아가지 않았다: {lane_ids}")
@@ -477,11 +524,25 @@ def test_decompose_only_spec_matches_early_phase_contract() -> None:
     missing = [key for key in declared.get("carries") or [] if key not in actual]
     if missing:
         pytest.fail(f"early_phase_spec.carries 중 실제 산출에 없는 키: {missing}")
-    if actual.get("figures") != []:
-        pytest.fail(f"분해 전용 figures 자리표시 기대 [], 실제 {actual.get('figures')!r}")
-    drop_signal = ((actual.get("extensions") or {}).get("docent") or {}).get("drop_signal")
-    if drop_signal != {}:
-        pytest.fail(f"분해 전용 drop_signal 자리표시 기대 {{}}, 실제 {drop_signal!r}")
+    placeholders = declared.get("placeholders") or {}
+    for dotted_path, expected_value in (placeholders.get("spec_fields") or {}).items():
+        value = actual
+        for segment in str(dotted_path).split("."):
+            if not isinstance(value, dict) or segment not in value:
+                pytest.fail(f"early_phase_spec.spec_fields 경로가 산출에 없다: {dotted_path}")
+            value = value[segment]
+        if value != expected_value:
+            pytest.fail(
+                f"분해 전용 {dotted_path} 자리표시 기대 {expected_value!r}, 실제 {value!r}"
+            )
+    assembler_inputs = set((placeholders.get("assembler_inputs") or {}).keys())
+    parameters = set(inspect.signature(m2.read_stage.assemble_spec).parameters)
+    missing_inputs = assembler_inputs - parameters
+    if missing_inputs:
+        pytest.fail(f"assemble_spec 에 실재하지 않는 자리표시 인자: {sorted(missing_inputs)}")
+    confused = assembler_inputs & set(actual)
+    if confused:
+        pytest.fail(f"조립기 인자 이름을 산출 명세 최상위 필드로 혼동했다: {sorted(confused)}")
     payload_kinds = {item.get("kind") for item in m2.decompose_payload().get("items") or []}
     actual_kinds = {item.get("kind") for item in actual.get("items") or []}
     if actual_kinds != payload_kinds:
@@ -507,7 +568,11 @@ def test_decompose_only_spec_matches_early_phase_contract() -> None:
 
 
 def test_claim_check_phase_meanings_and_exit_rows_are_declared() -> None:
-    """두 실패의 뜻과 출구 행을 성문화하지 않으면 국면 간 변이의 유일한 탐지기가 사라진다."""
+    """두 실패의 뜻과 출구 행을 성문화하지 않으면 최종 기록·봉투 우회 재보고·미래 결합 대비가 사라진다.
+
+    오늘 두 출구 행의 탐지량은 0 이다. 그래도 최종 판정서(CP1 표면)의 기록, T17 뒤 상신 축
+    미달로 좁아진 봉투 우회 경로의 재보고, 뒷날 claims 문언 결합 대비라는 세 격으로 존치한다.
+    """
     contract = load_stage_contract("read", None)
     checks = contract.get("checks_before_exit") or []
     missing_exit = [entry.get("id") for entry in checks if "exit" not in (entry.get("phases") or [])]
@@ -516,18 +581,88 @@ def test_claim_check_phase_meanings_and_exit_rows_are_declared() -> None:
     early_declared = {
         entry.get("id") for entry in checks if "early" in (entry.get("phases") or [])
     }
-    if early_declared != set(EARLY_CLAIM_CHECK_IDS):
+    judged_here = set((contract.get("early_phase_spec") or {}).get("judged_here") or [])
+    if early_declared != judged_here:
         pytest.fail(
-            f"early phases 기대 {sorted(EARLY_CLAIM_CHECK_IDS)}, 실제 {sorted(early_declared)}"
+            f"checks_before_exit early 집합과 early_phase_spec.judged_here 가 갈렸다: "
+            f"phases={sorted(early_declared)}, judged_here={sorted(judged_here)}"
         )
+    expected_judged = set(EARLY_CLAIM_CHECK_IDS) | {"read.convergence"}
+    if judged_here != expected_judged:
+        pytest.fail(f"judged_here 기대 코드 등재부 {sorted(expected_judged)}, 실제 {sorted(judged_here)}")
     by_id = {entry.get("id"): entry for entry in checks}
-    for check_id in EARLY_CLAIM_CHECK_IDS:
+    for check_id in early_declared:
         meaning = str(by_id.get(check_id, {}).get("phase_meaning", ""))
         if not meaning.strip():
             pytest.fail(f"{check_id}.phase_meaning 이 비었다")
+    for check_id in EARLY_CLAIM_CHECK_IDS:
+        meaning = str(by_id.get(check_id, {}).get("phase_meaning", ""))
         missing_terms = [term for term in ("분해 결함", "국면 간 변이") if term not in meaning]
         if missing_terms:
             pytest.fail(f"{check_id}.phase_meaning 에 뜻이 빠졌다: {missing_terms}")
     missing_from_exit = set(EARLY_CLAIM_CHECK_IDS) - set(READ_CHECK_IDS)
     if missing_from_exit:
         pytest.fail(f"조기 청구항 검사 출구 행이 사라졌다: {sorted(missing_from_exit)}")
+
+
+def test_retry_contract_declarations_are_bound_or_classified() -> None:
+    """선언 키의 강제 층을 분류하지 않으면 산문을 러너 강제로 오해하게 된다(A-3)."""
+    contract = load_stage_contract("read", None)
+
+    def verify(label: str, actual_keys: set[str], status: dict) -> None:
+        categories = {
+            name: set(status.get(name) or [])
+            for name in ("runner_reads", "test_bound", "prose_only")
+        }
+        duplicates = {
+            key
+            for key in set().union(*categories.values())
+            if sum(key in values for values in categories.values()) > 1
+        }
+        if duplicates:
+            pytest.fail(f"{label} 결속 분류가 겹친 키: {sorted(duplicates)}")
+        classified = set().union(*categories.values())
+        unclassified = actual_keys - classified
+        nonexistent = classified - actual_keys
+        if unclassified or nonexistent:
+            pytest.fail(
+                f"{label} 결속 분류 불일치: 미분류={sorted(unclassified)}, "
+                f"존재하지 않는 분류={sorted(nonexistent)}"
+            )
+
+    retry = contract.get("retry_budget") or {}
+    retry_status = retry.get("binding_status") or {}
+    point_keys = {
+        key
+        for point in retry.get("points") or []
+        if isinstance(point, dict)
+        for key in point
+    }
+    verify("retry_budget.points[]", point_keys, retry_status)
+    verify(
+        "retry_budget",
+        set(retry) - {"binding_status"},
+        retry_status.get("container") or {},
+    )
+    if retry_status.get("runner_reads") != ["id", "max_retries"]:
+        pytest.fail(f"retry_budget.runner_reads 실물 기대 [id, max_retries], 실제 {retry_status.get('runner_reads')!r}")
+
+    early = contract.get("early_phase_spec") or {}
+    verify(
+        "early_phase_spec",
+        set(early) - {"binding_status"},
+        early.get("binding_status") or {},
+    )
+
+    early_point = next(point for point in retry["points"] if point.get("id") == "early")
+    if set(early_point.get("checks") or []) != set(early.get("judged_here") or []):
+        pytest.fail("retry_budget early.checks 와 early_phase_spec.judged_here 가 갈렸다")
+    exit_point = next(point for point in retry["points"] if point.get("id") == "exit")
+    pointer = exit_point.get("checks")
+    target = contract.get(pointer) if isinstance(pointer, str) else None
+    if not isinstance(target, list):
+        pytest.fail(f"exit.checks 포인터 대상 블록이 없다: {pointer!r}")
+    declared_exit_ids = {entry.get("id") for entry in target if isinstance(entry, dict)}
+    missing_exit = set(READ_CHECK_IDS) - declared_exit_ids
+    if missing_exit:
+        pytest.fail(f"exit.checks 포인터 블록에 READ_CHECK_IDS 누락: {sorted(missing_exit)}")

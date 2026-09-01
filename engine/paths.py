@@ -331,6 +331,11 @@ class RunPaths:
         return self.path("convergence-early.json")
 
     @property
+    def phase_gate_json(self) -> str:
+        """접지 진입 게이트 판정 기록(재정 2026-09-01 T17)."""
+        return self.path("phase-gate.json")
+
+    @property
     def convergence_continue_md(self) -> str:
         """수렴 미달 시의 Owner '계속' 봉투(재정 P-U3). 선언 자리는 `phase_gates[].continue_envelope`
         하나뿐이며, 이 경로가 실재하지 않는 것이 정상 상태다(봉투는 필요할 때만 생긴다)."""

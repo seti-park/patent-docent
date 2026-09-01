@@ -123,7 +123,8 @@ def test_tail_lanes_are_not_labeled_retry_after_a_decompose_retry(tmp_path) -> N
     """
     diverged = {
         "read-a": m2.payload_set(),
-        "read-b": m2.payload_set(dependency_type="multiple-or"),  # exact-match 축을 가른다
+        # T16 뒤 multiple-or 선언은 read.dependency-parse 자체를 실패시켜 분해 재시도를 발화한다.
+        "read-b": m2.payload_set(dependency_type="multiple-or"),
     }
     converged = {"read-a": m2.payload_set(), "read-b": m2.payload_set()}
     root, outcome, adapter = run_with_attempts(tmp_path, first=diverged, second=converged)
@@ -180,6 +181,10 @@ def test_retry_budget_is_unchanged_by_the_split(tmp_path) -> None:
     미끄러지지 않는다 — **각 판정점의 상한은 계약이 정한 값이고 러너가 임의로 늘리지 않는다.**
     ⓐ 가 계약 두 곳(`retry_budget.points[]` ↔ `failure[].action` 의 `retry(n)`)의 일치를 재고,
     ⓒ 가 실측 재시도 수가 그 상한을 넘지 않음을 잰다. **몰래 늘어난 예산은 여기서 잡힌다.**
+
+    **감사 지적 D-1 개정.** ⓐ 는 더 이상 모든 조치값의 집합 소속을 보지 않고, 각 `retry(n)`
+    행이 신고한 `points` 와 판정점별 상한을 대응시킨다. 무관한 `retry(2)` 행으로 조기 상한
+    2배를 세탁하던 구멍을 닫되, 위 구 문언과 함수명은 재정 원장 포인터 때문에 보존한다.
     """
     contract = load_stage_contract("read", None)
     points = {
@@ -193,17 +198,26 @@ def test_retry_budget_is_unchanged_by_the_split(tmp_path) -> None:
         if type(point.get("max_retries")) is not int:
             pytest.fail(f"{point_id}.max_retries 가 정수가 아니다: {point.get('max_retries')!r}")
 
-    action_budgets: set[int] = set()
+    action_budgets: dict[str, set[int]] = {point_id: set() for point_id in points}
     for entry in contract.get("failure") or []:
         action = str(entry.get("action", ""))
         match = re.fullmatch(r"retry\((\d+)\)", action)
         if match:
-            action_budgets.add(int(match.group(1)))
+            declared_points = entry.get("points")
+            if not isinstance(declared_points, list) or not declared_points:
+                pytest.fail(f"retry(n) 조치 행에 points 신고가 없다: {entry}")
+            unknown = set(declared_points) - set(points)
+            if unknown:
+                pytest.fail(f"retry(n) 조치 행이 모르는 판정점을 신고했다: {sorted(unknown)}")
+            for point_id in declared_points:
+                action_budgets[point_id].add(int(match.group(1)))
     for point_id, point in points.items():
-        if point["max_retries"] not in action_budgets:
+        expected = {point["max_retries"]}
+        actual = action_budgets[point_id]
+        if actual != expected:
             pytest.fail(
-                "러너의 상한이 조치 표가 선언한 값 밖이다 — 코드가 예산을 늘렸거나 "
-                f"계약 두 곳이 갈렸다: {point_id}={point['max_retries']}, 조치={sorted(action_budgets)}"
+                "판정점별 상한과 그 점을 신고한 조치 행의 예산이 갈렸다: "
+                f"{point_id} 기대={sorted(expected)}, 조치={sorted(actual)}"
             )
     if points["early"].get("scope") != "per-read-run":
         pytest.fail(f"early scope 기대 per-read-run, 실제 {points['early'].get('scope')}")
