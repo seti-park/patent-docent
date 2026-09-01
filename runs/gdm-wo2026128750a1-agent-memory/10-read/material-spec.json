@@ -1,0 +1,4214 @@
+{
+  "claims": {
+    "applicant_interest": [],
+    "dependents": [
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-2/a1",
+            "material_id": "M7",
+            "text_verbatim": "wherein the interaction memory datastore comprises multimodal data"
+          },
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-2/a2",
+            "material_id": "M8",
+            "text_verbatim": "wherein the memory data is based on a first memory object associated with a first data modality and a second memory object associated with a second data modality"
+          }
+        ],
+        "dependency_type": "single",
+        "depends_on": [
+          "CL-1"
+        ],
+        "id": "CL-2",
+        "text_verbatim": "The method of claim 1 , wherein the interaction memory datastore comprises multimodal data, and wherein the memory data is based on a first memory object associated with a first data modality and a second memory object associated with a second data modality."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-3/a1",
+            "material_id": "M9",
+            "text_verbatim": "the first data modality comprises audio data, and wherein the second data modality comprises image data"
+          },
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-3/a2",
+            "material_id": "M10",
+            "text_verbatim": "the first data modality comprises text data, and wherein the second data modality comprises image data"
+          },
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-3/a3",
+            "material_id": "M11",
+            "text_verbatim": "the first data modality comprises text data, and wherein the second data modality comprises audio data"
+          }
+        ],
+        "dependency_type": "single",
+        "depends_on": [
+          "CL-2"
+        ],
+        "id": "CL-3",
+        "text_verbatim": "The method of claim 2, wherein:\n\nthe first data modality comprises audio data, and wherein the second data modality comprises image data;\n\nthe first data modality comprises text data, and wherein the second data modality comprises image data; or\n\nthe first data modality comprises text data, and wherein the second data modality comprises audio data."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-4/a1",
+            "material_id": "M12",
+            "text_verbatim": "retrieving, by the machine-learned agent system, and from the interaction memory datastore, the one or more memory values based on a relevance of the one or more memory values to the query"
+          }
+        ],
+        "dependency_type": "single",
+        "depends_on": [
+          "CL-1"
+        ],
+        "id": "CL-4",
+        "text_verbatim": "The method of claim 1 , comprising:\n\nretrieving, by the machine-learned agent system, and from the interaction memory datastore, the one or more memory values based on a relevance of the one or more memory values to the query."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-5/a1",
+            "material_id": "M13",
+            "text_verbatim": "after receiving an input during an interactive session, processing, by the machine-learned agent system, the input using a machine-learned model to generate one or more values"
+          },
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-5/a2",
+            "material_id": "M14",
+            "text_verbatim": "based on the generated one or more values indicating that at least a portion of the input is to be stored:"
+          },
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-5/a3",
+            "material_id": "M15",
+            "text_verbatim": "extracting, by the machine-learned agent system, the portion"
+          },
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-5/a4",
+            "material_id": "M16",
+            "text_verbatim": "storing, by the machine-learned agent system, the portion as a memory value in a memory object in the interaction memory datastore"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4"
+        ],
+        "id": "CL-5",
+        "text_verbatim": "The method of any of the preceding claims, comprising:\n\nafter receiving an input during an interactive session, processing, by the machine-learned agent system, the input using a machine-learned model to generate one or more values; and \n\nbased on the generated one or more values indicating that at least a portion of the input is to be stored:\n\nextracting, by the machine-learned agent system, the portion; and\n\nstoring, by the machine-learned agent system, the portion as a memory value in a memory object in the interaction memory datastore."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-6/a1",
+            "material_id": "M17",
+            "text_verbatim": "storing, by the machine-learned agent system, metadata associated with the memory value in the memory object"
+          }
+        ],
+        "dependency_type": "single",
+        "depends_on": [
+          "CL-5"
+        ],
+        "id": "CL-6",
+        "text_verbatim": "The method of claim 5, comprising:\n\nstoring, by the machine-learned agent system, metadata associated with the memory value in the memory object."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-7/a1",
+            "material_id": "M18",
+            "text_verbatim": "wherein the portion comprises at least one of: text data, image data, or audio data"
+          }
+        ],
+        "dependency_type": "single",
+        "depends_on": [
+          "CL-5"
+        ],
+        "id": "CL-7",
+        "text_verbatim": "The method of claim 5, wherein the portion comprises at least one of: text data, image data, or audio data."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-8/a1",
+            "material_id": "M19",
+            "text_verbatim": "wherein the portion corresponds to an explicit instruction to remember information"
+          }
+        ],
+        "dependency_type": "single",
+        "depends_on": [
+          "CL-5"
+        ],
+        "id": "CL-8",
+        "text_verbatim": "The method of claim 5, wherein the portion corresponds to an explicit instruction to remember information."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-9/a1",
+            "material_id": "M20",
+            "text_verbatim": "receiving, by the machine-learned agent system, input data indicating an instruction to forget specified information"
+          },
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-9/a2",
+            "material_id": "M21",
+            "text_verbatim": "deleting, by the machine-learned agent system, the specified information from the interaction memory datastore"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8"
+        ],
+        "id": "CL-9",
+        "text_verbatim": "The method of any of the preceding claims, comprising:\n\nreceiving, by the machine-learned agent system, input data indicating an instruction to forget specified information; and\n\ndeleting, by the machine-learned agent system, the specified information from the interaction memory datastore."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-10/a1",
+            "material_id": "M22",
+            "text_verbatim": "receiving, by the machine-learned agent system, input data indicating an instruction to forget specified information after a specified interval"
+          },
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-10/a2",
+            "material_id": "M23",
+            "text_verbatim": "queuing, by the machine-learned agent system, the specified information for deletion from the interaction memory datastore after the specified interval"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9"
+        ],
+        "id": "CL-10",
+        "text_verbatim": "The method of any of the preceding claims, comprising:\n\nreceiving, by the machine-learned agent system, input data indicating an instruction to forget specified information after a specified interval; and\n\nqueuing, by the machine-learned agent system, the specified information for deletion from the interaction memory datastore after the specified interval."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-11/a1",
+            "material_id": "M24",
+            "text_verbatim": "wherein the memory data comprises an ordered combination of the one or more memory values, the ordered combination ordered based on corresponding timestamps of the plurality of memory objects"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9",
+          "CL-10"
+        ],
+        "id": "CL-11",
+        "text_verbatim": "The method of any of the preceding claims, wherein the memory data comprises an ordered combination of the one or more memory values, the ordered combination ordered based on corresponding timestamps of the plurality of memory objects."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-12/a1",
+            "material_id": "M25",
+            "text_verbatim": "filtering the plurality of memory objects to obtain the one or more memory values"
+          },
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-12/a2",
+            "material_id": "M26",
+            "text_verbatim": "computing one or more relevance measures for the plurality of memory objects based on the query"
+          },
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-12/a3",
+            "material_id": "M27",
+            "text_verbatim": "returning a subset of the plurality of memory objects based on the relevance measure"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9",
+          "CL-10",
+          "CL-11"
+        ],
+        "id": "CL-12",
+        "text_verbatim": "The method of any of the preceding claims, comprising:\n\nfiltering the plurality of memory objects to obtain the one or more memory values, wherein the filtering comprises: \n\ncomputing one or more relevance measures for the plurality of memory objects based on the query; and\n\nreturning a subset of the plurality of memory objects based on the relevance measure."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-13/a1",
+            "material_id": "M28",
+            "text_verbatim": "a respective score generated based on distance between a query embedding and a respective memory value embedding"
+          },
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-13/a2",
+            "material_id": "M29",
+            "text_verbatim": "a respective sequence output generated by processing the query and one or more respective memory values using a second machine-learned sequence processing model that is optionally the same as or different from the machine-learned sequence processing model"
+          }
+        ],
+        "dependency_type": "single",
+        "depends_on": [
+          "CL-12"
+        ],
+        "id": "CL-13",
+        "text_verbatim": "The method of claim 12, wherein the one or more relevance measures comprise:\n\na respective score generated based on distance between a query embedding and a respective memory value embedding; or\n\na respective sequence output generated by processing the query and one or more respective memory values using a second machine-learned sequence processing model that is optionally the same as or different from the machine-learned sequence processing model."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-14/a1",
+            "material_id": "M30",
+            "text_verbatim": "wherein the one or more memory values each comprise a respective string"
+          },
+          {
+            "attaches_to": "CL-1/e2",
+            "id": "CL-14/a2",
+            "material_id": "M31",
+            "text_verbatim": "wherein the memory data comprises a string comprising the one or more respective strings from the one or more memory values"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9",
+          "CL-10",
+          "CL-11",
+          "CL-12",
+          "CL-13"
+        ],
+        "id": "CL-14",
+        "text_verbatim": "The method of any of the preceding claims, wherein the one or more memory values each comprise a respective string, and wherein the memory data comprises a string comprising the one or more respective strings from the one or more memory values."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e3",
+            "id": "CL-15/a1",
+            "material_id": "M32",
+            "text_verbatim": "inputting at least a portion of the output to the machine-learned sequence processing model"
+          },
+          {
+            "attaches_to": "CL-1/e5",
+            "id": "CL-15/a2",
+            "material_id": "M33",
+            "text_verbatim": "generating, based on processing the output using the machine-learned sequence processing model, the response to the query"
+          },
+          {
+            "attaches_to": "CL-1/e4",
+            "id": "CL-15/a3",
+            "material_id": "M34",
+            "text_verbatim": "wherein the output comprises a plurality of predictions for analytical content that comprises an analysis of the query with respect to the memory data"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9",
+          "CL-10",
+          "CL-11",
+          "CL-12",
+          "CL-13",
+          "CL-14"
+        ],
+        "id": "CL-15",
+        "text_verbatim": "The method of any of the preceding claims, comprising:\n\ninputting at least a portion of the output to the machine-learned sequence processing model; generating, based on processing the output using the machine-learned sequence processing model, the response to the query;\n\nwherein the output comprises a plurality of predictions for analytical content that comprises an analysis of the query with respect to the memory data."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e4",
+            "id": "CL-16/a1",
+            "material_id": "M35",
+            "text_verbatim": "wherein the plurality of predictions for analytical content are not exposed on a user interface associated with the query"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9",
+          "CL-10",
+          "CL-11",
+          "CL-12",
+          "CL-13",
+          "CL-14",
+          "CL-15"
+        ],
+        "id": "CL-16",
+        "text_verbatim": "The method of any of the preceding claims, wherein the plurality of predictions for analytical content are not exposed on a user interface associated with the query."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-17/a1",
+            "material_id": "M36",
+            "text_verbatim": "consolidating, in the interaction memory datastore, a subset of the plurality of memory objects into a single memory object based on an alignment between the subset"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9",
+          "CL-10",
+          "CL-11",
+          "CL-12",
+          "CL-13",
+          "CL-14",
+          "CL-15",
+          "CL-16"
+        ],
+        "id": "CL-17",
+        "text_verbatim": "The method of any of the preceding claims, comprising:\n\nconsolidating, in the interaction memory datastore, a subset of the plurality of memory objects into a single memory object based on an alignment between the subset."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-18/a1",
+            "material_id": "M37",
+            "text_verbatim": "receiving input data associated with a timestamp"
+          },
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-18/a2",
+            "material_id": "M38",
+            "text_verbatim": "creating a current memory object comprising:"
+          },
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-18/a3",
+            "material_id": "M39",
+            "text_verbatim": "the timestamp"
+          },
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-18/a4",
+            "material_id": "M40",
+            "text_verbatim": "a current memory value based on the input data"
+          },
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-18/a5",
+            "material_id": "M41",
+            "text_verbatim": "matching the current memory object to a prior memory object"
+          },
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-18/a6",
+            "material_id": "M42",
+            "text_verbatim": "replacing, in the interaction memory datastore, the prior memory object with the current memory object"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9",
+          "CL-10",
+          "CL-11",
+          "CL-12",
+          "CL-13",
+          "CL-14",
+          "CL-15",
+          "CL-16",
+          "CL-17"
+        ],
+        "id": "CL-18",
+        "text_verbatim": "The method of any of the preceding claims, comprising:\n\nreceiving input data associated with a timestamp;\n\ncreating a current memory object comprising:\n\nthe timestamp; and\n\na current memory value based on the input data;\n\nmatching the current memory object to a prior memory object; and \n\nreplacing, in the interaction memory datastore, the prior memory object with the current memory object."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-19/a1",
+            "material_id": "M43",
+            "text_verbatim": "receiving input data associated with a timestamp"
+          },
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-19/a2",
+            "material_id": "M44",
+            "text_verbatim": "matching at least a portion of the input data to a prior memory object"
+          },
+          {
+            "attaches_to": "CL-1/e2/e1",
+            "id": "CL-19/a3",
+            "material_id": "M45",
+            "text_verbatim": "updating, in the interaction memory datastore, the prior memory object based on the portion of the input data"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9",
+          "CL-10",
+          "CL-11",
+          "CL-12",
+          "CL-13",
+          "CL-14",
+          "CL-15",
+          "CL-16",
+          "CL-17",
+          "CL-18"
+        ],
+        "id": "CL-19",
+        "text_verbatim": "The method of any of the preceding claims, comprising:\n\nreceiving input data associated with a timestamp;\n\nmatching at least a portion of the input data to a prior memory object;\n\nupdating, in the interaction memory datastore, the prior memory object based on the portion of the input data."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e5",
+            "id": "CL-20/a1",
+            "material_id": "M46",
+            "text_verbatim": "wherein the response comprises instructions configured to control an application programming interface to cause a computing system to perform an action"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9",
+          "CL-10",
+          "CL-11",
+          "CL-12",
+          "CL-13",
+          "CL-14",
+          "CL-15",
+          "CL-16",
+          "CL-17",
+          "CL-18",
+          "CL-19"
+        ],
+        "id": "CL-20",
+        "text_verbatim": "The method of any of the preceding claims, wherein the response comprises instructions configured to control an application programming interface to cause a computing system to perform an action."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-21/a1",
+            "material_id": "M47",
+            "text_verbatim": "wherein the query indicates a configuration parameter that controls an operation of the computing system"
+          },
+          {
+            "attaches_to": "CL-1/e5",
+            "id": "CL-21/a2",
+            "material_id": "M48",
+            "text_verbatim": "wherein the instructions are configured to control the application programming interface to cause the computing system to assign a value for the configuration parameter"
+          }
+        ],
+        "dependency_type": "single",
+        "depends_on": [
+          "CL-20"
+        ],
+        "id": "CL-21",
+        "text_verbatim": "The method of claim 20, wherein the query indicates a configuration parameter that controls an operation of the computing system, and wherein the instructions are configured to control the application programming interface to cause the computing system to assign a value for the configuration parameter."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-22/a1",
+            "material_id": "M49",
+            "text_verbatim": "wherein the configuration parameter is associated with at least one of:"
+          },
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-22/a2",
+            "material_id": "M50",
+            "text_verbatim": "data access by the computing system"
+          },
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-22/a3",
+            "material_id": "M51",
+            "text_verbatim": "data retention by the computing system"
+          },
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-22/a4",
+            "material_id": "M52",
+            "text_verbatim": "data communication by the computing system"
+          }
+        ],
+        "dependency_type": "single",
+        "depends_on": [
+          "CL-21"
+        ],
+        "id": "CL-22",
+        "text_verbatim": "The method of claim 21 , wherein the configuration parameter is associated with at least one of:\n\ndata access by the computing system;\n\ndata retention by the computing system; or\n\ndata communication by the computing system."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-23/a1",
+            "material_id": "M53",
+            "text_verbatim": "One or more non-transitory computer-readable media storing instructions that are executable by one or more processors to cause a computing system to perform operations"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9",
+          "CL-10",
+          "CL-11",
+          "CL-12",
+          "CL-13",
+          "CL-14",
+          "CL-15",
+          "CL-16",
+          "CL-17",
+          "CL-18",
+          "CL-19",
+          "CL-20",
+          "CL-21",
+          "CL-22"
+        ],
+        "id": "CL-23",
+        "text_verbatim": "One or more non-transitory computer-readable media storing instructions that are executable by one or more processors to cause a computing system to perform operations, the operations comprising the method of any of the preceding claims."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-24/a1",
+            "material_id": "M54",
+            "text_verbatim": "one or more processors"
+          },
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-24/a2",
+            "material_id": "M55",
+            "text_verbatim": "one or more non-transitory computer-readable media storing instructions that are executable by the one or more processors to cause the computing system to perform operations"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9",
+          "CL-10",
+          "CL-11",
+          "CL-12",
+          "CL-13",
+          "CL-14",
+          "CL-15",
+          "CL-16",
+          "CL-17",
+          "CL-18",
+          "CL-19",
+          "CL-20",
+          "CL-21",
+          "CL-22"
+        ],
+        "id": "CL-24",
+        "text_verbatim": "A computing system, comprising:\n\none or more processors; and\n\none or more non-transitory computer-readable media storing instructions that are executable by the one or more processors to cause the computing system to perform operations, the operations comprising the method of any of the preceding claims."
+      },
+      {
+        "additions": [
+          {
+            "attaches_to": "CL-1/e1",
+            "id": "CL-25/a1",
+            "material_id": "M56",
+            "text_verbatim": "A computer program product comprising instructions that are executable by one or more processors to cause a computing system to perform operations"
+          }
+        ],
+        "dependency_type": "all-preceding",
+        "depends_on": [
+          "CL-1",
+          "CL-2",
+          "CL-3",
+          "CL-4",
+          "CL-5",
+          "CL-6",
+          "CL-7",
+          "CL-8",
+          "CL-9",
+          "CL-10",
+          "CL-11",
+          "CL-12",
+          "CL-13",
+          "CL-14",
+          "CL-15",
+          "CL-16",
+          "CL-17",
+          "CL-18",
+          "CL-19",
+          "CL-20",
+          "CL-21",
+          "CL-22"
+        ],
+        "id": "CL-25",
+        "text_verbatim": "A computer program product comprising instructions that are executable by one or more processors to cause a computing system to perform operations, the operations comprising the method of any of the preceding claims."
+      }
+    ],
+    "independent": [
+      {
+        "elements": [
+          {
+            "children": [],
+            "id": "CL-1/e1",
+            "material_id": "M1",
+            "text_verbatim": "receiving, by a machine-learned agent system, a query associated with a user"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "CL-1/e2/e1",
+                "material_id": "M3",
+                "text_verbatim": "wherein the interaction memory datastore comprises one or more memory objects that were generated based on one or more prior interactions between the machine-learned agent system and the user"
+              }
+            ],
+            "id": "CL-1/e2",
+            "material_id": "M2",
+            "text_verbatim": "accessing, by the machine-learned agent system, memory data from an interaction memory datastore associated with the user"
+          },
+          {
+            "children": [],
+            "id": "CL-1/e3",
+            "material_id": "M4",
+            "text_verbatim": "inputting, by the machine-learned agent system and to a machine-learned sequence processing model, an input data structure based on the query and the memory data"
+          },
+          {
+            "children": [],
+            "id": "CL-1/e4",
+            "material_id": "M5",
+            "text_verbatim": "generating, by the machine-learned agent system and based on processing the input data structure using the machine-learned sequence processing model, an output"
+          },
+          {
+            "children": [],
+            "id": "CL-1/e5",
+            "material_id": "M6",
+            "text_verbatim": "outputting, by the machine-learned agent system, and based on the output, a response to the query"
+          }
+        ],
+        "id": "CL-1",
+        "text_verbatim": "A computer-implemented method, comprising:\n\nreceiving, by a machine-learned agent system, a query associated with a user;\n\naccessing, by the machine-learned agent system, memory data from an interaction memory datastore associated with the user, wherein the interaction memory datastore comprises one or more memory objects that were generated based on one or more prior interactions between the machine-learned agent system and the user;\n\ninputting, by the machine-learned agent system and to a machine-learned sequence processing model, an input data structure based on the query and the memory data;\n\ngenerating, by the machine-learned agent system and based on processing the input data structure using the machine-learned sequence processing model, an output; and\n\noutputting, by the machine-learned agent system, and based on the output, a response to the query.",
+        "type": "independent"
+      }
+    ]
+  },
+  "extensions": {
+    "docent": {
+      "drop_signal": {
+        "reason": "안도감 적합. 이 문서는 서사가 설 자리를 셋 갖는다. ① 독립항 CL-1 이 읽기 경로만 덮고 쓰기·망각·통합이 전부 종속항과 명세서로 흩어져 있어 '무엇을 주장했고 무엇을 주장하지 않았는가'의 대비가 선명하다 — 점진적 망각/권한 계층, 지지 기록, 지식그래프 간선, 객체 분할이 청구항에 없다는 사실이 그 자체로 기사 한 절이 된다. ② FIG-8/9/10 이 충돌 해소를 쓰기 시점에 둘지 읽기 시점에 둘지를 삼분한 채 명세서가 판정을 유보하므로, 설계 선택을 그대로 서술할 수 있다. ③ 청구항 20~22 가 기억을 '동의 응답기'로 전환하는 대목은 기억 저장소가 스스로 야기하는 프라이버시 문제를 같은 저장소로 답하게 하는 구조라 논평 여지가 크다. 접지 측 도면 10건이 전부 해소되고 실시례(채식→페스카테리안, 건축가, 쿠키 팝업)가 구체적이어서 인용 재료도 충분하다. 성능 수치가 전무한 것(수확 결과가 도면부호와 서지뿐)은 약점이지만, 이 건의 델타는 애초에 구조적 델타이므로 수치 부재를 그대로 적시하면 되고 그것이 기사를 무르게 하지 않는다.",
+        "stage": "final",
+        "verdict": "go"
+      }
+    }
+  },
+  "figures": [
+    {
+      "asset_path": null,
+      "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+      "id": "FIG-1",
+      "numerals": [
+        "100",
+        "102",
+        "104",
+        "105",
+        "106",
+        "108",
+        "110",
+        "112",
+        "114",
+        "116",
+        "118",
+        "120",
+        "122",
+        "124"
+      ],
+      "raw_path": "00-source/figures-raw/fig-01.png"
+    },
+    {
+      "asset_path": null,
+      "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+      "id": "FIG-2",
+      "numerals": [
+        "110",
+        "202-1",
+        "202-M",
+        "204-1",
+        "204-M",
+        "206-1",
+        "206-M"
+      ],
+      "raw_path": "00-source/figures-raw/fig-02.png"
+    },
+    {
+      "asset_path": null,
+      "caption_quote": "Figure 3 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+      "id": "FIG-3",
+      "numerals": [
+        "105",
+        "106",
+        "108",
+        "110",
+        "300",
+        "302",
+        "304",
+        "306",
+        "308"
+      ],
+      "raw_path": "00-source/figures-raw/fig-03.png"
+    },
+    {
+      "asset_path": null,
+      "caption_quote": "Figure 4 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+      "id": "FIG-4",
+      "numerals": [
+        "105",
+        "118",
+        "400",
+        "402"
+      ],
+      "raw_path": "00-source/figures-raw/fig-04.png"
+    },
+    {
+      "asset_path": null,
+      "caption_quote": "Figure 5 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+      "id": "FIG-5",
+      "numerals": [
+        "105",
+        "110",
+        "118",
+        "402",
+        "500",
+        "502"
+      ],
+      "raw_path": "00-source/figures-raw/fig-05.png"
+    },
+    {
+      "asset_path": null,
+      "caption_quote": "Figure 8 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+      "id": "FIG-8",
+      "numerals": [
+        "100",
+        "105",
+        "110",
+        "118",
+        "704",
+        "802",
+        "804",
+        "806"
+      ],
+      "raw_path": "00-source/figures-raw/fig-08.png"
+    },
+    {
+      "asset_path": null,
+      "caption_quote": "Figure 10 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+      "id": "FIG-10",
+      "numerals": [
+        "100",
+        "105",
+        "110",
+        "118",
+        "704",
+        "804",
+        "904",
+        "1002"
+      ],
+      "raw_path": "00-source/figures-raw/fig-10.png"
+    },
+    {
+      "asset_path": null,
+      "caption_quote": "Figure 13 is a block diagram of an example sequence processing model according to example implementations of aspects of the present disclosure.",
+      "id": "FIG-13",
+      "numerals": [
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "raw_path": "00-source/figures-raw/fig-13.png"
+    },
+    {
+      "asset_path": null,
+      "caption_quote": "Figure 18 is a block diagram of an example networked computing system according to example implementations of aspects of the present disclosure.",
+      "id": "FIG-18",
+      "numerals": [
+        "51",
+        "52",
+        "54",
+        "61",
+        "62",
+        "64"
+      ],
+      "raw_path": "00-source/figures-raw/fig-18.png"
+    },
+    {
+      "asset_path": null,
+      "caption_quote": "Figure 21 is a flow chart diagram illustrating an example method for using a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+      "id": "FIG-21",
+      "numerals": [
+        "2100",
+        "2102",
+        "2104",
+        "2106",
+        "2108",
+        "2110"
+      ],
+      "raw_path": "00-source/figures-raw/fig-21.png"
+    }
+  ],
+  "items": [
+    {
+      "claim_ref": "CL-1/e1",
+      "id": "M1",
+      "kind": "component",
+      "label_en": "receiving a query associated with a user",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "receiving, by a machine-learned agent system, a query associated with a user"
+    },
+    {
+      "claim_ref": "CL-1/e2",
+      "id": "M2",
+      "kind": "component",
+      "label_en": "accessing memory data from an interaction memory datastore associated with the user",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "accessing, by the machine-learned agent system, memory data from an interaction memory datastore associated with the user"
+    },
+    {
+      "claim_ref": "CL-1/e2/e1",
+      "id": "M3",
+      "kind": "component",
+      "label_en": "interaction memory datastore comprising memory objects generated from prior interactions",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the interaction memory datastore comprises one or more memory objects that were generated based on one or more prior interactions between the machine-learned agent system and the user"
+    },
+    {
+      "claim_ref": "CL-1/e3",
+      "id": "M4",
+      "kind": "component",
+      "label_en": "inputting an input data structure based on the query and the memory data to a sequence processing model",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "inputting, by the machine-learned agent system and to a machine-learned sequence processing model, an input data structure based on the query and the memory data"
+    },
+    {
+      "claim_ref": "CL-1/e4",
+      "id": "M5",
+      "kind": "component",
+      "label_en": "generating an output by processing the input data structure with the sequence processing model",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "generating, by the machine-learned agent system and based on processing the input data structure using the machine-learned sequence processing model, an output"
+    },
+    {
+      "claim_ref": "CL-1/e5",
+      "id": "M6",
+      "kind": "component",
+      "label_en": "outputting a response to the query based on the output",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "outputting, by the machine-learned agent system, and based on the output, a response to the query"
+    },
+    {
+      "claim_ref": "CL-2/a1",
+      "id": "M7",
+      "kind": "component",
+      "label_en": "interaction memory datastore comprising multimodal data",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the interaction memory datastore comprises multimodal data"
+    },
+    {
+      "claim_ref": "CL-2/a2",
+      "id": "M8",
+      "kind": "component",
+      "label_en": "memory data based on first and second memory objects of first and second data modalities",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the memory data is based on a first memory object associated with a first data modality and a second memory object associated with a second data modality"
+    },
+    {
+      "claim_ref": "CL-3/a1",
+      "id": "M9",
+      "kind": "component",
+      "label_en": "audio first modality with image second modality",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "the first data modality comprises audio data, and wherein the second data modality comprises image data"
+    },
+    {
+      "claim_ref": "CL-3/a2",
+      "id": "M10",
+      "kind": "component",
+      "label_en": "text first modality with image second modality",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "the first data modality comprises text data, and wherein the second data modality comprises image data"
+    },
+    {
+      "claim_ref": "CL-3/a3",
+      "id": "M11",
+      "kind": "component",
+      "label_en": "text first modality with audio second modality",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "the first data modality comprises text data, and wherein the second data modality comprises audio data"
+    },
+    {
+      "claim_ref": "CL-4/a1",
+      "id": "M12",
+      "kind": "component",
+      "label_en": "retrieving memory values from the datastore based on relevance to the query",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "retrieving, by the machine-learned agent system, and from the interaction memory datastore, the one or more memory values based on a relevance of the one or more memory values to the query"
+    },
+    {
+      "claim_ref": "CL-5/a1",
+      "id": "M13",
+      "kind": "component",
+      "label_en": "processing an interactive-session input with a machine-learned model to generate values",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "after receiving an input during an interactive session, processing, by the machine-learned agent system, the input using a machine-learned model to generate one or more values"
+    },
+    {
+      "claim_ref": "CL-5/a2",
+      "id": "M14",
+      "kind": "component",
+      "label_en": "condition that the generated values indicate a portion of the input is to be stored",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "based on the generated one or more values indicating that at least a portion of the input is to be stored:"
+    },
+    {
+      "claim_ref": "CL-5/a3",
+      "id": "M15",
+      "kind": "component",
+      "label_en": "extracting the portion of the input",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "extracting, by the machine-learned agent system, the portion"
+    },
+    {
+      "claim_ref": "CL-5/a4",
+      "id": "M16",
+      "kind": "component",
+      "label_en": "storing the portion as a memory value in a memory object in the datastore",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "storing, by the machine-learned agent system, the portion as a memory value in a memory object in the interaction memory datastore"
+    },
+    {
+      "claim_ref": "CL-6/a1",
+      "id": "M17",
+      "kind": "component",
+      "label_en": "storing metadata associated with the memory value in the memory object",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "storing, by the machine-learned agent system, metadata associated with the memory value in the memory object"
+    },
+    {
+      "claim_ref": "CL-7/a1",
+      "id": "M18",
+      "kind": "component",
+      "label_en": "portion comprising text, image, or audio data",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the portion comprises at least one of: text data, image data, or audio data"
+    },
+    {
+      "claim_ref": "CL-8/a1",
+      "id": "M19",
+      "kind": "component",
+      "label_en": "portion corresponding to an explicit instruction to remember information",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the portion corresponds to an explicit instruction to remember information"
+    },
+    {
+      "claim_ref": "CL-9/a1",
+      "id": "M20",
+      "kind": "component",
+      "label_en": "receiving input data indicating an instruction to forget specified information",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "receiving, by the machine-learned agent system, input data indicating an instruction to forget specified information"
+    },
+    {
+      "claim_ref": "CL-9/a2",
+      "id": "M21",
+      "kind": "component",
+      "label_en": "deleting the specified information from the interaction memory datastore",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "deleting, by the machine-learned agent system, the specified information from the interaction memory datastore"
+    },
+    {
+      "claim_ref": "CL-10/a1",
+      "id": "M22",
+      "kind": "component",
+      "label_en": "receiving an instruction to forget specified information after a specified interval",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "receiving, by the machine-learned agent system, input data indicating an instruction to forget specified information after a specified interval"
+    },
+    {
+      "claim_ref": "CL-10/a2",
+      "id": "M23",
+      "kind": "component",
+      "label_en": "queuing the specified information for deletion after the specified interval",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "queuing, by the machine-learned agent system, the specified information for deletion from the interaction memory datastore after the specified interval"
+    },
+    {
+      "claim_ref": "CL-11/a1",
+      "id": "M24",
+      "kind": "component",
+      "label_en": "memory data as a timestamp-ordered combination of memory values",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the memory data comprises an ordered combination of the one or more memory values, the ordered combination ordered based on corresponding timestamps of the plurality of memory objects"
+    },
+    {
+      "claim_ref": "CL-12/a1",
+      "id": "M25",
+      "kind": "component",
+      "label_en": "filtering the memory objects to obtain the memory values",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "filtering the plurality of memory objects to obtain the one or more memory values"
+    },
+    {
+      "claim_ref": "CL-12/a2",
+      "id": "M26",
+      "kind": "component",
+      "label_en": "computing relevance measures for the memory objects based on the query",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "computing one or more relevance measures for the plurality of memory objects based on the query"
+    },
+    {
+      "claim_ref": "CL-12/a3",
+      "id": "M27",
+      "kind": "component",
+      "label_en": "returning a subset of the memory objects based on the relevance measure",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "returning a subset of the plurality of memory objects based on the relevance measure"
+    },
+    {
+      "claim_ref": "CL-13/a1",
+      "id": "M28",
+      "kind": "component",
+      "label_en": "relevance score from distance between query embedding and memory value embedding",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "a respective score generated based on distance between a query embedding and a respective memory value embedding"
+    },
+    {
+      "claim_ref": "CL-13/a2",
+      "id": "M29",
+      "kind": "component",
+      "label_en": "relevance as sequence output from a second sequence processing model",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "a respective sequence output generated by processing the query and one or more respective memory values using a second machine-learned sequence processing model that is optionally the same as or different from the machine-learned sequence processing model"
+    },
+    {
+      "claim_ref": "CL-14/a1",
+      "id": "M30",
+      "kind": "component",
+      "label_en": "each memory value comprising a respective string",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the one or more memory values each comprise a respective string"
+    },
+    {
+      "claim_ref": "CL-14/a2",
+      "id": "M31",
+      "kind": "component",
+      "label_en": "memory data as a string comprising the respective memory value strings",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the memory data comprises a string comprising the one or more respective strings from the one or more memory values"
+    },
+    {
+      "claim_ref": "CL-15/a1",
+      "id": "M32",
+      "kind": "component",
+      "label_en": "inputting a portion of the output back to the sequence processing model",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "inputting at least a portion of the output to the machine-learned sequence processing model"
+    },
+    {
+      "claim_ref": "CL-15/a2",
+      "id": "M33",
+      "kind": "component",
+      "label_en": "generating the response by processing the output with the sequence processing model",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "generating, based on processing the output using the machine-learned sequence processing model, the response to the query"
+    },
+    {
+      "claim_ref": "CL-15/a3",
+      "id": "M34",
+      "kind": "component",
+      "label_en": "output comprising predictions for analytical content analyzing the query against the memory data",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the output comprises a plurality of predictions for analytical content that comprises an analysis of the query with respect to the memory data"
+    },
+    {
+      "claim_ref": "CL-16/a1",
+      "id": "M35",
+      "kind": "component",
+      "label_en": "analytical-content predictions not exposed on the user interface",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the plurality of predictions for analytical content are not exposed on a user interface associated with the query"
+    },
+    {
+      "claim_ref": "CL-17/a1",
+      "id": "M36",
+      "kind": "component",
+      "label_en": "consolidating aligned memory objects into a single memory object",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "consolidating, in the interaction memory datastore, a subset of the plurality of memory objects into a single memory object based on an alignment between the subset"
+    },
+    {
+      "claim_ref": "CL-18/a1",
+      "id": "M37",
+      "kind": "component",
+      "label_en": "receiving input data associated with a timestamp",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "receiving input data associated with a timestamp"
+    },
+    {
+      "claim_ref": "CL-18/a2",
+      "id": "M38",
+      "kind": "component",
+      "label_en": "creating a current memory object",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "creating a current memory object comprising:"
+    },
+    {
+      "claim_ref": "CL-18/a3",
+      "id": "M39",
+      "kind": "component",
+      "label_en": "the timestamp within the current memory object",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "the timestamp"
+    },
+    {
+      "claim_ref": "CL-18/a4",
+      "id": "M40",
+      "kind": "component",
+      "label_en": "current memory value based on the input data",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "a current memory value based on the input data"
+    },
+    {
+      "claim_ref": "CL-18/a5",
+      "id": "M41",
+      "kind": "component",
+      "label_en": "matching the current memory object to a prior memory object",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "matching the current memory object to a prior memory object"
+    },
+    {
+      "claim_ref": "CL-18/a6",
+      "id": "M42",
+      "kind": "component",
+      "label_en": "replacing the prior memory object with the current memory object",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "replacing, in the interaction memory datastore, the prior memory object with the current memory object"
+    },
+    {
+      "claim_ref": "CL-19/a1",
+      "id": "M43",
+      "kind": "component",
+      "label_en": "receiving timestamped input data for updating",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "receiving input data associated with a timestamp"
+    },
+    {
+      "claim_ref": "CL-19/a2",
+      "id": "M44",
+      "kind": "component",
+      "label_en": "matching a portion of the input data to a prior memory object",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "matching at least a portion of the input data to a prior memory object"
+    },
+    {
+      "claim_ref": "CL-19/a3",
+      "id": "M45",
+      "kind": "component",
+      "label_en": "updating the prior memory object based on the portion of the input data",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "updating, in the interaction memory datastore, the prior memory object based on the portion of the input data"
+    },
+    {
+      "claim_ref": "CL-20/a1",
+      "id": "M46",
+      "kind": "component",
+      "label_en": "response comprising instructions controlling an API to cause an action",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the response comprises instructions configured to control an application programming interface to cause a computing system to perform an action"
+    },
+    {
+      "claim_ref": "CL-21/a1",
+      "id": "M47",
+      "kind": "component",
+      "label_en": "query indicating a configuration parameter controlling a system operation",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the query indicates a configuration parameter that controls an operation of the computing system"
+    },
+    {
+      "claim_ref": "CL-21/a2",
+      "id": "M48",
+      "kind": "component",
+      "label_en": "instructions causing the system to assign a value for the configuration parameter",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the instructions are configured to control the application programming interface to cause the computing system to assign a value for the configuration parameter"
+    },
+    {
+      "claim_ref": "CL-22/a1",
+      "id": "M49",
+      "kind": "component",
+      "label_en": "configuration parameter associated with at least one listed aspect",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "wherein the configuration parameter is associated with at least one of:"
+    },
+    {
+      "claim_ref": "CL-22/a2",
+      "id": "M50",
+      "kind": "component",
+      "label_en": "data access by the computing system",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "data access by the computing system"
+    },
+    {
+      "claim_ref": "CL-22/a3",
+      "id": "M51",
+      "kind": "component",
+      "label_en": "data retention by the computing system",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "data retention by the computing system"
+    },
+    {
+      "claim_ref": "CL-22/a4",
+      "id": "M52",
+      "kind": "component",
+      "label_en": "data communication by the computing system",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "data communication by the computing system"
+    },
+    {
+      "claim_ref": "CL-23/a1",
+      "id": "M53",
+      "kind": "component",
+      "label_en": "non-transitory computer-readable media storing processor-executable instructions",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "One or more non-transitory computer-readable media storing instructions that are executable by one or more processors to cause a computing system to perform operations"
+    },
+    {
+      "claim_ref": "CL-24/a1",
+      "id": "M54",
+      "kind": "component",
+      "label_en": "one or more processors",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "one or more processors"
+    },
+    {
+      "claim_ref": "CL-24/a2",
+      "id": "M55",
+      "kind": "component",
+      "label_en": "media storing instructions executable by the processors of the computing system",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "one or more non-transitory computer-readable media storing instructions that are executable by the one or more processors to cause the computing system to perform operations"
+    },
+    {
+      "claim_ref": "CL-25/a1",
+      "id": "M56",
+      "kind": "component",
+      "label_en": "computer program product comprising processor-executable instructions",
+      "status": "active",
+      "superseded_by": null,
+      "text_verbatim": "A computer program product comprising instructions that are executable by one or more processors to cause a computing system to perform operations"
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M1",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-1",
+          "numerals": [
+            "100",
+            "102",
+            "104"
+          ]
+        },
+        {
+          "caption_quote": "Figure 21 is a flow chart diagram illustrating an example method for using a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-21",
+          "numerals": [
+            "2100",
+            "2102"
+          ]
+        }
+      ],
+      "id": "M57",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0431]",
+          "quote": "At 2102, example method 2100 includes receiving, by a machine-learned agent system, a query associated with a user."
+        },
+        {
+          "locator": "[0065]",
+          "quote": "Input interface(s) 102 can receive inputs (e.g., from a user). Query 104 can be based on data from input interfaces 102."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M2",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-1",
+          "numerals": [
+            "100",
+            "105",
+            "106",
+            "108",
+            "110",
+            "112",
+            "114"
+          ]
+        },
+        {
+          "caption_quote": "Figure 21 is a flow chart diagram illustrating an example method for using a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-21",
+          "numerals": [
+            "2104"
+          ]
+        }
+      ],
+      "id": "M58",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0432]",
+          "quote": "At 2104, example method 2100 includes accessing, by the machine-learned agent system, memory data from an interaction memory datastore associated with the user."
+        },
+        {
+          "locator": "[0066]",
+          "quote": "Machine-learned agent system 100 can issue a memory query 108 to interaction memory datastore 110."
+        },
+        {
+          "locator": "[0067]",
+          "quote": "Machine-learned agent system 100 can obtain memory data 114 based on memory response 112"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M3",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-2",
+          "numerals": [
+            "110",
+            "202-1",
+            "202-M",
+            "204-1",
+            "204-M",
+            "206-1",
+            "206-M"
+          ]
+        }
+      ],
+      "id": "M59",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0432]",
+          "quote": "In some implementations, the interaction memory datastore includes one or more memory objects that were generated based on one or more prior interactions between the machine-learned agent system and the user."
+        },
+        {
+          "locator": "[0066]",
+          "quote": "Interaction memory datastore 110 can contain stored contextual information catalogued and stored over prior interactions with the user."
+        },
+        {
+          "locator": "[0053]",
+          "quote": "For instance, the machine-learned agent system can process the content of an interaction with the user and selectively generate memory objects that encapsulate salient features of the interaction."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M4",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-1",
+          "numerals": [
+            "100",
+            "114",
+            "116",
+            "118"
+          ]
+        },
+        {
+          "caption_quote": "Figure 21 is a flow chart diagram illustrating an example method for using a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-21",
+          "numerals": [
+            "2106"
+          ]
+        }
+      ],
+      "id": "M60",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0434]",
+          "quote": "At 2106, example method 2100 includes inputting, by the machine-learned agent system and to a machine-learned sequence processing model, an input data structure based on the query and the memory"
+        },
+        {
+          "locator": "[0067]",
+          "quote": "Machine-learned agent system 100 can output input data structure 116 based on memory data 114."
+        },
+        {
+          "locator": "[0105]",
+          "quote": "Input data structure 116 can be or include a data object configured for input to machine-learned model system(s) 118."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M5",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-1",
+          "numerals": [
+            "116",
+            "118",
+            "120"
+          ]
+        },
+        {
+          "caption_quote": "Figure 21 is a flow chart diagram illustrating an example method for using a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-21",
+          "numerals": [
+            "2108"
+          ]
+        }
+      ],
+      "id": "M61",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0435]",
+          "quote": "At 2108, example method 2100 includes generating, by the machine-learned agent system and based on processing the input data structure using the machine-learned sequence processing model, an output."
+        },
+        {
+          "locator": "[0068]",
+          "quote": "Machine-learned model system 118 can process input data structure 116 to generate output data structure 120."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M6",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-1",
+          "numerals": [
+            "100",
+            "104",
+            "120",
+            "122",
+            "124"
+          ]
+        },
+        {
+          "caption_quote": "Figure 21 is a flow chart diagram illustrating an example method for using a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-21",
+          "numerals": [
+            "2110"
+          ]
+        }
+      ],
+      "id": "M62",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0436]",
+          "quote": "At 2110, example method 2100 includes outputting, by the machine-learned agent system, and based on the output, a response to the query."
+        },
+        {
+          "locator": "[0069]",
+          "quote": "Machine-learned agent system 100 can output response 122 based on output data structure 120."
+        },
+        {
+          "locator": "[0069]",
+          "quote": "Output interface(s) 124 can render, transmit, or execute data from response 122."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M7",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-2",
+          "numerals": [
+            "110"
+          ]
+        }
+      ],
+      "id": "M63",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0100]",
+          "quote": "Interaction memory datastore 110 can be multimodal."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M8",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-2",
+          "numerals": [
+            "202-1",
+            "202-M",
+            "110"
+          ]
+        }
+      ],
+      "id": "M64",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0432]",
+          "quote": "the memory data can be based on a first memory object associated with a first data modality and a second memory object associated with a second data modality"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M9",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-2",
+          "numerals": [
+            "110"
+          ]
+        }
+      ],
+      "id": "M65",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0432]",
+          "quote": "For example, the first data modality can include audio data, and wherein the second data modality can include image data."
+        },
+        {
+          "locator": "[0162]",
+          "quote": "interaction memory datastore 110 can store image data in association with audio data"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M10",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-2",
+          "numerals": [
+            "110"
+          ]
+        }
+      ],
+      "id": "M66",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0163]",
+          "quote": "interaction memory datastore 110 can store image data in association with text data"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M11",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-2",
+          "numerals": [
+            "110"
+          ]
+        }
+      ],
+      "id": "M67",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0164]",
+          "quote": "interaction memory datastore 110 can store audio data in association with text data"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M12",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 3 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-3",
+          "numerals": [
+            "106",
+            "110"
+          ]
+        }
+      ],
+      "id": "M68",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0437]",
+          "quote": "retrieving, by the machine-learned agent system, and from the interaction memory datastore, the one or more memory values based on a relevance of the one or more memory values to the query"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M13",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 8 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-8",
+          "numerals": [
+            "802",
+            "118"
+          ]
+        }
+      ],
+      "id": "M69",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0438]",
+          "quote": "processing, by the machine-learned agent system, the input using a machine-learned model to generate one or more values"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M14",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 8 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-8",
+          "numerals": [
+            "804",
+            "118"
+          ]
+        }
+      ],
+      "id": "M70",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0439]",
+          "quote": "The values can indicate that at least a portion of the input is to be stored."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M15",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 8 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-8",
+          "numerals": [
+            "105",
+            "804"
+          ]
+        }
+      ],
+      "id": "M71",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0439]",
+          "quote": "The machine-learned agent system (e.g., 100) can extract a portion of the input (e.g., using memory model 105)"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M16",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-2",
+          "numerals": [
+            "204-1",
+            "202-1",
+            "110"
+          ]
+        }
+      ],
+      "id": "M72",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0439]",
+          "quote": "The extracted portion is then stored as a memory value (e.g., 204-1 in Figure 2) in a memory object (e.g., 202-1 in Figure 2) in the interaction memory datastore (e.g., 110)."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M17",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-2",
+          "numerals": [
+            "206-1",
+            "204-1",
+            "202-1"
+          ]
+        }
+      ],
+      "id": "M73",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0440]",
+          "quote": "storing, by the machine-learned agent system, metadata associated with the memory value in the memory object"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M18",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-2",
+          "numerals": [
+            "110",
+            "204-1"
+          ]
+        }
+      ],
+      "id": "M74",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0441]",
+          "quote": "the portion includes at least one of: text data, image data, or audio data"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M19",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 4 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-4",
+          "numerals": [
+            "402",
+            "105"
+          ]
+        }
+      ],
+      "id": "M75",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0442]",
+          "quote": "the portion corresponds to an explicit instruction to remember information"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M20",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 10 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-10",
+          "numerals": [
+            "1002",
+            "105"
+          ]
+        }
+      ],
+      "id": "M76",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0443]",
+          "quote": "receiving, by the machine-learned agent system, input data indicating an instruction to forget specified information"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M21",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 10 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-10",
+          "numerals": [
+            "105",
+            "110",
+            "804"
+          ]
+        }
+      ],
+      "id": "M77",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0443]",
+          "quote": "Memory model 105 can then cause the identified memory objects to be deleted from interaction memory datastore 110."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M22",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 10 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-10",
+          "numerals": [
+            "1002",
+            "110"
+          ]
+        }
+      ],
+      "id": "M78",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0444]",
+          "quote": "receiving, by the machine-learned agent system, input data indicating an instruction to forget specified information after a specified interval"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M23",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 10 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-10",
+          "numerals": [
+            "110",
+            "804"
+          ]
+        }
+      ],
+      "id": "M79",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0444]",
+          "quote": "queuing, by the machine-learned agent system, the specified information for deletion from the interaction memory datastore after the specified interval"
+        },
+        {
+          "locator": "[0444]",
+          "quote": "The deletion can be performed immediately or scheduled for a later time."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M24",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 3 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-3",
+          "numerals": [
+            "308"
+          ]
+        }
+      ],
+      "id": "M80",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0445]",
+          "quote": "the memory data includes an ordered combination of the one or more memory values, the ordered combination ordered based on corresponding timestamps of the plurality of memory objects"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M25",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 3 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-3",
+          "numerals": [
+            "108",
+            "110"
+          ]
+        }
+      ],
+      "id": "M81",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0446]",
+          "quote": "filtering the plurality of memory objects to obtain the one or more memory values"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M26",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 3 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-3",
+          "numerals": [
+            "108",
+            "106"
+          ]
+        }
+      ],
+      "id": "M82",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0446]",
+          "quote": "The filtering process can involve computing one or more relevance measures (e.g., similarity scores, distance metrics, or probabilities) for each memory object"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M27",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 3 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-3",
+          "numerals": [
+            "302",
+            "304",
+            "306"
+          ]
+        }
+      ],
+      "id": "M83",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0446]",
+          "quote": "The filtering process can then return a subset of the memory objects"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M28",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-2",
+          "numerals": [
+            "110"
+          ]
+        }
+      ],
+      "id": "M84",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0447]",
+          "quote": "the one or more relevance measures include a respective score generated based on distance between a query embedding and a respective memory value embedding"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M29",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 13 is a block diagram of an example sequence processing model according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-13",
+          "numerals": [
+            "4",
+            "6"
+          ]
+        }
+      ],
+      "id": "M85",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0447]",
+          "quote": "a respective sequence output generated by processing the query and one or more respective memory values using a second machine-learned sequence processing model that is optionally the same as or different from the machine-learned sequence processing model"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M30",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-2",
+          "numerals": [
+            "204-1",
+            "204-M"
+          ]
+        }
+      ],
+      "id": "M86",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0448]",
+          "quote": "the one or more memory values each include a respective string"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M31",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 3 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-3",
+          "numerals": [
+            "308"
+          ]
+        }
+      ],
+      "id": "M87",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0448]",
+          "quote": "the memory data includes a string including the one or more respective strings from the one or more memory values"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M32",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-1",
+          "numerals": [
+            "120",
+            "118"
+          ]
+        }
+      ],
+      "id": "M88",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0449]",
+          "quote": "inputting at least a portion of the output to the machine-learned sequence processing model"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M33",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-1",
+          "numerals": [
+            "122",
+            "120"
+          ]
+        }
+      ],
+      "id": "M89",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0449]",
+          "quote": "generating, based on processing the output using the machine-learned sequence processing model, the response to the query"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M34",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-1",
+          "numerals": [
+            "120"
+          ]
+        }
+      ],
+      "id": "M90",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0449]",
+          "quote": "the output includes a plurality of predictions for analytical content that includes an analysis of the query with respect to the memory data"
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M35",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-1",
+          "numerals": [
+            "124",
+            "122"
+          ]
+        }
+      ],
+      "id": "M91",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0450]",
+          "quote": "the plurality of predictions for analytical content are not exposed on a user interface associated with the query"
+        },
+        {
+          "locator": "[0117]",
+          "quote": "The raw outputs may not be surfaced to the user."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M36",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 10 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-10",
+          "numerals": [
+            "704",
+            "110",
+            "105"
+          ]
+        }
+      ],
+      "id": "M92",
+      "kind": "grounding",
+      "search_note": "통합(consolidation)은 FIG-10의 메모리 유지보수 사이클(704) 안에서 memory model 105 가 interaction memory datastore 110 에 대해 수행하는 동작으로 표현된다. '통합' 자체에 고유 도면부호는 없어 상위 요소 부호만 등재했다.",
+      "spec_refs": [
+        {
+          "locator": "[0020]",
+          "quote": "In some implementations, the example method includes consolidating, in the interaction memory datastore, a subset of the plurality of memory objects into a single memory object based on an alignment between the subset."
+        },
+        {
+          "locator": "[0299]",
+          "quote": "Memory model 105 may consolidate related memory objects, merging redundant or overlapping information to reduce storage overhead."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M37",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 5 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-5",
+          "numerals": [
+            "500"
+          ]
+        }
+      ],
+      "id": "M93",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0021]",
+          "quote": "In some implementations, the example method includes receiving input data associated with a timestamp."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M38",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 4 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-4",
+          "numerals": [
+            "402",
+            "400",
+            "105"
+          ]
+        }
+      ],
+      "id": "M94",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0021]",
+          "quote": "In some implementations, the example method includes creating a current memory object."
+        },
+        {
+          "locator": "[0246]",
+          "quote": "Memory model 105 can interact with machine-learned model system(s) 118 to generate values for a new memory object 402 based on input 400."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M39",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 4 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-4",
+          "numerals": [
+            "402"
+          ]
+        }
+      ],
+      "id": "M95",
+      "kind": "grounding",
+      "search_note": "타임스탬프는 메모리 객체 402 내부의 필드(created/lastUpdated)로 표현될 뿐 고유 도면부호를 갖지 않아, 이를 포함하는 객체 부호 402 만 등재했다.",
+      "spec_refs": [
+        {
+          "locator": "[0021]",
+          "quote": "In some implementations, the current memory object includes the timestamp."
+        },
+        {
+          "locator": "[0256]",
+          "quote": "Memory model 105 can cause memory object 402 to store time data associated with the memory."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M40",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 4 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-4",
+          "numerals": [
+            "402",
+            "400"
+          ]
+        }
+      ],
+      "id": "M96",
+      "kind": "grounding",
+      "search_note": "메모리 값(memory value)은 FIG-4 에서 객체 402 내부 값으로 표현되며 별도 도면부호가 없다. FIG-2 의 204-1…204-M 이 일반형 부호이나, 본 종속항의 '현재 메모리 값'에 직접 조응하는 것은 FIG-4 의 402 이므로 402·400 만 등재했다.",
+      "spec_refs": [
+        {
+          "locator": "[0021]",
+          "quote": "In some implementations, the current memory object includes a current memory value based on the input data."
+        },
+        {
+          "locator": "[0246]",
+          "quote": "For example, memory model 105 can use machine-learned model system(s) 118 to predict a memory value “prefers vegetarian” based on the input."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M41",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 5 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-5",
+          "numerals": [
+            "500",
+            "402"
+          ]
+        }
+      ],
+      "id": "M97",
+      "kind": "grounding",
+      "search_note": "매칭 동작 자체에는 도면부호가 없다. FIG-5 에서 신규 입력 500 이 선행 메모리 객체 402 에 대응되는 관계로 표현되므로 두 부호를 등재했다.",
+      "spec_refs": [
+        {
+          "locator": "[0021]",
+          "quote": "In some implementations, the example method includes matching the current memory object to a prior memory object."
+        },
+        {
+          "locator": "[0089]",
+          "quote": "Memory model 105 can query interaction memory datastore 110 to retrieve relevant entries for new information and update the relevant entries based on the new information."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M42",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 5 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-5",
+          "numerals": [
+            "502",
+            "402",
+            "110"
+          ]
+        }
+      ],
+      "id": "M98",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0021]",
+          "quote": "In some implementations, the example method includes replacing, in the interaction memory datastore, the prior memory object with the current memory object."
+        },
+        {
+          "locator": "[0263]",
+          "quote": "The updated memory object 502 can be stored in interaction memory datastore 110."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M43",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 5 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-5",
+          "numerals": [
+            "500"
+          ]
+        }
+      ],
+      "id": "M99",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0022]",
+          "quote": "In some implementations, the example method includes receiving input data associated with a timestamp."
+        },
+        {
+          "locator": "[0453]",
+          "quote": "For example, at 2108, the machine-learned agent system (e.g., 100) receives input data (e.g., 500 in Figure 5) associated with a timestamp."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M44",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 5 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-5",
+          "numerals": [
+            "500",
+            "402"
+          ]
+        }
+      ],
+      "id": "M100",
+      "kind": "grounding",
+      "search_note": "매칭 동작 자체에는 도면부호가 없어, 입력 500 과 선행 메모리 객체 402 의 부호를 등재했다.",
+      "spec_refs": [
+        {
+          "locator": "[0022]",
+          "quote": "In some implementations, the example method includes matching at least a portion of the input data to a prior memory object."
+        },
+        {
+          "locator": "[0453]",
+          "quote": "The system then matches at least a portion of the input data to a prior memory object (e.g., 402 in Figure 4)."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M45",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 5 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-5",
+          "numerals": [
+            "502",
+            "402",
+            "110"
+          ]
+        }
+      ],
+      "id": "M101",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0022]",
+          "quote": "In some implementations, the example method includes updating, in the interaction memory datastore, the prior memory object based on the portion of the input data."
+        },
+        {
+          "locator": "[0453]",
+          "quote": "Based on this match, the system updates (e.g., as in Figure 5), in the interaction memory datastore (e.g., 110), the prior memory object (e.g., 402) based on the portion of the input data (e.g., 500)."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M46",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-1",
+          "numerals": [
+            "122",
+            "124",
+            "120"
+          ]
+        }
+      ],
+      "id": "M102",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0023]",
+          "quote": "In some implementations of the example method, the response includes instructions configured to control an application programming interface to cause a computing system to perform an action."
+        },
+        {
+          "locator": "[0120]",
+          "quote": "For instance, response 122 can include an application programming interface call generated based on output data structure 120."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M47",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-1",
+          "numerals": [
+            "104",
+            "102"
+          ]
+        }
+      ],
+      "id": "M103",
+      "kind": "grounding",
+      "search_note": "구성 파라미터 자체에는 도면부호가 없다. 그것을 지시하는 질의 104(및 입력 인터페이스 102)의 부호를 등재했다.",
+      "spec_refs": [
+        {
+          "locator": "[0024]",
+          "quote": "the query indicates a configuration parameter that controls an operation of the computing system"
+        },
+        {
+          "locator": "[0455]",
+          "quote": "For example, the query (e.g , 104) might indicate a configuration parameter that controls an operation of the computing system."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M48",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-1",
+          "numerals": [
+            "120",
+            "122",
+            "124"
+          ]
+        }
+      ],
+      "id": "M104",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0024]",
+          "quote": "the instructions are configured to control the application programming interface to cause the computing system to assign a value for the configuration parameter"
+        },
+        {
+          "locator": "[0455]",
+          "quote": "The system then generates an output (e.g., 120) that includes instructions (e.g., in response 122) configured to control an API call (e.g., via output interface 124) to cause the computing system to assign a value for the configuration parameter."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "not-depicted",
+        "spec": "found"
+      },
+      "component": "M49",
+      "figure_refs": [],
+      "id": "M105",
+      "kind": "grounding",
+      "search_note": "FIG-1(100·104·110·118·122·124)과 FIG-18~FIG-21 캡션 및 부호를 확인했으나, 구성 파라미터의 연관 대상(데이터 접근·보유·통신)을 표시한 도면부호는 없다. 명세서 [0025]·[0132]~[0135]·[0456] 본문에만 서술된다.",
+      "spec_refs": [
+        {
+          "locator": "[0456]",
+          "quote": "In some implementations of example method 2100, the configuration parameter is associated with at least one of: data access by the computing system, data retention by the computing system, or data communication by the computing system."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "not-depicted",
+        "spec": "found"
+      },
+      "component": "M50",
+      "figure_refs": [],
+      "id": "M106",
+      "kind": "grounding",
+      "search_note": "FIG-1 및 FIG-18~FIG-21 의 부호를 확인했으나 '데이터 접근' 구성 파라미터를 지시하는 도면부호는 존재하지 않는다.",
+      "spec_refs": [
+        {
+          "locator": "[0025]",
+          "quote": "In some implementations of the example method, the configuration parameter is associated with data access by the computing system."
+        },
+        {
+          "locator": "[0456]",
+          "quote": "For example, the configuration parameter (e.g., a setting within an analytics system for a web-based resource) might relate to data access permissions."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "not-depicted",
+        "spec": "found"
+      },
+      "component": "M51",
+      "figure_refs": [],
+      "id": "M107",
+      "kind": "grounding",
+      "search_note": "FIG-1·FIG-10(704·1002·904·804) 등 유지보수 사이클 도면을 확인했으나 '데이터 보유' 구성 파라미터에 부여된 도면부호는 없다.",
+      "spec_refs": [
+        {
+          "locator": "[0025]",
+          "quote": "In some implementations of the example method, the configuration parameter is associated with data retention by the computing system."
+        },
+        {
+          "locator": "[0295]",
+          "quote": "The system may provide users with configurable parameters to control the time-based forgetting mechanism, allowing them to customize the system's memory retention policies."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "not-depicted",
+        "spec": "found"
+      },
+      "component": "M52",
+      "figure_refs": [],
+      "id": "M108",
+      "kind": "grounding",
+      "search_note": "FIG-1(124)·FIG-18(49) 등 통신 관련 부호를 확인했으나, 이들은 인터페이스·네트워크 자체의 부호이며 '데이터 통신' 구성 파라미터에 조응하는 도면부호는 없다.",
+      "spec_refs": [
+        {
+          "locator": "[0025]",
+          "quote": "In some implementations of the example method, the configuration parameter is associated with data communication by the computing system."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M53",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 18 is a block diagram of an example networked computing system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-18",
+          "numerals": [
+            "52",
+            "54",
+            "62",
+            "64"
+          ]
+        }
+      ],
+      "id": "M109",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0026]",
+          "quote": "In an aspect, the present disclosure provides an example one or more non-transitory computer-readable media storing instructions that are executable by one or more processors to cause a computing system to perform operations, the operations comprising any implementation of the example method."
+        },
+        {
+          "locator": "[0415]",
+          "quote": "Memory 52 can store data 53 and instructions 54 which can be executed by processor(s) 51 to cause computing device 50 to perform operations."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M54",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 18 is a block diagram of an example networked computing system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-18",
+          "numerals": [
+            "51",
+            "61"
+          ]
+        }
+      ],
+      "id": "M110",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0027]",
+          "quote": "In some implementations, the example computing system includes one or more processors."
+        },
+        {
+          "locator": "[0415]",
+          "quote": "Computing device 50 can include one or more processors 51 and a memory 52."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "found",
+        "spec": "found"
+      },
+      "component": "M55",
+      "figure_refs": [
+        {
+          "caption_quote": "Figure 18 is a block diagram of an example networked computing system according to example implementations of aspects of the present disclosure.",
+          "figure": "FIG-18",
+          "numerals": [
+            "52",
+            "54",
+            "62",
+            "64"
+          ]
+        }
+      ],
+      "id": "M111",
+      "kind": "grounding",
+      "spec_refs": [
+        {
+          "locator": "[0027]",
+          "quote": "In some implementations, the example computing system includes one or more non-transitory computer-readable media storing instructions that are executable by the one or more processors to cause the computing system to perform operations, the operations comprising any implementation of the example method."
+        },
+        {
+          "locator": "[0418]",
+          "quote": "Memory 62 can store data 63 and instructions 64 which can be executed by processor(s) 61 to cause server computing system(s) 60 to perform operations."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "anchor_state": {
+        "figure": "not-depicted",
+        "spec": "found"
+      },
+      "component": "M56",
+      "figure_refs": [],
+      "id": "M112",
+      "kind": "grounding",
+      "search_note": "FIG-18~FIG-20 의 컴퓨팅 장치 부호(50·51·52·53·54·60~65·98·99)와 전 도면 캡션을 확인했으나, '컴퓨터 프로그램 제품'이라는 청구 범주에 조응하는 도면부호는 없다. 해당 aspect 는 [0028] 본문에만 기재된다.",
+      "spec_refs": [
+        {
+          "locator": "[0028]",
+          "quote": "In an aspect, the present disclosure provides an computer program product comprising instructions that are executable by one or more processors to cause a computing system to perform operations, the operations comprising any implementation of the example method."
+        }
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "id": "M113",
+      "kind": "fact",
+      "label_en": "numeric value at [0439]",
+      "machine_verifiable": true,
+      "origin": "quoted",
+      "source": {
+        "locator": "[0439]",
+        "quote": "The extracted portion is then stored as a memory value (e.g., 204-1 in Figure 2) in a memory object (e.g., 202-1 in Figure 2) in the interaction memory datastore (e.g., 110).",
+        "value_span": {
+          "end": 67,
+          "start": 62
+        }
+      },
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "204-1",
+      "value_raw": "204-1",
+      "value_type": {
+        "approximate": false,
+        "high": "1",
+        "high_inclusive": true,
+        "kind": "range",
+        "low": "204",
+        "low_inclusive": true
+      }
+    },
+    {
+      "id": "M114",
+      "kind": "fact",
+      "label_en": "numeric value at [0439]",
+      "machine_verifiable": true,
+      "origin": "quoted",
+      "source": {
+        "locator": "[0439]",
+        "quote": "The extracted portion is then stored as a memory value (e.g., 204-1 in Figure 2) in a memory object (e.g., 202-1 in Figure 2) in the interaction memory datastore (e.g., 110).",
+        "value_span": {
+          "end": 112,
+          "start": 107
+        }
+      },
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "202-1",
+      "value_raw": "202-1",
+      "value_type": {
+        "approximate": false,
+        "high": "1",
+        "high_inclusive": true,
+        "kind": "range",
+        "low": "202",
+        "low_inclusive": true
+      }
+    },
+    {
+      "id": "M115",
+      "kind": "fact",
+      "label_en": "numeric value at [0415]",
+      "machine_verifiable": true,
+      "origin": "quoted",
+      "source": {
+        "locator": "[0415]",
+        "quote": "Memory 52 can store data 53 and instructions 54 which can be executed by processor(s) 51 to cause computing device 50 to perform operations.",
+        "value_span": {
+          "end": 27,
+          "start": 25
+        }
+      },
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "53",
+      "value_raw": "53",
+      "value_type": {
+        "approximate": false,
+        "kind": "scalar",
+        "value": "53"
+      }
+    },
+    {
+      "id": "M116",
+      "kind": "fact",
+      "label_en": "numeric value at [0415]",
+      "machine_verifiable": true,
+      "origin": "quoted",
+      "source": {
+        "locator": "[0415]",
+        "quote": "Memory 52 can store data 53 and instructions 54 which can be executed by processor(s) 51 to cause computing device 50 to perform operations.",
+        "value_span": {
+          "end": 117,
+          "start": 115
+        }
+      },
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "50",
+      "value_raw": "50",
+      "value_type": {
+        "approximate": false,
+        "kind": "scalar",
+        "value": "50"
+      }
+    },
+    {
+      "id": "M117",
+      "kind": "fact",
+      "label_en": "numeric value at [0415]",
+      "machine_verifiable": true,
+      "origin": "quoted",
+      "source": {
+        "locator": "[0415]",
+        "quote": "Computing device 50 can include one or more processors 51 and a memory 52.",
+        "value_span": {
+          "end": 19,
+          "start": 17
+        }
+      },
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "50",
+      "value_raw": "50",
+      "value_type": {
+        "approximate": false,
+        "kind": "scalar",
+        "value": "50"
+      }
+    },
+    {
+      "id": "M118",
+      "kind": "fact",
+      "label_en": "numeric value at [0418]",
+      "machine_verifiable": true,
+      "origin": "quoted",
+      "source": {
+        "locator": "[0418]",
+        "quote": "Memory 62 can store data 63 and instructions 64 which can be executed by processor(s) 61 to cause server computing system(s) 60 to perform operations.",
+        "value_span": {
+          "end": 27,
+          "start": 25
+        }
+      },
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "63",
+      "value_raw": "63",
+      "value_type": {
+        "approximate": false,
+        "kind": "scalar",
+        "value": "63"
+      }
+    },
+    {
+      "id": "M119",
+      "kind": "fact",
+      "label_en": "numeric value at [0418]",
+      "machine_verifiable": true,
+      "origin": "quoted",
+      "source": {
+        "locator": "[0418]",
+        "quote": "Memory 62 can store data 63 and instructions 64 which can be executed by processor(s) 61 to cause server computing system(s) 60 to perform operations.",
+        "value_span": {
+          "end": 127,
+          "start": 125
+        }
+      },
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "60",
+      "value_raw": "60",
+      "value_type": {
+        "approximate": false,
+        "kind": "scalar",
+        "value": "60"
+      }
+    },
+    {
+      "bib_source": {
+        "field": "patent.number"
+      },
+      "id": "M120",
+      "kind": "fact",
+      "label_en": "bibliographic field patent.number",
+      "machine_verifiable": true,
+      "origin": "bibliographic",
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "WO2026-128750A1",
+      "value_raw": "WO2026-128750A1",
+      "value_type": {
+        "approximate": false,
+        "kind": "identifier",
+        "value": "WO2026-128750A1"
+      }
+    },
+    {
+      "bib_source": {
+        "field": "patent.dates.priority"
+      },
+      "id": "M121",
+      "kind": "fact",
+      "label_en": "bibliographic field patent.dates.priority",
+      "machine_verifiable": true,
+      "origin": "bibliographic",
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "2024-12-11",
+      "value_raw": "2024-12-11",
+      "value_type": {
+        "approximate": false,
+        "kind": "date",
+        "value": "2024-12-11"
+      }
+    },
+    {
+      "bib_source": {
+        "field": "patent.dates.filing"
+      },
+      "id": "M122",
+      "kind": "fact",
+      "label_en": "bibliographic field patent.dates.filing",
+      "machine_verifiable": true,
+      "origin": "bibliographic",
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "2025-12-11",
+      "value_raw": "2025-12-11",
+      "value_type": {
+        "approximate": false,
+        "kind": "date",
+        "value": "2025-12-11"
+      }
+    },
+    {
+      "bib_source": {
+        "field": "patent.dates.publication"
+      },
+      "id": "M123",
+      "kind": "fact",
+      "label_en": "bibliographic field patent.dates.publication",
+      "machine_verifiable": true,
+      "origin": "bibliographic",
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "2026-06-18",
+      "value_raw": "2026-06-18",
+      "value_type": {
+        "approximate": false,
+        "kind": "date",
+        "value": "2026-06-18"
+      }
+    },
+    {
+      "figure_source": {
+        "figure": "FIG-3",
+        "locator": "[0183]",
+        "numerals": [
+          "302",
+          "304",
+          "306"
+        ]
+      },
+      "id": "M124",
+      "kind": "fact",
+      "label_en": "memory objects returned by the interaction memory datastore in the single recall cycle worked through in FIG. 3 (302, 304, 306)",
+      "machine_verifiable": false,
+      "origin": "figure-sourced",
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "3",
+      "value_raw": "3",
+      "value_type": {
+        "approximate": false,
+        "kind": "scalar",
+        "value": "3"
+      }
+    },
+    {
+      "figure_source": {
+        "figure": "FIG-21",
+        "locator": "[0429]",
+        "numerals": [
+          "2102",
+          "2104",
+          "2106",
+          "2108",
+          "2110"
+        ]
+      },
+      "id": "M125",
+      "kind": "fact",
+      "label_en": "operation blocks in the method flow chart of FIG. 21 (2102 receiving the query, 2104 accessing memory data, 2106 inputting the input data structure, 2108 generating the output, 2110 outputting the response)",
+      "machine_verifiable": false,
+      "origin": "figure-sourced",
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "5",
+      "value_raw": "5",
+      "value_type": {
+        "approximate": false,
+        "kind": "scalar",
+        "value": "5"
+      }
+    },
+    {
+      "figure_source": {
+        "figure": "FIG-2",
+        "locator": "[0152]",
+        "numerals": [
+          "202-1",
+          "204-1",
+          "206-1"
+        ]
+      },
+      "id": "M126",
+      "kind": "fact",
+      "label_en": "constituent slots drawn inside each memory object in FIG. 2 (memory value(s) 204-x and memory metadata 206-x), against the larger attribute set the description gives a memory object",
+      "machine_verifiable": false,
+      "origin": "figure-sourced",
+      "status": "active",
+      "superseded_by": null,
+      "unit": null,
+      "value_normalized": "2",
+      "value_raw": "2",
+      "value_type": {
+        "approximate": false,
+        "kind": "scalar",
+        "value": "2"
+      }
+    },
+    {
+      "basis": "claim",
+      "confidence": "inferred",
+      "derived_from": [
+        "M57",
+        "M58",
+        "M60",
+        "M61",
+        "M62"
+      ],
+      "evidence_quotes": [
+        "accessing, by the machine-learned agent system, memory data from an interaction memory datastore associated with the user",
+        "after receiving an input during an interactive session, processing, by the machine-learned agent system, the input using a machine-learned model to generate one or more values"
+      ],
+      "id": "M127",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "Independent claim CL-1 covers only the read path. Its five steps are receive a query, access memory data, input a structure built from query plus memory, generate an output, output a response; every write-side operation that makes such a store exist at all — deciding what to remember, extracting it, storing it, forgetting it, consolidating it, updating it — is pushed into dependent claims 5 to 10 and 17 to 19. At its broadest the monopoly therefore reads on a system that only consumes a user-specific memory datastore populated by some other actor.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "spec",
+      "confidence": "inferred",
+      "derived_from": [
+        "M59",
+        "M64",
+        "M72",
+        "M73"
+      ],
+      "evidence_quotes": [
+        "a memory object can be a data container that stores one or more memory values (e.g., strings, images, audio, etc.) along with relevant metadata",
+        "a memory value may operate as an information bottleneck as compared to the full record of interactions that support the memory value"
+      ],
+      "id": "M128",
+      "kind": "implication",
+      "numeric_refs": [
+        "M113",
+        "M114"
+      ],
+      "statement_en": "The unit of the invention is the memory object, not the memory value. Retrieval, consolidation, splitting, expiry and permission tiering all operate on the object and its metadata, while the sequence processing model only ever consumes values extracted out of objects. The description names the value an information bottleneck relative to the interactions behind it, which states plainly why the container exists: the object is where the engineering lives, and the value is the lossy thing the object is built to defend.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "spec",
+      "confidence": "inferred",
+      "derived_from": [
+        "M97",
+        "M98",
+        "M100",
+        "M101"
+      ],
+      "evidence_quotes": [
+        "This can stabilize the evolution of memories over time by anchoring new memories in context of prior support.",
+        "the support record can be used to generate more nuanced memories that can reconcile the memory record"
+      ],
+      "id": "M129",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "The support record is what makes a memory revisable rather than merely replaceable. Claim 18 matches a current object to a prior object and replaces it; claim 19 matches part of an input to a prior object and updates it. The description shows the second path only working because the object retains the interactions that produced its value: the vegetarian-to-pescatarian example turns an apparent contradiction into a refinement instead of an overwrite. Notably, FIG. 2 draws only a value slot and a metadata slot per object, so the mechanism that carries this argument is described at [0167] to [0172] but not depicted.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "spec",
+      "confidence": "inferred",
+      "derived_from": [
+        "M69",
+        "M70",
+        "M71",
+        "M92"
+      ],
+      "evidence_quotes": [
+        "This can offload the conflict resolution/interpretation task to a runtime execution of one or more models for processing a given query.",
+        "Runtime queries can be processed in full view of all retrieved memories."
+      ],
+      "id": "M130",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "FIG. 8, FIG. 9 and FIG. 10 encode a three-way choice about where conflict resolution happens, and the disclosure deliberately declines to settle it. FIG. 8 writes without reading the current store, which is cheap and defers every contradiction to query time. FIG. 9 writes in view of the current store, which consolidates early but costs more as the store grows and can propagate its own intermediate errors. FIG. 10 runs the cycle with no new input at all, purely as maintenance. The contribution disclosed here is the placement decision itself, not one placement.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "spec",
+      "confidence": "inferred",
+      "derived_from": [
+        "M76",
+        "M77",
+        "M78",
+        "M79"
+      ],
+      "evidence_quotes": [
+        "The schedule can be based on a time at which the memory was last accessed.",
+        "Although a schedule of forgetting memory information by memory model 105 may be understood in terms of time, it is also to be understood that a schedule can also correspond to a hierarchy of permissions.",
+        "Interaction memory datastore 110 can store multiple versions of memory content, with various levels of noise or obfuscation applied, to enable retrieval and use of various qualities of memory data."
+      ],
+      "id": "M131",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "Forgetting is implemented as staged lossy re-encoding rather than deletion — video to sampled frames, frames to a single frame, frame to a textual summary — and the same ladder is then reused as an access-control hierarchy, with each permission level seeing memory obfuscated to a further stage. Because degraded versions are retained alongside the intact ones, a single mechanism yields both storage decay and a tiered privacy view served to external systems.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "claim",
+      "confidence": "inferred",
+      "derived_from": [
+        "M76",
+        "M78",
+        "M92",
+        "M101"
+      ],
+      "evidence_quotes": [
+        "consolidating, in the interaction memory datastore, a subset of the plurality of memory objects into a single memory object based on an alignment between the subset",
+        "the system may manage memory object size by splitting large memory objects into smaller, distinct memory objects",
+        "A gradual memory rolloff may also provide for improved resource utilization."
+      ],
+      "id": "M132",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "The most distinctive disclosed mechanisms are unclaimed. Graduated forgetting and the permission ladder, the support record and the reconciliation it enables, the typed knowledge-graph edges between memory objects, and the splitting of an overgrown object into sub-objects all appear nowhere in claims 1 to 25. What is claimed is the generic read path plus store, forget, timed forget, consolidate, replace and update. The claim scope and the technical centre of gravity of the disclosure are offset, which is the shape of a filing that expects continuations.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "claim",
+      "confidence": "inferred",
+      "derived_from": [
+        "M102",
+        "M103",
+        "M104",
+        "M105",
+        "M106",
+        "M108"
+      ],
+      "evidence_quotes": [
+        "wherein the response comprises instructions configured to control an application programming interface to cause a computing system to perform an action",
+        "data access by the computing system",
+        "A machine-learned agent system 100 could respond to the interface features on the behalf of a user in near real-time to reduce a latency of loading the underlying content."
+      ],
+      "id": "M133",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "Claims 20 to 22 turn the memory into a consent actuator. The response is an API call; the query indicates a configuration parameter governing an operation of a computing system; that parameter is one of data access, data retention or data communication. Read against the browser pop-up scenario, the agent answers privacy prompts on the user's behalf from remembered preferences — so the same datastore that itself raises a data-retention question is claimed as the instrument that answers data-retention questions.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "claim",
+      "confidence": "inferred",
+      "derived_from": [
+        "M81",
+        "M82",
+        "M83",
+        "M84",
+        "M85"
+      ],
+      "evidence_quotes": [
+        "a respective score generated based on distance between a query embedding and a respective memory value embedding",
+        "a second machine-learned sequence processing model that is optionally the same as or different from the machine-learned sequence processing model"
+      ],
+      "id": "M134",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "Relevance is claimed disjunctively — an embedding-distance score or a sequence output from a second model — and claim 13 expressly allows that second model to be the same model as the generator. The retriever/generator separation is therefore not a claim limitation: an implementation that prompts one language model both to rank candidate memories and to answer the query still falls within claims 12 and 13.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "spec",
+      "confidence": "inferred",
+      "derived_from": [
+        "M86",
+        "M87",
+        "M80"
+      ],
+      "evidence_quotes": [
+        "the one or more memory values each comprise a respective string, and wherein the memory data comprises a string comprising the one or more respective strings from the one or more memory values",
+        "memory data 308 can include a concatenated string of the memory values contained in the memory objects"
+      ],
+      "id": "M135",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "The floor of the invention is string concatenation. Claim 14 permits every memory value to be a string and the memory data to be the string of those strings; the worked example makes memory data literally a three-line bulleted list of dietary and budget preferences prepended to a prompt. Whatever is novel therefore cannot lie in how the memory is consumed — it must lie in which strings come to exist and how they are maintained over time.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "claim",
+      "confidence": "inferred",
+      "derived_from": [
+        "M80",
+        "M87"
+      ],
+      "evidence_quotes": [
+        "the ordered combination ordered based on corresponding timestamps of the plurality of memory objects",
+        "This ordering allows the machine-learned agent system to prioritize more recent context when making inferences."
+      ],
+      "id": "M136",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "Timestamp ordering is conflict resolution relocated into the prompt. Claim 11 orders the combined memory values by the timestamps of their objects, and the description explains that the ordering alone carries the recency signal even when the timestamps themselves are not rendered. This is the read-time counterpart of the FIG. 8 write-time choice: whichever end declines to resolve the contradiction, the ordering of the list is what the model is left to arbitrate with.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "claim",
+      "confidence": "inferred",
+      "derived_from": [
+        "M63",
+        "M65",
+        "M66",
+        "M67"
+      ],
+      "evidence_quotes": [
+        "the interaction memory datastore comprises multimodal data, and wherein the memory data is based on a first memory object associated with a first data modality and a second memory object associated with a second data modality",
+        "Interaction memory datastore 110 can be multimodal.",
+        "Video data can include a combination of image data and audio synchronized over time."
+      ],
+      "id": "M137",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "Multimodality is claimed as a pair, not as a general capacity. Claim 2 requires the memory data to rest on one object in a first modality and a second object in a second modality, and claim 3 enumerates exactly three admissible pairs: audio with image, text with image, text with audio. Video, sensor, location and document data are all disclosed as storable memory values, and video is expressly used in the wearable-device examples, yet none of them appears in the claimed pairs. The claimed multimodal scope is narrower than the disclosed one.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "spec",
+      "confidence": "stated",
+      "derived_from": [
+        "M63",
+        "M65",
+        "M66",
+        "M67"
+      ],
+      "evidence_quotes": [
+        "These audio recordings can capture rich contextual information that may be lost in the transcription, such as cadence, tone, inflection, background noise, etc.",
+        "The image data (e.g., video frames, still image captures) can capture rich contextual information that may be lost in captioning, such as environmental information, lighting, colors, mood, facial expressions, body posture, etc.",
+        "An example agent system can leverage a multimodal machine-learned model to process multimodal memories directly to leverage the benefits of the rich context in the native memory modality."
+      ],
+      "id": "M138",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "The specification states that storing a memory in the modality in which the interaction happened preserves signals that transcription or captioning destroys: cadence, tone, inflection and background noise on the audio side; environment, lighting, colour, mood, facial expression and body posture on the image side. This is the stated reason the store must not collapse into a text log, and the reason a multimodal model is wanted to read memories directly rather than read a description of them.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "claim",
+      "confidence": "inferred",
+      "derived_from": [
+        "M88",
+        "M89",
+        "M90",
+        "M91"
+      ],
+      "evidence_quotes": [
+        "wherein the output comprises a plurality of predictions for analytical content that comprises an analysis of the query with respect to the memory data",
+        "The raw outputs may not be surfaced to the user."
+      ],
+      "id": "M139",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "Claims 15 and 16 recite a hidden reasoning pass as a claim element. The model output holds a plurality of predictions for analytical content analysing the query against the memory data; that output is fed back into the same model to produce the response; and the analytical content is not exposed on the user interface. Chain-of-thought over retrieved memory is thus claimed together with a non-exposure limitation, so the hiding of the intermediate reasoning is itself part of what is asserted, not an implementation detail.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "claim",
+      "confidence": "inferred",
+      "derived_from": [
+        "M68",
+        "M80",
+        "M81",
+        "M91"
+      ],
+      "evidence_quotes": [
+        "16. The method of any of the preceding claims, wherein the plurality of predictions for analytical content are not exposed on a user interface associated with the query.",
+        "retrieving, by the machine-learned agent system, and from the interaction memory datastore, the one or more memory values based on a relevance of the one or more memory values to the query"
+      ],
+      "id": "M140",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "The claim set carries antecedent-basis defects that a national-phase examiner will raise. Claim 16 recites the plurality of predictions for analytical content while depending on any of the preceding claims, although that antecedent arises only in claim 15. Claims 4, 11 and 12 recite the one or more memory values and the plurality of memory objects, while claim 1 recites only one or more memory objects and never introduces memory values at all. The any-of-the-preceding-claims style is EPO-shaped drafting, and these are its ordinary casualties.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "spec",
+      "confidence": "inferred",
+      "derived_from": [
+        "M88",
+        "M90"
+      ],
+      "evidence_quotes": [
+        "This piece of information can be stored (e.g., as a string) as a context value in a memory object of the context datastore.",
+        "the output includes a plurality of predictions for analytical content that includes an analysis of the query with respect to the context data"
+      ],
+      "id": "M141",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "Vestigial context-management vocabulary survives inside the memory framing. [0054] stores information as a context value in a memory object of the context datastore; [0143] calls the invention a dynamic context datastore; [0144] speaks of context objects and structured context management. Most consequentially, summary paragraph [0018] describes the analytical content as an analysis of the query with respect to the context data where claim 15 says memory data. The disclosure was rewritten from a context framing into a memory framing and the summary was left unconformed to the claim it summarises.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "spec",
+      "confidence": "inferred",
+      "derived_from": [
+        "M58",
+        "M68"
+      ],
+      "evidence_quotes": [
+        "general recall of baseline information applicable to multiple different queries can be recalled offline and cached by memory model 105 to improve latency at runtime",
+        "memory model 105 can maintain a cached memory snapshot of top-K memory values"
+      ],
+      "id": "M142",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "Recall need not be responsive to the query. The description allows the recall cycle to run offline in advance and to hold a cached snapshot of top-K memory values that is inserted into inputs generally. Claim 1 requires only that memory data be accessed, not that the access be triggered by or scoped to the query, so a system that maintains a rolling memory preamble and never performs a per-request lookup still reads on the independent claim.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "spec",
+      "confidence": "inferred",
+      "derived_from": [
+        "M57",
+        "M58"
+      ],
+      "evidence_quotes": [
+        "one user can be a corporate entity associated with a corporate account",
+        "In this manner, for instance, multiple overlapping memories can be stored and accessed as desired."
+      ],
+      "id": "M143",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "The word user is defined so broadly — account, sub-account, individual, corporation, legal entity, administrator, or another computer-implemented agent — that user-specific becomes an addressing rule rather than a privacy boundary. The description layers memories across a personal profile, a business profile and a shared account-level memory, and lets employees of a corporate user reach memory linked to the corporate account. The scoping in claim 1 therefore says where a memory is filed, not who is protected from it.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "claim",
+      "confidence": "inferred",
+      "derived_from": [
+        "M109",
+        "M110",
+        "M111",
+        "M112"
+      ],
+      "evidence_quotes": [
+        "One or more non-transitory computer-readable media storing instructions that are executable by one or more processors to cause a computing system to perform operations, the operations comprising the method of any of the preceding claims.",
+        "Interaction memory datastore 110 can be implemented locally to machine-learned agent system 100 (e.g., on a same device or system) or remotely from machine-learned agent system 100 (e.g., on a different device or system)."
+      ],
+      "id": "M144",
+      "kind": "implication",
+      "numeric_refs": [
+        "M115",
+        "M116",
+        "M117",
+        "M118",
+        "M119"
+      ],
+      "statement_en": "The apparatus claims are deployment-agnostic boilerplate. Claims 23 to 25 are the standard media, system and computer-program-product triplet referring back to the method of any preceding claim, and the hardware disclosure behind them is generic — processor(s) 51 with memory 52 holding instructions 54 on the device side, processor(s) 61 with memory 62 holding instructions 64 on the server side. Both the datastore and the model system are expressly allowed to sit locally or remotely, so nothing in the claims requires on-device memory and the set reads equally on a wholly server-side deployment.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "effects",
+      "confidence": "inferred",
+      "derived_from": [
+        "M58",
+        "M60",
+        "M68"
+      ],
+      "evidence_quotes": [
+        "This can provide efficient use of computational resources by avoiding the processing of additional inputs and rendering of additional outputs for a given task.",
+        "increased energy efficiency can provide for less energy to be used to perform a given task",
+        "An amount of heat pollution in an environment (e.g., by the processors/storage locations) can be reduced by implementing more energy-efficient training or inference operations."
+      ],
+      "id": "M145",
+      "kind": "implication",
+      "numeric_refs": [],
+      "statement_en": "The asserted benefit chain runs: fewer turns, therefore fewer inputs parsed and outputs rendered, therefore lower latency and load, therefore less energy, therefore less carbon and heat pollution. The first two links are memory-specific and argued from the mechanism. The last two are generic energy-efficiency boilerplate attached at the end, tied to no memory-specific measurement, and would read identically in any filing about making inference cheaper.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "basis": "effects",
+      "confidence": "inferred",
+      "derived_from": [
+        "M58",
+        "M68",
+        "M92"
+      ],
+      "evidence_quotes": [
+        "This can reduce latency in response to queries by reducing a complexity of an inference task.",
+        "This reduces the computational load on the machine-learned model during online inference, as the system can respond by processing concise, relevant information instead of large amounts of raw data (e.g., such as a full transcript of all prior interactions)."
+      ],
+      "id": "M146",
+      "kind": "implication",
+      "numeric_refs": [
+        "M113",
+        "M114",
+        "M115",
+        "M116",
+        "M117",
+        "M118",
+        "M119",
+        "M120",
+        "M121",
+        "M122",
+        "M123"
+      ],
+      "statement_en": "There is no quantitative performance evidence anywhere in the document. Exhaustive numeric harvesting over the grounded specification spans and the bibliographic face returned only drawing reference numerals and the filing metadata — no benchmark, no latency figure, no accuracy or storage measurement, no comparison against any baseline. Every efficiency assertion is accordingly structural and argumentative: the disclosure claims that fewer interactions and pre-processed memory objects will cost less, and never says how much less.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "asserted_effect": "The specification asserts that an intelligently managed, dynamic interaction memory datastore lets the system begin execution from a single interaction where a traditional system would have to come back for details, avoiding the processing of additional inputs and the rendering of additional outputs for the task.",
+      "background_problem": "Agent systems without a memory capability make the user re-enter the same information across turns and across sessions, and must interrupt with follow-up prompts whenever a request omits a detail the user believes it has already given. The specification's own examples are a calendar entry at a dentist during a lunch break, where neither the dentist nor the lunch interval can be resolved, and a request that omits a previously stated dietary restriction.",
+      "delta": "No measurement is offered on either side. The stated difference is structural: context that the compared systems must re-solicit synchronously is instead retrieved from a user-specific store assembled out of prior interactions. The saving is argued in counts of interactions, not in time, tokens or cost.",
+      "id": "M147",
+      "kind": "positioning",
+      "numeric_refs": [],
+      "quotes": [
+        "Without a memory of useful context, traditional agent devices may require entry of the same information multiple times over the same or multiple sessions in order to perform the same or similar tasks.",
+        "an example machine-learned agent system, leveraging a memory according to the present disclosure, can initiate execution with a single interaction"
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "asserted_effect": "Memory grounded in what the user gave the agent directly over a history of interactions is asserted to give improved control over stored contextual information: the user can withhold, can permit a limited purpose, and can instruct the system to forget afterwards.",
+      "background_problem": "The alternative the specification names is exposing the agent to external application programming interfaces that fetch context from third-party data sources. It argues three defects: such sources were never curated by the agent against this user's interactions, the agent cannot keep them fresh, and they bundle sensitive material with the useful material — the dietary restriction that lives inside a health or medical-communication application.",
+      "delta": "Structural. The unit at which permission is granted moves from the data source to the individual memory object, replacing an all-or-nothing grant over a whole application with per-memory admission. No comparative figure of any kind is given, and the argument that the store stays fresher is asserted rather than demonstrated.",
+      "id": "M148",
+      "kind": "positioning",
+      "numeric_refs": [],
+      "quotes": [
+        "Under traditional approaches to enabling external data sources, the user may be faced with an all-or-nothing choice, which may be undesirable in some circumstances.",
+        "The user can decline to provide information that the user does not wish to share, or the user can instruct the agent system to use the information for limited purposes and subsequently forget."
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "asserted_effect": "Interaction-derived memory is asserted to carry the disambiguating context a generic external source lacks, and thereby to avoid a class of interruption the specification describes in physiological terms — arrested auditory and visual attention, diverted gaze, interrupted utterance, and the switching cost of returning to the abandoned task.",
+      "background_problem": "Even when an external source holds the datum, it may not be contextualised for the particular interaction. The specification's illustration is a request to call Blake where the user has both a best friend and a dentist of that name: the contact list contains the answer and still cannot select it, so the system must interrupt to ask.",
+      "delta": "Structural, and unusually the delta is argued in human rather than computational currency. The switching cost is called a measurable interval, but no interval is measured; it is invoked as a category of harm the memory avoids, not as a quantity the memory reduces by some amount.",
+      "id": "M149",
+      "kind": "positioning",
+      "numeric_refs": [],
+      "quotes": [
+        "a user may have a best friend named Blake",
+        "a switching cost can refer to a measurable interval of time required for the human brain to switch from performing any other task to the task of responding to the follow-up event"
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "asserted_effect": "The specification asserts that preferences parsed and stored at an earlier time let the agent answer such prompts asynchronously on the user's behalf in near real time, completing the task without initiating a synchronous interaction event when the task actually arises, and reducing the latency between the triggering event and the executed response.",
+      "background_problem": "Existing systems render configuration prompts at the moment a browser loads a web resource — typically for the data-handling parameters of an analytics system — and generally require the user to perceive and answer the prompt synchronously, at that moment, before the underlying content is usable.",
+      "delta": "Structural, and this is the document's strongest stated delta: it claims the arrangement provides a mechanism for controlling a computing device that would not be possible without the datastore — a difference in kind rather than degree. It remains an assertion; no latency measurement accompanies it, and the sentence making the claim still uses the superseded term context datastore.",
+      "id": "M150",
+      "kind": "positioning",
+      "numeric_refs": [],
+      "quotes": [
+        "Generally, existing systems require synchronous perception of and response to the prompt (e.g., inputting a configuration parameter).",
+        "In this manner, for instance, the task can be completed without initiating a synchronous interaction event at the time of the task performance.",
+        "example implementations provide a mechanism for controlling a computing device that would not be possible if the machine-learned agent system did not implement an intelligently managed, dynamic context datastore as described herein"
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "asserted_effect": "Pre-processing interactions offline into structured, high-quality memory objects holding key features and metadata is asserted to reduce the runtime computational load, to lower latency by reducing the complexity of the inference task, and to move the curation work onto a time-shifted schedule away from peak demand.",
+      "background_problem": "The naive way to give a model memory is to prepend the raw history — an exhaustive record of prior interactions, a full transcript — to the query. The specification argues this is both expensive at inference time and, for a particular task, sometimes less reliable or accurate than a curated input.",
+      "delta": "Structural, plus an unquantified scheduling claim. Both the accuracy assertion and the load assertion are stated without figures for either the transcript baseline or the curated alternative, so what is offered is a mechanism and a direction of effect, not a magnitude.",
+      "id": "M151",
+      "kind": "positioning",
+      "numeric_refs": [],
+      "quotes": [
+        "for obtaining an inference for a particular task can sometimes be less reliable or accurate than inputting clean, curated, and condensed data for the same query",
+        "Example machine-learned agent systems can reduce a computational load at runtime through pre-processing and storage of high-quality memory data objects."
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "asserted_effect": "Every comparative assertion in the filing is instead made in the detailed description against a baseline the applicant characterises there: some traditional agent systems that lack a memory capability, and some possible alternative approaches that expose external data-source interfaces.",
+      "background_problem": "The formal BACKGROUND section recites only what a machine-learned model is — a computer receives inputs, processes them with a parameterised model, obtains feedback, updates parameters, and is said to learn. It identifies no prior memory or context-management system and cites no document at all.",
+      "delta": "The delta is defined against an applicant-drawn baseline rather than against identified art. The only external literature cited anywhere in the disclosure supports the generic model machinery — transformer, mixture-of-experts, tokenisation, the applicant's own Gemma, PaliGemma and Gemini papers — and none of it is offered as prior art for the memory mechanism. An examiner's characterisation of the closest art is therefore entirely unanticipated by the document.",
+      "id": "M152",
+      "kind": "positioning",
+      "numeric_refs": [],
+      "quotes": [
+        "A computer can receive input(s).",
+        "some traditional agent systems that lack a memory capability may lead to interruptions or prompts to process additional inputs and render additional outputs to perform a task"
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "asserted_effect": "The asserted contribution is the layer around that model — generating, curating, retrieving, updating and forgetting user-specific memory objects — so as to condition an otherwise unmodified sequence processing model on what the user said before.",
+      "background_problem": "The filing does not position itself against a rival memory architecture. It positions the memory layer against its own model stack operated without one: the sequence processing model is treated throughout as a supplied component, reached through machine-learned model system(s) 118 and described generically at FIG. 12 to FIG. 17, and the surrounding platform, training and inference chapters are shared boilerplate rather than contributed matter.",
+      "delta": "No change to model architecture, training or parameters is claimed. Claim 1 requires only that the model process an input data structure built from the query and the memory data, so the entire delta sits in what enters the prompt and in how that content is maintained between prompts. The timing supports the reading: priority 2024-12-11 from US provisional 63/730,845, PCT filing exactly one Paris year later on 2025-12-11, publication 2026-06-18 as WO2026-128750A1 — a memory-layer filing made from inside an established model programme rather than alongside a model result.",
+      "id": "M153",
+      "kind": "positioning",
+      "numeric_refs": [
+        "M120",
+        "M121",
+        "M122",
+        "M123"
+      ],
+      "quotes": [
+        "Machine-learned model system(s) 118 can manage and perform execution of one or more machine-learned models based on inputs received from machine-learned agent system 100.",
+        "inputting, by the machine-learned agent system and to a machine-learned sequence processing model, an input data structure based on the query and the memory data"
+      ],
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "figure": "FIG-1",
+      "id": "M154",
+      "kind": "figure_note",
+      "numerals": [
+        "100",
+        "102",
+        "104",
+        "105",
+        "106",
+        "108",
+        "110",
+        "112",
+        "114",
+        "116",
+        "118",
+        "120",
+        "122",
+        "124"
+      ],
+      "status": "active",
+      "superseded_by": null,
+      "what_it_shows_en": "The whole data path of machine-learned agent system 100 in one line. Input interface(s) 102 yield query 104; memory model 105 runs recall cycle 106, issuing memory query 108 to interaction memory datastore 110 and taking back memory response 112, from which memory data 114 is composed; memory data 114 is packed into input data structure 116 and handed to machine-learned model system(s) 118, which returns output data structure 120; response 122 is derived from that and emitted through output interface(s) 124. The five steps of independent claim CL-1 are read off this path."
+    },
+    {
+      "figure": "FIG-2",
+      "id": "M155",
+      "kind": "figure_note",
+      "numerals": [
+        "110",
+        "202-1",
+        "202-M",
+        "204-1",
+        "204-M",
+        "206-1",
+        "206-M"
+      ],
+      "status": "active",
+      "superseded_by": null,
+      "what_it_shows_en": "The interior of interaction memory datastore 110: memory objects 202-1 through 202-M, each holding one or more memory values 204-1 through 204-M together with respective memory metadata 206-1 through 206-M. Only these two slots per object are drawn, so the support record and the inter-object graph edges that the description relies on for reconciliation and updating are not depicted here."
+    },
+    {
+      "figure": "FIG-3",
+      "id": "M156",
+      "kind": "figure_note",
+      "numerals": [
+        "105",
+        "106",
+        "108",
+        "110",
+        "300",
+        "302",
+        "304",
+        "306",
+        "308"
+      ],
+      "status": "active",
+      "superseded_by": null,
+      "what_it_shows_en": "One recall cycle 106 worked through end to end. Memory model 105 queries interaction memory datastore 110 with input 300 and receives three memory objects 302, 304 and 306 — a budget preference, a vegetarian diet and a low-sodium diet, each carrying tags, creation and update dates, a confidence value and a support list. Memory data 308 is what survives the reduction: a three-line concatenation of the memory values alone, with all metadata dropped."
+    },
+    {
+      "figure": "FIG-4",
+      "id": "M157",
+      "kind": "figure_note",
+      "numerals": [
+        "105",
+        "118",
+        "400",
+        "402"
+      ],
+      "status": "active",
+      "superseded_by": null,
+      "what_it_shows_en": "Creation of a new memory object 402 out of input 400. Memory model 105 calls machine-learned model system(s) 118 to predict a memory value from the input, tags for later retrieval, a support object holding the original content and its timestamp, and a confidence value — set low in the worked example precisely because a single supporting interaction stands behind the inference."
+    },
+    {
+      "figure": "FIG-5",
+      "id": "M158",
+      "kind": "figure_note",
+      "numerals": [
+        "105",
+        "110",
+        "118",
+        "402",
+        "500",
+        "502"
+      ],
+      "status": "active",
+      "superseded_by": null,
+      "what_it_shows_en": "Revision of memory object 402 into updated memory object 502 on a later input 500. The prior support record and the new statement are given to a machine-learned model together, and what comes back is a firmer memory value, a raised confidence value and an extended support record; the updated object is written back into interaction memory datastore 110. This is the update path of claim 19, as against the replacement path of claim 18."
+    },
+    {
+      "figure": "FIG-8",
+      "id": "M159",
+      "kind": "figure_note",
+      "numerals": [
+        "100",
+        "105",
+        "110",
+        "118",
+        "704",
+        "802",
+        "804",
+        "806"
+      ],
+      "status": "active",
+      "superseded_by": null,
+      "what_it_shows_en": "A memory update cycle 704 that writes without first reading the store. Cached input(s) 802 go to machine-learned model system(s) 118 for a judgement about what is worth remembering; memory data update(s) 804 come back; memory model 105 parses them and executes memory data write 806 into interaction memory datastore 110. Nothing already stored is consulted, so every contradiction is left for query time to settle."
+    },
+    {
+      "figure": "FIG-10",
+      "id": "M160",
+      "kind": "figure_note",
+      "numerals": [
+        "100",
+        "105",
+        "110",
+        "118",
+        "704",
+        "804",
+        "904",
+        "1002"
+      ],
+      "status": "active",
+      "superseded_by": null,
+      "what_it_shows_en": "The maintenance variant of memory update cycle 704, running on no new user input at all. Memory model 105 sends memory update request(s) 1002 together with current memory data 904 read out of interaction memory datastore 110, so that machine-learned model system(s) 118 can return memory data update(s) 804 that prune, consolidate, split or progressively degrade what is already stored."
+    },
+    {
+      "figure": "FIG-13",
+      "id": "M161",
+      "kind": "figure_note",
+      "numerals": [
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "status": "active",
+      "superseded_by": null,
+      "what_it_shows_en": "The generic sequence processing model 4 that the agent system treats as a supplied part. Input(s) 2 are tokenised and embedded into input sequence 5, prediction layer(s) 6 emit output sequence 7, and output(s) 3 are formed from it. This is both the model that consumes input data structure 116 and the model that claim 13 allows to double as the second sequence processing model scoring memory relevance."
+    },
+    {
+      "figure": "FIG-18",
+      "id": "M162",
+      "kind": "figure_note",
+      "numerals": [
+        "51",
+        "52",
+        "54",
+        "61",
+        "62",
+        "64"
+      ],
+      "status": "active",
+      "superseded_by": null,
+      "what_it_shows_en": "The generic networked deployment behind the apparatus claims: a client-side computing device with processor(s) 51 and memory 52 storing instructions 54, and a server computing system with processor(s) 61 and memory 62 storing instructions 64, joined over a network alongside a model development platform system and third-party systems. Either side can host the agent system, the interaction memory datastore and the model system, which is why the claims impose no locality."
+    },
+    {
+      "figure": "FIG-21",
+      "id": "M163",
+      "kind": "figure_note",
+      "numerals": [
+        "2100",
+        "2102",
+        "2104",
+        "2106",
+        "2108",
+        "2110"
+      ],
+      "status": "active",
+      "superseded_by": null,
+      "what_it_shows_en": "The flow chart of method 2100, whose five blocks map one to one onto the five steps of independent claim CL-1: receiving the query at 2102, accessing memory data from the interaction memory datastore at 2104, inputting the input data structure at 2106, generating the output at 2108, and outputting the response at 2110. No writing, forgetting or maintenance step appears in this flow."
+    }
+  ],
+  "patent": {
+    "applicants": [
+      "GDM HOLDING LLC"
+    ],
+    "assignee": "GDM HOLDING LLC",
+    "classifications": {
+      "cpc": [
+        "G06F 16/41"
+      ],
+      "ipc": [
+        "G06F 16/41"
+      ]
+    },
+    "dates": {
+      "filing": "2025-12-11",
+      "priority": "2024-12-11",
+      "publication": "2026-06-18"
+    },
+    "inventors": [
+      "HASSABIS, Demis",
+      "THOTA, Chandrasekhar",
+      "CHI, Ed Huai-hsin",
+      "WAYNE, Gregory Duncan"
+    ],
+    "jurisdiction": "WO",
+    "kind_code": "A1",
+    "number": "WO2026-128750A1",
+    "priority_claims": [
+      {
+        "date": "2024-12-11",
+        "jurisdiction": "US",
+        "number": "63/730,845"
+      }
+    ],
+    "source_digest": "sha256:64d5d6271d2921e9bf973dec4a8ef997896c4fcdfa120a55a4d305fb25b7154e",
+    "source_path": "00-source/patent.md",
+    "title": "DYNAMIC INTERACTION MEMORY DATASTORE FOR MACHINE-LEARNED AGENT SYSTEMS"
+  },
+  "provenance": {
+    "engine_commit": "d4e6ca2d54c2ba6c3a9caf0c92042af0554a0676",
+    "produced_at": "2026-09-01T02:59:58Z",
+    "read_runs": [
+      "read-a:canonical",
+      "read-b:convergence-peer"
+    ]
+  },
+  "reader_version": "0.8.0",
+  "run_id": "gdm-wo2026128750a1-agent-memory",
+  "schema": "material-spec/v0",
+  "spec_version": 1,
+  "status": "draft"
+}
