@@ -286,11 +286,10 @@ def _divergence(rules: Rules, axis_id: str, left: set, right: set) -> dict | Non
     def render(values: set) -> list:
         # 정렬해서 자른다 — 집합의 반복 순서는 실행마다 달라질 수 있고, 상신 서식이
         # 결정론이 아니면 같은 두 독해가 매번 다른 보고서를 낸다.
-        out = []
-        for value in sorted(values, key=_sort_key)[:limit]:
-            text = _flatten(value)
-            out.append(text if len(text) <= width else text[:width] + suffix)
-        return out
+        return [
+            _truncate_parts(value, width, suffix)
+            for value in sorted(values, key=_sort_key)[:limit]
+        ]
 
     return {
         "axis": axis_id,
@@ -310,3 +309,31 @@ def _flatten(value) -> str:
 
 def _sort_key(value) -> str:
     return _flatten(value)
+
+
+# 부분 하나에 최소한 남겨 둘 폭. 원소가 여럿이어도 각 부분이 식별 가능해야 한다.
+_MIN_PART_CHARS = 24
+
+
+def _truncate_parts(value, width: int, suffix: str) -> str:
+    """구성 부분마다 **예산을 나눠** 자른다(백로그 G-10 의 처분 · 2026-09-01).
+
+    ★ 구 구현은 이어 붙인 뒤 **앞에서** 잘랐다. 그러면 앞 부분(간선의 부모 문언)이 긴 축에서
+    예산을 통째로 먹고 **뒤 부분(자식)이 아예 들어가지 않는다.** 부모가 같은 항목들이
+    **저장 문자열까지 동일**해지고, 갈린 자리를 보이려고 존재하는 보고가 **정확히 그때**
+    아무것도 못 보인다.
+
+    실측(2026-09-01 · `gdm-wo2026128750a1-agent-memory`): `tree-edges` 의
+    `only_in_canonical` 5건이 전부 같은 202자였다 — 부모가 868 B 청구항 전문이었기 때문이다.
+    표시만의 문제가 아니라 **파일에 잘린 채 저장**되어 사후 복구도 되지 않았다.
+
+    그래서 폭은 이제 **부분당 예산**이며 전체 길이가 `width` 를 넘을 수 있다. 그것이 의도다 —
+    이 값의 목적은 파일 크기 절약이 아니라 **한 항목을 다른 항목과 구별 가능하게 두는 것**이다.
+    """
+    parts = [_flatten(part) for part in value] if isinstance(value, tuple) else [_flatten(value)]
+    if not parts:
+        return ""
+    share = max(width // len(parts), _MIN_PART_CHARS)
+    return " | ".join(
+        part if len(part) <= share else part[:share] + suffix for part in parts
+    )
