@@ -318,3 +318,22 @@ grep 의 패턴 목록에 이번 다섯을 더했다.
 **열 번째 FAIL 에 대한 총괄 자기 점검.** 값은 열 번 맞았고, 남는 지적은 판마다 **수락 체계가 「주장」을 「반증」으로 바꾸지 못한 자리**다 — 이번엔
 음성 시험이 검사의 존재를 증명하지 못하는 형태(동반 변조 · 개수 기준). 검증기든 관문이든 「X 를 검사한다」고 적으면 「X 만 바꾼 입력이 X 의 이름으로
 떨어진다」는 시험이 붙어야 그 문장이 산다 — [[verification-design-principles]] 「심은 결함 100% 검출」의 필드 단위 적용. 이 규칙을 v12 표 T-V 로 성문화했다.
+
+
+---
+
+## §17 11차 도전(설계 v12) 지적 AE-1 ~ AE-3 의 처분 — 2026-09-02 추기 (총괄 저작)
+
+원문 = `docs/lessons/2026-09-02-sol-challenge-t26-design-v12.md`. 판정 FAIL · 3건(HIGH 1 · MED 2) · 새 재정 0 · AD-2 closed · AD-1·AD-3 partially ·
+그 밖 전건 closed. 값 8,190 칸은 열한 번째 일치. 셋 전부 **수용** → **v13** → 12차 도전.
+
+| ID | 격 | 지적 요지 | 처분 | v13 에서 어떻게 닫았나 |
+|---|---|---|---|---|
+| **AE-1** | HIGH | 표 T-V 가 「필드 하나씩」이지 「**제약** 하나씩」이 아니다 — `check_ids` 토큰 아래 길이·고유·비공·convergence·집합 상등이 겹쳐 있어 `read.schema → read.__ghost__` 치환(다른 넷 유지)이 없으면 집합 상등 검사를 빼도 통과 · `$comment` 부분 문자열 셋 중 하나만 빼도 통과 · `expected_counts` 개별 계수 float · `provenance.engine_path` 단일 상대경로 등 | **수용** | 진단 코드 = **제약 ID**(검증기 상수 `CONSTRAINT_IDS` · 독립 제약 하나 = ID 하나 · 타입·길이·고유·집합 상등·부분 문자열 하나·리터럴 상등 각각 별개) · 표 T-V 를 제약 ID 단위로 재작성(각 행 = 그 제약만 깨는 변조) · B-0 시험이 `set(CONSTRAINT_IDS) == 표의 ID 집합`(양방향)과 각 변조의 그 ID 위반 실재를 검사 · 라운드 B T-7 ③ 도 같은 표 |
+| **AE-2** | MED | `test "$(git diff --name-only … \| wc -l)" = 0` — 명령 치환은 `test` 의 인자일 뿐이라 `git diff` 가 nonzero 여도 `wc -l` 이 `0` 을 내면 통과 · `set -e` 미발동(도전자 실측) | **수용** | 둘째 줄을 `git diff --quiet "$BASE" HEAD -- engine contracts reader` 로(차이 → exit 1 · git 오류 → ≥ 2 · 파이프·치환 없이 `set -e` 가 직접 본다) · B-0 ⒟ `BASE=deadbeef0` 역프로브(rc ≠ 0 · 파일 부재) |
+| **AE-3** | MED | 정본 블록이 `$MAIN/.venv/bin/python` 을 고정 — B-0 성공 시험의 `MAIN` 은 시험용 클론이라 `.venv` 가 없다(`git ls-files .venv/bin/python` → 미추적) · 생성기는 HEAD 앞 7자와 비교하는데 B-0 의 `BASE` 가 전체 해시인지 미정 | **수용** | `PYTHON_BIN="${PYTHON_BIN:-$MAIN/.venv/bin/python}"` 매개 추가(기본값 = 실제 실행) · B-0 공통 환경 `PYTHON_BIN=/home/laptop/projects/patent-docent/.venv/bin/python` · `BASE=$(git -C <클론> rev-parse --short=7 HEAD)`(⒝ 는 `HEAD~1` 의 7자) |
+
+**열한 번째 FAIL 에 대한 총괄 자기 점검.** 10차의 「한 필드씩」을 11차가 「한 제약씩」으로 한 겹 더 내렸다 — 음성 시험의 단위는 필드가 아니라 **검사 코드가
+분기하는 단위**여야 검사 하나의 부재를 드러낸다. AE-2 는 셸 의미(명령 치환 안의 파이프 실패는 `set -e` 밖)를 총괄이 실측 없이 적은 자리이고, AE-3 은
+「시험용 클론」이라는 말을 쓰면서 그 클론에 무엇이 없는지(`.venv`)를 따라가지 않은 자리다. 둘 다 「매개화한 명령을 시험이 실제로 돌릴 때 무엇이 필요한가」를
+끝까지 실행해 보지 않은 결과 — 발주 전에 총괄이 그 블록을 시험용 클론에서 한 번 돌려 봤어야 했다.

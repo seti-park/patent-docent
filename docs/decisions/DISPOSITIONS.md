@@ -79,6 +79,7 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v9.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v10.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v11.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v12.md | 등재 | — |
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -184,6 +185,11 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v11.md | AD-1 | HIGH | 수용 | 검증기 음성 시험이 여러 필드 동반 변조 + 「위반 ≥ 1」만 요구 — 검사 하나를 빼도 전건 통과 — v12 = 위반 문장에 필드 경로 토큰 · 표 T-V 한 필드씩 · 각 시험은 그 토큰의 위반 실재 | `D-20260902-02-t26-design-challenge.md` §16 |
 | 2026-09-02-sol-challenge-t26-design-v11.md | AD-2 | MED | 수용 | G1 골격 상수에 `judged_at` 부재 · 열거 밖 기계 키 추가 통과 — v12 = 상수에 `judged_at` 열 · 행별 허용 키 집합 정확 일치 · 변조 ㉜㉝ · T-13 | `D-20260902-02-t26-design-challenge.md` §16 |
 | 2026-09-02-sol-challenge-t26-design-v11.md | AD-3 | MED | 수용 | 생성 명령이 fail-fast 아님 · 마지막 줄 미검사 · B-0 시험이 생성기 단독만 — v12 = `set -euo pipefail` + `trap` + `EXIT=0` 대조 · 환경변수 매개 · B-0 시험이 블록 전체 서브프로세스 ⒜⒝⒞ | `D-20260902-02-t26-design-challenge.md` §16 |
+| 2026-09-02-sol-challenge-t26-design-v12.md | AE-1 | HIGH | 수용 | 표 T-V 가 필드 단위라 한 토큰 아래 여러 제약이 겹쳐 검사 하나를 빼도 전건 통과 — v13 = 제약 ID(`CONSTRAINT_IDS`) 진단 · 표를 제약 ID 단위로 · 양방향 상등 + 각 ID 위반 실재 | `D-20260902-02-t26-design-challenge.md` §17 |
+| 2026-09-02-sol-challenge-t26-design-v12.md | AE-2 | MED | 수용 | `test "$(git diff … \| wc -l)" = 0` 이 명령 치환 안 파이프 실패를 삼킴 — v13 = `git diff --quiet` · B-0 ⒟ 무효 ref 역프로브 | `D-20260902-02-t26-design-challenge.md` §17 |
+| 2026-09-02-sol-challenge-t26-design-v12.md | AE-3 | MED | 수용 | 시험용 클론에 `.venv` 없음 · `BASE` 자릿수 미정 — v13 = `PYTHON_BIN` 매개(기본 main `.venv`) · B-0 은 정본 `.venv` 절대경로 · `BASE=git rev-parse --short=7` | `D-20260902-02-t26-design-challenge.md` §17 |
+
+**행 수 = 99**(`등재` 19파일의 지적 전건). **[정정 2026-09-02 · 12차]** 직전 판 **96** — 11차 도전 원문 반입(AE 3)으로 셋 늘었다.
 
 **행 수 = 96**(`등재` 18파일의 지적 전건). **[정정 2026-09-02 · 11차]** 직전 판 **93** — 10차 도전 원문 반입(AD 3)으로 셋 늘었다.
 
