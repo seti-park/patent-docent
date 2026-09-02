@@ -59,7 +59,7 @@ def _check_row(contract: dict, check_id: str) -> dict:
 
 
 def _run_gate(path: pathlib.Path, optimized: bool = False, self_test: bool = False):
-    command = ["/home/laptop/projects/patent-docent/.venv/bin/python"]
+    command = [sys.executable]
     if optimized:
         command.append("-O")
     command.extend([str(TOOL), "--contract", str(path)])
@@ -233,16 +233,37 @@ def test_contract_engine_constant_bridge_is_bidirectional() -> None:
         pytest.fail(f"RETRY_POINT_IDS가 두 판정점이 아니다: {RETRY_POINT_IDS!r}")
 
 
-def test_ledger_t24_t25_halt_and_t28_beta_derive_exit_retry_independently() -> None:
-    """원장 T24·T25(halt) · T28(β) 도출 — 사본 셋(계약·엔진 상수·관문 상수)과 독립."""
-    derived = set(READ_CHECK_IDS) - {"read.source-digest", CONVERGENCE_CHECK_ID}
+EXIT_UNIVERSE = set(READ_CHECK_IDS) | set(ENGINE_READ_CHECK_IDS)
+# 재정 T24·T25: source-digest halt는 출구 재시도 예산을 쓰지 않는다.
+HALT_EXIT_CHECKS = {"read.source-digest"}
+# 재정 T28 β: convergence가 든 출구 실패 집합은 재디스패치하지 않는다.
+BETA_EXCLUDED = {CONVERGENCE_CHECK_ID}
+# 재정 T22: lane-log 두 검사는 출구 루프 뒤 합류하므로 retry(n) 대상이 아니다.
+POST_LOOP_NO_RETRY = {"read.lane-log-shape", "read.lane-log-digest-value"}
+
+
+def test_ledger_exclusions_derive_exit_retry_independently() -> None:
+    """T22·T24·T25·T28·T29 도출 — 계약·엔진·관문 사본과 독립."""
+    if len(EXIT_UNIVERSE) != 12:
+        pytest.fail(f"T29 출구 검사 우주 기대 12종, 실제 {len(EXIT_UNIVERSE)}종")
+    exclusions = (HALT_EXIT_CHECKS, BETA_EXCLUDED, POST_LOOP_NO_RETRY)
+    if any(not excluded <= EXIT_UNIVERSE for excluded in exclusions):
+        pytest.fail("명시 배제 집합이 T29 출구 검사 우주의 부분집합이 아니다")
+    if any(left & right for index, left in enumerate(exclusions) for right in exclusions[index + 1 :]):
+        pytest.fail("명시 배제 세 집합이 서로 겹친다")
+    derived = EXIT_UNIVERSE - HALT_EXIT_CHECKS - BETA_EXCLUDED - POST_LOOP_NO_RETRY
     if set(EXIT_RETRY_CHECK_IDS) != derived:
         pytest.fail(f"엔진 exit 승인 집합이 원장 도출값과 다르다: {sorted(derived)!r}")
     if set(gate.APPROVED_RETRY_CHECKS["exit"]) != derived:
         pytest.fail(f"관문 exit 승인 집합이 원장 도출값과 다르다: {sorted(derived)!r}")
-    contract_exit = set(_point(load_stage_contract("read", None), "exit")["checks"])
+    contract = load_stage_contract("read", None)
+    contract_exit = set(_point(contract, "exit")["checks"])
     if contract_exit != derived:
         pytest.fail(f"계약 exit 승인 집합이 원장 도출값과 다르다: {sorted(derived)!r}")
+    for check_id in POST_LOOP_NO_RETRY:
+        row = _check_row(contract, check_id)
+        if row.get("action") != "escalate" or "retry" in row or "points" in row:
+            pytest.fail(f"T22 루프 뒤 합류 행이 무재시도 escalate가 아니다: {row!r}")
 
 
 def test_approved_failure_skeleton_matches_contract_exactly() -> None:

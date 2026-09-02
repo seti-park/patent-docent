@@ -92,8 +92,10 @@ def _commit(repo: pathlib.Path, message: str) -> None:
     _require_ok(proc, "fixture commit")
 
 
-def _worktree_delta() -> list[tuple[str, str, str | None]]:
-    status = _git(REPO_ROOT, "status", "--porcelain", "-uall", "-z")
+def _worktree_delta(
+    source_root: pathlib.Path = REPO_ROOT,
+) -> list[tuple[str, str, str | None]]:
+    status = _git(source_root, "status", "--porcelain", "-uall", "-z")
     _require_ok(status, "작업 트리 delta status")
     records = status.stdout.split("\0")
     delta: list[tuple[str, str, str | None]] = []
@@ -116,13 +118,20 @@ def _worktree_delta() -> list[tuple[str, str, str | None]]:
     return delta
 
 
-def _mirror_worktree_delta(clone: pathlib.Path) -> list[str]:
+def _mirror_worktree_delta(
+    clone: pathlib.Path, source_root: pathlib.Path = REPO_ROOT
+) -> list[str]:
     copied: set[str] = set()
     deleted: set[str] = set()
-    for code, relative, old_relative in _worktree_delta():
+    for code, relative, old_relative in _worktree_delta(source_root):
         if old_relative is not None and "R" in code:
+            old_target = clone / old_relative
+            if old_target.is_file() or old_target.is_symlink():
+                old_target.unlink()
+            elif old_target.is_dir():
+                shutil.rmtree(old_target)
             deleted.add(old_relative)
-        source = REPO_ROOT / relative
+        source = source_root / relative
         target = clone / relative
         if source.is_file() or source.is_symlink():
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -143,6 +152,70 @@ def _mirror_worktree_delta(clone: pathlib.Path) -> list[str]:
     if deleted:
         _require_ok(_git(clone, "add", "-u", "--", *sorted(deleted)), "delta 삭제 경로 add")
     return sorted(copied | deleted)
+
+
+def _boundary_source(tmp_path: pathlib.Path, name: str) -> pathlib.Path:
+    source = tmp_path / f"{name}-source"
+    _require_ok(
+        _run(["git", "clone", "-q", "--no-hardlinks", str(REPO_ROOT), str(source)]),
+        f"{name} 원천 clone",
+    )
+    return source
+
+
+def _mirrored_boundary_clone(
+    tmp_path: pathlib.Path, source: pathlib.Path, name: str
+) -> pathlib.Path:
+    clone = tmp_path / f"{name}-mirror"
+    _require_ok(
+        _run(["git", "clone", "-q", "--no-hardlinks", str(source), str(clone)]),
+        f"{name} mirror clone",
+    )
+    mirrored = _mirror_worktree_delta(clone, source_root=source)
+    if mirrored:
+        _commit(clone, f"mirror {name}")
+    clean = _git(clone, "status", "--porcelain")
+    _require_ok(clean, f"{name} mirror status")
+    assert clean.stdout == ""
+    return clone
+
+
+def test_mirror_worktree_delta_rename_boundary(tmp_path: pathlib.Path) -> None:
+    source = _boundary_source(tmp_path, "rename")
+    old_relative = pathlib.Path("reader/READER-VERSION")
+    new_relative = pathlib.Path("reader/READER-VERSION-RENAMED")
+    _require_ok(
+        _git(source, "mv", str(old_relative), str(new_relative)),
+        "rename 원천 git mv",
+    )
+
+    clone = _mirrored_boundary_clone(tmp_path, source, "rename")
+
+    assert not (clone / old_relative).exists()
+    assert (clone / new_relative).is_file()
+
+
+def test_mirror_worktree_delta_deletion_boundary(tmp_path: pathlib.Path) -> None:
+    source = _boundary_source(tmp_path, "deletion")
+    relative = pathlib.Path("reader/READER-VERSION")
+    (source / relative).unlink()
+
+    clone = _mirrored_boundary_clone(tmp_path, source, "deletion")
+
+    assert not (clone / relative).exists()
+
+
+def test_mirror_worktree_delta_untracked_directory_boundary(
+    tmp_path: pathlib.Path,
+) -> None:
+    source = _boundary_source(tmp_path, "untracked-directory")
+    relative = pathlib.Path("reader/untracked-boundary/probe.txt")
+    (source / relative).parent.mkdir()
+    (source / relative).write_text("untracked boundary\n", encoding="utf-8")
+
+    clone = _mirrored_boundary_clone(tmp_path, source, "untracked-directory")
+
+    assert (clone / relative).read_text(encoding="utf-8") == "untracked boundary\n"
 
 
 @pytest.fixture(scope="module")

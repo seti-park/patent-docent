@@ -83,7 +83,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _build_manifest(args: argparse.Namespace, out: str) -> tuple[dict[str, Any], str, str, Any, Any]:
+def _build_manifest(args: argparse.Namespace, out: str) -> tuple[dict[str, Any], str, str, dict[str, Any]]:
     repo_arg = args.repo
     repo = os.path.realpath(repo_arg)
     if not os.path.isabs(repo_arg):
@@ -230,7 +230,7 @@ def _build_manifest(args: argparse.Namespace, out: str) -> tuple[dict[str, Any],
         ],
         "cells": cells,
     }
-    return manifest, tree_head, read_file, run_checks_module, read_stage
+    return manifest, tree_head, read_file, contract
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -239,11 +239,11 @@ def main(argv: list[str] | None = None) -> int:
     if not sys.flags.isolated:
         print("경고: isolated 모드가 아니다; 공개 생성은 python -I를 사용해야 한다", file=sys.stderr)
     try:
-        manifest, tree_head, read_file, run_checks_module, read_stage = _build_manifest(args, out)
+        manifest, tree_head, read_file, contract = _build_manifest(args, out)
         validator = _load_validator()
         violations = validator.validate_manifest(
             manifest,
-            expected_check_ids=set(run_checks_module.READ_CHECK_IDS) | set(read_stage.ENGINE_READ_CHECK_IDS),
+            expected_check_ids={entry["id"] for entry in contract["checks_before_exit"]},
             required_base_commit=args.base_commit,
             required_tree_head=tree_head,
         )

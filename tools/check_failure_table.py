@@ -377,12 +377,6 @@ def load_contract(path: Path) -> dict[str, Any]:
 
 
 def run_self_test(canonical: dict[str, Any]) -> bool:
-    canonical_errors = validate_contract(canonical)
-    if canonical_errors:
-        print("SELF-TEST canonical unexpectedly failed")
-        for error in canonical_errors:
-            print(error)
-        return False
     failures: list[str] = []
     mutations = _mutations()
     for name, mutate in mutations:
@@ -411,6 +405,13 @@ def main(argv: list[str] | None = None) -> int:
         print("EXIT=2")
         return 2
     if args.self_test:
+        canonical_errors = validate_contract(contract)
+        if canonical_errors:
+            print("정본 계약이 승인 골격과 다르다 — self-test 미실행")
+            for error in canonical_errors:
+                print(error)
+            print("EXIT=1")
+            return 1
         ok = run_self_test(contract)
         print(f"EXIT={0 if ok else 1}")
         return 0 if ok else 1
