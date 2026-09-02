@@ -73,6 +73,7 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-audit-round-c.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v4.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v5.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v6.md | 등재 | — |
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -157,6 +158,13 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v5.md | X-1 | BLOCKER | 수용 | 관문이 행 분할을 고정하지 않아 T22 §3 ① 의 lane-log 두 전용 행을 하나로 병합(11→10행)해도 관문 전종·골든 통과 — v6 = G1 이 승인 실패표 골격 전체(순서·키·action·then·label·points)를 상수로 정확 일치 · T-13 · `test_m23` 두 조회 다른 행 · 변조 ㉕㉖ | `D-20260902-02-t26-design-challenge.md` §10 |
 | 2026-09-02-sol-challenge-t26-design-v5.md | X-2 | HIGH | 수용 | T-1 이 finding 을 더한 `element-set` 은 escalation-trigger 축(exact-match 축 = independent-count·dependent-count·dependent-set) — 자기모순 판정서. v6 = wrapper 가 peer spec 사본에 독립항을 복제해 검사기 자신이 `independent-count` fail · 판정서 축 `fail` 기록까지 검사 | `D-20260902-02-t26-design-challenge.md` §10 |
 | 2026-09-02-sol-challenge-t26-design-v5.md | X-3 | MED | 수용 | `upstream-defect` 행의 `reject-upstream` 이 어디에도 고정되지 않아 `halt` 로 바꿔도 통과(PD-M5 이연 처분의 계약 변경) — v6 = G1 골격 고정이 kind 행 action·then·label 을 덮는다 · 변조 ㉗ | `D-20260902-02-t26-design-challenge.md` §10 |
+| 2026-09-02-sol-challenge-t26-design-v6.md | Y-1 | HIGH | 수용 | T-1 에 폐기된 v5 지시(`element-set` finding 수동 추가)와 새 지시가 공존 — 총괄의 패치 잔재. v7 = T-1 행을 한 절차만 남겨 재작성 | `D-20260902-02-t26-design-challenge.md` §11 |
+| 2026-09-02-sol-challenge-t26-design-v6.md | Y-2 | MED | 수용 | `test_m21` :533 은 원천 다이제스트 행 시험인데 `retry-repeat` 조회로 바꾸라 적었다 — v7 = :533 → `failure_rows_for_checks(contract, {"read.source-digest"})` · :733 → `failure_row_of_kind(…, "retry-repeat")` | `D-20260902-02-t26-design-challenge.md` §11 |
+| 2026-09-02-sol-challenge-t26-design-v6.md | Y-3 | MED | 수용 | 관문이 `max_retries` 를 보지 않아 `early.max_retries: 2` 가 관문 관측면 불변으로 통과(존치 `test_m17` 이 잡지만 관문 구멍) — v7 = G3 에 `{n} == {max_retries}` 결속 · 변조 ㉙ | `D-20260902-02-t26-design-challenge.md` §11 |
+| 2026-09-02-sol-challenge-t26-design-v6.md | Y-4 | LOW | 수용 | 계수 리터럴(24/28)이 §0·§2.10·§2.11 에 다시 들어가 W-4 재발 — 총괄의 패치 잔재. v7 = 리터럴 전부 제거 · §2.7 열거만 정본 · 관문 출력이 센다 | `D-20260902-02-t26-design-challenge.md` §11 |
+| 2026-09-02-sol-challenge-t26-design-v6.md | Y-5 | LOW | 수용 | T-12 「유령 행은 이 시험만 잡는다」가 v6 에서 거짓(G1 골격이 먼저 잡는다) — v7 = 목적 문언을 「관문 오라클과 독립적인 계약↔엔진 상수 다리」로 | `D-20260902-02-t26-design-challenge.md` §11 |
+
+**행 수 = 80**(`등재` 13파일의 지적 전건). **[정정 2026-09-02 · 6차]** 직전 판 **75** — 5차 도전 원문 반입(Y 5)으로 다섯 늘었다.
 
 **행 수 = 75**(`등재` 12파일의 지적 전건). **[정정 2026-09-02 · 5차]** 직전 판 **72** — 4차 도전 원문 반입(X 3)으로 셋 늘었다.
 

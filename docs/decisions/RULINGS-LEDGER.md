@@ -121,6 +121,7 @@
 | 2026-09-02 | `2026-09-02-sol-audit-round-c.md` | **라운드 C(`852dcdd`) sol xhigh 감사(complete · 격리 사본 workspace-write)** — **FAIL 6건**(HIGH 1 · MED 3 · LOW 2) · C-1 = 4b 처분 선행 출처 부재(Owner 사후 확인) · C-2~C-4 = 관문 결함 → 라운드 C′ · 처분표 `D-20260902-03` §6 |
 | 2026-09-02 | `2026-09-02-sol-challenge-t26-design-v4.md` | **T26 설계 v4 M1b 3차 도전**(sol xhigh · complete) — **FAIL 4건**(BLOCKER 1 · HIGH 1 · MED 1 · LOW 1 · 새 재정 0) · B/V/N 전건 closed · W-1 = 승인 재시도 8종 미결속(동시 변조 통과) → v5 · 처분표 `D-20260902-02` §9 |
 | 2026-09-02 | `2026-09-02-sol-challenge-t26-design-v5.md` | **T26 설계 v5 M1b 4차 도전**(sol xhigh · complete) — **FAIL 3건**(BLOCKER 1 · HIGH 1 · MED 1 · 결정 공백 0 · 새 재정 0) · W 전건 closed · X-1 = 행 분할 미고정(lane-log 병합 통과) · X-2 = T-1 주입 축 오류 → v6 · 처분표 `D-20260902-02` §10 |
+| 2026-09-02 | `2026-09-02-sol-challenge-t26-design-v6.md` | **T26 설계 v6 M1b 5차 도전**(sol xhigh · complete) — **FAIL 5건**(HIGH 1 · MED 2 · LOW 2 · BLOCKER 0 · 새 재정 0) · X-1·X-3 closed · Y-1·Y-4 = 총괄 패치 잔재 · Y-3 = 관문 예산 미결속 → v7 · 처분표 `D-20260902-02` §11 |
 
 **★ 회수분에는 격이 붙는다(재정 2026-08-19 S8 — 재정 P-11의 부칙).** 위 4파일은 하네스 결함으로 죽은 1차 세션에서 사후 회수한 감수 원문이며, **격 표시가 의무**다. 격의 규정은 넷이다 — ① **앵커가 있는 지적은 격과 무관하다**(좌표가 실재하면 지적도 실재한다) ② 판정표 자격은 `complete`·`recovered`에 있고 `partial`은 **참고 전용**이며, 회수분의 **미확인 표기 항목은 커버리지에서 제외**한다 ③ 같은 항목에 상반 판정이 오면 **자동 승자 없이 둘 다 등재 + 불일치 표시 + 상신**(선례 = 재정 Q8 ④) ④ **회수분만으로 진행할 수 있고** 재실행 여부는 발주자의 판단이다. 원장 = `ruling-20260819-03-S1-S9.md` §2 S8, 절차 반영 = `docs/SPEC.md` §8.3 9항.
 
