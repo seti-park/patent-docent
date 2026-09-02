@@ -6,9 +6,9 @@
 
 | 발견 | Owner 처분 | 집행 | 시점 |
 |---|---|---|---|
-| F7 (`CLAUDE.md` §6 → HANDOFF 포인터 + 관문표 · 구 본문 `docs/IMPLEMENTATION-HISTORY.md` 이동) | 승인 | 이 문서를 반입하는 커밋 | 즉시 |
-| F3~F6 (`~/.claude/agents` 4파일 — effort 표 정합 · description · 폐지 흔적 · 금지 절 응축) | 승인 | agents 리포 커밋(파일 4) · LEDGER 등재는 병렬 세션이 L-048 을 라이브로 쓰고 있어 **보류**(HANDOFF §0 에 기재) | 즉시 |
-| F1·F2 (`reader/procedure/*.md` 이력 이동 · 현재형 재서술 · `HISTORY.md` 신설) | 승인 | **골든 manifest 커밋 뒤** | 이연 — 아래 사유 |
+| F7 (`CLAUDE.md` §6 → HANDOFF 포인터 + 관문표 · 구 본문 `docs/IMPLEMENTATION-HISTORY.md` 이동) | 승인 | `5b84fb7` | 즉시 |
+| F3~F6 (`~/.claude/agents` 4파일 — effort 표 정합 · description · 폐지 흔적 · 금지 절 응축) | 승인 | agents 리포 커밋 `11d8707`(파일 4) · LEDGER 등재는 병렬 세션이 L-048 을 라이브로 쓰고 있어 **보류** — L-050 으로 등재 예정(nd-magnet 세션의 L-049 뒤) | 즉시 |
+| F1·F2 (`reader/procedure/*.md` 이력 이동 · 현재형 재서술 · `HISTORY.md` 신설) | 승인 | **골든 manifest `47e437c` 뒤 · `8259075` 로 집행됨** | 이연 후 집행 — 아래 사유 |
 
 **F1·F2 를 뒤로 미룬 사유(총괄 재량 · 사후 확인 대상).** 설계 §2.8 의 골든 생성 명령 블록은 `git diff --quiet "$BASE" HEAD -- engine contracts reader` 를 사전조건으로 건다 — 경로 기준이라 `reader/procedure/*.md` 개정도 걸린다. F1·F2 를 지금 main 에 올리면 B-0 의 정상 경로 시험(같은 경로 무변경 확인)과 골든 생성이 그 자리에서 실패한다. 값(8,190칸)에는 영향이 없는 개정이지만 사전조건은 설계 PASS 판의 문언이므로 고치지 않고, **순서**를 바꾼다: B-0 병합 → 골든 생성·커밋 → F1·F2 적용. 승인은 났고 diff 는 검증되어 있다(worktree 적용 · 관문 6종 · pytest 591).
 

@@ -1,11 +1,19 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-03(5차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-03(6차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-03 6차 갱신 — 라운드 B-0 병합(`6f93519`) · 골든 manifest 커밋(`47e437c` · 8,190칸 · 오라클 불일치 0) · T33 ① 집행(`8259075` · 절차 문서 → `reader/procedure/HISTORY.md`)이 끝났다.** 경위·재현표·발주자 오류 4건 = `docs/decisions/D-20260903-02-round-b0.md`.
+**지금 할 일 = 라운드 B 발주** — `좌석 M3` sol-coder(sol high · workspace-write) · worktree `round-b`(HEAD 에서 분기) · 첨부 = 설계 v18 §2 전문(`~/projects/workspaces/patent-docent-session-drafts/T26-DESIGN-v18.md` §2.1~§2.11 · §6 골격) · **C-5 반경 고지** 동반(SPEC §8.3 7항·관문표 = C 병합본 기준) · D-02 §5 ⑹⑦⑧⑨ 골격 → 총괄 재현 → 병합(관문 6→7 · `tools/check_failure_table.py`) → **opus max 감사**(A′·C′·B-0·B 합본 · sol 저작 → opus) → T31·T32 소라운드.
+**환경 규율(이 세션 실측)** — pytest 는 반드시 `--basetemp` 를 홈 fs 에(`/tmp` 는 tmpfs 1.5 GB · 02:07 레인 사망 원인) · `/tmp/pytest-of-laptop`·`/tmp` 전체 삭제 금지(nd-magnet 세션 게이트가 ~11:00 까지 돈다 · 가득 차면 그 세션에 먼저 알린다) · `pkill -f` 금지(PID 로).
+**병렬 세션 조율(nd-magnet · `~/.claude/agents`)** — 그 세션이 `sol-auditor.md` 를 얇은 래퍼 + `bin/sol-audit.sh` 로 바꿨다(agents HEAD). **다음 sol 감수 발주 전에 그 본문 ②(preflight→run 배경→poll→finish)를 재독**하고 발주문 형태를 맞춘다(어긋나면 스크립트 쪽을 고친다). agents LEDGER 는 제3 세션(기억 체계 v2)이 L-048 을 라이브로 쓰는 중 → 커밋되면 **L-049(nd-magnet · `LEDGER-PENDING-L049-2026-09-03.md`) → L-050(이 세션 · T33 ③)** 순으로 총괄이 옮긴다. `~/.claude/CLAUDE.md` 9·15행 SessionStart 문구는 제3 세션 변경(Owner 확인 사항).
+**Owner 사후 확인(추가)** — ⓓ T33 ① 을 골든 뒤로 미룬 순서 결정(총괄 재량 · `ruling-20260903-01-T33.md` §3 2) ⓔ B-0 fixture 의 상설 `99fad78` diff 조항 삭제(발주자 오류 정정 · D-02 §5 ⑶) ⓕ `/tmp` 삭제로 nd-magnet 게이트 30분 손실(D-02 §1 02:09).
+
+> [정정 2026-09-03 · 6차] 아래 5차 문단의 「B-0 회수 …」·「F1·F2 는 골든 커밋 뒤에 적용한다」는 **끝났다**. 경위 보존용으로 남긴다.
 
 **★ 09-03 5차 갱신 — T26 설계가 M1b 도전 17차에서 PASS 했다**(v18 · `docs/lessons/2026-09-02-sol-challenge-t26-design-v18.md` · 지적 0 · 결정 공백 0).
 16차는 FAIL 1(AJ-1 MED · `-v17.md` · 처분 `D-20260902-02` §22) · 17차 기록 = 같은 문서 §23. **T26 §3 ①(PASS 전 착수·커밋 금지)이 해제되어 라운드 B-0 를 발주했다.**
