@@ -8,7 +8,7 @@
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
 
 **★ 09-03 8차 갱신 — opus max 합본 감사 = FAIL 6건(HIGH 1 · MED 2 · LOW 3 · `docs/lessons/2026-09-03-opus-audit-round-b.md` · 처분 `D-20260903-03` §6 · DISPOSITIONS 118행).** 값·집행·A′·C′ 이행은 전건 closed. RB-1(출구 재시도 8종의 독립 오라클 부재 — 정합 편집이 전 관문·전 시험 통과) · RB-2(B-0 시험이 정본 main 을 clone) · RB-3(설계 T-4 문언 거짓) · RB-4~6(LOW). **전부 수용 → 라운드 B′ 발주**(sol-coder · worktree `round-b-prime` · 발주문 = drafts `SPEC-round-b-prime.md` · 레인 디렉터리 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/sol-coder-round-b-prime/` · 반경 = 시험 3파일 + 생성기 + CLAUDE.md 일곱째 행 + SPEC 두 자리 · **계약·엔진·관문·골든 무접촉**). 회수 = 총괄 재현(양성 대조 둘 포함) → 병합 → 좁은 재감사(opus max · RB-1~6 폐쇄 여부만) 또는 T31·T32 소라운드로.
-**설계 v19 부록**(RB-3 정정 · RB-1 처분)은 drafts `T26-DESIGN-v19-addendum.md`. 감사 발주문 교훈 = 「감사 중 정본 커밋 금지 또는 저자 대조」(D-03 §6 말미).
+**설계 v19 부록**(RB-3 정정 · RB-1 처분)은 drafts `T26-DESIGN-v19-addendum.md`. **[추기 04:33] 라운드 B′ 를 발주했다** — worktree `.worktrees/round-b-prime`(브랜치 `round-b-prime` · `815a67d` 분기) · 발주문 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/order-round-b-prime.md`(= drafts `SPEC-round-b-prime.md` · §2 ①~⑧ · 양성 대조 둘 필수) · 레인 디렉터리 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/sol-coder-round-b-prime/`(`status` PID/START/EXIT · `final.txt`) · 예상 20~40분. 회수 = 총괄 재현(§4 + 양성 대조 둘 직접) → worktree 커밋 → rebase·ff → 좁은 재감사 발주(opus max · RB 폐쇄 여부 · 감사 중 정본 커밋 금지). 감사 발주문 교훈 = 「감사 중 정본 커밋 금지 또는 저자 대조」(D-03 §6 말미).
 
 > [정정 2026-09-03 · 8차] 아래 7차 문단의 「지금 할 일 = opus max 감사 발주/회수」는 **끝났다**. 경위 보존용으로 남긴다.
 
