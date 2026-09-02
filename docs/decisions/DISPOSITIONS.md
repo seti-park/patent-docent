@@ -78,6 +78,7 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v8.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v9.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v10.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v11.md | 등재 | — |
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -180,6 +181,11 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v10.md | AC-3 | MED | 수용 | 골든 커밋 열거에 검증기 누락 · B-0 미커밋 산출의 main 승격 절차 부재 — v11 = B-0 병합 커밋(세 파일 · C′ 절차) → main 에서 생성 → 골든 커밋(manifest) → 라운드 B | `D-20260902-02-t26-design-challenge.md` §15 |
 | 2026-09-02-sol-challenge-t26-design-v10.md | AC-4 | LOW | 수용 | T-7 이 「§2.8 ①~⑥」을 가리키나 목록은 ①~③ + 총괄 검수 ④ — v11 = T-7 = §2.8 시험 ①~③ | `D-20260902-02-t26-design-challenge.md` §15 |
 | 2026-09-02-sol-challenge-t26-design-v10.md | AC-5 | LOW | 수용 | `assemble_spec :505-556` → `:506-561` — v11 §1 정정 | `D-20260902-02-t26-design-challenge.md` §15 |
+| 2026-09-02-sol-challenge-t26-design-v11.md | AD-1 | HIGH | 수용 | 검증기 음성 시험이 여러 필드 동반 변조 + 「위반 ≥ 1」만 요구 — 검사 하나를 빼도 전건 통과 — v12 = 위반 문장에 필드 경로 토큰 · 표 T-V 한 필드씩 · 각 시험은 그 토큰의 위반 실재 | `D-20260902-02-t26-design-challenge.md` §16 |
+| 2026-09-02-sol-challenge-t26-design-v11.md | AD-2 | MED | 수용 | G1 골격 상수에 `judged_at` 부재 · 열거 밖 기계 키 추가 통과 — v12 = 상수에 `judged_at` 열 · 행별 허용 키 집합 정확 일치 · 변조 ㉜㉝ · T-13 | `D-20260902-02-t26-design-challenge.md` §16 |
+| 2026-09-02-sol-challenge-t26-design-v11.md | AD-3 | MED | 수용 | 생성 명령이 fail-fast 아님 · 마지막 줄 미검사 · B-0 시험이 생성기 단독만 — v12 = `set -euo pipefail` + `trap` + `EXIT=0` 대조 · 환경변수 매개 · B-0 시험이 블록 전체 서브프로세스 ⒜⒝⒞ | `D-20260902-02-t26-design-challenge.md` §16 |
+
+**행 수 = 96**(`등재` 18파일의 지적 전건). **[정정 2026-09-02 · 11차]** 직전 판 **93** — 10차 도전 원문 반입(AD 3)으로 셋 늘었다.
 
 **행 수 = 93**(`등재` 17파일의 지적 전건). **[정정 2026-09-02 · 10차]** 직전 판 **88** — 9차 도전 원문 반입(AC 5)으로 다섯 늘었다.
 
