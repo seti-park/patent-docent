@@ -1,11 +1,17 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-03(10차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-03(11차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-03 11차 갱신 — 라운드 B″ 병합(`00dd3f8` · RC-1~5·7 + [미검증] ⑤ · sol-coder 1턴 · 총괄 재현 765·765 · 단독 실행 3파일 · 양성 대조 셋). 기록 = `D-20260903-03` §9(총괄 실수 1건 — 되돌림이 레인 hunk 를 지워 재적용).**
+**지금 할 일 = T31·T32 소라운드 발주**(`좌석 M3` sol-coder · worktree `round-t31` · 상류 = `ruling-20260902-02-T28-T32.md` T31 §2·§3(CP1 조기 합집합 블록 · `engine/render/material_spec_md.py` · 렌더 시험 · SPEC §1.5 · 스키마 diff 0) + T32 §2·§3(`contracts/schemas/convergence.schema.json` `$defs` 하나 · 참조 두 곳 · `check_schema_enforcement` 무효/유효 · 러너 판정서 양성 대조 · `runs/**` 무접촉 · `$comment` 기록) + §5 ①(A-2 임시 표지 문언을 블록을 가리키게) · §5 ③(`$comment` 어긋남 수정) · **§5 ② `screening_memos[].read_run` 은 재정 전 무접촉** · 설계 v18 ⑫). 발주문 골격 = `D-20260902-02` §5 ⑹~⑼ + 환경 규율 + 「감사 중 정본 커밋 금지」. 그 뒤 **감사 = B″ + 소라운드 합본**(opus max · sol 저작).
+**Owner 사후 확인(신규)** — ⓘ B″ 총괄 실수(관문 hunk 되돌림·재적용 · §9).
+
+> [정정 2026-09-03 · 11차] 아래 10차 문단의 「지금 할 일 = 라운드 B″ 발주/회수」는 **끝났다**. 경위 보존용으로 남긴다.
 
 **★ 09-03 10차 갱신 — B′ 좁은 재감사 = FAIL 7건(MED 2 · LOW 5 · `docs/lessons/2026-09-03-opus-audit-round-b-prime.md` · 처분 `D-20260903-03` §8 · DISPOSITIONS 125행). RB-1(HIGH)은 닫혔다 — 감사가 정합 편집을 6종으로 확장해도 도출식 시험이 전건 붉음(관문 7종은 초록). RC-1 = 델타 미러 rename 경계 · RC-2 = 도출식 배제 근거의 우연·후건 무재정 → 12 우주 − 명시 배제 3집합으로 재작성. 전부 수용 → 라운드 B″ 발주**(sol-coder · worktree `round-b-2` · 발주문 = drafts `SPEC-round-b-2.md` · 레인 디렉터리 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/sol-coder-round-b-2/`). B″ 의 감사는 **T31·T32 소라운드 감사에 합본**(§8 근거 · Owner 가 다르게 보면 별건). 회수 = 총괄 재현(rename 경계 · 정합 편집 2종 양성 대조) → 병합 → **T31·T32 소라운드 발주**.
 **[추기 05:59] 라운드 B″ 를 발주했다** — worktree `.worktrees/round-b-2`(브랜치 `round-b-2` · `eb1cee4` 분기) · 발주문 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/order-round-b-2.md`(= drafts `SPEC-round-b-2.md` · §1 ①~⑦ · §2 양성 대조 셋) · 레인 디렉터리 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/sol-coder-round-b-2/`(`status` PID/START/EXIT · `final.txt`) · 예상 20~40분. 회수 = 총괄 재현(§4 + 양성 대조 셋 직접) → worktree 커밋 → rebase·ff → **T31·T32 소라운드 발주**(감사 합본).
