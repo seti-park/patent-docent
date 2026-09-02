@@ -356,3 +356,21 @@ grep 의 패턴 목록에 이번 다섯을 더했다.
 「검사가 실재함을 시험이 증명한다」는 요건을 총괄이 매번 한 겹씩만 좁혔다. 이번에 **층위 평가**라는 구조로 「한 변조 = 한 ID」를 검증기 쪽에서
 보장하게 한 것이 계열을 끝내는 형태라고 본다. AF-2 는 AE-3(클론에 `.venv` 없음)과 같은 형태 — 「시험용 클론」이라는 말의 실물을 끝까지 따라가지
 않았다. AF-3 은 G2 의 우주를 적을 때 계약을 전수로 훑지 않고 세 선언 중 둘만 든 것.
+
+
+---
+
+## §19 13차 도전(설계 v14) 지적 AG-1 · AG-2 의 처분 — 2026-09-03 추기 (총괄 저작)
+
+원문 = `docs/lessons/2026-09-02-sol-challenge-t26-design-v14.md`. 판정 FAIL · 2건(HIGH 1 · MED 1) · 새 재정 0 · AF-2·AF-3 closed · AF-1 partially ·
+그 밖 전건 closed. 값 8,190 칸은 열세 번째 일치. 둘 다 **수용** → **v15** → 14차 도전.
+
+| ID | 격 | 지적 요지 | 처분 | v15 에서 어떻게 닫았나 |
+|---|---|---|---|---|
+| **AG-1** | HIGH | T-V 가 독립 제약 전부를 열거하지 않는다 — `exceptions[0]` 의 dict 여부(`[17]` 이 type·len1 통과) · `engine_path`·`reader_path` 원소의 str 타입(`.absolute` 와 한 ID) · 셀 값 문자열 갈래의 정확한 `"StageError"`(`"NotStageError"` 통과) · 표의 ID 열에 `exception.cells.subset_of_cells` 가 남아 「ID 를 두지 않는다」와 모순 · `expected_counts.<k>.*` 가 실제 ID 문자열이 아님 · 필드 간 선행조건 미명시 | **수용** | ID 추가 `exception.item.type` · `provenance.engine_path.items.str` · `provenance.reader_path.items.str` · `cells.value.sentinel`(각 단일 변조) · `subset_of_cells` 행 제거(함의 설명은 표 밖) · `<k>` → 슬러그 다섯(`halt_null`·`escalate_null`·`escalate_repeat`·`stage_error`·`total`) × {type, eq} = 열 개 ID 문자열 · 슬러그↔키 대응 상수 `COUNT_KEY_SLUGS` · **선행조건 DAG** 절(필드 안 · 필드 사이) |
+| **AG-2** | MED | G1·T-13 이 `condition`·`note` 를 선택 키로 두어 1행 `condition` 삭제가 G1~G6·T-13·T-10 전부 통과 — T26 ⒜ ① 「조건 문장은 사람용 설명으로 남긴다」·§2.2 「각 행에 옮긴다」와 어긋남(도전자 실측 `g1_accepts_condition_delete=True`) | **수용** | G1 — 각 행 키 집합 == 승인 기계 키 ∪ {condition, note} **정확히** · 둘은 비공 str(내용 자유) — 정본 10행 전부 둘을 든다(총괄 실측) · 변조 ㉟(condition 삭제) ㊱(note 정수) · T-13 동기 |
+
+**열세 번째 FAIL 에 대한 총괄 자기 점검.** AG-1 은 AF-1 의 잔여 — 표를 다시 쓰면서 제거했다고 적은 행을 실제로는 남겼고(`subset_of_cells`), 「모든 필드」를
+훑는다면서 `exceptions[0]` 자체의 타입과 셀 문자열 갈래의 값을 빠뜨렸다. 검증기 항목을 적을 때 **컨테이너 → 원소 → 값** 세 층을 필드마다 기계적으로
+묻는 절차가 없었다 — v15 의 DAG 절이 그 절차다. AG-2 는 원장 문언(「사람용 설명으로 남긴다」)을 관문 규칙으로 옮기지 않은 것 — 산문이라고 「자유」로
+분류한 것이 「없어도 된다」로 읽혔다.

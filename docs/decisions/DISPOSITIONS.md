@@ -81,6 +81,7 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v11.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v12.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v13.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v14.md | 등재 | — |
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -192,6 +193,10 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v13.md | AF-1 | HIGH | 수용 | T-V 가 「제약 하나만 깨고 그 제약만 보고」 결속이 아님(복합 변조 · 누락 ID · 한 키 전칭 · 「ID 포함」 기대) — v14 = 층위 평가 · `set(위반 ID) == {target}` · 표 재작성 | `D-20260902-02-t26-design-challenge.md` §18 |
 | 2026-09-02-sol-challenge-t26-design-v13.md | AF-2 | MED | 수용 | B-0 산출물이 미커밋이라 시험용 clone 에 생성기·검증기가 없음 — v14 = clone 조립 절차(두 파일 복사 + clone 안 임시 커밋 · BASE 7자) | `D-20260902-02-t26-design-challenge.md` §18 |
 | 2026-09-02-sol-challenge-t26-design-v13.md | AF-3 | MED | 수용 | 관문이 조기 선언 `early_phase_spec.judged_here` 를 안 읽어 유령 id 추가가 통과 — v14 = R2 우주에 judged_here · 세 벌 상등 · 변조 ㉞ | `D-20260902-02-t26-design-challenge.md` §18 |
+| 2026-09-02-sol-challenge-t26-design-v14.md | AG-1 | HIGH | 수용 | T-V 에 누락 ID(`exceptions[0]` dict · 경로 원소 str · 셀 문자열 sentinel) · `subset_of_cells` 잔재 · `<k>` 미전개 · DAG 미명시 — v15 = ID 셋 추가 · 잔재 제거 · 슬러그 열 개 전개 · 선행조건 DAG 절 | `D-20260902-02-t26-design-challenge.md` §19 |
+| 2026-09-02-sol-challenge-t26-design-v14.md | AG-2 | MED | 수용 | G1 이 `condition`·`note` 를 선택 키로 허용(1행 `condition` 삭제 통과) — v15 = 모든 행에 둘을 비공 str 로 필수(정본 10행 전부 실측) · 변조 ㉟㊱ · T-13 동기 | `D-20260902-02-t26-design-challenge.md` §19 |
+
+**행 수 = 104**(`등재` 21파일의 지적 전건). **[정정 2026-09-03 · 14차]** 직전 판 **102** — 13차 도전 원문 반입(AG 2)으로 둘 늘었다.
 
 **행 수 = 102**(`등재` 20파일의 지적 전건). **[정정 2026-09-02 · 13차]** 직전 판 **99** — 12차 도전 원문 반입(AF 3)으로 셋 늘었다.
 
