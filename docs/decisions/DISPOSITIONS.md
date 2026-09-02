@@ -82,6 +82,8 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v12.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v13.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v14.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v15.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v16.md | 등재 | — |
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -195,6 +197,15 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v13.md | AF-3 | MED | 수용 | 관문이 조기 선언 `early_phase_spec.judged_here` 를 안 읽어 유령 id 추가가 통과 — v14 = R2 우주에 judged_here · 세 벌 상등 · 변조 ㉞ | `D-20260902-02-t26-design-challenge.md` §18 |
 | 2026-09-02-sol-challenge-t26-design-v14.md | AG-1 | HIGH | 수용 | T-V 에 누락 ID(`exceptions[0]` dict · 경로 원소 str · 셀 문자열 sentinel) · `subset_of_cells` 잔재 · `<k>` 미전개 · DAG 미명시 — v15 = ID 셋 추가 · 잔재 제거 · 슬러그 열 개 전개 · 선행조건 DAG 절 | `D-20260902-02-t26-design-challenge.md` §19 |
 | 2026-09-02-sol-challenge-t26-design-v14.md | AG-2 | MED | 수용 | G1 이 `condition`·`note` 를 선택 키로 허용(1행 `condition` 삭제 통과) — v15 = 모든 행에 둘을 비공 str 로 필수(정본 10행 전부 실측) · 변조 ㉟㊱ · T-13 동기 | `D-20260902-02-t26-design-challenge.md` §19 |
+| 2026-09-02-sol-challenge-t26-design-v15.md | AH-1 | HIGH | 수용 | 최상위 manifest 타입 제약 부재(`[]` → 예외 또는 ID 병합) — v16 = `manifest.type` ID · 변조 `[]` · DAG 뿌리 | `D-20260902-02-t26-design-challenge.md` §20 |
+| 2026-09-02-sol-challenge-t26-design-v15.md | AH-2 | HIGH | 수용 | `expected_counts.keys.exact` 가 cells 재계산 의존인데 DAG 는 `.eq` 만 cells 뒤 — v16 = keys.exact 를 `COUNT_KEY_SLUGS` 고정 집합으로 · `.eq` 는 cells 층 전부 뒤 | `D-20260902-02-t26-design-challenge.md` §20 |
+| 2026-09-02-sol-challenge-t26-design-v15.md | AH-3 | MED | 수용 | `exception.cell_count.eq` 정의 둘(len 연쇄 vs 고정값) — v16 = `cell_count == 2048` 단일 · `len(cells)==2048` 은 unique+set 함의 | `D-20260902-02-t26-design-challenge.md` §20 |
+| 2026-09-02-sol-challenge-t26-design-v15.md | AH-4 | LOW | 수용 | §1 import 좌표 오류 — v16 = `tests/test_m21…:33 import test_m2_read as m2` | `D-20260902-02-t26-design-challenge.md` §20 |
+| 2026-09-02-sol-challenge-t26-design-v16.md | AI-1 | HIGH | 수용 | `$comment` 「비공」 제약에 ID·변조·순서 없음 — v17 = 직접 검사 삭제 · 세 `contains` 가 함의(함의 목록 명시) · DAG `comment.type → contains 셋` | `D-20260902-02-t26-design-challenge.md` §21 |
+| 2026-09-02-sol-challenge-t26-design-v16.md | AI-2 | MED | 수용 | 「T-V 행 순서 = 평가 순서」가 2열 배치·DAG 와 충돌 — v17 = 문언 삭제 · DAG 절이 순서의 유일 정본 | `D-20260902-02-t26-design-challenge.md` §21 |
+| 2026-09-02-sol-challenge-t26-design-v16.md | AI-3 | LOW | 수용 | DAG 「`.eq` 열 개」 vs 실제 다섯 — v17 = type 다섯 + eq 다섯 = 열 ID 로 문언 정정 | `D-20260902-02-t26-design-challenge.md` §21 |
+
+**행 수 = 111**(`등재` 23파일의 지적 전건). **[정정 2026-09-03 · 15·16차]** 직전 판 **104** — 14차(AH 4)·15차(AI 3) 도전 원문 반입으로 일곱 늘었다.
 
 **행 수 = 104**(`등재` 21파일의 지적 전건). **[정정 2026-09-03 · 14차]** 직전 판 **102** — 13차 도전 원문 반입(AG 2)으로 둘 늘었다.
 
