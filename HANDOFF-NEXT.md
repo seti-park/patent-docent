@@ -1,11 +1,16 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-03(7차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-03(8차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-03 8차 갱신 — opus max 합본 감사 = FAIL 6건(HIGH 1 · MED 2 · LOW 3 · `docs/lessons/2026-09-03-opus-audit-round-b.md` · 처분 `D-20260903-03` §6 · DISPOSITIONS 118행).** 값·집행·A′·C′ 이행은 전건 closed. RB-1(출구 재시도 8종의 독립 오라클 부재 — 정합 편집이 전 관문·전 시험 통과) · RB-2(B-0 시험이 정본 main 을 clone) · RB-3(설계 T-4 문언 거짓) · RB-4~6(LOW). **전부 수용 → 라운드 B′ 발주**(sol-coder · worktree `round-b-prime` · 발주문 = drafts `SPEC-round-b-prime.md` · 레인 디렉터리 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/sol-coder-round-b-prime/` · 반경 = 시험 3파일 + 생성기 + CLAUDE.md 일곱째 행 + SPEC 두 자리 · **계약·엔진·관문·골든 무접촉**). 회수 = 총괄 재현(양성 대조 둘 포함) → 병합 → 좁은 재감사(opus max · RB-1~6 폐쇄 여부만) 또는 T31·T32 소라운드로.
+**설계 v19 부록**(RB-3 정정 · RB-1 처분)은 drafts `T26-DESIGN-v19-addendum.md`. 감사 발주문 교훈 = 「감사 중 정본 커밋 금지 또는 저자 대조」(D-03 §6 말미).
+
+> [정정 2026-09-03 · 8차] 아래 7차 문단의 「지금 할 일 = opus max 감사 발주/회수」는 **끝났다**. 경위 보존용으로 남긴다.
 
 **★ 09-03 7차 갱신 — 라운드 B 가 병합됐다(`1d29c8b` · sol-coder 1턴 완주 · blocked 0 · 총괄 재현 전건 일치 · 관문 **7종** 두 모드 exit 0 · pytest 761). 기록 = `docs/decisions/D-20260903-03-round-b.md`.** 재정 T26·T28·T29·T30 의 집행 실물 = `contracts/stages/read.yaml#failure` 11행 · `engine/stages/read.py` 상수·진입 가드·`_failure_verdict` · `tools/check_failure_table.py`(일곱째 관문 · `--self-test` 36) · T-1~T-13 시험 · 골든 T-7.
 **[추기 03:46] opus max 감사를 발주했다** — 사본 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/audit-round-b`(detached `94ca66f` · 마커 `.audit-sandbox` pin `94ca66f14efa8f1bce0ab6a16cea76dab90dbd2d`) · 발주문 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/AUDIT-ORDER-round-b.md`(= drafts `AUDIT-ORDER-round-b.md` · 여덟 질문 · 지적 ID `RB-*`) · 레인 디렉터리 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/opus-audit-round-b/`(`runner.sh` · `status` PID/START/EXIT · `out.txt` = 감사 원문 · `err.txt`) · 호출 `claude -p --model claude-opus-5 --effort max`(환경변수 2종 · setsid) · 정본 트리 지문 감사 전 `de4e54c9e1c3fdf6ad454c36aee0c504ba771b83`(끝난 뒤 같은 값 + `git status` 0행 확인) · 예상 30~60분. 회수 = `out.txt` 전문 → `docs/lessons/2026-09-03-opus-audit-round-b.md`(머리말 · `지적 열거 =`) → DISPOSITIONS §0/§1 → FAIL 이면 B′ 수리 발주 · PASS 면 T31·T32 소라운드.

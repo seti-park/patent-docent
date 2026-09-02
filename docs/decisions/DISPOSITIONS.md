@@ -86,8 +86,9 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v16.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v17.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v18.md | 등재 | — |
+| 2026-09-03-opus-audit-round-b.md | 등재 | — |
 
-**계수** — `등재` **25** · `선행 종결` **12** · 합 **37**(`docs/lessons/` 전 파일). **[정정 2026-09-03]** 아래 구 문언 「등재 7 · 선행 종결 12 · 합 19」는 라운드 C 반입(`852cdd`) 시점의 계수이며, 그 뒤 도전 원문 v2~v18 반입이 이 줄을 따라가지 않았다 — 오류 수정(규율 11 ③). 관문 G1 은 집합 상등을 보고 이 계수는 보지 않는다.
+**계수** — `등재` **26** · `선행 종결` **12** · 합 **38**(`docs/lessons/` 전 파일). **[정정 2026-09-03 · 라운드 B 감사 반입]** 직전 판 25/12/37. **[정정 2026-09-03]** 아래 구 문언 「등재 7 · 선행 종결 12 · 합 19」는 라운드 C 반입(`852cdd`) 시점의 계수이며, 그 뒤 도전 원문 v2~v18 반입이 이 줄을 따라가지 않았다 — 오류 수정(규율 11 ③). 관문 G1 은 집합 상등을 보고 이 계수는 보지 않는다.
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -209,6 +210,14 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v16.md | AI-2 | MED | 수용 | 「T-V 행 순서 = 평가 순서」가 2열 배치·DAG 와 충돌 — v17 = 문언 삭제 · DAG 절이 순서의 유일 정본 | `D-20260902-02-t26-design-challenge.md` §21 |
 | 2026-09-02-sol-challenge-t26-design-v16.md | AI-3 | LOW | 수용 | DAG 「`.eq` 열 개」 vs 실제 다섯 — v17 = type 다섯 + eq 다섯 = 열 ID 로 문언 정정 | `D-20260902-02-t26-design-challenge.md` §21 |
 | 2026-09-02-sol-challenge-t26-design-v17.md | AJ-1 | MED | 수용 | `provenance.tree_head` 의 제약·선행순서가 검사 항목·T-V·DAG 세 정본 사이에서 불일치(DAG 「각 키: type」 vs 표의 `.eq` 하나 → M3 가 진단 ID 임의 선택) — v18 = DAG provenance 가지를 키별로 명시 재작성 · `tree_head` 는 `.eq` 하나 · T-V 변조 정수 `17` | `D-20260902-02-t26-design-challenge.md` §22 |
+| 2026-09-03-opus-audit-round-b.md | RB-1 | HIGH | 수용 | 출구 재시도 8종이 계약·엔진 상수·관문 상수 세 사본에만 결박 — 정합 편집(8행 points → early 만 + 두 상수 축소)이 관문 7종·self-test·pytest 761 전건 통과하며 claim 2종의 출구 재시도를 지움. 설계 W-1 처분이 「독립 정답지」 대신 사본을 늘린 것 — B′ = 원장 도출식 다리 시험 set(EXIT_RETRY_CHECK_IDS) == set(READ_CHECK_IDS) − {{source-digest, convergence}}(reader/lib 상수 = 독립 정본) + SPEC 에 도출식 한 줄 + 발주문 양성 대조(RB-1 재현 편집이 빨개짐 실측) | `D-20260903-03-round-b.md` §6 |
+| 2026-09-03-opus-audit-round-b.md | RB-2 | MED | 수용 | B-0 단위 시험의 clone 원천이 정본 main 절대경로 리터럴 — 작업 트리의 엔진 변조(골든 1,020칸 어긋남)에도 86 passed(발주자 오류 · SPEC-round-b0 v2 §2 문언) — B′ = clone 원천 REPO_ROOT + 작업 트리 델타 미러(status --porcelain -uall) + PYTHON_BIN = sys.executable + 반증 실측 | `D-20260903-03-round-b.md` §6 |
+| 2026-09-03-opus-audit-round-b.md | RB-3 | MED | 수용 | 설계 v18 §2.9 T-4 행 「exit 목록에서 verbatim 을 빼면 T-2 가 떨어진다」 거짓 — T-2 는 pointer-resolve 만 지킨다(설계 귀책 · W-1 충분성 논거에 쓰임) — 설계 v19 부록(리포 밖)에 정정 · 행위 결속은 RB-1 처분의 8종 균일 도출식이 대체 | `D-20260903-03-round-b.md` §6 |
+| 2026-09-03-opus-audit-round-b.md | RB-4 | LOW | 수용 | D-03 §1 「발주자 오류 0건(이 라운드)」 — 설계 귀책 2건(RB-1·RB-3)이 있으므로 사실 아님 · 「레인이 부딪힌 결정 공백 0」과 혼동 — [정정] 마커 | `D-20260903-03-round-b.md` §1 |
+| 2026-09-03-opus-audit-round-b.md | RB-5 | LOW | 수용 | CLAUDE.md §6 관문표 일곱째 행에 「주장하지 않는 것」(값의 참·거짓 = T-7 · 종단 어휘 상등 = T-11 ⑤ · 승인 집합 상등 = T-11 ⑥) 부재 — B′ 문서 hunk | `D-20260903-03-round-b.md` §6 |
+| 2026-09-03-opus-audit-round-b.md | RB-6 | LOW | 수용 | 생성기 자기 검증이 expected_check_ids=set(manifest[check_ids]) 로 항진식(Z-2 형) — B′ = READ_CHECK_IDS ∪ ENGINE_READ_CHECK_IDS 실상수 전달(골든 무접촉 · 값 불변) | `D-20260903-03-round-b.md` §6 |
+
+**행 수 = 118**(`등재` 26파일의 지적 전건). **[정정 2026-09-03 · 라운드 B 감사]** 직전 판 **112** — opus max 합본 감사 원문 반입(RB 6)으로 여섯 늘었다.
 
 **행 수 = 112**(`등재` 25파일의 지적 전건). **[정정 2026-09-03 · 16·17차]** 직전 판 **111** — 16차 도전 원문 반입(AJ 1)으로 하나 늘었고, 17차(PASS · 지적 0 · `-v18.md`)는 `등재` 파일은 늘리되 행을 더하지 않는다.
 
