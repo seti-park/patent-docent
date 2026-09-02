@@ -233,6 +233,18 @@ def test_contract_engine_constant_bridge_is_bidirectional() -> None:
         pytest.fail(f"RETRY_POINT_IDS가 두 판정점이 아니다: {RETRY_POINT_IDS!r}")
 
 
+def test_ledger_t24_t25_halt_and_t28_beta_derive_exit_retry_independently() -> None:
+    """원장 T24·T25(halt) · T28(β) 도출 — 사본 셋(계약·엔진 상수·관문 상수)과 독립."""
+    derived = set(READ_CHECK_IDS) - {"read.source-digest", CONVERGENCE_CHECK_ID}
+    if set(EXIT_RETRY_CHECK_IDS) != derived:
+        pytest.fail(f"엔진 exit 승인 집합이 원장 도출값과 다르다: {sorted(derived)!r}")
+    if set(gate.APPROVED_RETRY_CHECKS["exit"]) != derived:
+        pytest.fail(f"관문 exit 승인 집합이 원장 도출값과 다르다: {sorted(derived)!r}")
+    contract_exit = set(_point(load_stage_contract("read", None), "exit")["checks"])
+    if contract_exit != derived:
+        pytest.fail(f"계약 exit 승인 집합이 원장 도출값과 다르다: {sorted(derived)!r}")
+
+
 def test_approved_failure_skeleton_matches_contract_exactly() -> None:
     contract = load_stage_contract("read", None)
     rows = contract["failure"]

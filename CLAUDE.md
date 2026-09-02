@@ -121,6 +121,6 @@
 | `python3 tools/check_lane_binding.py` | 레인 왕복 시점 결속의 변조가 잡힌다 — 정상 소비 · 낡은 응답 주입 거부 · 응답 사후 교체 탐지 · 절차 문서 변조 후 구 응답 주입 거부 · 지문 위조 거부 · `null` 위장 거부 · 정당한 면제 보존 | 러너 |
 | `python3 tools/check_lesson_authorship.py` | `docs/lessons/` 에서 제목 줄에 `추기`·`머리말` 토큰을 든 절이 머리 3줄 안에 `총괄 저작` 을 명시한다. 표지 없이 감수자 절 안에 끼운 총괄 문장은 기계가 구별하지 못한다 — 그 밖의 저자 경계는 사람이 지킨다(규격 = SPEC §8.3 10항) | 사료(절) |
 | `python3 tools/check_dispositions.py` | `docs/decisions/DISPOSITIONS.md` 가 `docs/lessons/` 와 상등한다 — G1 등재 완전성(양방향) · G2 상태 어휘 `등재`/`선행 종결` · G3 `등재` 파일마다 `지적 열거 = …` 줄이 정확히 하나이고 그 id 집합이 §1 과 양방향 차집합 0 · G4 처분 어휘 4종 · 격 어휘 · 사유·포인터 비지 않음 · 표 행 arity · §0/§1 결속. 열거가 감수 원문을 빠짐없이 담았는가는 반입 시점의 사람 몫이다(규격 = SPEC §8.3 11항) | 사료(지적) |
-| `python3 tools/check_failure_table.py` | READ 실패표의 승인 골격·완전성·재시도 등식·국면 정합·진입 표지·종단 어휘가 정확하다 | 계약·엔진 상수 |
+| `python3 tools/check_failure_table.py` | READ 실패표의 승인 골격·완전성·재시도 등식·국면 정합·진입 표지·종단 어휘가 정확하다. 주장하지 않는 것 — 골든 값의 참·거짓은 T-7 · 종단 어휘 두 벌의 상등은 T-11 ⑤ · 승인 집합 두 벌의 상등은 T-11 ⑥ | 계약·엔진 상수 |
 
 관문의 신설·승격·계수 정정의 이력은 `docs/IMPLEMENTATION-HISTORY.md` 와 각 재정 원장이 든다.

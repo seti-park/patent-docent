@@ -74,6 +74,9 @@ def test_manifest_shape_universe_beta_and_provenance(manifest: dict) -> None:
     violations = _validate(manifest)
     if violations:
         pytest.fail(f"골든 manifest 정적 검증 실패: {violations!r}")
+    expected_check_ids = list(READ_CHECK_IDS) + list(ENGINE_READ_CHECK_IDS)
+    if manifest["check_ids"] != expected_check_ids:
+        pytest.fail(f"골든 check_ids 순서가 원장 상수와 다르다: {manifest['check_ids']!r}")
     expected_keys = {
         f"{mask}:{repeated}"
         for mask in range(1, 1 << 12)

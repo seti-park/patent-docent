@@ -10,6 +10,7 @@ import os
 import pathlib
 import shutil
 import subprocess
+import sys
 from collections.abc import Callable
 from typing import Any
 
@@ -20,14 +21,8 @@ from reader.lib.run_checks import READ_CHECK_IDS
 
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
-PYTHON_BIN = "/home/laptop/projects/patent-docent/.venv/bin/python"
-MAIN_REPO = "/home/laptop/projects/patent-docent"
+PYTHON_BIN = sys.executable
 GENERATOR_PATH = REPO_ROOT / "tests" / "fixtures" / "read-failure-grid" / "generate.py"
-OUTPUT_NAMES = (
-    "tests/fixtures/read-failure-grid/generate.py",
-    "tests/fixtures/read-failure-grid/validate_manifest.py",
-    "tests/test_m24a_failure_grid_generator.py",
-)
 EXPECTED_COUNTS = {
     "halt/null": 6144,
     "escalate/null": 1023,
@@ -97,26 +92,68 @@ def _commit(repo: pathlib.Path, message: str) -> None:
     _require_ok(proc, "fixture commit")
 
 
+def _worktree_delta() -> list[tuple[str, str, str | None]]:
+    status = _git(REPO_ROOT, "status", "--porcelain", "-uall", "-z")
+    _require_ok(status, "작업 트리 delta status")
+    records = status.stdout.split("\0")
+    delta: list[tuple[str, str, str | None]] = []
+    index = 0
+    while index < len(records) and records[index]:
+        record = records[index]
+        index += 1
+        if len(record) < 4 or record[2] != " ":
+            pytest.fail(f"해석할 수 없는 porcelain 레코드: {record!r}")
+        code = record[:2]
+        path = record[3:]
+        old_path = None
+        if "R" in code or "C" in code:
+            if index >= len(records) or not records[index]:
+                pytest.fail(f"이름 변경의 옛 경로가 없다: {record!r}")
+            old_path = records[index]
+            index += 1
+        if code != "!!":
+            delta.append((code, path, old_path))
+    return delta
+
+
+def _mirror_worktree_delta(clone: pathlib.Path) -> list[str]:
+    copied: set[str] = set()
+    deleted: set[str] = set()
+    for code, relative, old_relative in _worktree_delta():
+        if old_relative is not None and "R" in code:
+            deleted.add(old_relative)
+        source = REPO_ROOT / relative
+        target = clone / relative
+        if source.is_file() or source.is_symlink():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if target.exists() or target.is_symlink():
+                target.unlink()
+            if source.is_symlink():
+                target.symlink_to(os.readlink(source))
+            else:
+                shutil.copy2(source, target)
+            copied.add(relative)
+        else:
+            if target.is_file() or target.is_symlink():
+                target.unlink()
+            deleted.add(relative)
+
+    if copied:
+        _require_ok(_git(clone, "add", "--", *sorted(copied)), "delta 복사 경로 add")
+    if deleted:
+        _require_ok(_git(clone, "add", "-u", "--", *sorted(deleted)), "delta 삭제 경로 add")
+    return sorted(copied | deleted)
+
+
 @pytest.fixture(scope="module")
 def committed_clone(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
     root = tmp_path_factory.mktemp("m24a-committed-clone")
     clone = root / "clone"
-    proc = _run(["git", "clone", "-q", "--no-hardlinks", MAIN_REPO, str(clone)])
+    proc = _run(["git", "clone", "-q", "--no-hardlinks", str(REPO_ROOT), str(clone)])
     _require_ok(proc, "시험용 clone")
 
-    for relative in OUTPUT_NAMES:
-        source = REPO_ROOT / relative
-        if not source.is_file():
-            pytest.fail(f"B-0 산출물이 없다: {source}")
-        target = clone / relative
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, target)
-
-    status = _git(clone, "status", "--porcelain")
-    _require_ok(status, "clone status")
-    if status.stdout.strip():
-        add = _git(clone, "add", *OUTPUT_NAMES)
-        _require_ok(add, "B-0 세 파일 add")
+    mirrored = _mirror_worktree_delta(clone)
+    if mirrored:
         _commit(clone, "b0-fixture")
 
     clean = _git(clone, "status", "--porcelain")
