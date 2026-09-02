@@ -27,6 +27,7 @@ from engine.stages import (  # noqa: E402
 )
 from engine.stages.read import _failure_verdict  # noqa: E402
 from reader.lib.report import CheckRow  # noqa: E402
+from reader.lib.run_checks import to_convergence_payload  # noqa: E402
 
 
 def load_json(path: str) -> dict:
@@ -58,6 +59,65 @@ def ghost_unclassified_payload() -> dict:
     ghost["additions"] = []
     payload["decompose"]["claims"]["dependents"].append(ghost)
     return payload
+
+
+def unclassified_row(read_run: str | None, *, text: str) -> CheckRow:
+    extras = {
+        "unclassified_detail": [
+            {
+                "claim": "CL-3",
+                "dependency_type": "unclassified",
+                "text_verbatim": text,
+                "text_status": "verbatim",
+            }
+        ]
+    }
+    if read_run is not None:
+        extras["read_run"] = read_run
+    return CheckRow(check_id="read.dependency-parse", checked=1, extras=extras)
+
+
+def test_t23_unclassified_union_preserves_identity_and_reports_both_runs() -> None:
+    """같은 3튜플을 한 행으로 접은 뒤 신고 실행만 순회 순서대로 합친다(재정 T23)."""
+    rows = [
+        unclassified_row("read-a", text="The assembly of claim 1 in a Markush form."),
+        unclassified_row("read-b", text="The assembly of claim 1 in a Markush form."),
+    ]
+    payload = to_convergence_payload(rows, phase="early", canonical_read_run="read-a")
+    actual = payload["unclassified_dependents"]
+    if len(actual) != 1:
+        pytest.fail(f"같은 미분류 신고 기대 1행, 실제 {len(actual)}행: {actual!r}")
+    if actual[0].get("reported_by") != ["read-a", "read-b"]:
+        pytest.fail(
+            "같은 신고의 reported_by 기대 정본 순서 [read-a, read-b], 실제 "
+            f"{actual[0].get('reported_by')!r}"
+        )
+
+
+def test_t23_unclassified_divergence_keeps_two_attributed_rows() -> None:
+    """문언이 갈린 신고는 dedupe 축을 넓히지 않고 각각 자기 실행에 귀속한다(재정 T23)."""
+    rows = [
+        unclassified_row("read-a", text="Canonical wording of claim 3."),
+        unclassified_row("read-b", text="Peer wording of claim 3."),
+    ]
+    payload = to_convergence_payload(rows, phase="early", canonical_read_run="read-a")
+    actual = payload["unclassified_dependents"]
+    if len(actual) != 2:
+        pytest.fail(f"갈린 미분류 신고 기대 2행, 실제 {len(actual)}행: {actual!r}")
+    attributions = [entry.get("reported_by") for entry in actual]
+    if attributions != [["read-a"], ["read-b"]]:
+        pytest.fail(f"갈린 신고 귀속 기대 [[read-a], [read-b]], 실제 {attributions!r}")
+
+
+def test_t23_nonempty_unclassified_report_without_run_fails_closed() -> None:
+    """실행 귀속 없는 비어 있지 않은 신고를 받으면 익명 판정서를 만들지 않는다(재정 T23)."""
+    row = unclassified_row(None, text="Unattributed wording of claim 3.")
+    with pytest.raises(ValueError) as excinfo:
+        to_convergence_payload([row], phase="early", canonical_read_run="read-a")
+    message = str(excinfo.value)
+    for token in ("read.dependency-parse", "실행 귀속 없는 미분류 신고"):
+        if token not in message:
+            pytest.fail(f"귀속 누락 ValueError 에 {token!r} 이 없다: {message!r}")
 
 
 def test_both_runs_vacuous_dependency_parse_still_writes_the_verdict(tmp_path) -> None:

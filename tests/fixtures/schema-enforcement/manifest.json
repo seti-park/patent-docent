@@ -270,8 +270,8 @@
       "file": "accept/convergence.unclassified-text-absent.json",
       "schema": "contracts/schemas/convergence.schema.json",
       "expect": "accept",
-      "series": "T18·T21 미분류 문언 부재 정상형",
-      "basis": "재정 2026-09-01 T18·T21. text_status: absent 와 정확한 고정 토큰 «문언 없음»을 짝지은 convergence/v0 정상형 — 자리표시를 자유 문언이 아니라 선언 필드와 대조되는 값으로 고정한다."
+      "series": "T18·T21·T23 미분류 문언 부재 정상형",
+      "basis": "재정 2026-09-01 T18·T21·T23. text_status: absent 와 정확한 고정 토큰 «문언 없음»을 짝짓고 reported_by: [read-a] 로 신고 실행을 밝힌 convergence/v0 정상형이다."
     },
     {
       "file": "reject/convergence.unclassified-absent-wrong-text.json",
@@ -293,6 +293,34 @@
       "expect": "reject",
       "series": "T18·T21 text_status 필수",
       "basis": "재정 2026-09-01 T18·T21. accept/convergence.unclassified-text-absent.json 에서 text_status 키만 삭제한 판. 짝 필드가 없으면 자리표시인지 원문인지 선언되지 않으므로 거부해야 한다."
+    },
+    {
+      "file": "reject/convergence.unclassified-reported-by-empty.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "reject",
+      "series": "T23 reported_by 빈 배열",
+      "basis": "재정 2026-09-01 T23. accept/convergence.unclassified-text-absent.json 에서 reported_by 만 빈 배열로 바꾼 판. 신고가 있는데 실행 귀속이 0건이면 안 된다."
+    },
+    {
+      "file": "reject/convergence.unclassified-reported-by-unknown.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "reject",
+      "series": "T23 reported_by 실행 id 값 공간",
+      "basis": "재정 2026-09-01 T23. accept/convergence.unclassified-text-absent.json 에서 reported_by 원소만 read-a → read-c 로 바꾼 판. 실행 id 는 read-a·read-b 두 값뿐이다."
+    },
+    {
+      "file": "reject/convergence.unclassified-reported-by-duplicate.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "reject",
+      "series": "T23 reported_by 중복 금지",
+      "basis": "재정 2026-09-01 T23. accept/convergence.unclassified-text-absent.json 에서 reported_by 를 [read-a, read-a] 로 바꾼 판. 한 실행을 두 번 신고할 수 없다."
+    },
+    {
+      "file": "reject/convergence.unclassified-missing-reported-by.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "reject",
+      "series": "T23 reported_by 필수",
+      "basis": "재정 2026-09-01 T23. accept/convergence.unclassified-text-absent.json 에서 reported_by 키만 삭제한 판. 새 산출의 미분류 신고는 실행 귀속을 반드시 든다."
     }
   ]
 }

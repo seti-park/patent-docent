@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""감사 Y-6 — CP1 미분류 목록의 실행 귀속 한계와 문언 부재 렌더를 고정한다."""
+"""재정 T23 — CP1 미분류 목록의 실제 실행 귀속과 구 산출 호환 렌더를 고정한다."""
 
 from __future__ import annotations
 
@@ -27,9 +27,22 @@ def render_unclassified(entries: list[dict]) -> str:
     return render(spec, convergence=convergence, contract={"owner_checkpoint": {}}, repo=REPO)
 
 
-def test_unclassified_union_notice_states_the_attribution_limit() -> None:
-    rendered = render_unclassified([])
-    missing = [
+def test_unclassified_items_render_actual_attribution_without_the_old_notice() -> None:
+    rendered = render_unclassified(
+        [
+            {
+                "claim": "CL-3",
+                "dependency_type": "unclassified",
+                "text_status": "verbatim",
+                "text_verbatim": "The assembly of claim 1 in a Markush form.",
+                "reported_by": ["read-a", "read-b"],
+            }
+        ]
+    )
+    section = rendered.split("## 10. ★ 미분류 종속 구조", 1)[1].split(
+        "## 11. ★ 맹검 스크리닝 메모", 1
+    )[0]
+    forbidden = [
         token
         for token in (
             "두 실행",
@@ -41,10 +54,13 @@ def test_unclassified_union_notice_states_the_attribution_limit() -> None:
             "감수하고 넘어가는 것의 명기",
             "상신 중",
         )
-        if token not in rendered
+        if token in section
     ]
-    if missing:
-        pytest.fail(f"미분류 실행 귀속 한계 고지 누락 {missing}")
+    if forbidden:
+        pytest.fail(f"삭제되어야 할 실행 귀속 한계 고지 토큰이 남았다: {forbidden}")
+    expected = "신고 실행: read-a, read-b"
+    if expected not in section:
+        pytest.fail(f"실제 실행 귀속 줄 기대 {expected!r}")
 
 
 def test_absent_text_is_reported_as_absent_without_quoting_it() -> None:
@@ -79,6 +95,8 @@ def test_legacy_item_without_text_status_keeps_the_old_rendering() -> None:
     expected = "전문: “Legacy dependent claim text.”"
     if expected not in rendered:
         pytest.fail(f"text_status 없는 구 산출 렌더 기대 {expected!r}")
+    if "신고 실행:" in rendered:
+        pytest.fail("reported_by 없는 구 산출물에 실행 귀속 줄을 지어냈다")
 
 
 def test_verbatim_text_is_rendered_exactly() -> None:

@@ -144,6 +144,10 @@ def to_convergence_payload(
 
     ★ `phase == "early"` 에 접지·수확 산물이 실려 있으면 계약이 그것을 거부한다. 이 함수가
     값을 지워서 맞추지 않는 이유가 그것이다 — 순서가 무너진 사실은 산출물에 남아야 한다.
+
+    ★ 미분류 신고 행은 `extras["read_run"]` 으로 어느 독해 실행의 신고인지 밝힌다(재정
+    2026-09-01 T23). 비어 있지 않은 `extras["unclassified_detail"]` 에 실행 귀속이 없으면
+    판정서를 익명 신고로 만들지 않고 실패한다.
     """
     source = spec or {}
     patent = source.get("patent") or {}
@@ -220,24 +224,32 @@ def to_convergence_payload(
             # (감사 지적 X-3). 이 칸은 스키마 `$comment` 가 「침묵을 막는 목록」이라 적은
             # 자리이므로, 두 실행이 각자 신고한 것을 **합집합**으로 싣는다 — 같은 청구항을 같은
             # 문언으로 신고했으면 한 행, 문언이 갈리면 두 행이다(정보를 지우지 않는다).
-            seen = {
+            details = row.extras.get("unclassified_detail") or []
+            read_run = row.extras.get("read_run")
+            if details and not read_run:
+                raise ValueError(f"{row.check_id}: 실행 귀속 없는 미분류 신고")
+            by_identity = {
                 (
                     entry.get("claim"),
                     entry.get("dependency_type"),
                     entry.get("text_verbatim"),
-                )
+                ): entry
                 for entry in payload["unclassified_dependents"]
             }
-            for entry in row.extras.get("unclassified_detail") or []:
+            for entry in details:
                 copied = dict(entry)
                 identity = (
                     copied.get("claim"),
                     copied.get("dependency_type"),
                     copied.get("text_verbatim"),
                 )
-                if identity not in seen:
+                existing = by_identity.get(identity)
+                if existing is None:
+                    copied["reported_by"] = [read_run]
                     payload["unclassified_dependents"].append(copied)
-                    seen.add(identity)
+                    by_identity[identity] = copied
+                elif read_run not in existing["reported_by"]:
+                    existing["reported_by"].append(read_run)
         if row.check_id == "read.convergence":
             executed = not row.extras.get("skipped", False)
             payload["convergence_detail"] = {

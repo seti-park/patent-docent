@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib
 import inspect
 import json
@@ -51,7 +52,9 @@ def load_json(path: str) -> dict:
         return json.load(handle)
 
 
-def run_with_payloads(tmp_path, *, per_attempt: dict[int, dict]):
+def run_with_payloads(
+    tmp_path, *, per_attempt: dict[int, dict], adapter_type=m2.ReplayLaneAdapter
+):
     """회차별 `payloads_by_run` 을 깔고 READ 를 한 번 돌린다. 반환 (run_root, outcome, adapter).
 
     회차마다 **모든 실행의 응답을 깐다** — 그래야 "러너가 발송하지 않았다"가 응답 부재에
@@ -70,7 +73,7 @@ def run_with_payloads(tmp_path, *, per_attempt: dict[int, dict]):
         )
     if lanes_root is None:
         pytest.fail("응답 회차가 하나도 없다 — READ 하네스가 공허하다")
-    adapter = m2.ReplayLaneAdapter(lanes_root)
+    adapter = adapter_type(lanes_root)
     outcome = m2.run_read_stage(run_root=root, adapter=adapter, rules=m2.RULES)
     return root, outcome, adapter
 
@@ -81,6 +84,45 @@ def phantom_dependent_payloads() -> dict:
     phantom = copy.deepcopy(payloads["decompose"]["claims"]["dependents"][0])
     phantom["id"] = "CL-9"
     payloads["decompose"]["claims"]["dependents"].append(phantom)
+    return payloads
+
+
+class MutateOnCanonicalTailAdapter(m2.ReplayLaneAdapter):
+    """첫 정본 후속 발송 직전에 원천 파일을 한 번 바꾼다."""
+
+    def __init__(self, root: str) -> None:
+        super().__init__(root)
+        self.mutated = False
+        self.patent_path = RunPaths(os.path.dirname(os.path.dirname(root))).patent_md
+
+    def dispatch(self, requests):
+        if not self.mutated and any(request.task in TAIL_TASKS for request in requests):
+            with open(self.patent_path, "a", encoding="utf-8") as handle:
+                handle.write("\n<!-- mutated by test -->\n")
+            self.mutated = True
+        return super().dispatch(requests)
+
+
+class MutateOnDecomposeAdapter(m2.ReplayLaneAdapter):
+    """첫 분해 발송 직전에 원천 파일을 한 번 바꾼다."""
+
+    def __init__(self, root: str) -> None:
+        super().__init__(root)
+        self.mutated = False
+        self.patent_path = RunPaths(os.path.dirname(os.path.dirname(root))).patent_md
+
+    def dispatch(self, requests):
+        if not self.mutated and any(request.task == "decompose" for request in requests):
+            with open(self.patent_path, "a", encoding="utf-8") as handle:
+                handle.write("\n<!-- mutated by test -->\n")
+            self.mutated = True
+        return super().dispatch(requests)
+
+
+def schema_invalid_payloads() -> dict:
+    """조립본 items[] 한 항목에 스키마 밖 키 하나만 심는다."""
+    payloads = m2.payload_set()
+    payloads["synthesize"]["items"][0]["unexpected_contract_field"] = True
     return payloads
 
 
@@ -287,6 +329,120 @@ def test_v2_exit_retry_repairs_phase_drift(tmp_path) -> None:
         pytest.fail(f"출구 결함을 분해로 잘못 돌려보냈다: {forbidden}")
     if not os.path.isfile(RunPaths(root).material_spec_json):
         pytest.fail("후속 재시도가 변이를 고쳤는데 material-spec.json 이 쓰이지 않았다")
+
+
+def test_t24_tail_time_source_mutation_halts_without_retry(tmp_path) -> None:
+    """조기 통과 뒤 원천 변경을 출구 재독이 잡고 halt 행은 후속 레인을 다시 돌리지 않는다."""
+    payloads = {"read-a": m2.payload_set(), "read-b": m2.payload_set()}
+    root, outcome, adapter = run_with_payloads(
+        tmp_path / "mutated",
+        per_attempt={0: payloads, 1: copy.deepcopy(payloads)},
+        adapter_type=MutateOnCanonicalTailAdapter,
+    )
+    if outcome["status"] != "halt":
+        pytest.fail(f"출구 전 원천 변경 status 기대 halt, 실제 {outcome['status']}")
+    failed_ids = [row.check_id for row in outcome["rows"] if row.status == "fail"]
+    if "read.source-digest" not in failed_ids:
+        pytest.fail(f"출구 재독의 read.source-digest 실패가 없다: {failed_ids}")
+    retried_tail = [
+        lane_id
+        for lane_id in tail_lane_ids(dispatched_ids(adapter))
+        if "/retry-1/" in lane_id
+    ]
+    if retried_tail:
+        pytest.fail(f"retry 없는 halt 뒤 정본 후속 레인을 다시 발송했다: {retried_tail}")
+
+    paths = RunPaths(root)
+    diagnostic = outcome.get("diagnostic")
+    if not isinstance(diagnostic, dict):
+        pytest.fail(f"source-digest halt 진단 기대 dict, 실제 {diagnostic!r}")
+    with open(paths.patent_md, "rb") as handle:
+        actual_digest = "sha256:" + hashlib.sha256(handle.read()).hexdigest()
+    with open(paths.patent_sha256, encoding="utf-8") as handle:
+        declared_digest = handle.read().strip()
+    expected = {
+        "check_id": "read.source-digest",
+        "path": paths.patent_md,
+        "declared": declared_digest,
+        "actual": actual_digest,
+    }
+    if diagnostic != expected:
+        pytest.fail(f"source-digest 진단 3항 기대 {expected!r}, 실제 {diagnostic!r}")
+    if diagnostic["declared"] == diagnostic["actual"]:
+        pytest.fail("변조 표본의 declared 와 actual 지문이 같다")
+
+    control_payloads = {"read-a": m2.payload_set(), "read-b": m2.payload_set()}
+    _, control, _ = run_with_payloads(
+        tmp_path / "control",
+        per_attempt={0: control_payloads, 1: copy.deepcopy(control_payloads)},
+    )
+    if control["status"] != "ok":
+        pytest.fail(f"무변조 대조군 status 기대 ok, 실제 {control['status']}")
+    if control.get("diagnostic") is not None:
+        pytest.fail(f"무변조 성공 런에 진단이 생겼다: {control.get('diagnostic')!r}")
+
+
+def test_t24_decompose_time_mutation_does_not_change_early_verdict(tmp_path) -> None:
+    """분해 발송 때 바뀐 파일은 조기 메모리 판정을 흔들지 않고 출구에서만 halt 한다."""
+    control_payloads = {"read-a": m2.payload_set(), "read-b": m2.payload_set()}
+    control_root, control, _ = run_with_payloads(
+        tmp_path / "control",
+        per_attempt={0: control_payloads, 1: copy.deepcopy(control_payloads)},
+    )
+    if control["status"] != "ok":
+        pytest.fail(f"조기 대조군 status 기대 ok, 실제 {control['status']}")
+
+    mutated_payloads = {"read-a": m2.payload_set(), "read-b": m2.payload_set()}
+    mutated_root, mutated, adapter = run_with_payloads(
+        tmp_path / "mutated",
+        per_attempt={0: mutated_payloads, 1: copy.deepcopy(mutated_payloads)},
+        adapter_type=MutateOnDecomposeAdapter,
+    )
+    if mutated["status"] != "halt":
+        pytest.fail(f"분해 시점 원천 변경 최종 status 기대 halt, 실제 {mutated['status']}")
+
+    keys = ("check_id", "status", "checked", "violations")
+    control_checks = [
+        {key: row.get(key) for key in keys}
+        for row in load_json(RunPaths(control_root).convergence_early_json)["checks"]
+    ]
+    mutated_checks = [
+        {key: row.get(key) for key in keys}
+        for row in load_json(RunPaths(mutated_root).convergence_early_json)["checks"]
+    ]
+    if mutated_checks != control_checks:
+        pytest.fail(
+            "조기 판정점이 진입 메모리 사본 대신 변조 파일을 읽었다: "
+            f"control={control_checks!r}, mutated={mutated_checks!r}"
+        )
+    decompose_retries = [
+        lane_id
+        for lane_id in dispatched_ids(adapter)
+        if "/decompose/retry-1/" in lane_id
+    ]
+    if decompose_retries:
+        pytest.fail(f"파일 변조를 조기 분해 결함으로 오진해 재시도했다: {decompose_retries}")
+
+
+def test_t25_read_schema_still_retries_once_before_halt(tmp_path) -> None:
+    """action=retry(1), then=halt 인 read.schema 는 즉시 halt 최소판의 대상이 아니다."""
+    broken = schema_invalid_payloads()
+    root, outcome, adapter = run_with_payloads(
+        tmp_path,
+        per_attempt={
+            0: {"read-a": broken, "read-b": m2.payload_set()},
+            1: {"read-a": copy.deepcopy(broken), "read-b": m2.payload_set()},
+        },
+    )
+    failed_ids = [row.check_id for row in outcome["rows"] if row.status == "fail"]
+    if "read.schema" not in failed_ids:
+        pytest.fail(f"스키마 변조 표본에 read.schema 실패가 없다: {failed_ids}")
+    if outcome["status"] != "halt":
+        pytest.fail(f"read.schema 재시도 뒤 status 기대 halt, 실제 {outcome['status']}")
+    attempts = retry_attempts(tail_lane_ids(dispatched_ids(adapter)))
+    if attempts != {"retry-1"}:
+        pytest.fail(f"read.schema 후속 재시도 기대 정확히 1회, 실제 {sorted(attempts)}")
+    _ = root
 
 
 def test_v3_retry_counts_stay_within_contract_limits(tmp_path) -> None:

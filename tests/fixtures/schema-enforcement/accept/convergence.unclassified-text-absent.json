@@ -49,7 +49,8 @@
       "claim": "CL-3",
       "dependency_type": "unclassified",
       "text_verbatim": "«문언 없음»",
-      "text_status": "absent"
+      "text_status": "absent",
+      "reported_by": ["read-a"]
     }
   ],
   "numeric_inventory": {

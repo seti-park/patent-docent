@@ -1401,8 +1401,10 @@ def run(
 ) -> dict:
     """READ 스테이지 1회. 실행 순서는 모듈 docstring 의 ①~⑩ 그대로다.
 
-    반환 = `{"rows", "spec", "convergence", "status", "reason_label"}`. 원장 자리는 반환값이
-    아니라 **산출물**에 남는다 — `10-read/lanes/shadow-ledger.json`(아래 `_write_shadow_pointer`).
+    실패 반환 = `{"rows", "spec", "convergence", "status", "reason_label", "diagnostic"}`.
+    `read.source-digest` 실패의 diagnostic 은 원천 파일·기대 지문·재독 실측 지문을 든다.
+    원장 자리는 반환값이 아니라 **산출물**에 남는다 — `10-read/lanes/shadow-ledger.json`
+    (아래 `_write_shadow_pointer`).
     반환값은 호출자의 메모리에서 끝나고 산출물은 런 폴더에 남으므로, 사후 감사가 볼 수 있는
     것은 뒤엣것뿐이다.
 
@@ -1501,16 +1503,18 @@ def run(
             }
 
             # ④-a 청구항 소유 검사 — 실행별 판정이므로 실패한 실행만 표적 재시도한다.
-            early_claim_rows = {
-                name: run_early_claim_checks(
+            early_claim_rows = {}
+            for name in read_runs:
+                run_rows = run_early_claim_checks(
                     CheckContext(
                         spec=decompose_specs[name],
                         source_text=source_text,
                         rules=rules,
                     )
                 )
-                for name in read_runs
-            }
+                for row in run_rows:
+                    row.extras["read_run"] = name
+                early_claim_rows[name] = run_rows
             claim_failures = {
                 name: [row for row in rows if row.status == "fail"]
                 for name, rows in early_claim_rows.items()
@@ -1659,6 +1663,7 @@ def run(
                 "convergence": early_payload,
                 "status": status,
                 "reason_label": entry.get("reason_label"),
+                "diagnostic": None,
                 "gate_note": gate_reason,
             }
 
@@ -1709,17 +1714,30 @@ def run(
 
             # ⑧ 검사 전건. 수렴 축의 peer 는 **분해만 돈** 비정본 실행이다 — 6축은 claims
             #    위에서 계산되므로 접지·통합이 없어도 같은 판정이 선다.
+            #
+            # 재정 2026-09-02 T24 ⒜ — 출구 검사는 매 회차 디스크 재독본 위에서 돈다. 조기
+            # 판정점은 진입 시 읽은 메모리 사본을 유지한다. 조기에 다시 읽으면 파일 변경이
+            # 분해 결함으로 오진되고, 그 판정점에는 원천 지문 검사도 없다.
+            exit_source_text = read_text(paths.patent_md)
             rows = run_read_checks(
                 CheckContext(
                     spec=canonical,
-                    source_text=source_text,
+                    source_text=exit_source_text,
                     rules=rules,
                     schema=schema,
                     peer_spec=decompose_specs[peer_run] if peer_run else None,
                 )
             )
+            for row in rows:
+                row.extras["read_run"] = canonical_run
             failing = [row for row in rows if row.status == "fail"]
             if not failing:
+                break
+            # 재정 2026-09-02 T25 최소판 — retry(n) 없이 action 자체가 halt 인 계약 행은
+            # 폐기할 런을 다시 돌리지 않는다. read.schema(action: retry(1), then: halt)는 이
+            # 조건에 들지 않아 종전처럼 한 번 재시도한 뒤 halt 한다.
+            entry = _failure_entry_for(contract, failing)
+            if str(entry.get("action")) == "halt":
                 break
             signature = _failure_signature(failing)
             if previous_signature is not None and signature == previous_signature:
@@ -1785,12 +1803,25 @@ def run(
             status, reason_label = _failure_verdict(
                 contract, failing, repeated=repeated_signature
             )
+            source_digest_rows = [
+                row for row in failing if row.check_id == "read.source-digest"
+            ]
+            diagnostic = None
+            if source_digest_rows:
+                source_digest_row = source_digest_rows[0]
+                diagnostic = {
+                    "check_id": "read.source-digest",
+                    "path": paths.patent_md,
+                    "declared": source_digest_row.extras.get("declared"),
+                    "actual": source_digest_row.extras.get("actual"),
+                }
             return {
                 "rows": rows,
                 "spec": None,
                 "convergence": payload,
                 "status": status,
                 "reason_label": reason_label,
+                "diagnostic": diagnostic,
             }
 
         # ⑩ CP1 상신물.
@@ -1840,18 +1871,17 @@ def run(
         )
 
 
-def _failure_verdict(
+def _failure_entry_for(
     contract: dict, failing: list[CheckRow], *, repeated: bool = False
-) -> tuple[str, str | None]:
-    """검사 실패 → 조치. 재시도 예산은 이미 소진된 뒤 호출된다."""
+) -> dict:
+    """실패 검사 집합에 대응하는 계약 `failure[]` 행을 고른다."""
     ids = {row.check_id for row in failing}
     if "read.schema" in ids:
         # `halt` 는 `escalate` 를 앞선다(감사 지적 C-3). 계약이 `read.schema` 실패에 halt 를
         # 정했고 halt(런 상태 무효)와 escalate(정지 + 상신)는 **다른 처분**이다. 같은 서명의
         # 재현은 「왜 멈췄는가」의 진단이지 처분의 격을 낮추는 사유가 아니다. 재정 T16 §6 ⑤
         # 는 이 우선순위를 정하지 않았다.
-        entry = failure_entry(contract, "read.schema 실패")
-        return str(entry.get("then", entry.get("action"))), entry.get("reason_label")
+        return failure_entry(contract, "read.schema 실패")
     if "read.source-digest" in ids:
         # 계약이 두 층을 구별해 남겼다(재정 P-C) — 같은 불일치를 **진입 시점**에 잡는 자리는
         # checks_on_entry 의 read.input-digest(환경 오류)이고, 이 행은 그 **이후 구간**에서
@@ -1861,17 +1891,27 @@ def _failure_verdict(
         # **계열**이었다(계약이 halt 를 정한 행이 escalate 뒤에 서 있는 것). 원천이 도중에
         # 바뀐 런은 재시도로 같은 서명을 재현하든 아니든 폐기 대상이며, 재현 사실이 폐기를
         # 상신으로 낮출 사유가 되지 못한다. 한쪽만 고치면 남은 절반이 「고쳐진 계열」로 보인다.
-        entry = failure_entry(contract, "원천 다이제스트")
-        return str(entry.get("then", entry.get("action"))), entry.get("reason_label")
+        return failure_entry(contract, "원천 다이제스트")
     if repeated:
-        entry = failure_entry(contract, "같은 실패 서명")
-        return str(entry["action"]), entry.get("reason_label")
+        return failure_entry(contract, "같은 실패 서명")
     if CONVERGENCE_CHECK_ID in ids:
         # 계약 문언이 "read.convergence 미달"에서 "read.convergence 의 exact-match 축 미달"로
         # 바뀌었다(재정 P-3) — 상신 축 미달은 판정 행을 fail 로 만들지 않으므로 여기 오지 않는다.
-        entry = failure_entry(contract, "exact-match 축")
-        return str(entry.get("then", entry.get("action"))), entry.get("reason_label")
-    entry = failure_entry(contract, "read.verbatim")
+        return failure_entry(contract, "exact-match 축")
+    # 재정 2026-09-01 T22 — 두 레인 로그 검사는 출구 재시도 루프 밖에서 합류하므로
+    # 자기 전용 escalate 행을 쓰고 retry(n) 은 없다. 오늘 판정 순서를 보존하려 맨 뒤에 둔다.
+    if "read.lane-log-shape" in ids:
+        return failure_entry(contract, "read.lane-log-shape")
+    if "read.lane-log-digest-value" in ids:
+        return failure_entry(contract, "read.lane-log-digest-value")
+    return failure_entry(contract, "read.verbatim")
+
+
+def _failure_verdict(
+    contract: dict, failing: list[CheckRow], *, repeated: bool = False
+) -> tuple[str, str | None]:
+    """검사 실패 → 조치. 재시도 예산은 이미 소진된 뒤 호출된다."""
+    entry = _failure_entry_for(contract, failing, repeated=repeated)
     return str(entry.get("then", entry.get("action"))), entry.get("reason_label")
 
 

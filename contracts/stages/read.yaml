@@ -550,7 +550,9 @@ checks_before_exit:
     note: >-
       ★ M1 재감수 M-01 보수 — 스테이지가 실제로 실행하는데 이 계약이 선언하지 않고 있었다.
       계약이 모르는 검사는 사후 감사에서 근거 없는 검사가 되고, 반대로 계약에만 있고
-      실행되지 않는 검사는 공허한 약속이 된다. 양방향 다 결함이다.
+      실행되지 않는 검사는 공허한 약속이 된다. 양방향 다 결함이다. 출구 국면의 source_text 는
+      매 회차 디스크에서 다시 읽은 본문이며, 명세가 든 진입 시점 patent.source_digest 와
+      대조하므로 도중 변경이 실제로 발동한다(재정 2026-09-02 T24).
   - id: read.verbatim
     phases: [exit]
     criterion: "모든 text_verbatim·quote·caption_quote·evidence_quotes[]·quotes[] 가 원천의 바이트 정확 부분문자열"
@@ -736,7 +738,23 @@ failure:
     note: >-
       원천이 도중에 바뀐 런은 폐기 대상이다. 같은 불일치를 **진입 시점**에 잡는 자리는
       위 checks_on_entry 의 read.input-digest 이며 사유 라벨은 "환경 오류"다(재정 P-C).
-      이 행은 그 이후 구간에서 드러난 불일치의 조치를 정한다.
+      이 행은 그 이후 구간에서 드러난 불일치의 조치를 정한다. 출구의 디스크 재독으로 이
+      검사가 실제로 발동한다(재정 2026-09-02 T24). 이 행은 retry(n) 없는 halt 이므로 실패하면
+      즉시 출구 루프를 나오며 재시도는 0회다(재정 2026-09-02 T25).
+  - condition: "read.lane-log-shape 실패(레인 왕복 기록의 형태)"
+    action: escalate
+    note: >-
+      두 검사는 출구 재시도 루프가 끝난 뒤 결과 목록에 합류하므로(engine/stages/read.py 루프
+      종료 후) 재시도 기회가 0회이며, 그래서 retry(n) 을 적지 않는다. 적으면 0회인 재시도를
+      계약이 허구로 선언한다(재정 2026-09-01 T22). halt 를 고르지 않은 사유는 회복 가능성
+      미실측이며 B-1 과 함께 잰다(재정 T22 ⒞).
+  - condition: "read.lane-log-digest-value 실패(레인 왕복 기록의 지문 값)"
+    action: escalate
+    note: >-
+      두 검사는 출구 재시도 루프가 끝난 뒤 결과 목록에 합류하므로(engine/stages/read.py 루프
+      종료 후) 재시도 기회가 0회이며, 그래서 retry(n) 을 적지 않는다. 적으면 0회인 재시도를
+      계약이 허구로 선언한다(재정 2026-09-01 T22). halt 를 고르지 않은 사유는 회복 가능성
+      미실측이며 B-1 과 함께 잰다(재정 T22 ⒞).
   - condition: "반려 수신(material-defect.md)"
     action: reject-upstream
     note: "재요리 — spec_version +1 로 개정, 항목은 append-only(SPEC §1.6)"
