@@ -75,6 +75,7 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v5.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v6.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v7.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v8.md | 등재 | — |
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -166,6 +167,12 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v6.md | Y-5 | LOW | 수용 | T-12 「유령 행은 이 시험만 잡는다」가 v6 에서 거짓(G1 골격이 먼저 잡는다) — v7 = 목적 문언을 「관문 오라클과 독립적인 계약↔엔진 상수 다리」로 | `D-20260902-02-t26-design-challenge.md` §11 |
 | 2026-09-02-sol-challenge-t26-design-v7.md | Z-1 | MED | 수용 | G3 예산 등식이 타입을 안 봐 `true`/`1.0` 이 통과(런타임·`test_m17` 은 `type is int` 로 거부 — 판정이 갈림) — v8 = G3 에 `type(max_retries) is int` 를 등식 앞에 · 변조 ㉚㉛ · T-11 ④ 직접 변조 | `D-20260902-02-t26-design-challenge.md` §12 |
 | 2026-09-02-sol-challenge-t26-design-v7.md | Z-2 | MED | 수용 | T-7 ④ 가 manifest 의 predicate 를 `eval` 해 같은 manifest 의 cells 와 비교하는 자기참조 오라클(동반 변조 자기일관 통과) — v8 = 시험 코드 고정 식으로 β 집합 독립 산출 · `exceptions` 길이·id·rule·predicate 문자열 고정값 대조 · B-0 시험에 동반 변조 | `D-20260902-02-t26-design-challenge.md` §12 |
+| 2026-09-02-sol-challenge-t26-design-v8.md | AA-1 | HIGH | 수용 | T-7 ① 이 `check_ids` 를 집합으로만 대조 — 중복 + 13번째 비활성 축 목록이 값·계수·β 전부 통과 — v9 = 검증기 `len == len(set) == 12` 선행 · 음성 시험 ⓐ | `D-20260902-02-t26-design-challenge.md` §13 |
+| 2026-09-02-sol-challenge-t26-design-v8.md | AA-2 | HIGH | 수용 | T-7 이 셀 키 우주를 고정하지 않아 `1024:1` 삭제 + 영역 밖 `0:1` 삽입이 통과 — v9 = 검증기 키 집합 == 정답 우주 양방향 · 값 형식 · `exceptions[0].cells` 정확히 2,048 · 음성 시험 ⓑ | `D-20260902-02-t26-design-challenge.md` §13 |
+| 2026-09-02-sol-challenge-t26-design-v8.md | AA-3 | MED | 수용 | T-7 ⑥ 이 `base_commit`·`tree_head` 자기일관만 봄 — v9 = 검증기에 리터럴 `99fad78` + `git rev-parse 99fad78` 전체 해시를 호출자가 넘겨 대조 · 음성 시험 ⓒ | `D-20260902-02-t26-design-challenge.md` §13 |
+| 2026-09-02-sol-challenge-t26-design-v8.md | AA-4 | MED | 수용 | Z-2 처분의 「B-0 시험에 동반 변조」가 피검 함수 없음(T-7 은 B 에서 생김) — v9 = `validate_manifest.py` 를 B-0 산출물로 · 생성기 자기 검증 · B-0 시험 · B 의 T-7 이 같은 검증기 호출 | `D-20260902-02-t26-design-challenge.md` §13 |
+
+**행 수 = 86**(`등재` 15파일의 지적 전건). **[정정 2026-09-02 · 8차]** 직전 판 **82** — 7차 도전 원문 반입(AA 4)으로 넷 늘었다.
 
 **행 수 = 82**(`등재` 14파일의 지적 전건). **[정정 2026-09-02 · 7차]** 직전 판 **80** — 6차 도전 원문 반입(Z 2)으로 둘 늘었다.
 
