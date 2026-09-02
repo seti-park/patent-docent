@@ -223,3 +223,20 @@ X-2 partially(Y-1) · B·V·N·W 전건 closed(W-4 만 Y-4 로 재개방). 값 8
 났다(v5 W-4 → v6 Y-4 · v6 X-2 정정 → Y-1). 대책 = v7 은 개정 뒤 **모순 탐색 grep**(폐기 문구 `original(ctx)` · 계수 리터럴 · 좌표 매핑 `:533/:733`)을
 돌려 잔재 0 을 확인한 뒤 냈다(대응표의 인용은 예외). Y-3 은 관문이 「주장하는 범위」와 「실제로 보는 것」의 어긋남 — 이 리포의 지배적 결함 계열
 (「강제의 범위를 실제보다 넓게 말했다」)이며 관문 설계 문서에서도 같은 형태로 났다.
+
+
+---
+
+## §12 6차 도전(설계 v7) 지적 Z-1 · Z-2 의 처분 — 2026-09-02 추기 (총괄 저작)
+
+원문 = `docs/lessons/2026-09-02-sol-challenge-t26-design-v7.md`. 판정 FAIL · 2건(MED 2 · BLOCKER 0 · HIGH 0) · 새 재정 0 · Y-1·Y-2·Y-4·Y-5 closed ·
+Y-3 partially(Z-1) · B·V·N·W·X 전건 closed. 값 8,190 칸은 여섯 번째 일치. 둘 다 **수용** → **v8** → 7차 도전.
+
+| ID | 격 | 지적 요지 | 처분 | v8 에서 어떻게 닫았나 |
+|---|---|---|---|---|
+| **Z-1** | MED | G3 의 Y-3 보수가 값의 집합 등식만 적고 `max_retries` 의 **타입**을 규정하지 않는다 — PyYAML `true`→bool · `1.0`→float 이고 `{1} == {True} == {1.0}` 이라 통과. 런타임 `_retry_budget()`(:754) 과 존치 `test_m17` 은 `type(v) is int` 로 거부하므로 관문·런타임의 계약 유효성 판정이 갈린다(도전자 실측 `bool_and_float_pass_literal_G3_set_equality=True runtime_rejects=True`) | **수용** | G3 — `type(p["max_retries"]) is int`(`isinstance` 금지 · bool 통과)를 등식 **앞**에 · 변조 ㉚ `true` ㉛ `1.0` · T-11 ④ 직접 YAML 변조에 ㉚ 포함(파서 실물 경로). 음수·0 은 현행 `_retry_budget` 도 통과시키므로 **손대지 않는다**(값 공간 = 재정 사항 — v8 §5 에 도전 대상으로 적음) |
+| **Z-2** | MED | T-7 ④ 가 manifest 의 `predicate` 를 `eval` 해 **같은 manifest** 의 `cells` 와 비교 — predicate 와 cells 를 함께 틀리면(schema 비트) 2,048칸·자기일관으로 통과(`equals_required_beta=False symmetric_difference=2048`). `exceptions` 길이·`id`·`rule` 도 미대조 | **수용** | T-7 ④ — 기대 셀은 **시험 코드의 고정 식**(`read.convergence` 리터럴은 시험 코드에 · `check_ids` 순서만 manifest)으로 독립 산출 → manifest `cells` 와 양방향 · 2,048 · `len(exceptions) == 1` · `id == "T28-beta"` · `rule`·`predicate` 문자열 고정값 대조. manifest 의 `predicate` 는 **기록**으로 남는다. B-0 생성기 시험에 동반 변조(자기일관 사본이 통과하면 검사가 자기참조) 추가. 총괄 오라클도 β 집합을 독립 계산 |
+
+**여섯 번째 FAIL 에 대한 총괄 자기 점검.** BLOCKER·HIGH 가 0 이고 남은 것은 **관문·시험이 「같은 것을 두 벌로」 보지 않은 자리** 둘 — 관문이 런타임과
+다른 타입 판정(Z-1) · 시험이 피검물의 술어로 피검물을 검산(Z-2). 둘 다 이 리포의 검증 설계 원리([[verification-design-principles]] — 「시험과 구현이 같은
+상수를 쓰면 전건 green 이어도 계약은 깨져 있다」)의 변형이다. 7차 발주문은 Z-1·Z-2 폐쇄와 재개방 여부만 묻는다.

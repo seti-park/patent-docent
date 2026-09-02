@@ -74,6 +74,7 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v4.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v5.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v6.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v7.md | 등재 | — |
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -163,6 +164,10 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v6.md | Y-3 | MED | 수용 | 관문이 `max_retries` 를 보지 않아 `early.max_retries: 2` 가 관문 관측면 불변으로 통과(존치 `test_m17` 이 잡지만 관문 구멍) — v7 = G3 에 `{n} == {max_retries}` 결속 · 변조 ㉙ | `D-20260902-02-t26-design-challenge.md` §11 |
 | 2026-09-02-sol-challenge-t26-design-v6.md | Y-4 | LOW | 수용 | 계수 리터럴(24/28)이 §0·§2.10·§2.11 에 다시 들어가 W-4 재발 — 총괄의 패치 잔재. v7 = 리터럴 전부 제거 · §2.7 열거만 정본 · 관문 출력이 센다 | `D-20260902-02-t26-design-challenge.md` §11 |
 | 2026-09-02-sol-challenge-t26-design-v6.md | Y-5 | LOW | 수용 | T-12 「유령 행은 이 시험만 잡는다」가 v6 에서 거짓(G1 골격이 먼저 잡는다) — v7 = 목적 문언을 「관문 오라클과 독립적인 계약↔엔진 상수 다리」로 | `D-20260902-02-t26-design-challenge.md` §11 |
+| 2026-09-02-sol-challenge-t26-design-v7.md | Z-1 | MED | 수용 | G3 예산 등식이 타입을 안 봐 `true`/`1.0` 이 통과(런타임·`test_m17` 은 `type is int` 로 거부 — 판정이 갈림) — v8 = G3 에 `type(max_retries) is int` 를 등식 앞에 · 변조 ㉚㉛ · T-11 ④ 직접 변조 | `D-20260902-02-t26-design-challenge.md` §12 |
+| 2026-09-02-sol-challenge-t26-design-v7.md | Z-2 | MED | 수용 | T-7 ④ 가 manifest 의 predicate 를 `eval` 해 같은 manifest 의 cells 와 비교하는 자기참조 오라클(동반 변조 자기일관 통과) — v8 = 시험 코드 고정 식으로 β 집합 독립 산출 · `exceptions` 길이·id·rule·predicate 문자열 고정값 대조 · B-0 시험에 동반 변조 | `D-20260902-02-t26-design-challenge.md` §12 |
+
+**행 수 = 82**(`등재` 14파일의 지적 전건). **[정정 2026-09-02 · 7차]** 직전 판 **80** — 6차 도전 원문 반입(Z 2)으로 둘 늘었다.
 
 **행 수 = 80**(`등재` 13파일의 지적 전건). **[정정 2026-09-02 · 6차]** 직전 판 **75** — 5차 도전 원문 반입(Y 5)으로 다섯 늘었다.
 
