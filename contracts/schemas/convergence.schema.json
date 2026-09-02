@@ -95,9 +95,8 @@
       "required": ["read_run", "rule", "content_blind"],
       "properties": {
         "read_run": {
-          "$comment": "정본으로 지정된 실행 식별자(예 read-a). provenance.read_runs[0] 과 같아야 하며, 그 대조는 스키마 밖이다(러너의 출구 검사 몫).",
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/read_run",
+          "$comment": "정본 지정은 러너가 `read_runs[0]` 로 정해 `canonical_read_run=` 으로 명시 전달한다 · 재료 명세의 `provenance.read_runs` 는 역할 접미(`:canonical`·`:convergence-peer`)를 든 별개 표기다 · 재정 T32. [정정 T32] 구 문언 「provenance.read_runs[0] 과 같아야 하며, 그 대조는 스키마 밖이다(러너의 출구 검사 몫)」은 실물과 어긋나므로 폐기한다."
         },
         "rule": { "const": "declaration-order" },
         "content_blind": { "const": true }
@@ -159,7 +158,7 @@
           "text_status": { "enum": ["verbatim", "absent"] },
           "reported_by": {
             "type": "array",
-            "items": { "enum": ["read-a", "read-b"] },
+            "items": { "$ref": "#/$defs/read_run" },
             "minItems": 1,
             "uniqueItems": true
           }
@@ -274,6 +273,10 @@
     }
   ],
   "$defs": {
+    "read_run": {
+      "enum": ["read-a", "read-b"],
+      "$comment": "재정 2026-09-02 T32 — 독해 실행 식별자의 단일 진원 · reported_by.items 와 canonical_selection.read_run 이 참조한다 · screening_memos[].read_run 은 §5 ② 상신 전이라 이 참조 밖"
+    },
     "axis_id": {
       "$comment": "수렴 6축의 이름. convergence_detail.axes[].id 와 convergence_report 의 두 목록이 같은 어휘를 쓴다.",
       "enum": [

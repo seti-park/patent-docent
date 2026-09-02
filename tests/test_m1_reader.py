@@ -1228,7 +1228,7 @@ def test_convergence_payload_validates_against_contract() -> None:
     spec = golden_spec()
     for peer in (golden_spec(), None):  # 2회차 있는 런과 없는 런(공허 경로) 둘 다
         rows = run_read_checks(context(spec, peer_spec=peer))
-        payload = to_convergence_payload(rows, spec)
+        payload = to_convergence_payload(rows, spec, canonical_read_run="read-a")
         errors = sorted(validator.iter_errors(payload), key=str)
         if errors:
             pytest.fail(

@@ -274,6 +274,27 @@
       "basis": "재정 2026-09-01 T18·T21·T23. text_status: absent 와 정확한 고정 토큰 «문언 없음»을 짝짓고 reported_by: [read-a] 로 신고 실행을 밝힌 convergence/v0 정상형이다."
     },
     {
+      "file": "accept/convergence.canonical-read-run-read-a.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "accept",
+      "series": "T32 canonical_selection.read_run 유효 enum",
+      "basis": "재정 2026-09-02 T32 §2·§3 ②. accept/convergence.unclassified-text-absent.json 을 그대로 복제한 정상 대조군이며 canonical_selection.read_run: read-a 가 단일 진원 enum 을 통과한다."
+    },
+    {
+      "file": "reject/convergence.canonical-read-run-unknown.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "reject",
+      "series": "T32 canonical_selection.read_run 미등록 실행 거부",
+      "basis": "재정 2026-09-02 T32 §2·§3 ②. accept/convergence.unclassified-text-absent.json 에서 canonical_selection.read_run 만 read-a → read-c 로 바꾼 판. 정본 실행 식별자는 $defs.read_run 의 두 값 밖을 받을 수 없다."
+    },
+    {
+      "file": "reject/convergence.canonical-read-run-empty.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "reject",
+      "series": "T32 canonical_selection.read_run 빈 문자열 거부",
+      "basis": "재정 2026-09-02 T32 §2·§3 ②. accept/convergence.unclassified-text-absent.json 에서 canonical_selection.read_run 만 read-a → 빈 문자열로 바꾼 판. 자유 문자열 시절의 빈 값 거부도 단일 진원 enum 이 계속 집행한다."
+    },
+    {
       "file": "reject/convergence.unclassified-absent-wrong-text.json",
       "schema": "contracts/schemas/convergence.schema.json",
       "expect": "reject",
