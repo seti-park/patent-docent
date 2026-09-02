@@ -263,7 +263,7 @@ owner_checkpoint: { id: ..., surfaces: [...], confirm_file: ... }   # 있는 스
 | C3 | 작업 레인은 어떤 경우에도 **승인 봉투 파일을 쓰지 않는다**. 봉투는 오케스트레이터가 Owner 응답 후 기록한다 | 재량(D9 재정 단독성의 집행) |
 | C4 | 모든 스테이지는 진입 시 `run.yaml`의 `engine_commit`·`reader_version`을 확인하고, 산출물 `provenance`에 그대로 기록한다 | D14 |
 | C5 | `checks_before_exit`가 하나라도 실패하면 스테이지는 산출을 확정하지 않는다. 부분 성공 확정은 금지 | 재량 |
-| C6 | 실패 조치 어휘는 `retry(n)` / `escalate` / `halt` / `reject-upstream` 넷뿐이다. `escalate`의 수신자는 항상 Owner다 | 브리프 고정 |
+| C6 | 실패 조치 어휘는 `retry(n)` / `escalate` / `halt` / `reject-upstream` 넷뿐이다. `escalate`의 수신자는 항상 Owner다. READ 실패표의 키·선택 규칙은 §1.16을 따른다 | 브리프 고정 · 재정 T26 |
 | C7 | 재료 명세를 소비하는 모든 스테이지는 **동결본(`15-frozen/`)만** 읽는다. `10-read/`의 작업본을 읽는 것은 계약 위반이다 | D6 |
 | C8 | 변주 간 교차 열람 금지. 한 변주 레인은 다른 변주의 어떤 산출물도 읽지 않는다(공정 비교) | D10 |
 | C9 | **런 개시 관문.** 모든 런은 `run.yaml`에 `run_kind ∈ {rehearsal, publish}`를 선언한다. `publish` 런은 **런 시작 시점**(`source` 진입 전)에 검사 `run.publish-preconditions`를 통과해야 시작되며, 판정 문언 정본은 `contracts/run-kinds.yaml`이다. 미충족 = **런 시작 불가**(`halt`). 게시 런 진입을 결정하는 것은 회차가 아니라 상태 조건이다 | 재정 N10 |
@@ -382,7 +382,7 @@ owner_checkpoint: { id: ..., surfaces: [...], confirm_file: ... }   # 있는 스
 | `id` | `read` |
 | `lane` | Opus 5 max — **분해 2회(독립) · 접지 이후 1회**(재정 P-4·E 지시) |
 | `execution` | `decompose_instances: 2` · `post_convergence_instances: 1` · `canonical_selection: {rule: declaration-order, content_blind: true}` |
-| `retry_budget` | **판정점별** 재시도 예산(재정 2026-09-01 T16) — `early`(조기 관문 · `scope: per-read-run` · `max_retries: 1` · 고치는 대상 = 분해) · `exit`(출구 관문 · `scope: run` · `max_retries: 1` · 고치는 대상 = 정본 후속). 더해 `escalate_on_repeat`(같은 실패 서명 재현 = 즉시 상신)과 `feedback_discipline`(되먹임은 검사 소견만). 출구 검사의 원천 본문은 매 회차 디스크 재독본이다(재정 2026-09-02 T24). **`retry(n)` 없는 `halt` 행의 실패는 출구 예산을 쓰지 않고 즉시 루프를 나온다**(재정 2026-09-02 T25) |
+| `retry_budget` | **판정점별** 재시도 예산(재정 2026-09-01 T16) — `early`(조기 관문 · `scope: per-read-run` · `max_retries: 1` · 고치는 대상 = 분해 · 목록 = `read.claim-inventory`·`read.dependency-parse`·`read.convergence`) · `exit`(출구 관문 · `scope: run` · `max_retries: 1` · 고치는 대상 = 정본 후속 · 목록 = `read.schema`·`read.claim-inventory`·`read.dependency-parse`·`read.verbatim`·`read.pointer-resolve`·`read.coverage`·`read.value-derivation`·`read.bibliography`). 출구 실패 집합이 이 8종의 부분집합일 때만 재시도하며 `read.convergence`는 출구 목록 밖이다(재정 T26·T28 β). 더해 `escalate_on_repeat`(같은 실패 서명 재현 = 즉시 상신)과 `feedback_discipline`(되먹임은 검사 소견만). 출구 검사의 원천 본문은 매 회차 디스크 재독본이다(재정 2026-09-02 T24). **`retry(n)` 없는 `halt` 행의 실패는 출구 예산을 쓰지 않고 즉시 루프를 나온다**(재정 2026-09-02 T25) |
 | `early_phase_spec` | 「분해 전용 명세」 조립의 **파이프라인 소유** 선언(재정 T16 부속 4) — 소유자·조립기·싣는 필드·자리표시·그 위에서 도는 검사를 계약이 든다. 자리표시는 조립기에 넣는 인자(`assembler_inputs`: `groundings`·`synthesis`·`harvest`)와 산출 명세에 남는 실제 필드(`spec_fields`: `figures`·`extensions.docent.drop_signal`)를 나눠 선언한다 |
 | `checks_on_entry` | `read.input-digest` — 선언 입력 전건의 지문 대조(`patent.md` ↔ `patent.sha256` ↔ `run.yaml`의 원천 해시 ↔ `source-report.json`, 그리고 도면 세트 매니페스트 지문). 불일치 = **환경 오류**(재정 P-C) |
 | `inputs` | `00-source/patent.md`, `00-source/patent.sha256`, `00-source/figures-raw/`, `00-source/source-report.json`, `run.yaml`, **`10-read/convergence-early.json`**(접지 단계의 선언 입력, 재정 P-U3) |
@@ -1311,6 +1311,8 @@ owner_checkpoint:
 | 2-b | **청구항 소유 검사 실패**(인벤토리·종속 파싱) | `read.claim-inventory`·`read.dependency-parse` — **두 국면**(분해 직후 실행별 / 출구) | `retry(1)` → `escalate`. **어느 국면에서 났는지가 조치의 방향을 정한다**: 조기 = **분해 결함**이므로 그 실행의 분해를 다시 돌리고, 출구(조기 통과 후) = **국면 간 변이**이므로 **정본 후속**을 다시 돌린다. **조기 실패는 봉투 적용 범위 밖**이다 | 재정 2026-09-01 T16-ⓐ·부속 1, 재정 T17 |
 | 3 | 재독해 수렴 미달 | `read.convergence`(**분해 직후**) | 축 정책별로 갈린다 — `exact-match` 미달 = `retry(1)` → `escalate`(절차 신호, **봉투 적용 범위 밖**) / `escalation-trigger` 미달 = `escalate`(사유 `독해 프로파일 상신`, 실패가 아니며 **봉투가 적용되는 유일한 자리**) / `measure-only` = 판정 없음 | D6 규율 ③, 재정 P-3·P-4·T17 |
 | 3-b | **재시도가 같은 실패 서명을 재현** | `read`의 정본 후속 루프(서명 = 실패 판정 행의 `(check_id, rule, locus)` 집합) | `escalate` — 사유 라벨 `국면 간 변이 재현 — 코드 결함 의심`. **남은 예산을 태우지 않는다**: 변이가 레인 실수가 아니라 코드 결함이면 재시도는 같은 실패를 재현하고, **그 재현 자체가 진단**이다 | 재정 2026-09-01 T16 §6 ⑤ |
+| 3-c | **READ 실패표 선택 규칙** | `contracts/stages/read.yaml#failure`의 11행 — 검사 사건은 비공 `checks`, 비검사 사건은 `kind`(`retry-repeat`·`gate-escalation`·`upstream-defect`)를 정확히 하나의 키로 든다 | 후보의 종단 조치를 격자 `halt > reject-upstream > escalate`로 고르고, 같은 조치의 동률은 **계약 행 순서**로 푼다. 격자 순서와 동률 해소 순서는 다른 값이며, `retry-repeat` 행이 검사 `escalate` 행보다 앞선다 | 재정 T26·T30 |
+| 3-d | **READ 진입 실패와 출구 재시도 경계** | `read.input-digest`는 `judged_at: entry`; 출구 12검사와 다른 판정점이다 | 진입은 `halt` + `환경 오류`이고 출구 실패표 함수에 오지 않는다(재정 T29). 출구 재시도 목록은 명시 8종이며 `read.convergence`가 든 실패 집합은 재디스패치 없이 exact-match 행의 `escalate`로 간다(재정 T26·T28 β) | 재정 T26·T28·T29 |
 | 4 | drop 신호 발생(2단) | `read` 조기(분해 직후) / 최종(포지셔닝 후) | **조기 = 조치 없음** — 맹검 메모로 기록만 하고 진행한다(상신 없음·최종 서사 평가 레인 비공개). **확정 = CP1 통합 재정** — 구속력 있는 결정은 재료 승인과 한 자리에서 1회 내려진다. 구 조치 "즉시 `escalate`, 하류 정지"는 **폐기** | D4(v1.3), 재정 P-A |
 | 4-b | 진입 지문 불일치(전 스테이지) | 각 스테이지의 `checks_on_entry` | `halt` — 사유 `환경 오류`. 품질 결함이 아니므로 재시도·수정 루프에 넣지 않는다 | 재정 P-C(C10) |
 | 4-c | 원천 변경 감지(`patent.md` 또는 도면 세트) | `source.input-digest` | `halt` → **항상 새 런**. 구 런은 `superseded-by-source-change`로 표시하고 상호 링크를 보존한다. 부분 복구·우회 스위치 없음 | 재정 P-U2 |
@@ -1323,6 +1325,8 @@ owner_checkpoint:
 | 11 | 도면 부재·전시물 후보 부족 | `source.exhibit-candidates`(조기 보고 시점) | `escalate` — 런 중단·Owner 상신. 사유 표기 = `형식 전제 미충족`(D4의 `안도감 부적합`과 구별) | D11·D12, 재정 N12 |
 | 12 | 게시 런 전제조건 미충족 | `run.publish-preconditions`(런 시작, `source` 진입 전) | `halt` — **런 시작 불가**. 방어층·사용권 재정·템플릿 동결이 상태 조건이다 | 재정 N10 |
 | 13 | 하류 산출물의 `spec_version` 불일치 | `design.spec-digest`·`compose.spec-digest`·게이트의 버전 정합 검사 | **자동 무효** → `halt`. 재료 개정 시 하류 전량 재생성이며 토너먼트 행은 무효 표시로 보존 | 재정 N11 |
+
+READ 실패표의 `condition`·`note`는 설명 산문이며 선택 코드가 읽지 않는다. 검사 id는 실패표 전체에서 정확히 한 행에만 속하고, 선언된 진입·조기·출구 검사 합집합과 실패표의 `checks` 합집합은 양방향으로 같다. `kind` 세 값은 각각 한 행뿐이며 `upstream-defect`의 재요리 호출자는 PD-M5까지 이연되어 오늘은 `deferred/test_bound`다(재정 T26·T29·T30).
 
 **조치 어휘의 의미(고정).**
 
@@ -4564,7 +4568,7 @@ if got != want:
 4. **최적화 모드 회귀**: 검증 도구는 `python3 -O`로도 동일한 종료 코드를 내야 한다. M11이 이 동치성을 서브프로세스 테스트로 강제한다(`test_checker_behaves_identically_under_O`).
 5. 산출물 스키마 검증은 JSON Schema draft 2020-12로 하고, **금지 필드는 `additionalProperties: false`로 집행**한다(점수 금지 등 — D15). ※ 앵커 원장의 절대량 필드 금지는 재정 R12로 폐기되었고, 남은 금지는 **점수·판정 필드**다(§4.6·§5.7).
 6. 회귀 스위트는 "**변조본 검출 실패 = 테스트 실패**"로 설계한다(§8.5).
-7. **커밋 전 필수 관문은 여섯이다**(M1에서 하나, **재정 2026-08-19 H7로 다시 하나**, **재정 2026-09-01 T20으로 다섯째**, **재정 2026-09-02 T27로 여섯째**가 늘었다). 문서(`docs/**`)·계약(`contracts/**`·`reader/schemas/**`·`reader/*.yaml`)·검증기(`reader/lib/**`)·**러너**(`engine/**`)·**감수 원문**(`docs/lessons/**`)·**처분 원장**(`docs/decisions/DISPOSITIONS.md`)을 고쳤으면 아래 여섯 도구가 **전부 exit 0**을 내는지 확인한 뒤 커밋한다. **여섯 도구는 각자 하나의 주장만 증명하며, 하나의 통과는 다른 하나의 증거가 아니다.** **[정정 2026-09-01 · 재정 T20]** 구 문언은 「넷이다」·「네 도구」였다 — 계수를 지우지 않고 마커로 남기는 것은 이 리포의 규율이며(닫힌 것도 어떻게 닫혔는지를 남긴다), 아래 표의 넷째 행이 **같은 종류의 낡음을 두 판 연속으로** 낸 자리다. **[정정 2026-09-02 · 재정 T27]** 그 다음 문언은 「**다섯이다**」·「**다섯 도구**」였고, 재정 T27이 여섯째(`tools/check_dispositions.py`)를 신설하면서 다시 낡았다. 함께 발화 조건에 **처분 원장**이 더해졌다 — 감수 원문을 고치면서 처분표를 고치지 않는 것이 정확히 이 관문이 막는 형태이므로 둘은 같은 발화 조건 아래 선다. **이 자리는 계수가 낡은 세 번째 지점이다**(4→5→6). 계수를 문서에 적는 한 이 실패는 반복되며(고치는 시점과 늘어나는 시점이 다르다), 그 구조적 처분은 재정 T5의 백로그에 있다.
+7. **커밋 전 필수 관문은 일곱이다**(M1에서 하나, **재정 2026-08-19 H7로 다시 하나**, **재정 2026-09-01 T20으로 다섯째**, **재정 2026-09-02 T27로 여섯째**, **재정 2026-09-03 T26 집행으로 일곱째**가 늘었다). 문서(`docs/**`)·계약(`contracts/**`·`reader/schemas/**`·`reader/*.yaml`)·검증기(`reader/lib/**`)·**러너**(`engine/**`)·**감수 원문**(`docs/lessons/**`)·**처분 원장**(`docs/decisions/DISPOSITIONS.md`)·**실패표**(`contracts/stages/read.yaml#failure`)를 고쳤으면 아래 일곱 도구가 **전부 exit 0**을 내는지 확인한 뒤 커밋한다. **일곱 도구는 각자 하나의 주장만 증명하며, 하나의 통과는 다른 하나의 증거가 아니다.** **[정정 2026-09-01 · 재정 T20]** 구 문언은 「넷이다」·「네 도구」였다 — 계수를 지우지 않고 마커로 남기는 것은 이 리포의 규율이며(닫힌 것도 어떻게 닫혔는지를 남긴다), 아래 표의 넷째 행이 **같은 종류의 낡음을 두 판 연속으로** 낸 자리다. **[정정 2026-09-02 · 재정 T27]** 그 다음 문언은 「**다섯이다**」·「**다섯 도구**」였고, 재정 T27이 여섯째(`tools/check_dispositions.py`)를 신설하면서 다시 낡았다. 함께 발화 조건에 **처분 원장**이 더해졌다 — 감수 원문을 고치면서 처분표를 고치지 않는 것이 정확히 이 관문이 막는 형태이므로 둘은 같은 발화 조건 아래 선다. **이 자리는 계수가 낡은 세 번째 지점이다**(4→5→6). **[정정 2026-09-03 · 재정 T26]** 그 뒤 실패표 관문 `tools/check_failure_table.py`가 더해져 4→5→6→7이 되었다. 계수를 문서에 적는 한 이 실패는 반복되며(고치는 시점과 늘어나는 시점이 다르다), 그 구조적 처분은 재정 T5의 백로그에 있다.
 
 | 도구 | 무엇을 보는가 | 없으면 무엇이 새는가 |
 |---|---|---|
@@ -4574,6 +4578,7 @@ if got != want:
 | `tools/check_lane_binding.py`(M1.6 신설 · **재정 2026-08-19 H7로 관문 승격**) | **러너의 레인 왕복 시점 결속을 변조로 실증** — **일곱 시나리오**를 실제 파일·실제 러너 경로(`engine/stages/read.py#_dispatch`)로 돌린다: 정상 소비 / **낡은 응답 주입 거부** / **응답 사후 교체 탐지**(재정 P-12) / **절차 문서 변조 후 구 응답 주입 거부**(재정 2026-08-19 S4 — 넷째는 요청 필드를 한 글자도 바꾸지 않고 절차 본문만 고치며, 같은 자리에서 *"구 규격이었다면 통과했다"*를 함께 보인다). 앞의 셋과 **층이 다르다**: 셋은 문서·계약·검증기를 재고 이것은 **러너**를 잰다. 그러므로 앞 셋의 통과는 이 도구의 증거가 아니고 그 역도 같다 ） / **지문 위조 거부** / **`null` 위장 거부** / **정당한 면제 보존**(재정 2026-08-31 Q1 의 반증 ⑤⑥⑦ + ⑥-b). **[정정 2026-08-31 — 감수 A′·C′-2 공통 지적]** 구 문언은 「네 시나리오」였고 실행물은 7종이다. **넓게 말하는 것만 결함이 아니라 좁게 말하는 것도 결함이다** — 바로 아래 줄이 *「이 표는 실행물의 증명 범위를 좁게도 넓게도 적지 않는다」*고 선언하는데 그 선언과 정면으로 어긋나 있었다 | 낡은 응답·사후 교체가 산출물에 **아무 흔적도 남기지 않는다** — 같은 자리에 응답이 두 번 쓰여도 런이 어느 쪽을 읽었는지 증명하지 못한다(구 사고 OOS-01·OOS-02) |
 | `tools/check_lesson_authorship.py`(**재정 2026-09-01 T20 신설**) | **원장·감수 산출의 저자 경계.** `docs/lessons/`의 각 파일에서 **제목 줄에 `추기`·`머리말` 토큰을 들어 자기 신고한 절**이 **절 머리 3줄(제목 줄 포함) 안에 `총괄 저작`을 명시하는가** — 그 하나만 본다(규격 정본 = 아래 **10항**). **★ 증명 범위는 그 하나뿐이다**: 표지 없이 **감수자 절 안에** 끼워 넣은 총괄 문장은 **기계가 구별할 수 없고**, 그 밖의 저자 경계는 **사람이 지킨다.** 앞의 넷과 층이 또 다르다 — 셋은 문서·계약·검증기를, 넷째는 러너를 재고, 이것은 **사료(史料)의 저자 경계**를 잰다 | 한 파일에 저자가 둘인데 표지가 없다 — 총괄의 요약·추기가 **감수자의 목소리로 읽히고**, 반증된 전제가 감수 원문 안에 살아남는다(2026-09-01 실물 사고: 저작 레인·감독·총괄 **셋이 연속으로 파일만 보고 저자를 보지 않았다**) |
 | `tools/check_dispositions.py`(**재정 2026-09-02 T27 신설**) | **지적의 처분이 자리를 갖는가.** `docs/lessons/`의 총괄 머리말에 **열거된 지적 id**와 `docs/decisions/DISPOSITIONS.md` §1 처분표를 **양방향 차집합 0**으로 대조하고, 처분 값이 **4종**(`수용`·`부분 수용`·`기각`·`이연`) 중 하나이며 사유·포인터가 비지 않았는지를 본다(G1 등재 현황 완전성 · G2 상태 어휘 · G3 열거 ↔ 처분표 · G4 처분 행 규격 — 규격 정본 = 아래 **11항**). **★ 주장하지 않는 것**: **열거가 원문의 지적을 빠짐없이 담았는지는 기계가 모른다** — 어느 문단이 지적이고 어느 것이 소견인지, 지적 하나를 앞/뒷절반으로 쪼갤지는 **사람이 반입 시점에** 정한다(원장 T27 ⒜ ①). 앞의 다섯과 층이 또 다르다 — 다섯째가 사료의 **저자**를 잰다면 이것은 사료 안 지적의 **처분**을 잰다 | **처분 없이 사라진 지적이 남는다.** 문언이 아니라 **실물 사고 2건**이 근거다 — sol 지적 1의 앞절반이 원장에 오르지 않아 인계문서가 「할 일은 하나」로 틀렸고(`7c8ce3c`에서 정정), sol 지적 4의 뒷절반은 앞절반만 처분된 채 **사유 없이 사라졌다**. 처분 기록이 커밋 메시지(`39286ca`·`c3fe549`)에만 살면 검색도 정정도 되지 않는다 |
+| `tools/check_failure_table.py`(**재정 T26 집행 신설**) | READ 실패표의 **G1 승인 골격·키 형태, G2 선언 우주 완전성, G3 재시도 등식·승인 집합, G4 국면 정합, G5 진입 표지, G6 종단 어휘**를 YAML과 자체 승인 상수로 대조한다(규격 정본 = 아래 **12항**) | 행 병합·순서 이동·누락·유령 검사·재시도 목록 표류·진입/국면/종단 어휘 변조가 계약과 러너 사이로 샌다 |
 
    **★ 이 표는 실행물의 증명 범위를 좁게도 넓게도 적지 않는다.** 2026-08-19 감수 A′가 이 표를 NEW BLOCKER로 짚었다 — `check_spec_refs.py` 설명이 **K1~K7**만 열거하는데 도구는 **K8**(코어·확장 경계)까지 여덟을 돌리고, `check_validator_enforcement.py` 설명이 변조본 대조와 하한만 말하는데 도구는 **§① 기준선**(무변조 코퍼스 12종 전건 무위반 · 공허 없음 — 재정 P-14)도 판정한다. 감수 문언은 *"범위 7의 필수 대조 대상 자체가 실행물의 증명 범위를 정확히 기록하지 않으므로 PASS로 종결할 수 없습니다"*였다. **이것은 M0.6이 FAIL을 낸 사유의 거울상이다** — 그때의 판정 요지가 *"강제의 범위를 실제보다 넓게 말했다"*였고, 여기서는 **좁게** 말했다. 방향이 반대일 뿐 결함은 같다: 문서가 적은 강제 범위와 실행물의 강제 범위가 다르면, 그 표를 근거로 한 어떤 판정도 자기가 무엇을 근거로 삼았는지 모른다. 넓게 말하면 없는 방어를 믿게 하고, 좁게 말하면 있는 방어를 감사에서 잃는다.
 
@@ -4647,6 +4652,19 @@ if got != want:
 
    **★ 계약 파일을 만들지 않는 이유는 10항과 같다.** 이것은 **절차 규범**이지 스테이지 I/O 계약이 아니므로 `contracts/`에 두지 않고(계약의 경계 규칙 = 재정 N8), **§6.7 계약 파일 현황표의 변경 대상도 아니다**(그 표는 계약 실파일만 든다).
 
+12. **READ 실패표 검증 규격**(재정 2026-09-02 **T26**·T28·T29·T30). `tools/check_failure_table.py`는 기본 입력 `contracts/stages/read.yaml`을 엔진 import 없이 읽고, 명시 비교와 종료 코드 `0/1/2`로 아래 여섯 주장을 각각 집행한다. `assert`는 쓰지 않으며 plain과 `python3 -O`에서 같은 결과를 내야 한다.
+
+   | 관문 | 주장 |
+   |---|---|
+   | G1 | `failure[]`의 11행 승인 기계 필드·순서·키 형태가 정확하고 `condition`·`note`가 비공 문자열이다 |
+   | G2 | 진입·조기·출구 선언 검사 우주와 실패표 `checks` 합집합의 양방향 차집합이 0이며 조기 선언 세 벌이 상등이다 |
+   | G3 | 판정점은 `early`·`exit` 각각 한 행이고, 목록은 그 점을 신고한 `retry(n)` 행들의 검사 합집합 및 승인 집합과 정확히 같으며 예산도 일치한다 |
+   | G4 | 출구 검사 12종의 `phases`가 허용 국면·출구 포함·조기 목록·행 `points`와 정합한다 |
+   | G5 | 진입 검사 행만 `judged_at: entry`를 들고 `halt`이며 재시도 판정점에 들지 않는다 |
+   | G6 | `retry(n)`은 유효한 `then`을 반드시 들고, 비재시도 행은 종단 어휘 하나만 들며 `then`을 갖지 않는다 |
+
+   `--self-test`는 정본의 통과와 도구가 열거한 변조 전건의 거부를 메모리 사본에서 확인하고, **변조 수는 도구의 출력이 센다.** 이 문서는 그 시험 계수를 복제하지 않는다. 이 관문이 주장하지 않는 것도 분리한다 — 골든 8,190칸 값의 참·거짓은 `tests/test_m24_failure_grid_golden.py`가, 엔진과 관문의 종단 어휘 상등은 T-11 ⑤가, 승인 재시도 집합 두 벌의 상등은 T-11 ⑥이 증명한다.
+
 ### §8.4 모듈 명세
 
 각 모듈은 **산출 파일 · 완료 판정(DoD) · 검증 계획**을 갖는다. 검증 계획의 각 행은 "이 테스트가 없으면 무엇이 공허해지는가"를 기록한다.
@@ -4679,7 +4697,7 @@ if got != want:
   - 도구: `tools/check_validator_enforcement.py`(신설 — 검증기가 실제로 거부하는지의 실증), **`tools/run_worktree.py`**(신설 — 런 커밋 핀·worktree·만료 통지, 재정 P-U1+P-8), `tools/check_spec_refs.py`의 **K8**(신설 — 코어·확장 경계의 기계 집행, 재정 P-2 ⓑ)
   - 원장: **`ledgers/shadow/screening.jsonl`**(신설 — 맹검 메모 섀도 원장. 재료 명세 **계약면 밖**이며 런 폴더 밖이다, 재정 P-U4)
 - **DoD**
-  - §2.7의 예시 인스턴스가 스키마를 통과하고, `reader/lib`의 결정론 검사 **12종**을 전부 통과한다(§2.6) — READ 10종 + `freeze` 2종이며 등재의 단일 진원은 `reader/lib/run_checks.py`의 `CHECK_REGISTRY`다. P 계열에서 늘어난 것은 `read.bibliography` 1종이고(재정 P-2 ⓐ), 나머지 신설분은 엔진 소관이다(`read.input-digest`·`read.lane-log-shape`·`source.input-digest`·`source.figures-manifest-digest`·`freeze.input-digest`). `read` 스테이지 계약의 `checks_before_exit`는 그래서 **12행**이다(READ 10종 + 엔진 소관 2종 = `read.lane-log-shape` · `read.lane-log-digest-value`. 뒤엣것은 재정 2026-08-31 Q1 의 신설이며 **11행은 그 이전의 수**다).
+  - §2.7의 예시 인스턴스가 스키마를 통과하고, `reader/lib`의 결정론 검사 **12종**을 전부 통과한다(§2.6) — READ 10종 + `freeze` 2종이며 등재의 단일 진원은 `reader/lib/run_checks.py`의 `CHECK_REGISTRY`다. P 계열에서 늘어난 것은 `read.bibliography` 1종이고(재정 P-2 ⓐ), 나머지 신설분은 엔진 소관이다(`read.input-digest`·`read.lane-log-shape`·`source.input-digest`·`source.figures-manifest-digest`·`freeze.input-digest`). `read` 스테이지 계약의 `checks_before_exit`는 그래서 **12행**이다(READ 10종 + 엔진 소관 2종 = `read.lane-log-shape` · `read.lane-log-digest-value`. 뒤엣것은 재정 2026-08-31 Q1 의 신설이며 **11행은 그 이전의 수**다). **출구 재시도 목록은 그 12종 전체가 아니라 8종**(`read.schema`·`read.claim-inventory`·`read.dependency-parse`·`read.verbatim`·`read.pointer-resolve`·`read.coverage`·`read.value-derivation`·`read.bibliography`)이며, `read.convergence`는 재정 T28 β에 따라 목록 밖이다.
   - 검사 12종 각각에 대해 **실패해야 하는 변조 인스턴스**가 준비되어 실제로 실패한다(합성 코퍼스 `tests/fixtures/reader/` — 현재 **42건**, 관문 = `tools/check_validator_enforcement.py` 가 매 실행 *변조본 42/42* 로 계수를 함께 보고한다. 구 표기 39건은 낡은 수였다).
   - `origin` 4종(`quoted`·`derived`·`figure-sourced`·`bibliographic`)의 조건부 필수가 집행되고, **`origin` 간 배타성**이 함께 집행된다 — 한 `origin`이 다른 `origin`의 부속 필드를 동시에 갖지 못한다(재감수 M-01). `figure-sourced`는 `machine_verifiable: false`로 `manual_verification_required[]`에 수집된다(재정 R1).
   - **파생 수치의 참조 그래프가 닫혀 있다**(재감수 M-01, 재정 N9) — 자기참조 금지 · 비순환 · **파생의 파생 금지(깊이 1: `derivation.inputs[].ref`가 가리키는 `fact`의 `origin`은 `derived`가 아니다)**. 스키마로 표현되지 않는 3항은 검증기 몫으로 명시된다(§2.8).

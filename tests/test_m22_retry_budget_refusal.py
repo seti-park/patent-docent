@@ -14,7 +14,7 @@ if REPO not in sys.path:
     sys.path.insert(0, REPO)
 
 from engine.paths import load_stage_contract  # noqa: E402
-from engine.stages.read import RunnerContractError, _retry_budget  # noqa: E402
+from engine.stages.read import RunnerContractError, _retry_budget, _retry_checks  # noqa: E402
 
 
 def test_missing_judgment_point_is_refused_not_defaulted() -> None:
@@ -59,3 +59,33 @@ def test_the_refusal_is_what_the_spec_says_it_is() -> None:
     wording = "기본값을 지어내지 않고 거부한다"
     if wording not in spec:
         pytest.fail(f"docs/SPEC.md §1.4 에 재시도 상한 거부 문언이 없다: {wording!r}")
+
+
+def test_retry_checks_rejects_missing_shape_unknown_entry_duplicate_and_point_duplicate() -> None:
+    contract = load_stage_contract("read", None)
+
+    missing = copy.deepcopy(contract)
+    missing["retry_budget"]["points"] = [
+        row for row in missing["retry_budget"]["points"] if row.get("id") != "exit"
+    ]
+    with pytest.raises(RunnerContractError):
+        _retry_checks(missing, "exit")
+
+    for bad in ("not-a-list", ["read.__ghost__"], ["read.input-digest"]):
+        broken = copy.deepcopy(contract)
+        point = next(row for row in broken["retry_budget"]["points"] if row["id"] == "exit")
+        point["checks"] = bad
+        with pytest.raises(RunnerContractError):
+            _retry_checks(broken, "exit")
+
+    duplicate = copy.deepcopy(contract)
+    point = next(row for row in duplicate["retry_budget"]["points"] if row["id"] == "exit")
+    point["checks"].append(point["checks"][0])
+    with pytest.raises(RunnerContractError):
+        _retry_checks(duplicate, "exit")
+
+    duplicate_point = copy.deepcopy(contract)
+    point = next(row for row in duplicate_point["retry_budget"]["points"] if row["id"] == "exit")
+    duplicate_point["retry_budget"]["points"].append(copy.deepcopy(point))
+    with pytest.raises(RunnerContractError):
+        _retry_checks(duplicate_point, "exit")

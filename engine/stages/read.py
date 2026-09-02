@@ -57,13 +57,16 @@ from reader.lib.spec_io import load_schema
 from . import (
     StageEnvironmentError,
     StageError,
-    failure_entry,
+    failure_row_of_kind,
+    failure_rows_for_checks,
     findings_of,
     load_json,
     load_yaml,
     read_text,
     sha256_bytes,
     sha256_file,
+    select_failure_row,
+    terminal_action,
     verify_declared_inputs,
     write_json,
     write_text,
@@ -122,6 +125,23 @@ LANE_LOG_DIGEST_VALUE_CHECK_ID = "read.lane-log-digest-value"
 ENGINE_READ_CHECK_IDS: tuple[str, ...] = (
     LANE_LOG_SHAPE_CHECK_ID,
     LANE_LOG_DIGEST_VALUE_CHECK_ID,
+)
+RETRY_POINT_IDS = ("early", "exit")
+# 승인된 재시도 집합(재정 T26 ⓐ ③·T28 β·T25). 계약이 다르면 계약이 틀린 것이다.
+EARLY_RETRY_CHECK_IDS = (
+    "read.claim-inventory",
+    "read.dependency-parse",
+    "read.convergence",
+)
+EXIT_RETRY_CHECK_IDS = (
+    "read.schema",
+    "read.claim-inventory",
+    "read.dependency-parse",
+    "read.verbatim",
+    "read.pointer-resolve",
+    "read.coverage",
+    "read.value-derivation",
+    "read.bibliography",
 )
 CONTINUE_CHECKPOINT = "convergence_continue"
 PHASE_GATE_NONE = "none"
@@ -775,6 +795,69 @@ def _retry_budget(contract: dict, point: str) -> int:
         f"판정점 {point!r} 이 retry_budget.points[] 에 없다 — "
         "계약: contracts/stages/read.yaml"
     )
+
+
+def _retry_checks(contract: dict, point: str) -> set[str]:
+    """판정점의 재시도 검사 목록을 정확히 한 행에서 읽는다."""
+    points = (contract.get("retry_budget") or {}).get("points") or []
+    matches = [
+        entry
+        for entry in points
+        if isinstance(entry, dict) and entry.get("id") == point
+    ]
+    if len(matches) != 1:
+        raise RunnerContractError(
+            f"판정점 {point!r}의 retry_budget.points[] 행은 정확히 1개여야 한다: {len(matches)}"
+        )
+    checks = matches[0].get("checks")
+    if not isinstance(checks, list) or not checks:
+        raise RunnerContractError(f"판정점 {point!r}의 checks는 비지 않은 list여야 한다")
+    if any(not isinstance(check_id, str) or not check_id for check_id in checks):
+        raise RunnerContractError(f"판정점 {point!r}의 checks 원소는 비지 않은 문자열이어야 한다")
+    if len(checks) != len(set(checks)):
+        raise RunnerContractError(f"판정점 {point!r}의 checks에 중복이 있다")
+    allowed = set(READ_CHECK_IDS) | set(ENGINE_READ_CHECK_IDS)
+    unknown = set(checks) - allowed
+    if unknown:
+        raise RunnerContractError(
+            f"판정점 {point!r}의 checks에 출구 12 id 밖의 값이 있다: {sorted(unknown)!r}"
+        )
+    return set(checks)
+
+
+def _validate_retry_contract(contract: dict) -> None:
+    """레인 디스패치 전에 판정점·승인 집합을 거부 경계로 닫는다."""
+    points = (contract.get("retry_budget") or {}).get("points") or []
+    ids = [entry.get("id") for entry in points if isinstance(entry, dict)]
+    expected_points = set(RETRY_POINT_IDS)
+    actual_points = set(ids)
+    if (
+        len(ids) != len(points)
+        or len(ids) != len(set(ids))
+        or actual_points != expected_points
+    ):
+        raise RunnerContractError(
+            "retry_budget 판정점이 승인값과 다르다: "
+            f"승인에만={sorted(expected_points - actual_points)!r}, "
+            f"계약에만={sorted(actual_points - expected_points)!r}, ids={ids!r}"
+        )
+    for point, approved in (
+        ("early", set(EARLY_RETRY_CHECK_IDS)),
+        ("exit", set(EXIT_RETRY_CHECK_IDS)),
+    ):
+        actual = _retry_checks(contract, point)
+        if actual != approved:
+            raise RunnerContractError(
+                f"판정점 {point!r} 재시도 목록이 승인 집합과 다르다: "
+                f"승인에만={sorted(approved - actual)!r}, 계약에만={sorted(actual - approved)!r}"
+            )
+
+
+def _exit_retry_eligible(contract: dict, failing: list[CheckRow]) -> bool:
+    """비지 않은 출구 실패 집합 전부가 재시도 목록에 들었는지 대조한다."""
+    if not failing:
+        return False
+    return {row.check_id for row in failing} <= _retry_checks(contract, "exit")
 
 
 def _failure_signature(rows: list[CheckRow]) -> tuple[tuple[str, str, str], ...]:
@@ -1432,6 +1515,7 @@ def run(
     #   바꾼다(재시도·수정 루프가 아니라 즉시 중단 + 진단). 같은 불변식 I1 을 **명세 위에서**
     #   보는 출구 검사 `read.source-digest`(reader/lib)는 그대로 돈다 — 층이 다르다.
     entry_row = verify_declared_inputs(paths, contract, STAGE_ID)
+    _validate_retry_contract(contract)
 
     source_text = read_text(paths.patent_md)
     actual_digest = sha256_bytes(source_text.encode("utf-8"))
@@ -1649,21 +1733,20 @@ def run(
         )
         if not entered:
             if blocked_by == PHASE_GATE_CLAIM_CHECKS:
-                # 조기 청구항 실패 = 분해 결함. 조치는 계약의 첫 failure 행이 든다.
-                entry = failure_entry(contract, "claim-inventory")
-                status = str(entry.get("then", entry.get("action")))
+                status, reason_label = _failure_verdict(
+                    contract,
+                    [row for rows in claim_failures.values() for row in rows],
+                )
             elif blocked_by == PHASE_GATE_EXACT_MATCH:
-                entry = failure_entry(contract, "exact-match 축")
-                status = str(entry.get("then", entry.get("action")))
+                status, reason_label = _failure_verdict(contract, [early_row])
             else:
-                entry = failure_entry(contract, "상신 축")
-                status = str(entry.get("action"))
+                status, reason_label = _gate_escalation_verdict(contract)
             return {
                 "rows": early_rows,
                 "spec": None,
                 "convergence": early_payload,
                 "status": status,
-                "reason_label": entry.get("reason_label"),
+                "reason_label": reason_label,
                 "diagnostic": None,
                 "gate_note": gate_reason,
             }
@@ -1756,7 +1839,7 @@ def run(
                 break
             # 감사 A-3 · 원장 T25 ⒜ 「하나라도」 — 실패 검사를 각각 자기 계약 행에
             # 대조한다. read.schema(action: retry(1), then: halt)는 종전처럼 한 번 재시도한다.
-            if _halts_immediately(contract, failing):
+            if not _exit_retry_eligible(contract, failing):
                 break
             signature = _failure_signature(failing)
             if previous_signature is not None and signature == previous_signature:
@@ -1890,50 +1973,6 @@ def run(
         )
 
 
-def _failure_entry_for(
-    contract: dict, failing: list[CheckRow], *, repeated: bool = False
-) -> dict:
-    """실패 검사 집합에 대응하는 계약 `failure[]` 행을 고른다."""
-    ids = {row.check_id for row in failing}
-    if "read.schema" in ids:
-        # `halt` 는 `escalate` 를 앞선다(감사 지적 C-3). 계약이 `read.schema` 실패에 halt 를
-        # 정했고 halt(런 상태 무효)와 escalate(정지 + 상신)는 **다른 처분**이다. 같은 서명의
-        # 재현은 「왜 멈췄는가」의 진단이지 처분의 격을 낮추는 사유가 아니다. 재정 T16 §6 ⑤
-        # 는 이 우선순위를 정하지 않았다.
-        return failure_entry(contract, "read.schema 실패")
-    if "read.source-digest" in ids:
-        # 계약이 두 층을 구별해 남겼다(재정 P-C) — 같은 불일치를 **진입 시점**에 잡는 자리는
-        # checks_on_entry 의 read.input-digest(환경 오류)이고, 이 행은 그 **이후 구간**에서
-        # 명세 위로 드러난 불일치의 조치를 정한다. 조치는 halt 다: 원천이 바뀐 런은 폐기 대상이다.
-        #
-        # 이 행도 `repeated` 를 앞선다 — 감사 지적 C-3 는 `read.schema` 를 지목했지만 결함은
-        # **계열**이었다(계약이 halt 를 정한 행이 escalate 뒤에 서 있는 것). 원천이 도중에
-        # 바뀐 런은 재시도로 같은 서명을 재현하든 아니든 폐기 대상이며, 재현 사실이 폐기를
-        # 상신으로 낮출 사유가 되지 못한다. 한쪽만 고치면 남은 절반이 「고쳐진 계열」로 보인다.
-        return failure_entry(contract, "원천 다이제스트")
-    if repeated:
-        return failure_entry(contract, "같은 실패 서명")
-    if CONVERGENCE_CHECK_ID in ids:
-        # 계약 문언이 "read.convergence 미달"에서 "read.convergence 의 exact-match 축 미달"로
-        # 바뀌었다(재정 P-3) — 상신 축 미달은 판정 행을 fail 로 만들지 않으므로 여기 오지 않는다.
-        return failure_entry(contract, "exact-match 축")
-    # 재정 2026-09-01 T22 — 두 레인 로그 검사는 출구 재시도 루프 밖에서 합류하므로
-    # 자기 전용 escalate 행을 쓰고 retry(n) 은 없다. 오늘 판정 순서를 보존하려 맨 뒤에 둔다.
-    if "read.lane-log-shape" in ids:
-        return failure_entry(contract, "read.lane-log-shape")
-    if "read.lane-log-digest-value" in ids:
-        return failure_entry(contract, "read.lane-log-digest-value")
-    return failure_entry(contract, "read.verbatim")
-
-
-def _halts_immediately(contract: dict, failing: list[CheckRow]) -> bool:
-    """출구 실패 집합이 재시도 없는 halt 행을 포함하는가."""
-    return any(
-        str(_failure_entry_for(contract, [row]).get("action")) == "halt"
-        for row in failing
-    )
-
-
 def _failure_verdict(
     contract: dict, failing: list[CheckRow], *, repeated: bool = False
 ) -> tuple[str, str | None]:
@@ -1943,8 +1982,17 @@ def _failure_verdict(
             "도달 불능 상태 — repeated=True 인데 출구 루프 검사 실패가 없다: "
             f"{sorted(row.check_id for row in failing)!r}"
         )
-    entry = _failure_entry_for(contract, failing, repeated=repeated)
-    return str(entry.get("then", entry.get("action"))), entry.get("reason_label")
+    candidates = failure_rows_for_checks(contract, {row.check_id for row in failing})
+    if repeated:
+        candidates.append(failure_row_of_kind(contract, "retry-repeat"))
+    entry = select_failure_row(contract, candidates)
+    return terminal_action(entry), entry.get("reason_label")
+
+
+def _gate_escalation_verdict(contract: dict) -> tuple[str, str | None]:
+    """조기 상신 축 사건도 종단 어휘 검증을 우회하지 않는다."""
+    entry = failure_row_of_kind(contract, "gate-escalation")
+    return terminal_action(entry), entry.get("reason_label")
 
 
 def _finish_lane_log(paths: RunPaths, journal: LaneJournal) -> None:

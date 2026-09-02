@@ -34,8 +34,11 @@ import test_m2_read as m2  # noqa: E402
 import test_m17_lanes as m17  # noqa: E402
 
 from engine.paths import RunPaths, load_stage_contract  # noqa: E402
+from engine.stages import failure_row_of_kind, failure_rows_for_checks  # noqa: E402
 from engine.stages.read import (  # noqa: E402
-    _halts_immediately,
+    ENGINE_READ_CHECK_IDS,
+    EXIT_RETRY_CHECK_IDS,
+    _exit_retry_eligible,
     _validate_convergence,
     decompose_only_spec,
 )
@@ -350,13 +353,62 @@ def test_v2_exit_retry_repairs_phase_drift(tmp_path) -> None:
     if outcome["status"] != "ok":
         pytest.fail(f"후속 재시도로 고친 런 status 기대 ok, 실제 {outcome['status']}")
     expected = [lane_id for lane_id in tail_lane_ids(lane_ids) if "/retry-" in lane_id]
-    if not expected:
-        pytest.fail(f"출구 실패의 후속 재시도 좌표가 없다: {lane_ids}")
+    if len(expected) != 3 or any("/retry-1/" not in lane_id for lane_id in expected):
+        pytest.fail(f"출구 재시도 레인 행 기대 retry-1 정확히 3개, 실제 {expected!r}")
+    tasks = {lane_id.split("/")[1] for lane_id in expected}
+    if tasks != set(TAIL_TASKS):
+        pytest.fail(f"출구 재시도 과업 집합 불일치: {sorted(tasks)!r}")
+    if any("/retry-2/" in lane_id for lane_id in lane_ids):
+        pytest.fail(f"승인되지 않은 retry-2 레인이 발송됐다: {lane_ids!r}")
     forbidden = [lane_id for lane_id in lane_ids if "/decompose/retry-" in lane_id]
     if forbidden:
         pytest.fail(f"출구 결함을 분해로 잘못 돌려보냈다: {forbidden}")
     if not os.path.isfile(RunPaths(root).material_spec_json):
         pytest.fail("후속 재시도가 변이를 고쳤는데 material-spec.json 이 쓰이지 않았다")
+
+
+def test_t28_exit_convergence_failure_does_not_redispatch(tmp_path, monkeypatch) -> None:
+    """출구 exact-match 수렴 실패는 재디스패치 없이 라벨 없는 escalate로 간다."""
+    import engine.stages.read as read_stage
+
+    original = read_stage.run_read_checks
+
+    def wrapper(ctx):
+        peer = copy.deepcopy(ctx.peer_spec)
+        peer["claims"]["independent"].append(
+            copy.deepcopy(peer["claims"]["independent"][0])
+        )
+        modified = CheckContext(
+            spec=ctx.spec,
+            source_text=ctx.source_text,
+            rules=ctx.rules,
+            schema=ctx.schema,
+            peer_spec=peer,
+            prior_spec=ctx.prior_spec,
+        )
+        return original(modified)
+
+    monkeypatch.setattr(read_stage, "run_read_checks", wrapper)
+    payloads = {"read-a": m2.payload_set(), "read-b": m2.payload_set()}
+    root, outcome, adapter = run_with_payloads(
+        tmp_path, per_attempt={0: payloads, 1: copy.deepcopy(payloads)}
+    )
+    retries = [lane_id for lane_id in dispatched_ids(adapter) if "/retry-" in lane_id]
+    if retries:
+        pytest.fail(f"convergence 출구 실패 뒤 재디스패치가 있다: {retries!r}")
+    if outcome.get("status") != "escalate" or outcome.get("reason_label") is not None:
+        pytest.fail(f"수렴 출구 처분 기대 ('escalate', None), 실제 {(outcome.get('status'), outcome.get('reason_label'))!r}")
+    failed = {row.check_id for row in outcome["rows"] if row.status == "fail"}
+    if failed != {"read.convergence"}:
+        pytest.fail(f"주입 후 실패 검사 기대 convergence 하나, 실제 {sorted(failed)!r}")
+    report = load_json(RunPaths(root).convergence_json)
+    axes = report.get("convergence_detail", {}).get("axes", [])
+    statuses = {axis.get("id"): axis.get("status") for axis in axes}
+    if statuses.get("independent-count") != "fail":
+        pytest.fail(f"independent-count exact-match 실패 기록이 없다: {statuses!r}")
+    other_exact = {key: statuses.get(key) for key in ("dependent-count", "dependent-set")}
+    if set(other_exact.values()) != {"pass"}:
+        pytest.fail(f"나머지 exact-match 축이 pass가 아니다: {other_exact!r}")
 
 
 def test_t24_tail_time_source_mutation_halts_without_retry(tmp_path) -> None:
@@ -504,20 +556,31 @@ def test_t25_a3_any_halt_failure_stops_canonical_tail_retry(tmp_path) -> None:
 
 
 def test_t25_a3_halt_predicate_quantifies_each_failed_check() -> None:
-    """A-3·원장 T25 ⒜의 「하나라도」를 단독·비halt·복합 실패 집합으로 대조한다."""
+    """T26·T28의 부분집합 규칙을 출구 12 id 전건과 복합 표본으로 대조한다."""
     contract = load_stage_contract("read", None)
+    universe = set(READ_CHECK_IDS) | set(ENGINE_READ_CHECK_IDS)
+    approved = set(EXIT_RETRY_CHECK_IDS)
+    actual_true = {
+        check_id
+        for check_id in universe
+        if _exit_retry_eligible(contract, [CheckRow(check_id=check_id)])
+    }
+    if actual_true != approved:
+        pytest.fail(
+            f"단독 출구 재시도 집합 불일치: true={sorted(actual_true)!r}, "
+            f"false={sorted(universe-actual_true)!r}"
+        )
     cases = (
-        (["read.source-digest"], True),
-        (["read.schema"], False),
-        (["read.schema", "read.source-digest"], True),
+        ({"read.schema", "read.source-digest"}, False),
+        ({"read.verbatim", "read.convergence"}, False),
+        ({"read.verbatim", "read.pointer-resolve"}, True),
     )
     for check_ids, expected in cases:
-        failing = [CheckRow(check_id=check_id) for check_id in check_ids]
-        actual = _halts_immediately(contract, failing)
+        actual = _exit_retry_eligible(
+            contract, [CheckRow(check_id=check_id) for check_id in check_ids]
+        )
         if actual is not expected:
-            pytest.fail(
-                f"T25 즉시 탈출 술어 실패집합={check_ids!r} 기대 {expected}, 실제 {actual}"
-            )
+            pytest.fail(f"복합 실패집합={sorted(check_ids)!r} 기대 {expected}, 실제 {actual}")
 
 
 def test_t24_a4_unreadable_exit_source_halts_with_diagnostic(tmp_path) -> None:
@@ -530,8 +593,8 @@ def test_t24_a4_unreadable_exit_source_halts_with_diagnostic(tmp_path) -> None:
     )
     if outcome["status"] != "halt":
         pytest.fail(f"출구 원천 삭제 status 기대 halt, 실제 {outcome['status']}")
-    entry = load_stage_contract("read", None)["failure"]
-    digest_entries = [row for row in entry if "원천 다이제스트" in str(row.get("condition", ""))]
+    contract = load_stage_contract("read", None)
+    digest_entries = failure_rows_for_checks(contract, {"read.source-digest"})
     if len(digest_entries) != 1:
         pytest.fail(f"원천 다이제스트 계약 행 기대 1개, 실제 {len(digest_entries)}")
     expected_reason = digest_entries[0].get("reason_label")
@@ -728,14 +791,8 @@ def test_v6_repeat_signature_escalates_before_budget_exhaustion(tmp_path) -> Non
     if outcome["status"] != "escalate":
         pytest.fail(f"같은 실패 서명 재현 status 기대 escalate, 실제 {outcome['status']}")
     law_contract = load_stage_contract("read", law)
-    repeated = [
-        entry
-        for entry in law_contract.get("failure") or []
-        if "같은 실패 서명" in str(entry.get("condition", ""))
-    ]
-    if len(repeated) != 1:
-        pytest.fail(f"같은 실패 서명 조치 행 기대 1개, 실제 {len(repeated)}")
-    expected_label = repeated[0].get("reason_label")
+    repeated = failure_row_of_kind(law_contract, "retry-repeat")
+    expected_label = repeated.get("reason_label")
     if outcome.get("reason_label") != expected_label:
         pytest.fail(
             f"상신 라벨 기대 계약값 {expected_label!r}, 실제 {outcome.get('reason_label')!r}"
@@ -927,8 +984,8 @@ def test_retry_contract_declarations_are_bound_or_classified() -> None:
         set(retry) - {"binding_status"},
         retry_status.get("container") or {},
     )
-    if retry_status.get("runner_reads") != ["id", "max_retries"]:
-        pytest.fail(f"retry_budget.runner_reads 실물 기대 [id, max_retries], 실제 {retry_status.get('runner_reads')!r}")
+    if retry_status.get("runner_reads") != ["id", "max_retries", "checks"]:
+        pytest.fail(f"retry_budget.runner_reads 실물 기대 [id, max_retries, checks], 실제 {retry_status.get('runner_reads')!r}")
 
     early = contract.get("early_phase_spec") or {}
     verify(
@@ -941,11 +998,5 @@ def test_retry_contract_declarations_are_bound_or_classified() -> None:
     if set(early_point.get("checks") or []) != set(early.get("judged_here") or []):
         pytest.fail("retry_budget early.checks 와 early_phase_spec.judged_here 가 갈렸다")
     exit_point = next(point for point in retry["points"] if point.get("id") == "exit")
-    pointer = exit_point.get("checks")
-    target = contract.get(pointer) if isinstance(pointer, str) else None
-    if not isinstance(target, list):
-        pytest.fail(f"exit.checks 포인터 대상 블록이 없다: {pointer!r}")
-    declared_exit_ids = {entry.get("id") for entry in target if isinstance(entry, dict)}
-    missing_exit = set(READ_CHECK_IDS) - declared_exit_ids
-    if missing_exit:
-        pytest.fail(f"exit.checks 포인터 블록에 READ_CHECK_IDS 누락: {sorted(missing_exit)}")
+    if set(exit_point.get("checks") or []) != set(EXIT_RETRY_CHECK_IDS):
+        pytest.fail("exit.checks 명시 목록이 EXIT_RETRY_CHECK_IDS와 다르다")

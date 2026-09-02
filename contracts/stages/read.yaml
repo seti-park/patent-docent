@@ -219,16 +219,16 @@ retry_budget:
   binding_status:
     ruling: "감사 지적 A-3 처분 (2026-09-01)"
     # points[] 원소의 키를 분류한다. 상위 컨테이너 키는 바로 아래 container 에 따로 분류한다.
-    runner_reads: [id, max_retries]
-    test_bound: [scope, repairs, checks]
+    runner_reads: [id, max_retries, checks]
+    test_bound: [scope, repairs]
     prose_only: [gate, failure_means, why_per_read_run, why_this_can_be_repaired]
     container:
       runner_reads: [points]
       test_bound: [points_binding]
       prose_only: [ruling, escalate_on_repeat, feedback_discipline]
     why: >-
-      읽히지 않는 선언을 읽히는 것처럼 두지 않는다. 어느 칸이 어느 층인지 적지 않으면
-      다음 사람이 산문을 강제로 오해하고, 그 오해가 「강제의 범위를 실제보다 넓게 말했다」다.
+      exit 목록은 러너가 재시도 결정에 읽고, early 목록은 진입 시 승인 상수와
+      대조한다. 조기 루프는 목록을 읽지 않고 실행별 표적 재시도를 한다.
   points:
     - id: early
       gate: "조기 관문 — 분해 직후"
@@ -247,9 +247,13 @@ retry_budget:
       scope: run
       max_retries: 1
       repairs: canonical-tail
-      # ★ 재정 2026-09-02 T25 — 이 목록 중 halt·무재시도 검사(read.source-digest)의 실패는
-      # 즉시 탈출한다(engine/stages/read.py). T26 이 실제 재시도 가능 부분집합으로 좁힌다.
-      checks: checks_before_exit
+      checks: [read.schema, read.claim-inventory, read.dependency-parse,
+               read.verbatim, read.pointer-resolve, read.coverage,
+               read.value-derivation, read.bibliography]
+      # [정정 2026-09-02 · 재정 T26·T28] 구 문언 `checks: checks_before_exit`
+      # (포인터 · 12행 전체)를 실제 재시도 가능한 명시 목록 8종으로 바꾼다.
+      # read.convergence 는 T28 β 로 출구 재시도 목록 밖이다. 출구 exact-match
+      # 미달은 재디스패치 없이 상신한다(P-4).
       failure_means: "조기 통과 후의 **국면 간 변이**"
       why_this_can_be_repaired: >-
         통합이 분해 산출에서 claims 를 **재복사**하므로, 조기 통과 후의 출구 실패에 한해
@@ -690,76 +694,92 @@ checks_before_exit:
 report_format: contracts/schemas/verdict-check-row.schema.json
 report_file: 10-read/convergence.json
 
+failure_binding_status:
+  runner_reads: [checks, kind, action, then, reason_label]
+  test_bound: [points, judged_at]
+  prose_only: [condition, note]
+  deferred:
+    - key: kind
+      value: upstream-defect
+      binding: test_bound
+      why: "재요리 경로는 재정 T2 가 PD-M5 로 이연 — 호출자 0 (grep 이 시험). 행은 키만 든다(T30 ⓐ)"
+      until: PD-M5
+
+# ★ 재정 T26·T28·T29·T30 — 키로 행을 찾고 동률은 아래 계약 순서로 풀므로,
+# failure[] 행 순서 자체가 값이다.
 failure:
-  - condition: "read.verbatim / pointer-resolve / coverage / dependency-parse / value-derivation / bibliography / claim-inventory 실패"
+  - checks: [read.schema]
     action: retry(1)
-    points: [early, exit]
-    then: escalate
+    then: halt
+    points: [exit]
+    condition: "read.schema 실패"
+    note: "read.schema 는 checks_before_exit 에서 exit 로만 선언된 출구 검사다."
+  - checks: [read.source-digest]
+    action: halt
+    condition: "원천 다이제스트가 run.yaml 기록과 불일치(read.source-digest)"
     note: >-
-      청구항 2종은 조기에도 돌고 이 행의 나머지 검사는 출구에서만 돌아 두 판정점을 함께 신고한다.
-      ★ 조기 국면의 `read.claim-inventory`·`read.dependency-parse` 실패는 Owner '계속' 봉투로
-      넘어가지 않는다(재정 2026-09-01 T17) — 처분은 분해 재시도이고 예산 소진 시 이 표를 따른다.
-  - condition: "read.convergence 의 exact-match 축 미달"
+      원천이 도중에 바뀐 런은 폐기 대상이다. 진입의 read.input-digest 이후 구간에서 드러난
+      불일치를 잡고, 출구 디스크 재독으로 실제 발동한다(재정 T24·T25).
+  - checks: [read.input-digest]
+    action: halt
+    reason_label: "환경 오류"
+    judged_at: entry
+    condition: "진입 지문 불일치(checks_on_entry: read.input-digest)"
+    note: >-
+      재정 P-C. 품질 결함이 아니므로 재시도·수정 루프에 넣지 않고 즉시 중단한다.
+  - kind: retry-repeat
+    action: escalate
+    reason_label: "국면 간 변이 재현 — 코드 결함 의심"
+    condition: "재시도가 같은 실패 서명을 재현(국면 간 변이 재현)"
+    note: >-
+      재정 2026-09-01 T16 §6 ⑤. 재시도의 같은 서명 재현 자체가 코드 결함 진단이다.
+  - checks: [read.convergence]
     action: retry(1)
     points: [early]
     then: escalate
+    condition: "read.convergence 의 exact-match 축 미달"
     note: >-
       이 행은 분해 직후의 **조기 수렴 지점**에서 재시도하므로 early 를 신고한다 — 접지 지출
-      이후로 미루지 않는다(재정 P-4).
+      이후로 미루지 않는다(재정 P-4). T28 β 로 출구에서는 재디스패치하지 않는다.
       Owner 재정 대상: 소재 변경 또는 절차 수정. 품질 결함이 아니라 절차 신호다. 이 축의
       미달도 봉투 적용 범위 밖이다(재정 T17).
-  - condition: "read.convergence 상신 축(escalation-trigger) 미달"
+  - checks: [read.lane-log-shape]
+    condition: "read.lane-log-shape 실패(레인 왕복 기록의 형태)"
+    action: escalate
+    note: "출구 루프 뒤에 합류하므로 재시도는 0회고 retry(n) 선언은 허구다(재정 2026-09-01 T22)."
+  - checks: [read.lane-log-digest-value]
+    condition: "read.lane-log-digest-value 실패(레인 왕복 기록의 지문 값)"
+    action: escalate
+    note: "출구 루프 뒤에 합류하므로 재시도는 0회고 retry(n) 선언은 허구다(재정 2026-09-01 T22)."
+  - checks: [read.claim-inventory, read.dependency-parse]
+    condition: "조기·출구 청구항 검사(read.claim-inventory / read.dependency-parse) 실패"
+    action: retry(1)
+    then: escalate
+    points: [early, exit]
+    note: >-
+      두 검사는 조기와 출구 양쪽에서 실제로 돌며, 조기 실패는 해당 분해 실행을,
+      출구 실패는 정본 후속을 고친다(재정 T16·T17·T26).
+  - checks: [read.verbatim, read.pointer-resolve, read.coverage, read.value-derivation, read.bibliography]
+    condition: "출구 전용 read.verbatim / pointer-resolve / coverage / value-derivation / bibliography 실패"
+    action: retry(1)
+    then: escalate
+    points: [exit]
+    note: >-
+      다섯 검사는 출구에서만 돌며 정본 후속 재시도 한 번 뒤에도 실패하면 상신한다
+      (재정 T17·T26).
+  - kind: gate-escalation
+    condition: "read.convergence 상신 축(escalation-trigger) 미달"
     action: escalate
     reason_label: "독해 프로파일 상신"
     note: >-
-      재정 P-3. 미달은 **실패가 아니라 상신**이다. 상신 서식 = 수렴 리포트(축별 값·정책·갈린
-      항목)이며 프레임은 "결함 후보"가 아니라 "독해 프로파일"이다. Owner 가 '계속' 봉투를
-      내면 phase_gates 의 접지 진입 조건이 충족된다(재정 P-U3). 봉투가 적용되는 **유일한**
-      자리다(재정 T17).
-  - condition: "read.schema 실패"
-    action: retry(1)
-    points: [exit]
-    then: halt
-    note: "read.schema 는 checks_before_exit 에서 exit 로만 선언된 출구 검사다."
-  - condition: "재시도가 같은 실패 서명을 재현(국면 간 변이 재현)"
-    action: escalate
-    reason_label: "국면 간 변이 재현 — 코드 결함 의심"
-    note: >-
-      재정 2026-09-01 T16 §6 ⑤ · 위 retry_budget.escalate_on_repeat. 국면 간 변이가 레인
-      실수가 아니라 **코드 결함**이면 재시도는 같은 실패를 재현한다. 그 재현 자체가
-      진단이므로 남은 예산을 태우지 않고 즉시 상신한다. 서명 = 실패 판정 행의
-      (check_id, rule, locus) 집합.
-  - condition: "진입 지문 불일치(checks_on_entry: read.input-digest)"
-    action: halt
-    reason_label: "환경 오류"
-    note: >-
-      재정 P-C. 품질 결함이 아니므로 재시도·수정 루프에 넣지 않는다 — 즉시 중단 + 진단
-      (파일·기대·실측)이다. 원천 자체가 바뀌었으면 부분 복구가 아니라 새 런이다(재정 P-U2).
-  - condition: "원천 다이제스트가 run.yaml 기록과 불일치(read.source-digest)"
-    action: halt
-    note: >-
-      원천이 도중에 바뀐 런은 폐기 대상이다. 같은 불일치를 **진입 시점**에 잡는 자리는
-      위 checks_on_entry 의 read.input-digest 이며 사유 라벨은 "환경 오류"다(재정 P-C).
-      이 행은 그 이후 구간에서 드러난 불일치의 조치를 정한다. 출구의 디스크 재독으로 이
-      검사가 실제로 발동한다(재정 2026-09-02 T24). 이 행은 retry(n) 없는 halt 이므로 실패하면
-      즉시 출구 루프를 나오며 재시도는 0회다(재정 2026-09-02 T25).
-  - condition: "read.lane-log-shape 실패(레인 왕복 기록의 형태)"
-    action: escalate
-    note: >-
-      두 검사는 출구 재시도 루프가 끝난 뒤 결과 목록에 합류하므로(engine/stages/read.py 루프
-      종료 후) 재시도 기회가 0회이며, 그래서 retry(n) 을 적지 않는다. 적으면 0회인 재시도를
-      계약이 허구로 선언한다(재정 2026-09-01 T22). halt 를 고르지 않은 사유는 회복 가능성
-      미실측이며 B-1 과 함께 잰다(재정 T22 ⒞).
-  - condition: "read.lane-log-digest-value 실패(레인 왕복 기록의 지문 값)"
-    action: escalate
-    note: >-
-      두 검사는 출구 재시도 루프가 끝난 뒤 결과 목록에 합류하므로(engine/stages/read.py 루프
-      종료 후) 재시도 기회가 0회이며, 그래서 retry(n) 을 적지 않는다. 적으면 0회인 재시도를
-      계약이 허구로 선언한다(재정 2026-09-01 T22). halt 를 고르지 않은 사유는 회복 가능성
-      미실측이며 B-1 과 함께 잰다(재정 T22 ⒞).
-  - condition: "반려 수신(material-defect.md)"
+      조기 수렴의 escalation-trigger 축 미달은 검사 실패 행이 아니라 이 kind 행으로
+      판정하며, 계속 봉투가 적용되는 유일한 자리다(재정 P-3·T17·T30).
+  - kind: upstream-defect
+    condition: "반려 수신(material-defect.md)"
     action: reject-upstream
-    note: "재요리 — spec_version +1 로 개정, 항목은 append-only(SPEC §1.6)"
+    note: >-
+      재요리 수신 경로는 재정 T2 가 PD-M5 로 이연했다. 이 행은 키만 보존하고 오늘의
+      러너 호출자는 없으며 결속은 deferred/test_bound 다(재정 T2·T30).
   # ★ 폐기 행 — `drop-signal = drop-proposed (early 또는 final)` → escalate(reason_label
   #   "안도감 부적합"). 재정 P-A 가 조기 drop 의 escalate 를 폐지하고 확정 재정을 CP1 에
   #   통합했으므로, drop 은 더 이상 이 표의 조치 대상이 아니다. drop 의 처분 자리는

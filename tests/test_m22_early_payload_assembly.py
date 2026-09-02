@@ -22,8 +22,8 @@ import test_m2_read as m2  # noqa: E402
 from engine.paths import RunPaths, load_stage_contract  # noqa: E402
 from engine.stages import (  # noqa: E402
     StageEnvironmentError,
-    failure_entry,
-    verify_declared_inputs,
+    failure_row_of_kind,
+    failure_rows_for_checks,
 )
 from engine.stages.read import _failure_verdict  # noqa: E402
 from reader.lib.report import CheckRow  # noqa: E402
@@ -216,12 +216,12 @@ def contract_halt_partitions() -> tuple[tuple[tuple[str, str], ...], tuple[tuple
             continue
         halt_rows += 1
         condition = str(row.get("condition", ""))
-        check_ids = tuple(dict.fromkeys(re.findall(r"\bread\.[A-Za-z0-9-]+\b", condition)))
+        check_ids = tuple(row.get("checks") or ())
         if not check_ids:
             missing_ids.append(condition)
             continue
         for check_id in check_ids:
-            target = entry_path if check_id in entry_ids else verdict_path
+            target = entry_path if row.get("judged_at") == "entry" else verdict_path
             target.append((check_id, condition))
     return tuple(entry_path), tuple(verdict_path), halt_rows, tuple(missing_ids)
 
@@ -259,7 +259,7 @@ def test_contract_halt_outranks_repeat_escalation(
     if check_id is None:
         pytest.fail("_failure_verdict 경로 halt 검사가 0건이다 — 공허 parametrize 는 허용하지 않는다")
     contract = load_stage_contract("read")
-    entry = failure_entry(contract, condition)
+    entry = failure_rows_for_checks(contract, {check_id})[0]
     expected = str(entry.get("then", entry.get("action")))
     if expected != "halt":
         pytest.fail(
@@ -274,14 +274,14 @@ def test_contract_halt_outranks_repeat_escalation(
 def test_repeat_escalation_still_applies_where_the_contract_did_not_say_halt() -> None:
     """역대조 — halt 를 앞세우느라 `repeated` 상신 자체를 죽이면 재정 T16 §6 ⑤ 가 무효가 된다."""
     contract = load_stage_contract("read")
-    verbatim_entry = failure_entry(contract, "read.verbatim")
+    verbatim_entry = failure_rows_for_checks(contract, {"read.verbatim"})[0]
     verbatim_final = str(verbatim_entry.get("then", verbatim_entry.get("action")))
     if verbatim_final == "halt":
         pytest.fail(
             "전제 붕괴 — 계약의 read.verbatim 최종 조치가 halt 다. "
             "'계약이 halt 라고 하지 않은 자리'라는 역대조가 무의미하다"
         )
-    repeated_entry = failure_entry(contract, "같은 실패 서명")
+    repeated_entry = failure_row_of_kind(contract, "retry-repeat")
     expected_repeated = str(repeated_entry["action"])
     expected_reason = repeated_entry.get("reason_label")
     actual_repeated, actual_reason = _failure_verdict(
@@ -297,7 +297,7 @@ def test_repeat_escalation_still_applies_where_the_contract_did_not_say_halt() -
         )
 
 
-def test_read_input_digest_halt_stays_on_the_entry_exception_path(tmp_path) -> None:
+def test_read_input_digest_halt_stays_on_the_entry_exception_path(tmp_path, monkeypatch) -> None:
     """read.input-digest 의 halt 는 진입 예외 경로에 머물러야 한다.
 
     이 분리가 깨져 진입 검사가 fail 판정 행을 반환하면 `_failure_verdict` 는 이 검사 전용
@@ -317,8 +317,26 @@ def test_read_input_digest_halt_stays_on_the_entry_exception_path(tmp_path) -> N
     with open(paths.patent_md, "a", encoding="utf-8") as handle:
         handle.write("\n[entry-digest-mismatch] actual file mutation\n")
     contract = load_stage_contract("read")
+    entry = failure_rows_for_checks(contract, {"read.input-digest"})[0]
+    if entry.get("judged_at") != "entry" or entry.get("action") != "halt" or entry.get("reason_label") != "환경 오류":
+        pytest.fail(f"read.input-digest 진입 행 값이 틀렸다: {entry!r}")
+
+    import engine.stages.read as read_stage
+
+    calls = 0
+    original = read_stage._failure_verdict
+
+    def counted(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(read_stage, "_failure_verdict", counted)
+    adapter = m2.ReplayLaneAdapter(os.path.join(root, "10-read", "lanes"))
     with pytest.raises(StageEnvironmentError) as excinfo:
-        verify_declared_inputs(paths, contract, "read")
+        m2.run_read_stage(run_root=root, adapter=adapter, rules=m2.RULES)
+    if calls != 0:
+        pytest.fail(f"진입 지문 실패가 _failure_verdict를 호출했다: {calls}")
     diagnosis = str(excinfo.value)
     missing = [
         token

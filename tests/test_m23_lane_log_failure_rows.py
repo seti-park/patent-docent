@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import copy
 import os
-import re
 import sys
 
 import pytest
@@ -15,29 +14,16 @@ if REPO not in sys.path:
     sys.path.insert(0, REPO)
 
 from engine.paths import load_stage_contract  # noqa: E402
-from engine.stages import StageError, failure_entry  # noqa: E402
+from engine.stages import StageError, failure_rows_for_checks  # noqa: E402
 from engine.stages.read import _failure_verdict  # noqa: E402
 from reader.lib.report import CheckRow  # noqa: E402
 
 
 LANE_LOG_CHECKS = ("read.lane-log-shape", "read.lane-log-digest-value")
-FAILURE_NEEDLES = (
-    "claim-inventory",
-    "상신 축",
-    "read.schema 실패",
-    "원천 다이제스트",
-    "같은 실패 서명",
-    "exact-match 축",
-    "read.lane-log-shape",
-    "read.lane-log-digest-value",
-    "read.verbatim",
-)
-
-
 def test_lane_log_verdicts_come_from_their_own_failure_rows() -> None:
     """read.verbatim 행을 변조해도 두 검사의 처분은 안 움직이고 대조군만 움직인다."""
     contract = copy.deepcopy(load_stage_contract("read", None))
-    verbatim = failure_entry(contract, "read.verbatim")
+    verbatim = failure_rows_for_checks(contract, {"read.verbatim"})[0]
     verbatim["then"] = "halt"
 
     for check_id in LANE_LOG_CHECKS:
@@ -50,28 +36,25 @@ def test_lane_log_verdicts_come_from_their_own_failure_rows() -> None:
         pytest.fail(f"변조 유효성 대조군 read.verbatim 기대 ('halt', None), 실제 {control!r}")
 
 
-def test_every_failure_verdict_needle_matches_exactly_one_contract_row() -> None:
-    """부분 문자열 조회의 모든 needle이 정확히 한 행만 가리켜야 처분 출처가 단일하다."""
+def test_every_declared_check_matches_exactly_one_contract_row() -> None:
+    """검사 id 키는 모든 신고된 id를 정확히 한 행에서만 찾는다."""
     contract = load_stage_contract("read", None)
-    conditions = [str(row.get("condition", "")) for row in contract.get("failure") or []]
-    for needle in FAILURE_NEEDLES:
-        matches = [condition for condition in conditions if needle in condition]
-        if len(matches) != 1:
-            pytest.fail(f"failure needle {needle!r} 기대 정확히 1행, 실제 {len(matches)}행: {matches!r}")
+    ids = {
+        row["id"] for row in contract["checks_on_entry"] + contract["checks_before_exit"]
+    }
+    for check_id in ids:
+        rows = failure_rows_for_checks(contract, {check_id})
+        if len(rows) != 1:
+            pytest.fail(f"failure key {check_id!r} 기대 정확히 1행, 실제 {len(rows)}")
 
 
-def test_failure_needles_equal_every_literal_lookup_in_read_stage() -> None:
-    """read.py의 실제 failure_entry 부분문자열 조회와 유일성 목록은 양방향으로 같아야 한다."""
+def test_read_stage_has_no_failure_entry_needle_lookup() -> None:
+    """READ 러너는 산문 부분문자열 조회를 더 이상 호출하지 않는다."""
     path = os.path.join(REPO, "engine", "stages", "read.py")
     with open(path, encoding="utf-8") as handle:
         source = handle.read()
-    actual = set(re.findall(r'failure_entry\(contract,\s*"([^"]+)"\)', source))
-    expected = set(FAILURE_NEEDLES)
-    if actual != expected:
-        pytest.fail(
-            "failure needle 목록과 read.py 실제 조회가 다르다: "
-            f"목록에만={sorted(expected - actual)!r}, 코드에만={sorted(actual - expected)!r}"
-        )
+    if "failure_entry(" in source:
+        pytest.fail("read.py에 failure_entry 산문 needle 조회가 남아 있다")
 
 
 def test_exit_retry_budget_comment_marks_t25_exception_without_changing_values() -> None:
@@ -79,9 +62,8 @@ def test_exit_retry_budget_comment_marks_t25_exception_without_changing_values()
     path = os.path.join(REPO, "contracts", "stages", "read.yaml")
     with open(path, encoding="utf-8") as handle:
         source = handle.read()
-    marker = "★ 재정 2026-09-02 T25"
-    if marker not in source or "T26" not in source:
-        pytest.fail(f"exit retry_budget 주석에 T25 예외·T26 포인터가 없다: marker={marker!r}")
+    if "[정정 2026-09-02 · 재정 T26·T28]" not in source:
+        pytest.fail("exit retry_budget 주석에 T26·T28 정정 마커가 없다")
 
 
 def test_repeated_signature_requires_an_exit_loop_failure() -> None:
@@ -113,7 +95,7 @@ def test_lane_log_rows_declare_no_fictional_retry_or_reason_label() -> None:
     """
     contract = load_stage_contract("read", None)
     for check_id in LANE_LOG_CHECKS:
-        row = failure_entry(contract, check_id)
+        row = failure_rows_for_checks(contract, {check_id})[0]
         forbidden_keys = [key for key in ("points", "reason_label", "then") if key in row]
         if forbidden_keys:
             pytest.fail(f"{check_id} 전용 행에 금지 키가 있다: {forbidden_keys}")

@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from typing import Any
 
 import yaml
@@ -22,6 +23,7 @@ import yaml
 from reader.lib.report import CheckRow
 
 DIGEST_PREFIX = "sha256:"
+TERMINAL_ACTIONS = ("halt", "reject-upstream", "escalate")
 
 
 class StageError(Exception):
@@ -135,6 +137,73 @@ def failure_entry(contract: dict, needle: str) -> dict:
         if needle in str(entry.get("condition", "")):
             return entry
     raise StageError(f"계약의 failure 목록에 '{needle}' 조건이 없다")
+
+
+def failure_rows_for_checks(contract: dict, check_ids) -> list[dict]:
+    """실패 검사 id 집합의 후보 행을 계약 순서로 돌려준다(재정 T26)."""
+    rows = contract.get("failure") or []
+    if not isinstance(rows, list):
+        raise StageError("계약 failure이 list가 아니다")
+    wanted = set(check_ids)
+    for check_id in wanted:
+        matches = [
+            row
+            for row in rows
+            if isinstance(row, dict)
+            and isinstance(row.get("checks"), list)
+            and check_id in row["checks"]
+        ]
+        if len(matches) != 1:
+            raise StageError(
+                f"검사 {check_id!r}의 failure 행은 정확히 1개여야 한다: {len(matches)}"
+            )
+    return [
+        row
+        for row in rows
+        if isinstance(row, dict)
+        and isinstance(row.get("checks"), list)
+        and wanted.intersection(row["checks"])
+    ]
+
+
+def failure_row_of_kind(contract: dict, kind: str) -> dict:
+    """failure[]의 비검사 사건 행을 kind로 단독 조회한다."""
+    rows = contract.get("failure") or []
+    matches = [row for row in rows if isinstance(row, dict) and row.get("kind") == kind]
+    if len(matches) != 1:
+        raise StageError(f"kind {kind!r}의 failure 행은 정확히 1개여야 한다: {len(matches)}")
+    return matches[0]
+
+
+def terminal_action(row: dict) -> str:
+    """retry(n)은 then, 나머지는 action의 종단 어휘를 fail-closed로 읽는다."""
+    action = row.get("action")
+    if isinstance(action, str) and re.fullmatch(r"retry\(\d+\)", action):
+        then = row.get("then")
+        if then not in TERMINAL_ACTIONS:
+            raise StageError(f"{action!r} 행의 then이 종단 어휘가 아니다: {then!r}")
+        return str(then)
+    if action not in TERMINAL_ACTIONS or "then" in row:
+        raise StageError(
+            f"비재시도 행은 종단 action만 들어야 한다: "
+            f"action={action!r}, then={row.get('then')!r}"
+        )
+    return str(action)
+
+
+def select_failure_row(contract: dict, candidates) -> dict:
+    """조치 격자의 최대를 고르고 동률은 failure[] 계약 순서로 풀어낸다."""
+    rows = contract.get("failure") or []
+    candidate_rows = list(candidates)
+    if not candidate_rows:
+        raise StageError("실패 후보 행이 없다")
+    actions = [terminal_action(row) for row in candidate_rows]
+    winner = worst_status(actions)
+    for row in rows:
+        if any(row is candidate for candidate in candidate_rows):
+            if terminal_action(row) == winner:
+                return row
+    raise StageError("실패 후보 행이 계약 failure[] 안에 없다")
 
 
 # ---------------------------------------------------------------------------
