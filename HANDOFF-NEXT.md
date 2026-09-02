@@ -1,11 +1,17 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-03(6차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-03(7차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-03 7차 갱신 — 라운드 B 가 병합됐다(`1d29c8b` · sol-coder 1턴 완주 · blocked 0 · 총괄 재현 전건 일치 · 관문 **7종** 두 모드 exit 0 · pytest 761). 기록 = `docs/decisions/D-20260903-03-round-b.md`.** 재정 T26·T28·T29·T30 의 집행 실물 = `contracts/stages/read.yaml#failure` 11행 · `engine/stages/read.py` 상수·진입 가드·`_failure_verdict` · `tools/check_failure_table.py`(일곱째 관문 · `--self-test` 36) · T-1~T-13 시험 · 골든 T-7.
+**지금 할 일 = opus max 감사 발주**(ROUTING M9 · sol 저작 → opus) — 합본 범위 A′ `99fad78` · C′ `867b95b` · B-0 `6f93519`+골든 `47e437c` · B `1d29c8b` · 격리 사본(`git clone --no-hardlinks` · detached · `.audit-sandbox` 마커 path/pin/order/disposable · SPEC §8.3 9항) · 호출 = `claude -p --model claude-opus-5 --effort max`(LANE-RUNTIME 「`claude -p` 레인 러너 환경변수 2종」 `CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000` · `MEMORY_HOOKS=off` · setsid 배경 + `EXIT=` 마커) · 발주문 골격 = `AUDIT-ORDER-round-c.md`(drafts) 형태 + 라운드 A 감사 교훈(A-1: 변조가 읽는 구간을 실측). FAIL → 지적 반입(규율 10 · `지적 열거 =` · DISPOSITIONS) → B′ 수리 · PASS → **T31·T32 소라운드** 발주(설계 §2 T31/T32 · `screening_memos[].read_run` 상신은 별건 유지).
+**커밋 전 관문은 이제 7종이다** — `check_failure_table` 포함(`CLAUDE.md` §6 표 · 실패표를 고치면 발화).
+
+> [정정 2026-09-03 · 7차] 아래 6차 문단의 「지금 할 일 = 라운드 B 발주/회수」는 **끝났다**. 경위 보존용으로 남긴다.
 
 **★ 09-03 6차 갱신 — 라운드 B-0 병합(`6f93519`) · 골든 manifest 커밋(`47e437c` · 8,190칸 · 오라클 불일치 0) · T33 ① 집행(`8259075` · 절차 문서 → `reader/procedure/HISTORY.md`)이 끝났다.** 경위·재현표·발주자 오류 4건 = `docs/decisions/D-20260903-02-round-b0.md`.
 **[추기 02:38] 라운드 B 를 발주했다** — 레인 디렉터리 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/sol-coder-round-b/`(`runner.sh` · `status` 첫 줄 PID · `events.jsonl` · `final.txt` · 발주문 = `order-round-b.md` = drafts `SPEC-round-b.md` · 79,579 B · 설계 §0~§3+§6 첨부) · worktree `.worktrees/round-b`(브랜치 `round-b` · `33e96f3` 분기) · 예상 1~2시간 · 세션이 죽었으면 `status` 의 `EXIT=` 와 `final.txt` 크기로 판별(EXIT=0 인데 0바이트 = 사망 · resume 1회 허용). 회수 뒤 = 총괄 재현(§4 수락 명령 · pytest 는 `--basetemp` 홈 fs) → worktree 커밋 → rebase·ff → opus max 감사 발주.
