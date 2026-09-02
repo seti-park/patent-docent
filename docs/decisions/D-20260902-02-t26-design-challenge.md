@@ -181,3 +181,24 @@ B-1~B-7 · V-1~V-8 · N-1~N-7 은 **전건 closed**(B-5 만 partially → W-2). 
 세 번 다 일치했고 남는 것은 **검증 체계의 구멍**(우회 변조 · 우회 호출자 · 다중집합)이다. ROUTING ⑽ ⓑ 자문은 2차 뒤에 한 번 거쳤고
 자문이 v4 를 「그대로 내도 된다」고 했으나 3차가 W-1 을 찾았다 — 자문도 도전자도 각각 다른 것을 보았고 둘 다 필요했다. 4차 도전은
 W-1~W-4 폐쇄와 「v5 가 이전 지적을 다시 열었는가」만 보게 발주문을 좁혔다.
+
+
+---
+
+## §10 4차 도전(설계 v5) 지적 X-1 ~ X-3 의 처분 — 2026-09-02 추기 (총괄 저작)
+
+원문 = `docs/lessons/2026-09-02-sol-challenge-t26-design-v5.md`. 판정 FAIL · 3건(BLOCKER 1 · HIGH 1 · MED 1) · **결정 공백 0 · 새 재정 사항 0** ·
+W-1~W-4 · B · V · N 전건 closed. 값 8,190 칸은 네 번째 일치. 셋 전부 **수용** → **v6** → 5차 도전.
+
+| ID | 격 | 지적 요지 | 처분 | v6 에서 어떻게 닫았나 |
+|---|---|---|---|---|
+| **X-1** | BLOCKER | 관문이 `failure[]` 의 **행 분할**을 고정하지 않는다 — T22 §3 ① 이 명한 lane-log 두 전용 행을 `checks: [shape, digest-value]` 한 행으로 병합해도 R1·R2·G3~G6 전부 참이고 8,190칸 값도 같다(`MERGED_GRID_MISMATCHES 0`). 재량이 아니라 Owner 재정(T22)의 집행 누락 | **수용** | G1 = 관문 상수 `APPROVED_FAILURE_TABLE`(11행 · 순서 · `checks` 집합 또는 `kind` · action · then · reason_label · points · 각 행에 재정 좌표)과 **정확 일치**. `condition`·`note` 산문 둘만 자유. T-13(importlib 다리 · lane-log 두 id 가 서로 다른 singleton 행) · `test_m23` 개정 · 변조 ㉕(병합) ㉖(순서 교환) |
+| **X-2** | HIGH | v5 T-1 이 `element-set` 에 finding 을 더하는데 그 축은 **escalation-trigger** 다 — 검사기는 그 축 미달에 finding 을 내지 않으므로 행 fail·축 전부 pass 의 자기모순 판정서가 되어 T28 §3 ③ 「실제 러너 경로에서 exact-match 실패」를 정직하게 실증하지 못한다 | **수용** | wrapper 가 `ctx.peer_spec` 사본에 독립항 하나를 복제한 `CheckContext` 로 원래 `run_read_checks` 를 부른다 → 검사기 자신이 `independent-count`(exact-match) fail + finding(도전자 실측 `COHERENT_EXACT_MATCH True`). 시험은 판정서 `axes[]` 의 `independent-count: fail` 기록까지 본다. 총괄 자기 신고 ⑩ 을 「틀렸다」로 정정 |
+| **X-3** | MED | `upstream-defect` 행의 `reject-upstream` 이 관문·시험·골든 어디에도 고정되지 않아 `action: halt` 로 바꿔도 통과 — 호출자 0 이라 오늘 실동작은 안 바뀌지만 PD-M5 이연 처분의 **계약 변경**이며 허용한 재정이 없다 | **수용** | X-1 의 골격 고정이 kind 행 셋의 action·then·label 을 함께 덮는다 · 변조 ㉗(`halt`) ㉘(`gate-escalation` 라벨 삭제) |
+
+**네 번째 FAIL 에 대한 총괄 자기 점검.** 값은 네 번 다 맞았고 지적은 7 → 8 → 4 → 3 이며 이번 셋은 전부 **「관문이 무엇을 고정하지 않는가」**
+한 계열이다(행 분할 · kind action · 주입 축의 진실성). v6 은 그 계열을 한 번에 닫는 형태 — **승인 실패표의 기계 필드 전체를 관문 상수로**
+— 를 택했다. 대가 = 관문이 계약의 사본을 든다. 그것이 「같은 상수」 함정인가를 v6 §4 ⑲ 에 자기 신고했다: 함정은 시험이 **구현**의 상수를
+복사해 구현 변화를 따라가는 것이고, 여기 상수는 **원장값**이며 계약이 그것을 따라와야 한다 — 방향이 반대다. 도전자가 이 논거를 치라.
+또 하나 — 4차 발주문은 「tools 불변」이라 적었으나 그 시각 라운드 C′ 레인이 `tools/check_dispositions.py` 를 고치고 있었고 총괄이 도전 중
+병합했다(총괄 귀책 · 도전자가 정직하게 적었다). 5차 발주문은 그 사실을 고지했다.
