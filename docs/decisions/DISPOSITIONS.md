@@ -76,6 +76,7 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v6.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v7.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v8.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v9.md | 등재 | — |
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -171,6 +172,10 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v8.md | AA-2 | HIGH | 수용 | T-7 이 셀 키 우주를 고정하지 않아 `1024:1` 삭제 + 영역 밖 `0:1` 삽입이 통과 — v9 = 검증기 키 집합 == 정답 우주 양방향 · 값 형식 · `exceptions[0].cells` 정확히 2,048 · 음성 시험 ⓑ | `D-20260902-02-t26-design-challenge.md` §13 |
 | 2026-09-02-sol-challenge-t26-design-v8.md | AA-3 | MED | 수용 | T-7 ⑥ 이 `base_commit`·`tree_head` 자기일관만 봄 — v9 = 검증기에 리터럴 `99fad78` + `git rev-parse 99fad78` 전체 해시를 호출자가 넘겨 대조 · 음성 시험 ⓒ | `D-20260902-02-t26-design-challenge.md` §13 |
 | 2026-09-02-sol-challenge-t26-design-v8.md | AA-4 | MED | 수용 | Z-2 처분의 「B-0 시험에 동반 변조」가 피검 함수 없음(T-7 은 B 에서 생김) — v9 = `validate_manifest.py` 를 B-0 산출물로 · 생성기 자기 검증 · B-0 시험 · B 의 T-7 이 같은 검증기 호출 | `D-20260902-02-t26-design-challenge.md` §13 |
+| 2026-09-02-sol-challenge-t26-design-v9.md | AB-1 | MED | 수용 | 검증기가 값 필드를 다 덮지 않음(`rule`·`meaning`·`$comment`·`cell_key`·`generator`·`generation_command` 존재만 · 계수 `type is int` 없음 · `provenance` 키 미고정) — v10 = 모든 값 필드에 리터럴/형식 · 음성 시험 ⓗⓘⓙ | `D-20260902-02-t26-design-challenge.md` §14 |
+| 2026-09-02-sol-challenge-t26-design-v9.md | AB-2 | MED | 수용 | `python -I` 아래에서 형제 `validate_manifest.py` 적재 방식 부재 → M3 임의 선택 — v10 = `importlib.util.spec_from_file_location(Path(__file__).with_name(…))` 코드 명시 · stdlib 만 import · B-0 시험이 공개 `-I` 명령을 서브프로세스로 실행 | `D-20260902-02-t26-design-challenge.md` §14 |
+
+**행 수 = 88**(`등재` 16파일의 지적 전건). **[정정 2026-09-02 · 9차]** 직전 판 **86** — 8차 도전 원문 반입(AB 2)으로 둘 늘었다.
 
 **행 수 = 86**(`등재` 15파일의 지적 전건). **[정정 2026-09-02 · 8차]** 직전 판 **82** — 7차 도전 원문 반입(AA 4)으로 넷 늘었다.
 

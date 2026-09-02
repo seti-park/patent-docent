@@ -260,3 +260,22 @@ Y-3 partially(Z-1) · B·V·N·W·X 전건 closed. 값 8,190 칸은 여섯 번�
 구멍 넷을 한 번에 냈다. 대책 = 지적 한 점이 아니라 **그 면 전체**를 닫는다 — manifest 의 모든 필드를 한 검증기가 형식·우주·계수·β·provenance 로
 덮고, 그 검증기를 세 호출자가 공유한다. 같은 형태가 3·4차(관문이 고정하지 않은 것 → 승인 표 전체를 상수로)에서도 났다 — 「한 점을 고치면 옆 점이
 난다」는 것이 이 도전 반복의 지배적 패턴이며 [[design-challenge-loop-lessons]] 에 적었다.
+
+
+---
+
+## §14 8차 도전(설계 v9) 지적 AB-1 · AB-2 의 처분 — 2026-09-02 추기 (총괄 저작)
+
+원문 = `docs/lessons/2026-09-02-sol-challenge-t26-design-v9.md`. 판정 FAIL · 2건(MED 2 · BLOCKER·HIGH 0) · 새 재정 0 · AA-1~AA-3 closed · AA-4 partially ·
+그 밖 전건 closed. 값 8,190 칸은 여덟 번째 일치. 둘 다 **수용** → **v10** → 9차 도전.
+
+| ID | 격 | 지적 요지 | 처분 | v10 에서 어떻게 닫았나 |
+|---|---|---|---|---|
+| **AB-1** | MED | v9 검증기 목록이 manifest 의 **값**을 다 검사하지 않는다 — Z-2 처분이 명한 `exceptions.rule` 고정이 상세 목록에서 빠졌고(`rule`·`meaning` 변조가 통과) `$comment`·`cell_key`·`generator`·`generation_command` 는 존재만 · `expected_counts`·`cell_count` 에 `type is int` 없음 · `provenance` 내부 키 집합 미고정(도전자 실측 `unchecked_value_fields=[…6개]`) | **수용** | 최상위 10키 · `provenance` 8키 · `exceptions[0]` 6키 **전부**에 고정 리터럴 또는 형식(`rule`·`meaning`·`cell_key`·`generator`·`generation_command` 문자열 상등 · `$comment` 부분 문자열 3종 · 계수 `type is int` · `generated_at` ISO-8601) · 음성 시험 ⓗ(rule/meaning) ⓘ(`$comment`·`cell_key`·`generation_command`) ⓙ(float 계수 · provenance 여분 키) |
+| **AB-2** | MED | `python -I` 는 스크립트 디렉터리·cwd 를 `sys.path` 에서 빼고 설계가 추가하는 경로는 `99fad78` 트리 루트뿐 — 형제 `validate_manifest.py` 는 그 트리에 없으므로 `import validate_manifest` 가 성립하지 않는다(도전자 실측 `sys_path=[stdlib, venv site-packages]`) → M3 가 `sys.path` 추가·`importlib`·로직 복제 중 임의 선택 | **수용** | 생성기·T-7 이 **`importlib.util.spec_from_file_location("validate_manifest", Path(__file__).with_name("validate_manifest.py"))`** 로 적재(설계에 코드 블록) · 검증기는 stdlib 만 import · B-0 시험이 공개 `python -I generate.py …` 명령을 **서브프로세스로** 실행해 `EXIT=0`·파일 생성·검증기 통과를 확인 |
+
+**여덟 번째 FAIL 에 대한 총괄 자기 점검.** 7차 뒤 「면 전체를 닫는다」고 적고서 검증기 항목을 **키의 존재**까지만 적고 **값**을 빠뜨렸다 — 같은 면에서
+한 겹 더 깊은 자리였다. 검증기 항목을 적을 때의 규칙 = 필드마다 **「무엇과 같아야 하는가」**(리터럴 · 형식 · 재계산)를 적고, 「있어야 한다」만 적은 필드가
+하나라도 남으면 그것이 다음 지적이다. AB-2 는 `-I` 의 부작용을 V-2 처분에서 스스로 도입하고 그 결과를 형제 파일 적재에 적용하지 않은 것 — 한 결정의
+파생 효과를 끝까지 따라가지 않았다. 9차 기동 직후 §6 의 낡은 열거(「ⓐ~ⓖ」)를 발견해 레인을 죽이고 재기동했다 — 그때 `pkill -f <패턴>` 이 총괄 자신의
+셸을 잡아 명령이 중도 사망했다(LANE-RUNTIME 「함정 C」 · 패턴 매칭 대신 PID 를 잡아야 했다).
