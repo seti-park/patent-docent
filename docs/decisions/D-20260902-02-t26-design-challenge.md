@@ -337,3 +337,22 @@ grep 의 패턴 목록에 이번 다섯을 더했다.
 분기하는 단위**여야 검사 하나의 부재를 드러낸다. AE-2 는 셸 의미(명령 치환 안의 파이프 실패는 `set -e` 밖)를 총괄이 실측 없이 적은 자리이고, AE-3 은
 「시험용 클론」이라는 말을 쓰면서 그 클론에 무엇이 없는지(`.venv`)를 따라가지 않은 자리다. 둘 다 「매개화한 명령을 시험이 실제로 돌릴 때 무엇이 필요한가」를
 끝까지 실행해 보지 않은 결과 — 발주 전에 총괄이 그 블록을 시험용 클론에서 한 번 돌려 봤어야 했다.
+
+
+---
+
+## §18 12차 도전(설계 v13) 지적 AF-1 ~ AF-3 의 처분 — 2026-09-02 추기 (총괄 저작)
+
+원문 = `docs/lessons/2026-09-02-sol-challenge-t26-design-v13.md`. 판정 FAIL · 3건(HIGH 1 · MED 2) · 새 재정 0 · AE-2·AE-3 closed · AE-1 partially ·
+그 밖 전건 closed. 값 8,190 칸은 열두 번째 일치. 셋 전부 **수용** → **v14** → 13차 도전.
+
+| ID | 격 | 지적 요지 | 처분 | v14 에서 어떻게 닫았나 |
+|---|---|---|---|---|
+| **AF-1** | HIGH | T-V 의 `exception.cells.set` 변조가 predicate 와 cells 를 함께 바꾸고 기대가 「ID 포함」이라, β 집합 검사를 지우고 predicate 불일치 때 두 진단을 함께 내는 구현이 통과 → T28 §3 ② 공허 · `reader_path.type` 등 누락 ID · `expected_counts` 한 키만 · `cells.value.shape` 에 두 제약 | **수용** | **층위 평가**(필드마다 구조 → 원소 → 고유 → 값 · 앞 층 위반이면 뒤 층 미평가 · 필드 간 의존도 같은 원리)로 한 변조 = 정확히 한 ID · 기대 = **`set(위반 ID) == {target}`** · 표 재작성 — 복합 변조 제거(β cells 변조는 predicate 고정) · 누락 ID 추가(`reader_path.type` · `*.items.nonempty` · `cells.value.type/len2` 분리 · `*.type` 전부) · `expected_counts.<k>.*` 다섯 키 각각 · tree_head nibble 반전 · 고립 불가 제약(`has_convergence`·`len12`·`subset_of_cells`)은 함의하는 제약에 흡수 · `CONSTRAINT_IDS` 자체 형식 검사 |
+| **AF-2** | MED | 「시험용 clone」에 B-0 세 산출물이 없다 — 일반 `git clone` 은 worktree 미커밋 파일을 복사하지 않고 HEAD 에도 없다 → 정상 시험이 생성기 부재로 실패 · M3 임의 선택 | **수용** | clone 조립 ①~④ 고정 — `git clone --no-hardlinks` → 두 파일 복사 → clone 안 `git add` + 임시 커밋(provenance ⓕ 깨끗함) → `BASE` = 그 커밋 7자 · 정본 무접촉 |
+| **AF-3** | MED | G1~G6 이 `early_phase_spec.judged_here` 를 읽지 않아 `judged_here += [read.__ghost__]` 가 관문 전종 통과 — T26 ⒜ ③ 의 우주(진입·조기·출구)에서 조기 선언 누락 · 존치 :853 이 잡지만 관문 주장이 더 넓다 | **수용** | R2 우주 = entry ∪ exit ∪ `judged_here` · `set(judged_here) == set(points[early].checks) == {id : early ∈ phases(id)}` 세 벌 상등 · list·비공 str·중복 없음 · 변조 ㉞ |
+
+**열두 번째 FAIL 에 대한 총괄 자기 점검.** AF-1 은 AD-1(필드 단위) → AE-1(제약 단위) → AF-1(정확 상등 + 층위)로 세 판에 걸쳐 내려온 같은 계열 —
+「검사가 실재함을 시험이 증명한다」는 요건을 총괄이 매번 한 겹씩만 좁혔다. 이번에 **층위 평가**라는 구조로 「한 변조 = 한 ID」를 검증기 쪽에서
+보장하게 한 것이 계열을 끝내는 형태라고 본다. AF-2 는 AE-3(클론에 `.venv` 없음)과 같은 형태 — 「시험용 클론」이라는 말의 실물을 끝까지 따라가지
+않았다. AF-3 은 G2 의 우주를 적을 때 계약을 전수로 훑지 않고 세 선언 중 둘만 든 것.

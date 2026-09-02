@@ -80,6 +80,7 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v10.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v11.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v12.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v13.md | 등재 | — |
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -188,6 +189,11 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v12.md | AE-1 | HIGH | 수용 | 표 T-V 가 필드 단위라 한 토큰 아래 여러 제약이 겹쳐 검사 하나를 빼도 전건 통과 — v13 = 제약 ID(`CONSTRAINT_IDS`) 진단 · 표를 제약 ID 단위로 · 양방향 상등 + 각 ID 위반 실재 | `D-20260902-02-t26-design-challenge.md` §17 |
 | 2026-09-02-sol-challenge-t26-design-v12.md | AE-2 | MED | 수용 | 생성 명령 둘째 줄(`test "$(git diff … 파이프 wc -l)" = 0`)이 명령 치환 안의 파이프 실패를 삼킴 — v13 = `git diff --quiet` · B-0 ⒟ 무효 ref 역프로브 | `D-20260902-02-t26-design-challenge.md` §17 |
 | 2026-09-02-sol-challenge-t26-design-v12.md | AE-3 | MED | 수용 | 시험용 클론에 `.venv` 없음 · `BASE` 자릿수 미정 — v13 = `PYTHON_BIN` 매개(기본 main `.venv`) · B-0 은 정본 `.venv` 절대경로 · `BASE=git rev-parse --short=7` | `D-20260902-02-t26-design-challenge.md` §17 |
+| 2026-09-02-sol-challenge-t26-design-v13.md | AF-1 | HIGH | 수용 | T-V 가 「제약 하나만 깨고 그 제약만 보고」 결속이 아님(복합 변조 · 누락 ID · 한 키 전칭 · 「ID 포함」 기대) — v14 = 층위 평가 · `set(위반 ID) == {target}` · 표 재작성 | `D-20260902-02-t26-design-challenge.md` §18 |
+| 2026-09-02-sol-challenge-t26-design-v13.md | AF-2 | MED | 수용 | B-0 산출물이 미커밋이라 시험용 clone 에 생성기·검증기가 없음 — v14 = clone 조립 절차(두 파일 복사 + clone 안 임시 커밋 · BASE 7자) | `D-20260902-02-t26-design-challenge.md` §18 |
+| 2026-09-02-sol-challenge-t26-design-v13.md | AF-3 | MED | 수용 | 관문이 조기 선언 `early_phase_spec.judged_here` 를 안 읽어 유령 id 추가가 통과 — v14 = R2 우주에 judged_here · 세 벌 상등 · 변조 ㉞ | `D-20260902-02-t26-design-challenge.md` §18 |
+
+**행 수 = 102**(`등재` 20파일의 지적 전건). **[정정 2026-09-02 · 13차]** 직전 판 **99** — 12차 도전 원문 반입(AF 3)으로 셋 늘었다.
 
 **행 수 = 99**(`등재` 19파일의 지적 전건). **[정정 2026-09-02 · 12차]** 직전 판 **96** — 11차 도전 원문 반입(AE 3)으로 셋 늘었다.
 

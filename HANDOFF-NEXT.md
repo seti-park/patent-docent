@@ -8,15 +8,15 @@
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
 
 **★ 09-02 4차 갱신 — 라운드 C 감사(FAIL 6건)와 그 수리 C′(`867b95b`)가 끝났고, T26 설계는 M1b 도전 세 번 FAIL
-(v1 B-1~B-7 · v2 V-1~V-8 · v4 W-1~W-4) + 자문 REVISE(N-1~N-7) 를 거쳐 v5 로 4차 도전 중이다. **[추기] 4차도 FAIL(X-1~X-3 · 결정 공백 0 · `-v5.md`) → v6(관문이 승인 실패표 골격 전체를 상수로) → 5차도 FAIL(Y-1~Y-5 · BLOCKER 0 · 둘은 총괄 패치 잔재 · `-v6.md`) → v7 → 6차 FAIL(Z-1·Z-2 · MED 2 · `-v7.md`) → v8 → 7차 FAIL(AA-1~AA-4 · 골든 manifest 수락면 · `-v8.md`) → v9(검증기 `validate_manifest.py`) → 8차 FAIL(AB-1·AB-2 · MED 2 · `-v9.md`) → v10(검증기가 모든 값 필드 · `importlib` 적재) → 9차 FAIL(AC-1~AC-5 · 문서 내부 정합 · `-v10.md`) → v11 → 10차 FAIL(AD-1~AD-3 · `-v11.md`) → v12(한 필드 음성 시험 표 T-V · `judged_at` 골격 · fail-fast 생성 블록) → **11차 FAIL(AE-1~AE-3 · `-v12.md`) → v13(제약 ID 단위 T-V · `git diff --quiet` · `PYTHON_BIN`) → 12차 도전 중.** 지금 할 일 =
+(v1 B-1~B-7 · v2 V-1~V-8 · v4 W-1~W-4) + 자문 REVISE(N-1~N-7) 를 거쳐 v5 로 4차 도전 중이다. **[추기] 4차도 FAIL(X-1~X-3 · 결정 공백 0 · `-v5.md`) → v6(관문이 승인 실패표 골격 전체를 상수로) → 5차도 FAIL(Y-1~Y-5 · BLOCKER 0 · 둘은 총괄 패치 잔재 · `-v6.md`) → v7 → 6차 FAIL(Z-1·Z-2 · MED 2 · `-v7.md`) → v8 → 7차 FAIL(AA-1~AA-4 · 골든 manifest 수락면 · `-v8.md`) → v9(검증기 `validate_manifest.py`) → 8차 FAIL(AB-1·AB-2 · MED 2 · `-v9.md`) → v10(검증기가 모든 값 필드 · `importlib` 적재) → 9차 FAIL(AC-1~AC-5 · 문서 내부 정합 · `-v10.md`) → v11 → 10차 FAIL(AD-1~AD-3 · `-v11.md`) → v12(한 필드 음성 시험 표 T-V · `judged_at` 골격 · fail-fast 생성 블록) → 11차 FAIL(AE-1~AE-3 · `-v12.md`) → v13(제약 ID 단위 T-V · `git diff --quiet` · `PYTHON_BIN`) → **12차 FAIL(AF-1~AF-3 · `-v13.md`) → v14(층위 평가 · `set(위반 ID) == {target}` · clone 조립 · `judged_here` 우주) → 13차 도전 중.** 지금 할 일 =
 ① 4차 도전 결과 회수 → PASS 면 **라운드 B-0**(골든 생성기 · sol-coder · 발주문 초안 있음) → 총괄이 `99fad78` 트리에서
 골든 생성·커밋 → **라운드 B**(설계 PASS 판 첨부) → opus max 감사(A′·C′·B-0·B 합본) → 병합(관문 6→7) · FAIL 이면 지적
 처분 → v6 → 5차. ② Owner **사후 확인** 3건(아래).**
 
 - **감수 원문 4건이 새로 반입됐다** — `docs/lessons/2026-09-02-sol-challenge-t26-design-v2.md`(2차 FAIL · V) ·
   `2026-09-02-fable-advice-t26-design-v3.md`(자문 REVISE · N — ROUTING ⑽ ⓑ 「같은 상신 2회 저항」) ·
-  `2026-09-02-sol-challenge-t26-design-v4.md`(3차 FAIL · W) · `-v5.md`(4차 FAIL · X) · `-v6.md`(5차 FAIL · Y) · `-v7.md`(6차 FAIL · Z) · `-v8.md`(7차 FAIL · AA) · `-v9.md`(8차 FAIL · AB) · `-v10.md`(9차 FAIL · AC) · `-v11.md`(10차 FAIL · AD) · `-v12.md`(11차 FAIL · AE) · `2026-09-02-sol-audit-round-c.md`(C 감사 FAIL · C).
-  처분 = `DISPOSITIONS.md` §1(99행) · 사유 = `D-20260902-02` §7~§17 · `D-20260902-03` §6.
+  `2026-09-02-sol-challenge-t26-design-v4.md`(3차 FAIL · W) · `-v5.md`(4차 FAIL · X) · `-v6.md`(5차 FAIL · Y) · `-v7.md`(6차 FAIL · Z) · `-v8.md`(7차 FAIL · AA) · `-v9.md`(8차 FAIL · AB) · `-v10.md`(9차 FAIL · AC) · `-v11.md`(10차 FAIL · AD) · `-v12.md`(11차 FAIL · AE) · `-v13.md`(12차 FAIL · AF) · `2026-09-02-sol-audit-round-c.md`(C 감사 FAIL · C).
+  처분 = `DISPOSITIONS.md` §1(102행) · 사유 = `D-20260902-02` §7~§18 · `D-20260902-03` §6.
 - **설계 메모는 리포에 없다**(PASS 판이 B 발주문 첨부로 들어온다). 세션 스크래치가 `/tmp` 라 **내구 사본**을
   `~/projects/workspaces/patent-docent-session-drafts/` 에 두었다 — `T26-DESIGN.md`(v1) ~ `-v5.md` · 도전 발주문 v2~v5 ·
   `order-round-b0-generator.md`(B-0 초안 · `<B0_BASE>` 와 §2.8 첨부만 채우면 발주 가능) · `AUDIT-ORDER-round-c.md` ·
@@ -351,7 +351,7 @@ e145366  원장: 재정 T18~T20 + 교차 감사 원문 2건 보존
        → [끝] 라운드 C′ : C-2·C-3·C-4·C-6 수리 — sol-coder · worktree `round-c-prime`  = 867b95b (감사는 B 감사에 합본)
 [끝] Owner 재정 T28~T32 (09-02)  = b3144d5 원장 등재 · 병합 뒤 총괄 후속 = 005355a · 663c77e
    ↓
-[지금] 라운드 B : T26 — 설계 v2 → M1b 2차 FAIL(V) → v3 → 자문 REVISE(N) → v4 → M1b 3차 FAIL(W) → v5 → M1b 4차 FAIL(X) → v6 → M1b 5차 FAIL(Y) → v7 → M1b 6차 FAIL(Z) → v8 → M1b 7차 FAIL(AA) → v9 → M1b 8차 FAIL(AB) → v10 → M1b 9차 FAIL(AC) → v11 → M1b 10차 FAIL(AD) → v12 → M1b 11차 FAIL(AE) → **v13 → M1b 12차 도전 중**
+[지금] 라운드 B : T26 — 설계 v2 → M1b 2차 FAIL(V) → v3 → 자문 REVISE(N) → v4 → M1b 3차 FAIL(W) → v5 → M1b 4차 FAIL(X) → v6 → M1b 5차 FAIL(Y) → v7 → M1b 6차 FAIL(Z) → v8 → M1b 7차 FAIL(AA) → v9 → M1b 8차 FAIL(AB) → v10 → M1b 9차 FAIL(AC) → v11 → M1b 10차 FAIL(AD) → v12 → M1b 11차 FAIL(AE) → v13 → M1b 12차 FAIL(AF) → **v14 → M1b 13차 도전 중**
        PASS → [B-0] 골든 생성기(sol-coder · 초안 order-round-b0-generator.md) → 총괄 99fad78 트리 생성 · 골든 커밋
        → [B] sol-coder(설계 PASS 판 첨부 · 골든 무접촉) → opus max 감사(A′·C′·B-0·B 합본) → 병합 (PD-M2a 첫 항목 · 관문 6→7)
 [뒤] T31 소라운드 : CP1 조기 합집합 블록(engine/render/material_spec_md.py · SPEC §1.5) — B 뒤
