@@ -77,6 +77,7 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v7.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v8.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v9.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v10.md | 등재 | — |
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -174,6 +175,13 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v8.md | AA-4 | MED | 수용 | Z-2 처분의 「B-0 시험에 동반 변조」가 피검 함수 없음(T-7 은 B 에서 생김) — v9 = `validate_manifest.py` 를 B-0 산출물로 · 생성기 자기 검증 · B-0 시험 · B 의 T-7 이 같은 검증기 호출 | `D-20260902-02-t26-design-challenge.md` §13 |
 | 2026-09-02-sol-challenge-t26-design-v9.md | AB-1 | MED | 수용 | 검증기가 값 필드를 다 덮지 않음(`rule`·`meaning`·`$comment`·`cell_key`·`generator`·`generation_command` 존재만 · 계수 `type is int` 없음 · `provenance` 키 미고정) — v10 = 모든 값 필드에 리터럴/형식 · 음성 시험 ⓗⓘⓙ | `D-20260902-02-t26-design-challenge.md` §14 |
 | 2026-09-02-sol-challenge-t26-design-v9.md | AB-2 | MED | 수용 | `python -I` 아래에서 형제 `validate_manifest.py` 적재 방식 부재 → M3 임의 선택 — v10 = `importlib.util.spec_from_file_location(Path(__file__).with_name(…))` 코드 명시 · stdlib 만 import · B-0 시험이 공개 `-I` 명령을 서브프로세스로 실행 | `D-20260902-02-t26-design-challenge.md` §14 |
+| 2026-09-02-sol-challenge-t26-design-v10.md | AC-1 | MED | 수용 | T-7 의 `with_name` 이 `tests/validate_manifest.py` 를 가리킴(파일 부재) — v11 = 호출자별 경로 · `is_file()` 선검사 · B-0 시험 파일을 `tests/test_m24a_failure_grid_generator.py` 로 고정해 T-7 경로식을 미리 실행 | `D-20260902-02-t26-design-challenge.md` §15 |
+| 2026-09-02-sol-challenge-t26-design-v10.md | AC-2 | MED | 수용 | `cell_key` 정본이 본문·예시(`**`)에서 다르고 `generation_command` 가 「네 줄」·「블록 그대로」·물리 6줄 — v11 = 정본을 각각 한 자리로 · 생성 명령을 정확히 네 줄로 재작성 | `D-20260902-02-t26-design-challenge.md` §15 |
+| 2026-09-02-sol-challenge-t26-design-v10.md | AC-3 | MED | 수용 | 골든 커밋 열거에 검증기 누락 · B-0 미커밋 산출의 main 승격 절차 부재 — v11 = B-0 병합 커밋(세 파일 · C′ 절차) → main 에서 생성 → 골든 커밋(manifest) → 라운드 B | `D-20260902-02-t26-design-challenge.md` §15 |
+| 2026-09-02-sol-challenge-t26-design-v10.md | AC-4 | LOW | 수용 | T-7 이 「§2.8 ①~⑥」을 가리키나 목록은 ①~③ + 총괄 검수 ④ — v11 = T-7 = §2.8 시험 ①~③ | `D-20260902-02-t26-design-challenge.md` §15 |
+| 2026-09-02-sol-challenge-t26-design-v10.md | AC-5 | LOW | 수용 | `assemble_spec :505-556` → `:506-561` — v11 §1 정정 | `D-20260902-02-t26-design-challenge.md` §15 |
+
+**행 수 = 93**(`등재` 17파일의 지적 전건). **[정정 2026-09-02 · 10차]** 직전 판 **88** — 9차 도전 원문 반입(AC 5)으로 다섯 늘었다.
 
 **행 수 = 88**(`등재` 16파일의 지적 전건). **[정정 2026-09-02 · 9차]** 직전 판 **86** — 8차 도전 원문 반입(AB 2)으로 둘 늘었다.
 
