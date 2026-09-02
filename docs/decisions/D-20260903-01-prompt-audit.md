@@ -10,7 +10,7 @@
 | F3~F6 (`~/.claude/agents` 4파일 — effort 표 정합 · description · 폐지 흔적 · 금지 절 응축) | 승인 | agents 리포 커밋 `11d8707`(파일 4) · LEDGER 등재는 병렬 세션이 L-048 을 라이브로 쓰고 있어 **보류** — L-050 으로 등재 예정(nd-magnet 세션의 L-049 뒤) | 즉시 |
 | F1·F2 (`reader/procedure/*.md` 이력 이동 · 현재형 재서술 · `HISTORY.md` 신설) | 승인 | **골든 manifest `47e437c` 뒤 · `8259075` 로 집행됨** | 이연 후 집행 — 아래 사유 |
 
-**F1·F2 를 뒤로 미룬 사유(총괄 재량 · 사후 확인 대상).** 설계 §2.8 의 골든 생성 명령 블록은 `git diff --quiet "$BASE" HEAD -- engine contracts reader` 를 사전조건으로 건다 — 경로 기준이라 `reader/procedure/*.md` 개정도 걸린다. F1·F2 를 지금 main 에 올리면 B-0 의 정상 경로 시험(같은 경로 무변경 확인)과 골든 생성이 그 자리에서 실패한다. 값(8,190칸)에는 영향이 없는 개정이지만 사전조건은 설계 PASS 판의 문언이므로 고치지 않고, **순서**를 바꾼다: B-0 병합 → 골든 생성·커밋 → F1·F2 적용. 승인은 났고 diff 는 검증되어 있다(worktree 적용 · 관문 6종 · pytest 591).
+**F1·F2 를 뒤로 미룬 사유(총괄 재량 · 사후 확인 대상 — [확인 2026-09-03 · 재정 T34 ⓓ]).** 설계 §2.8 의 골든 생성 명령 블록은 `git diff --quiet "$BASE" HEAD -- engine contracts reader` 를 사전조건으로 건다 — 경로 기준이라 `reader/procedure/*.md` 개정도 걸린다. F1·F2 를 지금 main 에 올리면 B-0 의 정상 경로 시험(같은 경로 무변경 확인)과 골든 생성이 그 자리에서 실패한다. 값(8,190칸)에는 영향이 없는 개정이지만 사전조건은 설계 PASS 판의 문언이므로 고치지 않고, **순서**를 바꾼다: B-0 병합 → 골든 생성·커밋 → F1·F2 적용. 승인은 났고 diff 는 검증되어 있다(worktree 적용 · 관문 6종 · pytest 591).
 
 **함께 드러난 것 — 발주자 오류(B-0 발주문).** B-0 단위 시험의 「clone 의 `engine contracts reader` 가 `99fad78` 이후 무변경이 아니면 fail」 조항(총괄이 쓴 것)은 설계의 **생성 시점** 사전조건을 **상설 시험**으로 옮겨 적은 것이라, F1·F2 처럼 값에 무관한 `reader/` 개정이 main 에 오르는 순간 영구 실패한다. B-0 재현 시 이 조항을 좁히거나(세 정본 파일 · `engine/stages/read.py` · `reader/lib/run_checks.py` · `contracts/stages/read.yaml`) 빼야 한다 — 설계 §2.8 값 공간은 건드리지 않는다.
 

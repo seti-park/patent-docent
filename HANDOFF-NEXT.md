@@ -12,7 +12,8 @@
 **지금 할 일 = 라운드 B 회수**(위) — 발주 골격은 아래 그대로 — `좌석 M3` sol-coder(sol high · workspace-write) · worktree `round-b`(HEAD 에서 분기) · 첨부 = 설계 v18 §2 전문(`~/projects/workspaces/patent-docent-session-drafts/T26-DESIGN-v18.md` §2.1~§2.11 · §6 골격) · **C-5 반경 고지** 동반(SPEC §8.3 7항·관문표 = C 병합본 기준) · D-02 §5 ⑹⑦⑧⑨ 골격 → 총괄 재현 → 병합(관문 6→7 · `tools/check_failure_table.py`) → **opus max 감사**(A′·C′·B-0·B 합본 · sol 저작 → opus) → T31·T32 소라운드.
 **환경 규율(이 세션 실측)** — pytest 는 반드시 `--basetemp` 를 홈 fs 에(`/tmp` 는 tmpfs 1.5 GB · 02:07 레인 사망 원인) · `/tmp/pytest-of-laptop`·`/tmp` 전체 삭제 금지(nd-magnet 세션 게이트가 ~11:00 까지 돈다 · 가득 차면 그 세션에 먼저 알린다) · `pkill -f` 금지(PID 로).
 **병렬 세션 조율(nd-magnet · `~/.claude/agents`)** — 그 세션이 `sol-auditor.md` 를 얇은 래퍼 + `bin/sol-audit.sh` 로 바꿨다(agents HEAD). **다음 sol 감수 발주 전에 그 본문 ②(preflight→run 배경→poll→finish)를 재독**하고 발주문 형태를 맞춘다(어긋나면 스크립트 쪽을 고친다). agents LEDGER 는 제3 세션(기억 체계 v2)이 L-048 을 라이브로 쓰는 중 → 커밋되면 **L-049(nd-magnet · `LEDGER-PENDING-L049-2026-09-03.md`) → L-050(이 세션 · T33 ③)** 순으로 총괄이 옮긴다. `~/.claude/CLAUDE.md` 9·15행 SessionStart 문구는 제3 세션 변경(Owner 확인 사항).
-**Owner 사후 확인(추가)** — ⓓ T33 ① 을 골든 뒤로 미룬 순서 결정(총괄 재량 · `ruling-20260903-01-T33.md` §3 2) ⓔ B-0 fixture 의 상설 `99fad78` diff 조항 삭제(발주자 오류 정정 · D-02 §5 ⑶) ⓕ `/tmp` 삭제로 nd-magnet 게이트 30분 손실(D-02 §1 02:09).
+**★ Owner 사후 확인 — 전건 확인 완료(재정 T34 · 09-03 · `ruling-20260903-02-T34.md` · 육성 「Owner 사후 확인 항목들 확인 완료 했어」).** 아래 ⓓ~ⓕ 와 4차 ⓐ~ⓒ · 3차 잔여 ⓖ·ⓗ 가 추인됐다. **남은 Owner 결정 = 상신 1건**(`screening_memos[].read_run` enum 결속 · T32 §5 ② · 추천 ⓐ · `RULINGS-LEDGER.md` §3) — 사후 확인이 아니라 재정이 필요한 값 공간 판단이다.
+**Owner 사후 확인(추가 · 확인됨)** — ⓓ T33 ① 을 골든 뒤로 미룬 순서 결정(총괄 재량 · `ruling-20260903-01-T33.md` §3 2) ⓔ B-0 fixture 의 상설 `99fad78` diff 조항 삭제(발주자 오류 정정 · D-02 §5 ⑶) ⓕ `/tmp` 삭제로 nd-magnet 게이트 30분 손실(D-02 §1 02:09).
 
 > [정정 2026-09-03 · 6차] 아래 5차 문단의 「B-0 회수 …」·「F1·F2 는 골든 커밋 뒤에 적용한다」는 **끝났다**. 경위 보존용으로 남긴다.
 
