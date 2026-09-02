@@ -4,6 +4,9 @@
 
 **규율 10 의 이행 — 아래 「감수 원문」 절은 전문 보존이며 한 글자도 고치지 않는다.**
 
+지적 열거 = 1a, 1b, 2, 3, 4a, 4b
+id 는 아래 감수자가 붙인 지적 번호다. `1a`/`1b`·`4a`/`4b` 는 원장이 쪼갠 앞절반/뒷절반이며 그 분할은 `ruling-20260902-01-T24-T27.md` 가 든다(§T25 §1 = 지적 1 앞절반 · §T24 §1 = 지적 1 뒷절반 · §T27 §1 = 지적 4 뒷절반). 처분은 `docs/decisions/DISPOSITIONS.md` §1 에 행으로 선다(재정 T27 · 2026-09-02 소급 등재).
+
 **좌석 = sol**(reasoning xhigh · `sol-auditor`). **교차 벤더 규칙의 적용** — 감사 대상 슬라이스
 (`_failure_verdict` 의 `read.source-digest` 분기 이동 + `HALT_CHECKS` 표 시험)는 **총괄(Claude)이
 직접 저작**했으므로 ROUTING §3 M9 에 따라 감사가 sol 로 갔다. 같은 커밋의 나머지는 sol-coder
