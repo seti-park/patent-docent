@@ -29,6 +29,12 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 기계가 모른다. 그것은 **반입 시점의 사람**이 지킨다(원장 T27 ⒜ ① — 지적을 앞/뒷절반으로
 쪼개는 판단도 주의가 가장 높은 그 순간에 일어난다).
 
+**[추기 2026-09-02 · 감사 C-6]** 관문이 보지 않는 것은 그것만이 아니다 — **포인터가 실재하는가 · 사유가 뜻이 통하는가 ·
+`선행 종결` 이 사실인가**도 기계가 모르며 사람이 지킨다(관문은 비공백만 본다 — `이연 / TBD / TBD` 는 통과한다).
+**[정정 2026-09-02 · 감사 C-1]** 「처분을 창설하지 않는다」에는 예외 하나가 있다 — 재정 T27 ⒞ 가 소급 등재분의 처분을
+**등재 시점에 사유와 함께 적으라** 했으므로 그 행(`sol-audit-halt-ordering` 4b)은 이 표가 처분을 처음 적은 자리다. 그 값을 정한 것은
+총괄 발주문이고(실체는 재정 T29 ⓐ 가 확정) Owner 사후 확인 대상이다(`D-20260902-03` §2 ⑸).
+
 ---
 
 ## §0 등재 현황 — `docs/lessons/` 전 파일
@@ -62,6 +68,9 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-01-sol-review-g6-retry-budget.md | 등재 | — |
 | 2026-09-02-opus-audit-round-a.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v2.md | 등재 | — |
+| 2026-09-02-fable-advice-t26-design-v3.md | 등재 | — |
+| 2026-09-02-sol-audit-round-c.md | 등재 | — |
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -99,7 +108,7 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-01-sol-audit-halt-ordering.md | 2 | MED | 수용 | 두 갈래 — 레인 로그 2종의 실패 조건이 계약에 없다 → 재정 T22 전용 실패 행(집행 `aa9a734`) · 복수 동시 실패의 우선순위가 코드에만 있다 → 재정 T26 실패표 재구성(채택 · **미착수** — M1b 설계 도전 FAIL 로 Owner 재정 대기). **[추기 2026-09-02]** 도전이 남긴 재정 세 자리는 T28~T30 으로 닫혔고 설계 v2 → M1b 재도전으로 간다 — T26 §3 ①(PASS 전 착수·커밋 금지)은 그대로 살아 있다 | `ruling-20260901-11-T22-T23.md` §T22 · `ruling-20260902-01-T24-T27.md` §T26 · 커밋 `aa9a734` · `D-20260902-02` §3 · 재정 T28~T30 = `ruling-20260902-02-T28-T32.md` |
 | 2026-09-01-sol-audit-halt-ordering.md | 3 | MED | 수용 | `HALT_CHECKS` 수기 표 폐기 → `contract_halt_partitions()` 로 계약 `failure[]` 에서 파생 · 공허 시 skip 아닌 fail · 역대조 시험에 「계약이 halt 라 하지 않았다」는 전제 검사 추가 | 커밋 `c3fe549` 메시지 「감사 잔여」 · `tests/test_m22_early_payload_assembly.py`(`contract_halt_partitions` · `test_repeat_escalation_still_applies_where_the_contract_did_not_say_halt`) |
 | 2026-09-01-sol-audit-halt-ordering.md | 4a | LOW | 수용 | `read.input-digest` 가 표에서 빠진 문제는 표의 계약 파생으로 자동 해소(진입 갈래에 실재함을 실행 확인) | 커밋 `c3fe549` 메시지 「감사 잔여」 · `tests/test_m22_early_payload_assembly.py`(진입·판정 두 갈래 분할 시험) |
-| 2026-09-01-sol-audit-halt-ordering.md | 4b | LOW | 수용 | `verify_declared_inputs` 실패 행 → `read.input-digest` 전용 실패 행(`halt` · 「환경 오류」) 이 T26 격자에서 구조로 서면 함수 리팩터로 halt 가 조용히 바뀌는 경로가 닫힌다. 이행 = 라운드 B(T26 · 미착수). **[추기 2026-09-02]** 재정 T29 ⓐ 가 이 행의 자리를 확정했다 — `read.input-digest` 는 진입 예외 경로(`halt` · 「환경 오류」 · 별도 시험)이고 「오늘의 표」 12검사 밖이다 | `ruling-20260902-01-T24-T27.md` §T27 §1 · 재정 T29 = `ruling-20260902-02-T28-T32.md` · 라운드 B 커밋(병합 뒤 총괄이 해시 보완) |
+| 2026-09-01-sol-audit-halt-ordering.md | 4b | LOW | 수용 | `verify_declared_inputs` 실패 행 → `read.input-digest` 전용 실패 행(`halt` · 「환경 오류」) 이 T26 격자에서 구조로 서면 함수 리팩터로 halt 가 조용히 바뀌는 경로가 닫힌다. 이행 = 라운드 B(T26 · 미착수). **[추기 2026-09-02]** 재정 T29 ⓐ 가 이 행의 자리를 확정했다 — `read.input-digest` 는 진입 예외 경로(`halt` · 「환경 오류」 · 별도 시험)이고 「오늘의 표」 12검사 밖이다 | `ruling-20260902-01-T24-T27.md` §T27 §1 · 재정 T29 = `ruling-20260902-02-T28-T32.md` · 라운드 B 커밋(병합 뒤 총괄이 해시 보완) · **[정정 2026-09-02 · 감사 C-1]** 이 처분은 `852dcdd` 반입 시점에 **이 표가 처음 적었다**(원장 T27 ⒞ 「처분은 등재 시점에 사유와 함께 적는다」의 이행 · 값은 총괄 발주문 `order-round-c-t27.md` 가 정했고 실체는 재정 T29 ⓐ 가 뒤에 확정). 「이미 정한 처분만 옮긴다」의 예외 — Owner 사후 확인 대상(`D-20260902-03` §2 ⑸) |
 | 2026-09-01-sol-review-g6-retry-budget.md | R | — | 수용 | 판정점별 유한 예산(조기 `retry(1)` + 정본 후속 `retry(1)`) → 재정 T16 ⒝ 예산(조기 = 레인별 1 · 후속 1) | `ruling-20260901-07-T16.md` §2 ⒝ · §3 부속 2 |
 | 2026-09-01-sol-review-g6-retry-budget.md | C-a | — | 수용 | 조건 (a) 「분해 소유 검사를 조기 지점으로 옮겨 분해 레인에 되먹인다」 → T16 ⓐ (c) = 조기 이동 **+ 출구 존치** 로 채택(출구 행을 없애는 「(a) 순수형」만 기각 — 그 순수형은 총괄의 해석이었다) | `ruling-20260901-07-T16.md` §2 ⒜ · §5 |
 | 2026-09-01-sol-review-g6-retry-budget.md | C-b | — | 기각 | 조건 (b) 「분해→수렴→tail 전체 재개방」 — 청구항 결함 하나에 레인 6회 · 재개방 조건·횟수·`attempt` 리셋이라는 새 경계 · 귀속 지연 | `ruling-20260901-07-T16.md` §5 |
@@ -118,6 +127,29 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design.md | B-5 | HIGH | 수용 | 총괄이 §5-5 에서 관문만 보고 「닫혔다」고 판단했다. v2 = `terminal_action()` 이 `action: retry(n)` 에 유효 `then` 필수 · `then` 어휘 3종 · `worst_status` 호출 **전** 검증 · 위반 시 `StageError` · 두 변조 시험 | `D-20260902-02-t26-design-challenge.md` §2 · v2 §2.4 |
 | 2026-09-02-sol-challenge-t26-design.md | B-6 | HIGH | 부분 수용 | 처분 원문은 「부분 수용 — 뒷절반 수용 · 앞절반 해석 상신」이다. 뒷절반: v2 = upstream 행에 **식별 키만** · 호출자 만들지 않음 명시 · binding `deferred/test_bound`. 앞절반: 「`checks` 의무는 검사 실패 행에만, 세 행은 `kind`」 는 원장 문언의 해석이라 **Owner 확인** → §3 ★3. **[추기 2026-09-02]** 앞절반은 **재정 T30 = ⓐ** 로 닫혔다(`checks` 는 검사 실패 행에만 · `kind` ∈ {`retry-repeat`, `gate-escalation`, `upstream-defect`} 각 정확히 1행 · `checks` xor `kind`) | `D-20260902-02-t26-design-challenge.md` §2 · v2 §2.1 · 상신 = 같은 문서 §3 ★3 · **재정 T30** = `ruling-20260902-02-T28-T32.md` §T30 |
 | 2026-09-02-sol-challenge-t26-design.md | B-7 | MED | 수용 | v2 수용 기준 = 전수 pytest(plain · `PYTHONOPTIMIZE=1`) · 기존 5 + 신설 1 관문 plain · 같은 6 관문 `-O` · 각 명령과 기대 exit | `D-20260902-02-t26-design-challenge.md` §2 · v2 §2.6 |
+| 2026-09-02-sol-challenge-t26-design-v2.md | V-1 | BLOCKER | 수용 | T-1 의 monkeypatch 대상 `m2`(= `tests.test_m2_read` 모듈)는 러너에 닿지 않는다(도전자 실측 `PATCH_REACHES_RUNNER False`) — v3 = `engine.stages.read` 모듈 전역 패치 | `D-20260902-02-t26-design-challenge.md` §7 |
+| 2026-09-02-sol-challenge-t26-design-v2.md | V-2 | BLOCKER | 수용 | 골든 생성이 `99fad78` 모듈을 import 한다는 보장 없음 — v3 = `--repo` 인자 · `sys.path[0]` · provenance 검사 실패 시 생성 거부(v4 = 6검사 + `-I` + 절대 `out`) | `D-20260902-02-t26-design-challenge.md` §7 |
+| 2026-09-02-sol-challenge-t26-design-v2.md | V-3 | HIGH | 수용 | 정본 후속 1회 재시도 = 레인 로그 3행(접지 2 + 통합 1) — v3 T-2 = `/retry-1/` 정확히 3 · task 집합 고정 | `D-20260902-02-t26-design-challenge.md` §7 |
+| 2026-09-02-sol-challenge-t26-design-v2.md | V-4 | HIGH | 수용 | G4 가 유령 phase 를 통과 — v3 R9 = `phases` ⊆ {early, exit} · 변조 ⒄(v4 에서 `exit` 필수 · `early` ⇔ early 목록으로 확장) | `D-20260902-02-t26-design-challenge.md` §7 |
+| 2026-09-02-sol-challenge-t26-design-v2.md | V-5 | HIGH | 수용 | 판정점 id 중복·미지 id 우주 미정 → M3 임의 선택 — v3 R8 = 판정점 정확히 {early, exit} 각 1행 · 우주 = 출구 12 id · 변조 ⒅ | `D-20260902-02-t26-design-challenge.md` §7 |
+| 2026-09-02-sol-challenge-t26-design-v2.md | V-6 | HIGH | 수용 | manifest predicate 가 정수 mask 에 쓸 수 없는 표현(`TypeError`) — v3 = `eval` 가능한 비트 식으로 고정 · 생성기·시험 공유 | `D-20260902-02-t26-design-challenge.md` §7 |
+| 2026-09-02-sol-challenge-t26-design-v2.md | V-7 | MED | 수용 | T-11 에 종단 어휘 두 벌(엔진·관문) 상등 검사 부재 — v3 T-11 ⑤ 신설 | `D-20260902-02-t26-design-challenge.md` §7 |
+| 2026-09-02-sol-challenge-t26-design-v2.md | V-8 | MED | 수용 | §2.2 손검산이 lane-log-only 3칸(`StageError`)을 누락 · 「격자 순」 서술이 `worst_status` 순서와 반대 — v3 = 3칸 예외 명시 · 격자 순서/동률 해소 순서 분리 서술(행 순서 불변) | `D-20260902-02-t26-design-challenge.md` §7 |
+| 2026-09-02-fable-advice-t26-design-v3.md | N-1 | HIGH | 수용 | 생성기가 `os.chdir(repo)` 뒤 상대 `--out` 을 쓰면 골든이 `$TMP` 에 떨어진다 — v4 = `out = realpath(--out)` 을 chdir 전에 고정 · `python -I` · provenance 요약에 절대경로 | `D-20260902-02-t26-design-challenge.md` §8 |
+| 2026-09-02-fable-advice-t26-design-v3.md | N-2 | HIGH | 수용 | R9 의 전제(정본 12건 `phases` ⊆ {early, exit})를 설계가 미실측 — v4 §1 「국면 실물」 행에 12건 값 전부 기재(전부 ⊆ · 전부 `exit` 포함 · `early` 셋 = early 목록) | `D-20260902-02-t26-design-challenge.md` §8 |
+| 2026-09-02-fable-advice-t26-design-v3.md | N-3 | HIGH | 수용 | 생성기 저작 좌석·시점이 라운드 순서에 없어 B 가 골든 없이 시작 — v4 = 라운드 B-0(sol-coder · 생성기 + 시험) → 총괄 실행·골든 커밋 → 라운드 B | `D-20260902-02-t26-design-challenge.md` §8 |
+| 2026-09-02-fable-advice-t26-design-v3.md | N-4 | MED | 수용 | T-4 피검 대상이 루프 인라인 — v4 = `_exit_retry_eligible(contract, failing)` 헬퍼 명명 · T-4 가 함수 단위로 부른다 | `D-20260902-02-t26-design-challenge.md` §8 |
+| 2026-09-02-fable-advice-t26-design-v3.md | N-5 | MED | 수용 | 계약 출구 id 집합 ↔ 엔진 상수의 양방향 다리 시험 좌표 없음(유령 id + 유령 행이 관문 전부 통과) — v4 T-12 신설 | `D-20260902-02-t26-design-challenge.md` §8 |
+| 2026-09-02-fable-advice-t26-design-v3.md | N-6 | MED | 수용 | R9 가 `phases` 거짓 양성(`read.source-digest` 에 `early`)을 안 잡는다 — v4 R9 = `exit` 필수 · `early ∈ phases ⇔ id ∈ points[early].checks` · 변조 ⒆⒇ | `D-20260902-02-t26-design-challenge.md` §8 |
+| 2026-09-02-fable-advice-t26-design-v3.md | N-7 | LOW | 수용 | 문언 5건 — T-11 ④ 결함 = ⑴⑽⒄ 명명 · T-9 grep 범위(`engine/` 의 `failure_row_of_kind(` 호출 리터럴) · `_failure_verdict` 빈 후보 StageError · T-2 retry-2 부재 · T-1 wrapper 치환 = `row.add` 한 건 | `D-20260902-02-t26-design-challenge.md` §8 |
+| 2026-09-02-sol-audit-round-c.md | C-1 | HIGH | 수용 | `852dcdd` 반입 시점 4b 행의 처분 `수용` 이 선행 출처 없이 이 표에서 처음 적혔다 — 원장 T27 ⒞ 「처분은 등재 시점에 사유와 함께 적는다」의 이행이었으나 값은 총괄 발주문이 정했고(실체는 재정 T29 ⓐ 가 뒤에 확정) 「이미 정한 처분만 옮긴다」는 자기 서술과 충돌했다. 처분 = 4b 행·머리에 `[정정]` 마커 + Owner 사후 확인 등재(`D-20260902-03` §2 ⑸) | `D-20260902-03-round-c.md` §6 |
+| 2026-09-02-sol-audit-round-c.md | C-2 | MED | 수용 | G4 가 격 열을 읽지 않아 `CRITICAL` 이 통과(SPEC 11항 「①~④ 대조」보다 실물이 좁다) — 라운드 C′(sol-coder) 에서 격 어휘 대조 + 자기 시험 추가 | `D-20260902-03-round-c.md` §6 |
+| 2026-09-02-sol-audit-round-c.md | C-3 | MED | 수용 | 표 파서가 데이터 행 열 수를 헤더와 대조하지 않는다(7셀 통과 · 5셀 `IndexError` 로 `EXIT=` 없이 사망) — C′ 에서 arity 대조 · 부족/초과 exit 1 + 마커 | `D-20260902-03-round-c.md` §6 |
+| 2026-09-02-sol-audit-round-c.md | C-4 | LOW | 수용 | `select_table` 이 문서 어느 곳의 동일 헤더든 받아 §0/§1 밖 decoy 표로 정식 절을 비울 수 있다 — C′ 에서 §0/§1 제목 아래 첫 표로 결속 | `D-20260902-03-round-c.md` §6 |
+| 2026-09-02-sol-audit-round-c.md | C-5 | MED | 부분 수용 | 사실 인정 — C 발주문은 B 가 아니라 A′ 반경을 고지했고 T26·T27 은 둘 다 `docs/SPEC.md` 를 반영처로 든다. 그러나 C 가 B 앞에 병합되어(`852dcdd` → B 미착수) 병렬이 순차로 바뀌었으므로 T27 §3 ④ 의 목적(동시 편집 충돌 방지)은 순차로 충족된다. 「고지」 의무는 B 발주문이 든다(C 와 겹치는 SPEC §8.3 7항·관문표를 C 병합본 위에서 고친다고 적는다). C 발주문 문면은 소급 수정하지 않는다 | `D-20260902-03-round-c.md` §6 |
+| 2026-09-02-sol-audit-round-c.md | C-6 | LOW | 수용 | 「관문이 주장하지 않는 것」 문언이 열거 완전성만 들고 포인터 실재성·사유 의미·`선행 종결` 사실성을 빠뜨렸다 — DISPOSITIONS 머리·SPEC 11항·CLAUDE.md 는 이 커밋에서 추기 · 도구 docstring 은 C′ | `D-20260902-03-round-c.md` §6 |
+
+**행 수 = 68**(`등재` 10파일의 지적 전건). **[정정 2026-09-02 · 3차]** 직전 판은 **47**(7파일)이었다 — 감수 원문 3건 반입(설계 v2 도전 V 8 · 자문 N 7 · 라운드 C 감사 C 6)으로 21 늘었다. 아래 구 문언은 그대로 둔다.
 
 **행 수 = 47**(`등재` 7파일의 지적 전건). **[정정 2026-09-02]** 반입 시점(`852dcdd`)은 **45** 였다 — §2 처분 대기 2건이 `S-1`·`S-2` 로 올라와 둘이 늘었다. 구 계수를 지우지 않는 이유는 이 리포의 관례다(닫힌 것도 어떻게 닫혔는지를 남긴다).
 

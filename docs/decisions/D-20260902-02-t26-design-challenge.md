@@ -108,5 +108,56 @@
 ## §6 다음
 
 1. Owner 재정 ★1·★2·★3 → 원장 등재(`ruling-20260902-02-T28…` · N6) → `RULINGS-LEDGER.md` §2. **[추기 2026-09-02]** 났다 — **T28 = β · T29 = ⓐ · T30 = ⓐ**(+ CP1 = T31 ⓐ · `canonical_selection.read_run` = T32 ⓐ) · 원장 등재 커밋 `b3144d5`.
-2. 설계 v2 확정(§2 처분 + 재정 값) → **M1b 재도전**(sol xhigh · PASS 필요) → 라운드 B 발주(sol-coder) → opus max 감사(라운드 A′ 합본).
+2. 설계 v2 확정(§2 처분 + 재정 값) → **M1b 재도전**(sol xhigh · PASS 필요) → 라운드 B 발주(sol-coder) → opus max 감사(라운드 A′ 합본). **[추기 2026-09-02]** 재도전은 **FAIL(V-1~V-8 · §7)** 이었고, 같은 상신 2회 저항이라 **자문(fable xhigh · ROUTING ⑽ ⓑ)** 을 거쳤다 — **REVISE(N-1~N-7 · §8)**. v4 로 **3차 도전** 중.
 3. 라운드 C(T27) 는 이 문서와 무관하게 진행 중 — 이 문서의 B-1~B-7 처분이 `DISPOSITIONS.md` 에 행으로 오른다.
+
+---
+
+## §7 2차 도전(설계 v2) 지적 V-1 ~ V-8 의 처분 — 2026-09-02 추기 (총괄 저작)
+
+원문 = `docs/lessons/2026-09-02-sol-challenge-t26-design-v2.md`. 판정 FAIL · 8건 · **새 재정 사항 0**(도전자 자신이 「Owner 재정이 새로
+필요한 자기 신고 항목은 없다」고 적었다). 값은 맞았고(8,190 칸 `MISMATCHES 0`) 집행 정밀도가 틀렸다. 여덟 건 전부 **수용** — 공학 수정이라
+규율 11 ③ 재량이며 v3 에 반영했다.
+
+| ID | 격 | 지적 요지 | 처분 | v3 에서 어떻게 닫았나 |
+|---|---|---|---|---|
+| **V-1** | BLOCKER | T-1 의 `monkeypatch.setattr(m2, "run_read_checks", …)` — `m2` 는 `tests.test_m2_read` 모듈이라 러너(`engine.stages.read` 전역)에 닿지 않는다(실측 `PATCH_REACHES_RUNNER False`) | **수용** | T-1 대상 = `import engine.stages.read as read_stage` 후 `read_stage.run_read_checks` 전역 패치 · 원본 보존 · 출구 전용 호출 자리 :1743 명시 |
+| **V-2** | BLOCKER | 골든 생성 명령이 `99fad78` 트리의 모듈을 import 한다는 보장이 없다(`cd <tmp>` 는 `sys.path` 를 바꾸지 않는다) | **수용** | 생성기 `--repo` 명시 인자 · `sys.path[0]` 삽입 뒤에만 import · **provenance 4검사**(read 모듈 경로 · run_checks 모듈 경로 · 계약 경로 · `git rev-parse HEAD`) 실패 시 파일 미작성 exit 1 · manifest `provenance` 블록 · 시험 ⑥ |
+| **V-3** | HIGH | T-2 「`/retry-` 레인 1」 — 정본 후속 1회차는 레인 로그 **3행**(ground-independent · ground-dependent · synthesize) | **수용** | T-2 = `/retry-1/` 정확히 3 · task 집합 고정 · 「회차 1 / 행 3」 구별 · T-1 은 `/retry-` 0 |
+| **V-4** | HIGH | G4 가 `phases: [exit, __ghost_phase__]` 를 통과시킨다(⊇ 한 방향만) | **수용** | R9 신설 — 모든 `checks_before_exit[].phases` list·비공·중복 없음·⊆ {early, exit} + 기존 ⊇ · 변조 ⒄ 추가 · 정본 12건 실물이 전부 ⊆ 임을 총괄 실측 |
+| **V-5** | HIGH | 판정점 id 중복 처리 · `_retry_checks` 미지 id 우주(12/13) 미정 → M3 임의 선택 | **수용** | R8 신설 — 판정점 = 정확히 {early, exit} 각 1행(관문 G3 + 진입 가드 `RunnerContractError`) · 우주 = 출구 12 id · `read.input-digest`·중복 거부 · 변조 ⒅ · T-5/T-6 확장 |
+| **V-6** | HIGH | manifest `predicate` 가 정수 mask 에 쓸 수 없는 표현(`TypeError`) | **수용** | `repeated == 1 and (mask & (1 << check_ids.index("read.convergence"))) != 0` 로 고정 · 생성기·T-7 이 같은 식을 `eval` · `cell_count` 2,048 |
+| **V-7** | MED | 자기 신고 ④ 「T-11 이 종단 어휘 상등을 대조」는 사실이 아니다 | **수용** | T-11 ⑤ 신설 — `importlib` 로 관문 적재 · `TERMINAL_ACTIONS` 집합 == 엔진 상수 == {halt, reject-upstream, escalate} |
+| **V-8** | MED | §2.2 손검산이 lane-log-only 3칸(`StageError`)을 누락 · 「격자 순 halt → escalate → reject」는 `worst_status` 순서(halt > reject-upstream > escalate)와 반대 | **수용** | 손검산에 3칸 예외 명시(mask 1024·2048·3072) · **격자 순서(ⓐ)와 동률 해소 순서(ⓑ)를 분리 서술** — 행 배열은 ⓑ 이며 ⓐ 를 따른 것이 아님을 적었다. 행 순서 자체는 바꾸지 않았다(값 불변 증명 유지) |
+
+**자문 트리거.** 같은 상신(T26 설계)에 2번째 FAIL 이다 — ROUTING §5 ⑽ ⓑ. v3 은 자문(fable xhigh · 자료 인라인 단발)을 거친 뒤 3차
+도전에 나간다. 자문 원문도 `docs/lessons/` 에 전문 보존한다.
+
+**[정정 2026-09-02] §2 B-7 행의 「기존 5 + 신설 1 관문 · 같은 6 관문 `-O`」** 는 그 행을 쓴 시점(라운드 C 이전)의 계수다. 라운드 C(`852dcdd`)가
+여섯째 관문 `check_dispositions.py` 를 세웠으므로 라운드 B 의 수락 기준은 **기존 6 + 신설 1 = 7 관문**(plain · `-O`)이다 — v2 §2.11 · v3 §2.11 이
+그렇게 적는다. 구 문언은 지우지 않는다.
+
+
+---
+
+## §8 자문(fable xhigh · v3) 지적 N-1 ~ N-7 의 처분 — 2026-09-02 추기 (총괄 저작)
+
+원문 = `docs/lessons/2026-09-02-fable-advice-t26-design-v3.md`. 좌석 = ROUTING §5 ⑽ 자문(판정 + 논거 · 결정 없음) · 트리거 ⓑ(같은 상신 2회 저항).
+판정 = **REVISE** · V-1~V-8 은 전부 `closed`(V-2·V-4 조건부) · 새 결함 7건(HIGH 3 · MED 3 · LOW 1) · **새 재정 사항 0**. 전부 **수용**(공학 수정 ·
+규율 11 ③) — **v4** 에 반영하고, 자문의 말대로(*「N-1~N-7 을 반영한 v4 는 3차 도전에 그대로 내도 된다」*) 재자문 없이 3차 도전에 냈다.
+
+| ID | 격 | 지적 요지 | 처분 | v4 에서 어떻게 닫았나 |
+|---|---|---|---|---|
+| **N-1** | HIGH | 생성기가 `os.chdir(repo)` 뒤 상대 `--out` 을 쓰면 골든이 `$TMP` 에 떨어진다(99fad78 에 디렉터리가 없으면 쓰기 오류 · 있으면 worktree 제거가 거부) | **수용** | `out = realpath(--out)` 을 맨 먼저 고정 · `python -I` 실행 · provenance 요약에 절대경로 |
+| **N-2** | HIGH | R9 의 전제(정본 12건 `phases` ⊆ {early, exit})를 설계가 스스로 재지 않았다 | **수용** | §1 「국면 실물」 행 — 12건 값 전부 실측 기재(전부 ⊆ · 전부 `exit` · `early` 셋 = early 목록과 일치) |
+| **N-3** | HIGH | 생성기 저작 좌석·시점 부재 — sol-coder 가 B 에서 쓰면 골든이 B 앞에 존재할 수 없다(순환) | **수용** | **라운드 B-0**(`좌석 M3` sol-coder · 생성기 + 단위 시험) → 총괄 실행·골든 커밋 → 라운드 B. 총괄이 직접 쓰지 않는 이유 = 교차 벤더 감사 유지 |
+| **N-4** | MED | T-4 의 피검 대상이 루프 인라인이라 도달 불능 집합을 함수 단위로 시험할 수 없다 | **수용** | `_exit_retry_eligible(contract, failing) -> bool` 헬퍼 · 루프가 그것을 부르고 T-4 가 그것을 시험 |
+| **N-5** | MED | 계약 출구 id 집합 ↔ 엔진 상수의 양방향 다리 시험 좌표 없음 — `read.__ghost__` 를 `checks_before_exit` 에 더하고 행도 더하면 G1~G6 전부 통과 | **수용** | **T-12 신설** — `{checks_before_exit ids} == READ_CHECK_IDS ∪ ENGINE_READ_CHECK_IDS`(양방향) · `{checks_on_entry ids} == {read.input-digest}` · 각 판정점 `checks` ⊆ 출구 집합 |
+| **N-6** | MED | R9 가 `phases` 거짓 양성(`read.source-digest` 에 `early`)을 안 잡는다 | **수용** | R9 확장 — `exit ∈ phases(id)` ∀12 · `early ∈ phases(id) ⇔ id ∈ points[early].checks` · 변조 ⒆⒇(20종) |
+| **N-7** | LOW | ⓐ T-11 ④ 「결함 3종」 미지정 ⓑ T-9 grep 범위 ⓒ `_failure_verdict` 빈 후보 ⓓ T-2 retry-2 부재 ⓔ T-1 wrapper 치환 방식 | **수용** | ⓐ = 변조 ⑴⑽⒄ · ⓑ = `engine/` 의 `failure_row_of_kind(` 호출 리터럴 0(사전 상수는 호출 아님) · ⓒ = `select_failure_row([])` → StageError · ⓓ = `/retry-` 전부 3이고 전부 `/retry-1/` · ⓔ = `row.add(...)` 한 건(status 는 findings 유무의 속성) |
+
+자문이 「실물 확인 필요」로 남긴 넷은 총괄이 실측해 v4 §1 에 적었다 — T-1 wrapper 치환(`CheckRow.status` 속성 · `add` 5인자) · `reader/__init__.py`
+부재(네임스페이스 패키지 → provenance ⓔ `__path__` 단일성) · `dispatched_ids` 형태(`plan.py:295` `{read_run}/{task}/retry-{n}/batch-{b}`) · 12건 `phases`.
+
+**규율 11 자기 점검(자문 §4 와 일치).** R8 · `_retry_checks` 우주 · 미지 id StageError · provenance 거부 · R9 = 전부 **공학**(정상 12 id 영역의
+(조치, 라벨) 값은 한 칸도 안 바뀐다 · 정본이 R9 를 이미 만족함을 실측). B-0 좌석 선택은 ROUTING §5 「소규모 편집의 판정」(교차 벤더 필요 → 위임).
