@@ -161,3 +161,23 @@
 
 **규율 11 자기 점검(자문 §4 와 일치).** R8 · `_retry_checks` 우주 · 미지 id StageError · provenance 거부 · R9 = 전부 **공학**(정상 12 id 영역의
 (조치, 라벨) 값은 한 칸도 안 바뀐다 · 정본이 R9 를 이미 만족함을 실측). B-0 좌석 선택은 ROUTING §5 「소규모 편집의 판정」(교차 벤더 필요 → 위임).
+
+
+---
+
+## §9 3차 도전(설계 v4) 지적 W-1 ~ W-4 의 처분 — 2026-09-02 추기 (총괄 저작)
+
+원문 = `docs/lessons/2026-09-02-sol-challenge-t26-design-v4.md`. 판정 FAIL · 4건(BLOCKER 1 · HIGH 1 · MED 1 · LOW 1) · **새 재정 사항 0** ·
+B-1~B-7 · V-1~V-8 · N-1~N-7 은 **전건 closed**(B-5 만 partially → W-2). 값 8,190 칸은 세 번째로 일치. 넷 전부 **수용** → **v5** → 4차 도전.
+
+| ID | 격 | 지적 요지 | 처분 | v5 에서 어떻게 닫았나 |
+|---|---|---|---|---|
+| **W-1** | BLOCKER | G3 는 exit 목록과 `points: [exit]` 행을 **서로** 비교할 뿐 승인된 8종과 대조하지 않는다 — exit 목록에서 `read.value-derivation` 을 빼고 9행을 나눠 그 검사만 비-retry `escalate` 행으로 두면 G1~G6 · T-12 · 골든 전부 통과하면서 실제 재디스패치 1→0(도전자 모형 `MUTANT_ACCEPTED True`) | **수용** | 엔진 상수 `EARLY_RETRY_CHECK_IDS`(3) · `EXIT_RETRY_CHECK_IDS`(8) + 진입 가드(계약 목록 ≠ 상수 → `RunnerContractError` · 디스패치 전) · 관문 G3 상수 `APPROVED_RETRY_CHECKS`(원장 T26 ⒜ ③ · T28 β · T25 좌표 주석) · T-11 ⑥ 두 상수 상등 · T-4 를 출구 12종 전부(True 8 · False 4) · T-5 에 동시 변조 · 자기 시험 ㉑. **규율 11 자기 점검** — 값을 아는 자리가 둘 더 생기지만 그 값은 원장이 이미 정한 것의 기록이다(G5 `halt` 와 같은 격 · v5 §4 ⑰) |
+| **W-2** | HIGH | 조기 상신축 갈래가 `failure_row_of_kind(…, "gate-escalation")` 의 `action` 을 그대로 status 로 써서 `terminal_action()` 을 우회 — 그 행에 `then: halt` 나 미지 action 이 있으면 관문(G6)은 거부하지만 런타임은 흘린다 | **수용** | `_gate_escalation_verdict(contract)` = `terminal_action(entry), entry.get("reason_label")` — 세 갈래 전부가 `terminal_action()` 을 지난다 · T-8 에 함수 단위 변조(`then: halt` · `action: __bogus__` → `StageError`) + 상신축 러너 경로가 있으면 그것도 · 자기 시험 ㉔ |
+| **W-3** | MED | `checks_on_entry`·`checks_before_exit` 선언 배열의 중복 미검사 — `read.schema` 선언 복제 시 13행/12 id 로 G2·R9·T-12 통과 | **수용** | G2 = 두 배열 각각 list · dict 행 · `id` 비공 문자열 · 중복 없음 · T-12 `len(ids) == len(set(ids))` · 자기 시험 ㉒㉓ |
+| **W-4** | LOW | §2.10 「자기 시험 18종」 vs §2.7·§2.11 20종 | **수용** | 계수는 §2.7 표 한 자리에만(지금 24) · §2.10·§2.11 은 그 표를 가리키고 SPEC 산문에 수를 적지 않는다(T5 계열) |
+
+**세 번째 FAIL 에 대한 총괄 자기 점검.** 세 판정의 지적 수는 7 → 8 → 4 이고 격의 무게는 내려간다(BLOCKER 4 → 2 → 1). 값(8,190 칸)은
+세 번 다 일치했고 남는 것은 **검증 체계의 구멍**(우회 변조 · 우회 호출자 · 다중집합)이다. ROUTING ⑽ ⓑ 자문은 2차 뒤에 한 번 거쳤고
+자문이 v4 를 「그대로 내도 된다」고 했으나 3차가 W-1 을 찾았다 — 자문도 도전자도 각각 다른 것을 보았고 둘 다 필요했다. 4차 도전은
+W-1~W-4 폐쇄와 「v5 가 이전 지적을 다시 열었는가」만 보게 발주문을 좁혔다.

@@ -71,6 +71,7 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v2.md | 등재 | — |
 | 2026-09-02-fable-advice-t26-design-v3.md | 등재 | — |
 | 2026-09-02-sol-audit-round-c.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v4.md | 등재 | — |
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -148,6 +149,12 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-audit-round-c.md | C-4 | LOW | 수용 | `select_table` 이 문서 어느 곳의 동일 헤더든 받아 §0/§1 밖 decoy 표로 정식 절을 비울 수 있다 — C′ 에서 §0/§1 제목 아래 첫 표로 결속 | `D-20260902-03-round-c.md` §6 |
 | 2026-09-02-sol-audit-round-c.md | C-5 | MED | 부분 수용 | 사실 인정 — C 발주문은 B 가 아니라 A′ 반경을 고지했고 T26·T27 은 둘 다 `docs/SPEC.md` 를 반영처로 든다. 그러나 C 가 B 앞에 병합되어(`852dcdd` → B 미착수) 병렬이 순차로 바뀌었으므로 T27 §3 ④ 의 목적(동시 편집 충돌 방지)은 순차로 충족된다. 「고지」 의무는 B 발주문이 든다(C 와 겹치는 SPEC §8.3 7항·관문표를 C 병합본 위에서 고친다고 적는다). C 발주문 문면은 소급 수정하지 않는다 | `D-20260902-03-round-c.md` §6 |
 | 2026-09-02-sol-audit-round-c.md | C-6 | LOW | 수용 | 「관문이 주장하지 않는 것」 문언이 열거 완전성만 들고 포인터 실재성·사유 의미·`선행 종결` 사실성을 빠뜨렸다 — DISPOSITIONS 머리·SPEC 11항·CLAUDE.md 는 이 커밋에서 추기 · 도구 docstring 은 C′ | `D-20260902-03-round-c.md` §6 |
+| 2026-09-02-sol-challenge-t26-design-v4.md | W-1 | BLOCKER | 수용 | 승인된 출구 재시도 8종이 독립 정답지에 결속되지 않아 「exit 목록 − 검사 하나 + 그 행을 비-retry escalate 로 분리」 변조가 관문·골든·T-12 전부 통과하며 재디스패치 1→0 — v5 = `EXIT_RETRY_CHECK_IDS`·`EARLY_RETRY_CHECK_IDS` 엔진 상수 + 진입 가드 · 관문 G3 승인 집합 상수 · T-4 출구 12종 전부 · 변조 ㉑ | `D-20260902-02-t26-design-challenge.md` §9 |
+| 2026-09-02-sol-challenge-t26-design-v4.md | W-2 | HIGH | 수용 | 조기 상신축 갈래가 `failure_row_of_kind` 의 `action` 을 직접 써서 `terminal_action()` 을 우회(B-5 런타임 조건 재개방) — v5 = `_gate_escalation_verdict()` 가 `terminal_action()` 경유 · T-8 확장 · 변조 ㉔ | `D-20260902-02-t26-design-challenge.md` §9 |
+| 2026-09-02-sol-challenge-t26-design-v4.md | W-3 | MED | 수용 | `checks_on_entry`·`checks_before_exit` 선언 배열의 중복을 검사하지 않는다(13행/12 id 통과) — v5 = G2 선언 형식·중복 검사 · T-12 `len == len(set)` · 변조 ㉒㉓ | `D-20260902-02-t26-design-challenge.md` §9 |
+| 2026-09-02-sol-challenge-t26-design-v4.md | W-4 | LOW | 수용 | §2.10 「자기 시험 18종」 vs §2.7·§2.11 20종 계수 충돌 — v5 = 계수는 §2.7 표 한 자리만 · 문서 산문에 수를 적지 않는다 | `D-20260902-02-t26-design-challenge.md` §9 |
+
+**행 수 = 72**(`등재` 11파일의 지적 전건). **[정정 2026-09-02 · 4차]** 직전 판 **68** — 3차 도전 원문 반입(W 4)으로 넷 늘었다.
 
 **행 수 = 68**(`등재` 10파일의 지적 전건). **[정정 2026-09-02 · 3차]** 직전 판은 **47**(7파일)이었다 — 감수 원문 3건 반입(설계 v2 도전 V 8 · 자문 N 7 · 라운드 C 감사 C 6)으로 21 늘었다. 아래 구 문언은 그대로 둔다.
 
