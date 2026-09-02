@@ -436,6 +436,13 @@ def render(
     out("**이 목록의 항목은 결함이 아니다** — 구조 미분류라는 사실의 표지이며, 종속 형태")
     out("판정(`parse.set-equals`·`parse.type-agrees`)의 대상에서 빠졌다는 뜻이다. 전문은")
     out("이미 보존되어 있으므로(재정 R1) 여기서 사람 눈이 마지막 심급이 된다.")
+    selection = convergence.get("canonical_selection") or {}
+    canonical_run = selection.get("read_run")
+    if isinstance(canonical_run, str) and canonical_run:
+        out(
+            f"이 목록은 정본 실행 `{canonical_run}` 의 신고다. 두 실행이 갈린 신고는 "
+            "`convergence-early.json` 에 있다."
+        )
     out()
     if not unclassified:
         out("_미분류 종속항 없음 — 전 종속항이 5종 어형으로 파싱되었다._")

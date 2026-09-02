@@ -15,7 +15,7 @@ if REPO not in sys.path:
 from engine.render.material_spec_md import render  # noqa: E402
 
 
-def render_unclassified(entries: list[dict]) -> str:
+def render_unclassified(entries: list[dict], *, canonical_selection: dict | None = None) -> str:
     spec = {
         "run_id": "render-notice-test",
         "spec_version": 1,
@@ -24,6 +24,8 @@ def render_unclassified(entries: list[dict]) -> str:
         "reader_version": "test",
     }
     convergence = {"unclassified_dependents": entries}
+    if canonical_selection is not None:
+        convergence["canonical_selection"] = canonical_selection
     return render(spec, convergence=convergence, contract={"owner_checkpoint": {}}, repo=REPO)
 
 
@@ -35,9 +37,14 @@ def test_unclassified_items_render_actual_attribution_without_the_old_notice() -
                 "dependency_type": "unclassified",
                 "text_status": "verbatim",
                 "text_verbatim": "The assembly of claim 1 in a Markush form.",
-                "reported_by": ["read-a", "read-b"],
+                "reported_by": ["read-a"],
             }
-        ]
+        ],
+        canonical_selection={
+            "read_run": "read-a",
+            "rule": "declaration-order",
+            "content_blind": True,
+        },
     )
     section = rendered.split("## 10. ★ 미분류 종속 구조", 1)[1].split(
         "## 11. ★ 맹검 스크리닝 메모", 1
@@ -45,7 +52,6 @@ def test_unclassified_items_render_actual_attribution_without_the_old_notice() -
     forbidden = [
         token
         for token in (
-            "두 실행",
             "합집합",
             "두 행",
             "additionalProperties: false",
@@ -58,7 +64,10 @@ def test_unclassified_items_render_actual_attribution_without_the_old_notice() -
     ]
     if forbidden:
         pytest.fail(f"삭제되어야 할 실행 귀속 한계 고지 토큰이 남았다: {forbidden}")
-    expected = "신고 실행: read-a, read-b"
+    scope = "이 목록은 정본 실행 `read-a` 의 신고다. 두 실행이 갈린 신고는 `convergence-early.json` 에 있다."
+    if scope not in section:
+        pytest.fail(f"정본 실행 범위 표지 기대 {scope!r}")
+    expected = "신고 실행: read-a"
     if expected not in section:
         pytest.fail(f"실제 실행 귀속 줄 기대 {expected!r}")
 
@@ -97,6 +106,23 @@ def test_legacy_item_without_text_status_keeps_the_old_rendering() -> None:
         pytest.fail(f"text_status 없는 구 산출 렌더 기대 {expected!r}")
     if "신고 실행:" in rendered:
         pytest.fail("reported_by 없는 구 산출물에 실행 귀속 줄을 지어냈다")
+
+
+def test_legacy_convergence_without_canonical_selection_omits_scope_and_attribution() -> None:
+    """canonical_selection 없는 구 산출에는 정본 범위와 신고 실행을 지어내지 않는다."""
+    rendered = render_unclassified(
+        [
+            {
+                "claim": "CL-3",
+                "dependency_type": "unclassified",
+                "text_verbatim": "Legacy dependent claim text.",
+            }
+        ]
+    )
+    if "이 목록은 정본 실행" in rendered:
+        pytest.fail("canonical_selection 없는 구 산출에 정본 범위 표지를 지어냈다")
+    if "신고 실행:" in rendered:
+        pytest.fail("reported_by 없는 구 산출에 신고 실행 줄을 지어냈다")
 
 
 def test_verbatim_text_is_rendered_exactly() -> None:

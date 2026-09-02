@@ -34,11 +34,16 @@ import test_m2_read as m2  # noqa: E402
 import test_m17_lanes as m17  # noqa: E402
 
 from engine.paths import RunPaths, load_stage_contract  # noqa: E402
-from engine.stages.read import decompose_only_spec  # noqa: E402
+from engine.stages.read import (  # noqa: E402
+    _halts_immediately,
+    _validate_convergence,
+    decompose_only_spec,
+)
 from reader.lib import (  # noqa: E402
     EARLY_CLAIM_CHECK_IDS,
     READ_CHECK_IDS,
     CheckContext,
+    CheckRow,
     run_early_claim_checks,
 )
 
@@ -113,9 +118,32 @@ class MutateOnDecomposeAdapter(m2.ReplayLaneAdapter):
 
     def dispatch(self, requests):
         if not self.mutated and any(request.task == "decompose" for request in requests):
-            with open(self.patent_path, "a", encoding="utf-8") as handle:
-                handle.write("\n<!-- mutated by test -->\n")
+            with open(self.patent_path, encoding="utf-8") as handle:
+                source_text = handle.read()
+            target = "25 cm3."
+            if source_text.count(target) != 1:
+                pytest.fail(
+                    f"청구항 3 변조 앵커 {target!r} 기대 정확히 1회, "
+                    f"실제 {source_text.count(target)}회"
+                )
+            with open(self.patent_path, "w", encoding="utf-8") as handle:
+                handle.write(source_text.replace(target, "25 cm3 (mutated)."))
             self.mutated = True
+        return super().dispatch(requests)
+
+
+class DeleteOnCanonicalTailAdapter(m2.ReplayLaneAdapter):
+    """첫 정본 후속 발송 직전에 원천 파일을 한 번 삭제한다."""
+
+    def __init__(self, root: str) -> None:
+        super().__init__(root)
+        self.deleted = False
+        self.patent_path = RunPaths(os.path.dirname(os.path.dirname(root))).patent_md
+
+    def dispatch(self, requests):
+        if not self.deleted and any(request.task in TAIL_TASKS for request in requests):
+            os.unlink(self.patent_path)
+            self.deleted = True
         return super().dispatch(requests)
 
 
@@ -383,7 +411,7 @@ def test_t24_tail_time_source_mutation_halts_without_retry(tmp_path) -> None:
 
 
 def test_t24_decompose_time_mutation_does_not_change_early_verdict(tmp_path) -> None:
-    """분해 발송 때 바뀐 파일은 조기 메모리 판정을 흔들지 않고 출구에서만 halt 한다."""
+    """감사 A-1·T19 §3: 조기 검사가 읽는 청구항 구간 변조만 판별력이 있다."""
     control_payloads = {"read-a": m2.payload_set(), "read-b": m2.payload_set()}
     control_root, control, _ = run_with_payloads(
         tmp_path / "control",
@@ -400,6 +428,31 @@ def test_t24_decompose_time_mutation_does_not_change_early_verdict(tmp_path) -> 
     )
     if mutated["status"] != "halt":
         pytest.fail(f"분해 시점 원천 변경 최종 status 기대 halt, 실제 {mutated['status']}")
+
+    early_spec = decompose_only_spec(
+        run_meta={
+            "run_id": "a1-positive-control",
+            "patent": copy.deepcopy(m2.PATENT_META),
+            "engine": {"commit": ""},
+        },
+        decompose=m2.payload_set()["decompose"],
+        read_runs=READ_RUNS,
+        repo=REPO,
+        source_digest="sha256:" + hashlib.sha256(m2.SOURCE.encode("utf-8")).hexdigest(),
+    )
+    with open(RunPaths(mutated_root).patent_md, encoding="utf-8") as handle:
+        mutated_source = handle.read()
+    mutated_early = run_early_claim_checks(
+        CheckContext(spec=early_spec, source_text=mutated_source, rules=m2.RULES)
+    )
+    original_early = run_early_claim_checks(
+        CheckContext(spec=early_spec, source_text=m2.SOURCE, rules=m2.RULES)
+    )
+    if not any(row.status == "fail" for row in mutated_early):
+        pytest.fail("청구항 구간 변조본 위에서 조기 검사 실패가 하나도 없다")
+    original_failures = [row.check_id for row in original_early if row.status == "fail"]
+    if original_failures:
+        pytest.fail(f"원본 위 조기 검사는 전건 pass 여야 한다: {original_failures}")
 
     keys = ("check_id", "status", "checked", "violations")
     control_checks = [
@@ -422,6 +475,80 @@ def test_t24_decompose_time_mutation_does_not_change_early_verdict(tmp_path) -> 
     ]
     if decompose_retries:
         pytest.fail(f"파일 변조를 조기 분해 결함으로 오진해 재시도했다: {decompose_retries}")
+
+
+def test_t25_a3_any_halt_failure_stops_canonical_tail_retry(tmp_path) -> None:
+    """A-3: schema 실패가 앞서도 source-digest halt 행 하나면 후속 재발송이 없어야 한다."""
+    broken = schema_invalid_payloads()
+    root, outcome, adapter = run_with_payloads(
+        tmp_path,
+        per_attempt={
+            0: {"read-a": broken, "read-b": m2.payload_set()},
+            1: {"read-a": copy.deepcopy(broken), "read-b": m2.payload_set()},
+        },
+        adapter_type=MutateOnCanonicalTailAdapter,
+    )
+    if outcome["status"] != "halt":
+        pytest.fail(f"복합 실패 최종 status 기대 halt, 실제 {outcome['status']}")
+    retried_tail = [
+        lane_id
+        for lane_id in tail_lane_ids(dispatched_ids(adapter))
+        if "/retry-1/" in lane_id
+    ]
+    if retried_tail:
+        pytest.fail(
+            "A-3 확인 — halt 행(read.source-digest)이 실패했는데 정본 후속 레인이 "
+            f"다시 발송되었다: {retried_tail}"
+        )
+    _ = root
+
+
+def test_t25_a3_halt_predicate_quantifies_each_failed_check() -> None:
+    """A-3·원장 T25 ⒜의 「하나라도」를 단독·비halt·복합 실패 집합으로 대조한다."""
+    contract = load_stage_contract("read", None)
+    cases = (
+        (["read.source-digest"], True),
+        (["read.schema"], False),
+        (["read.schema", "read.source-digest"], True),
+    )
+    for check_ids, expected in cases:
+        failing = [CheckRow(check_id=check_id) for check_id in check_ids]
+        actual = _halts_immediately(contract, failing)
+        if actual is not expected:
+            pytest.fail(
+                f"T25 즉시 탈출 술어 실패집합={check_ids!r} 기대 {expected}, 실제 {actual}"
+            )
+
+
+def test_t24_a4_unreadable_exit_source_halts_with_diagnostic(tmp_path) -> None:
+    """A-4: 출구 재독 IO 실패는 예외 대신 source-digest halt와 진단으로 닫혀야 한다."""
+    payloads = {"read-a": m2.payload_set(), "read-b": m2.payload_set()}
+    root, outcome, _ = run_with_payloads(
+        tmp_path,
+        per_attempt={0: payloads, 1: copy.deepcopy(payloads)},
+        adapter_type=DeleteOnCanonicalTailAdapter,
+    )
+    if outcome["status"] != "halt":
+        pytest.fail(f"출구 원천 삭제 status 기대 halt, 실제 {outcome['status']}")
+    entry = load_stage_contract("read", None)["failure"]
+    digest_entries = [row for row in entry if "원천 다이제스트" in str(row.get("condition", ""))]
+    if len(digest_entries) != 1:
+        pytest.fail(f"원천 다이제스트 계약 행 기대 1개, 실제 {len(digest_entries)}")
+    expected_reason = digest_entries[0].get("reason_label")
+    if outcome.get("reason_label") != expected_reason:
+        pytest.fail(
+            f"출구 재독 실패 reason_label 기대 {expected_reason!r}, "
+            f"실제 {outcome.get('reason_label')!r}"
+        )
+    diagnostic = outcome.get("diagnostic")
+    if not isinstance(diagnostic, dict):
+        pytest.fail(f"출구 재독 실패 진단 기대 dict, 실제 {diagnostic!r}")
+    if not str(diagnostic.get("actual", "")).startswith("(읽을 수 없음:"):
+        pytest.fail(f"출구 재독 실패 actual 진단이 IO 실패를 말하지 않는다: {diagnostic!r}")
+    paths = RunPaths(root)
+    if not os.path.isfile(paths.convergence_json):
+        pytest.fail("출구 재독 실패 뒤 convergence.json 이 쓰이지 않았다")
+    _validate_convergence(load_json(paths.convergence_json), paths.repo)
 
 
 def test_t25_read_schema_still_retries_once_before_halt(tmp_path) -> None:

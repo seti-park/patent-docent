@@ -44,6 +44,7 @@ from jsonschema import Draft202012Validator
 
 from reader.lib import (
     CHECK_REGISTRY,
+    READ_CHECK_IDS,
     run_early_claim_checks,
     run_read_checks,
     to_convergence_payload,
@@ -1718,26 +1719,44 @@ def run(
             # 재정 2026-09-02 T24 ⒜ — 출구 검사는 매 회차 디스크 재독본 위에서 돈다. 조기
             # 판정점은 진입 시 읽은 메모리 사본을 유지한다. 조기에 다시 읽으면 파일 변경이
             # 분해 결함으로 오진되고, 그 판정점에는 원천 지문 검사도 없다.
-            exit_source_text = read_text(paths.patent_md)
-            rows = run_read_checks(
-                CheckContext(
-                    spec=canonical,
-                    source_text=exit_source_text,
-                    rules=rules,
-                    schema=schema,
-                    peer_spec=decompose_specs[peer_run] if peer_run else None,
+            try:
+                exit_source_text = read_text(paths.patent_md)
+            except OSError as exc:
+                # 감사 A-4 — 이식 단위 reader/lib 는 파일 시스템을 모르므로 엔진이
+                # read.source-digest 대리 행을 만들어 기존 halt·진단 흐름에 합류시킨다.
+                declared = canonical["patent"]["source_digest"]
+                actual = f"(읽을 수 없음: {exc})"
+                row = CheckRow(check_id="read.source-digest")
+                row.checked = 1
+                row.extras["declared"] = declared
+                row.extras["actual"] = actual
+                row.add(
+                    "source.digest-match",
+                    "patent.source_digest",
+                    declared or "(없음)",
+                    actual,
+                    "출구 재독 실패 — 원천 파일을 읽을 수 없어 지문을 대조하지 못했다. "
+                    "이 인스턴스의 인용 검사 전부가 무효이므로 READ 중단 대상이다",
                 )
-            )
+                rows = [row]
+            else:
+                rows = run_read_checks(
+                    CheckContext(
+                        spec=canonical,
+                        source_text=exit_source_text,
+                        rules=rules,
+                        schema=schema,
+                        peer_spec=decompose_specs[peer_run] if peer_run else None,
+                    )
+                )
             for row in rows:
                 row.extras["read_run"] = canonical_run
             failing = [row for row in rows if row.status == "fail"]
             if not failing:
                 break
-            # 재정 2026-09-02 T25 최소판 — retry(n) 없이 action 자체가 halt 인 계약 행은
-            # 폐기할 런을 다시 돌리지 않는다. read.schema(action: retry(1), then: halt)는 이
-            # 조건에 들지 않아 종전처럼 한 번 재시도한 뒤 halt 한다.
-            entry = _failure_entry_for(contract, failing)
-            if str(entry.get("action")) == "halt":
+            # 감사 A-3 · 원장 T25 ⒜ 「하나라도」 — 실패 검사를 각각 자기 계약 행에
+            # 대조한다. read.schema(action: retry(1), then: halt)는 종전처럼 한 번 재시도한다.
+            if _halts_immediately(contract, failing):
                 break
             signature = _failure_signature(failing)
             if previous_signature is not None and signature == previous_signature:
@@ -1907,10 +1926,23 @@ def _failure_entry_for(
     return failure_entry(contract, "read.verbatim")
 
 
+def _halts_immediately(contract: dict, failing: list[CheckRow]) -> bool:
+    """출구 실패 집합이 재시도 없는 halt 행을 포함하는가."""
+    return any(
+        str(_failure_entry_for(contract, [row]).get("action")) == "halt"
+        for row in failing
+    )
+
+
 def _failure_verdict(
     contract: dict, failing: list[CheckRow], *, repeated: bool = False
 ) -> tuple[str, str | None]:
     """검사 실패 → 조치. 재시도 예산은 이미 소진된 뒤 호출된다."""
+    if repeated and not ({row.check_id for row in failing} & set(READ_CHECK_IDS)):
+        raise StageError(
+            "도달 불능 상태 — repeated=True 인데 출구 루프 검사 실패가 없다: "
+            f"{sorted(row.check_id for row in failing)!r}"
+        )
     entry = _failure_entry_for(contract, failing, repeated=repeated)
     return str(entry.get("then", entry.get("action"))), entry.get("reason_label")
 

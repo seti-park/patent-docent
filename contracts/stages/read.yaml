@@ -247,6 +247,8 @@ retry_budget:
       scope: run
       max_retries: 1
       repairs: canonical-tail
+      # ★ 재정 2026-09-02 T25 — 이 목록 중 halt·무재시도 검사(read.source-digest)의 실패는
+      # 즉시 탈출한다(engine/stages/read.py). T26 이 실제 재시도 가능 부분집합으로 좁힌다.
       checks: checks_before_exit
       failure_means: "조기 통과 후의 **국면 간 변이**"
       why_this_can_be_repaired: >-
