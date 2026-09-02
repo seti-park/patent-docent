@@ -15,7 +15,7 @@
 발주문 = `~/projects/workspaces/patent-docent-session-drafts/order-round-b0-generator.md`(B0_BASE 채운 판 = `SPEC-round-b0.md`) → 총괄이 §3 수락 명령 재현 → worktree 커밋 → main 에 rebase·ff 병합
 ② 총괄이 main 에서 설계 §2.8 「생성 명령」 블록 실행(`99fad78` 트리 · `PYTHON_BIN=.venv/bin/python`) → 골든 manifest 커밋 ③ **라운드 B** 발주(설계 v18 §2 전문 첨부 · C-5 반경 고지 = SPEC §8.3 7항·관문표) → opus max 감사(A′·C′·B-0·B 합본) → 병합(관문 6→7) ④ T31·T32 소라운드.
 설계 PASS 판 = `~/projects/workspaces/patent-docent-session-drafts/T26-DESIGN-v18.md`(리포 밖 · B 발주문 첨부로 들어온다). 도전 비용 = 17회(감수 원문 v2~v18 + 자문 1).
-**별건 — `/claude-api prompt-audit` 산출물**이 같은 drafts 디렉터리에 있다(`PROMPT-AUDIT-2026-09-03.md` · `-patent-docent.diff` · `-agents.diff`) — **미적용**. 절차 문서·`CLAUDE.md` §6 재구성(F1·F7)은 Owner 확인 뒤에만 적용한다.
+**별건 — `/claude-api prompt-audit`**: Owner 가 F1~F7 을 승인했다(**재정 T33** · `ruling-20260903-01-T33.md` · 상신 전문 `D-20260903-01-prompt-audit.md`). **F7(`CLAUDE.md` §6 → `docs/IMPLEMENTATION-HISTORY.md`)과 F3~F6(agents 4파일)은 집행됐다.** **F1·F2(`reader/procedure/*.md` → `HISTORY.md`)는 골든 manifest 커밋 뒤에 적용한다** — 설계 §2.8 생성 사전조건이 `reader/` 경로 무변경을 요구하기 때문(D-01 §0). 적용 diff = drafts `PROMPT-AUDIT-2026-09-03-patent-docent.diff` 의 `reader/procedure/*` 부분(`git apply --include='reader/procedure/*'` · 검증 완료). **agents LEDGER L-049 등재 보류** — 병렬 세션(기억 체계 v2 게이트)이 `~/.claude/agents/LEDGER.md` L-048 을 라이브로 쓰고 있다. 조용해지면 등재. **B-0 재현 시 주의**: 발주문의 「clone 의 `engine contracts reader` 99fad78 이후 무변경 아니면 fail」 시험 조항은 상설 시험으로는 틀렸다(F1·F2 적용 순간 영구 실패) — 병합 전에 좁히거나 뺀다(D-01 §0).
 
 > [정정 2026-09-03 · 5차] 아래 09-02 4차 문단은 16차 도전 **중** 문안이다 — 「4차 도전 결과 회수 → PASS 면 …」·「16차 도전 중(09-03 01:07)」·「§1(111행)」은 **낡았다**(지금 112행). 경위 보존용으로 남긴다.
 
