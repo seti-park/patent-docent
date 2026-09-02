@@ -1,11 +1,23 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-02(4차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-03(5차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-03 5차 갱신 — T26 설계가 M1b 도전 17차에서 PASS 했다**(v18 · `docs/lessons/2026-09-02-sol-challenge-t26-design-v18.md` · 지적 0 · 결정 공백 0).
+16차는 FAIL 1(AJ-1 MED · `-v17.md` · 처분 `D-20260902-02` §22) · 17차 기록 = 같은 문서 §23. **T26 §3 ①(PASS 전 착수·커밋 금지)이 해제되어 라운드 B-0 를 발주했다.**
+지금 할 일 = ① **B-0 회수** — 좌석 M3 sol-coder(sol high · workspace-write) · worktree `.worktrees/round-b0`(브랜치 `round-b0` · 이 커밋에서 분기) ·
+산출 = `tests/fixtures/read-failure-grid/generate.py` · `validate_manifest.py` · `tests/test_m24a_failure_grid_generator.py` · 레인 디렉터리 =
+`/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/sol-coder-round-b0/`(`runner.sh` · `status` 첫 줄 PID · `events.jsonl` · `final.txt`; 세션이 죽었으면 `status` 의 `EXIT=` 유무로 판별) ·
+발주문 = `~/projects/workspaces/patent-docent-session-drafts/order-round-b0-generator.md`(B0_BASE 채운 판 = `SPEC-round-b0.md`) → 총괄이 §3 수락 명령 재현 → worktree 커밋 → main 에 rebase·ff 병합
+② 총괄이 main 에서 설계 §2.8 「생성 명령」 블록 실행(`99fad78` 트리 · `PYTHON_BIN=.venv/bin/python`) → 골든 manifest 커밋 ③ **라운드 B** 발주(설계 v18 §2 전문 첨부 · C-5 반경 고지 = SPEC §8.3 7항·관문표) → opus max 감사(A′·C′·B-0·B 합본) → 병합(관문 6→7) ④ T31·T32 소라운드.
+설계 PASS 판 = `~/projects/workspaces/patent-docent-session-drafts/T26-DESIGN-v18.md`(리포 밖 · B 발주문 첨부로 들어온다). 도전 비용 = 17회(감수 원문 v2~v18 + 자문 1).
+**별건 — `/claude-api prompt-audit` 산출물**이 같은 drafts 디렉터리에 있다(`PROMPT-AUDIT-2026-09-03.md` · `-patent-docent.diff` · `-agents.diff`) — **미적용**. 절차 문서·`CLAUDE.md` §6 재구성(F1·F7)은 Owner 확인 뒤에만 적용한다.
+
+> [정정 2026-09-03 · 5차] 아래 09-02 4차 문단은 16차 도전 **중** 문안이다 — 「4차 도전 결과 회수 → PASS 면 …」·「16차 도전 중(09-03 01:07)」·「§1(111행)」은 **낡았다**(지금 112행). 경위 보존용으로 남긴다.
 
 **★ 09-02 4차 갱신 — 라운드 C 감사(FAIL 6건)와 그 수리 C′(`867b95b`)가 끝났고, T26 설계는 M1b 도전 세 번 FAIL
 (v1 B-1~B-7 · v2 V-1~V-8 · v4 W-1~W-4) + 자문 REVISE(N-1~N-7) 를 거쳐 v5 로 4차 도전 중이다. **[추기] 4차도 FAIL(X-1~X-3 · 결정 공백 0 · `-v5.md`) → v6(관문이 승인 실패표 골격 전체를 상수로) → 5차도 FAIL(Y-1~Y-5 · BLOCKER 0 · 둘은 총괄 패치 잔재 · `-v6.md`) → v7 → 6차 FAIL(Z-1·Z-2 · MED 2 · `-v7.md`) → v8 → 7차 FAIL(AA-1~AA-4 · 골든 manifest 수락면 · `-v8.md`) → v9(검증기 `validate_manifest.py`) → 8차 FAIL(AB-1·AB-2 · MED 2 · `-v9.md`) → v10(검증기가 모든 값 필드 · `importlib` 적재) → 9차 FAIL(AC-1~AC-5 · 문서 내부 정합 · `-v10.md`) → v11 → 10차 FAIL(AD-1~AD-3 · `-v11.md`) → v12(한 필드 음성 시험 표 T-V · `judged_at` 골격 · fail-fast 생성 블록) → 11차 FAIL(AE-1~AE-3 · `-v12.md`) → v13(제약 ID 단위 T-V · `git diff --quiet` · `PYTHON_BIN`) → 12차 FAIL(AF-1~AF-3 · `-v13.md`) → v14(층위 평가 · `set(위반 ID) == {target}` · clone 조립 · `judged_here` 우주) → 13차 FAIL(AG-1·AG-2 · `-v14.md`) → v15 → **14차 FAIL(AH-1~AH-4 · `-v15.md`) → v16 → 15차 FAIL(AI-1~AI-3 · `-v16.md`) → v17 → 16차 도전 중(09-03 01:07).** 지적은 전부 §2.8 검증기 절의 내부 정합으로 좁혀졌다 — BLOCKER 는 3차 이후 0. 지금 할 일 =

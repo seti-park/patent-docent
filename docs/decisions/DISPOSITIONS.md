@@ -84,6 +84,10 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v14.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v15.md | 등재 | — |
 | 2026-09-02-sol-challenge-t26-design-v16.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v17.md | 등재 | — |
+| 2026-09-02-sol-challenge-t26-design-v18.md | 등재 | — |
+
+**계수** — `등재` **25** · `선행 종결` **12** · 합 **37**(`docs/lessons/` 전 파일). **[정정 2026-09-03]** 아래 구 문언 「등재 7 · 선행 종결 12 · 합 19」는 라운드 C 반입(`852cdd`) 시점의 계수이며, 그 뒤 도전 원문 v2~v18 반입이 이 줄을 따라가지 않았다 — 오류 수정(규율 11 ③). 관문 G1 은 집합 상등을 보고 이 계수는 보지 않는다.
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -204,6 +208,9 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-02-sol-challenge-t26-design-v16.md | AI-1 | HIGH | 수용 | `$comment` 「비공」 제약에 ID·변조·순서 없음 — v17 = 직접 검사 삭제 · 세 `contains` 가 함의(함의 목록 명시) · DAG `comment.type → contains 셋` | `D-20260902-02-t26-design-challenge.md` §21 |
 | 2026-09-02-sol-challenge-t26-design-v16.md | AI-2 | MED | 수용 | 「T-V 행 순서 = 평가 순서」가 2열 배치·DAG 와 충돌 — v17 = 문언 삭제 · DAG 절이 순서의 유일 정본 | `D-20260902-02-t26-design-challenge.md` §21 |
 | 2026-09-02-sol-challenge-t26-design-v16.md | AI-3 | LOW | 수용 | DAG 「`.eq` 열 개」 vs 실제 다섯 — v17 = type 다섯 + eq 다섯 = 열 ID 로 문언 정정 | `D-20260902-02-t26-design-challenge.md` §21 |
+| 2026-09-02-sol-challenge-t26-design-v17.md | AJ-1 | MED | 수용 | `provenance.tree_head` 의 제약·선행순서가 검사 항목·T-V·DAG 세 정본 사이에서 불일치(DAG 「각 키: type」 vs 표의 `.eq` 하나 → M3 가 진단 ID 임의 선택) — v18 = DAG provenance 가지를 키별로 명시 재작성 · `tree_head` 는 `.eq` 하나 · T-V 변조 정수 `17` | `D-20260902-02-t26-design-challenge.md` §22 |
+
+**행 수 = 112**(`등재` 25파일의 지적 전건). **[정정 2026-09-03 · 16·17차]** 직전 판 **111** — 16차 도전 원문 반입(AJ 1)으로 하나 늘었고, 17차(PASS · 지적 0 · `-v18.md`)는 `등재` 파일은 늘리되 행을 더하지 않는다.
 
 **행 수 = 111**(`등재` 23파일의 지적 전건). **[정정 2026-09-03 · 15·16차]** 직전 판 **104** — 14차(AH 4)·15차(AI 3) 도전 원문 반입으로 일곱 늘었다.
 
