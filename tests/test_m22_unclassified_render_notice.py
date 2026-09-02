@@ -15,7 +15,12 @@ if REPO not in sys.path:
 from engine.render.material_spec_md import render  # noqa: E402
 
 
-def render_unclassified(entries: list[dict], *, canonical_selection: dict | None = None) -> str:
+def render_unclassified(
+    entries: list[dict],
+    *,
+    canonical_selection: dict | None = None,
+    convergence_early: dict | None = None,
+) -> str:
     spec = {
         "run_id": "render-notice-test",
         "spec_version": 1,
@@ -26,7 +31,13 @@ def render_unclassified(entries: list[dict], *, canonical_selection: dict | None
     convergence = {"unclassified_dependents": entries}
     if canonical_selection is not None:
         convergence["canonical_selection"] = canonical_selection
-    return render(spec, convergence=convergence, contract={"owner_checkpoint": {}}, repo=REPO)
+    return render(
+        spec,
+        convergence=convergence,
+        contract={"owner_checkpoint": {}},
+        repo=REPO,
+        convergence_early=convergence_early,
+    )
 
 
 def test_unclassified_items_render_actual_attribution_without_the_old_notice() -> None:
@@ -47,7 +58,7 @@ def test_unclassified_items_render_actual_attribution_without_the_old_notice() -
         },
     )
     section = rendered.split("## 10. ★ 미분류 종속 구조", 1)[1].split(
-        "## 11. ★ 맹검 스크리닝 메모", 1
+        "## 10-b. ★ 조기 합집합", 1
     )[0]
     forbidden = [
         token
@@ -64,7 +75,7 @@ def test_unclassified_items_render_actual_attribution_without_the_old_notice() -
     ]
     if forbidden:
         pytest.fail(f"삭제되어야 할 실행 귀속 한계 고지 토큰이 남았다: {forbidden}")
-    scope = "이 목록은 정본 실행 `read-a` 의 신고다. 두 실행이 갈린 신고는 `convergence-early.json` 에 있다."
+    scope = "이 목록은 정본 실행 `read-a` 의 신고다. 두 실행이 갈린 신고는 아래 10-b 블록에 있다."
     if scope not in section:
         pytest.fail(f"정본 실행 범위 표지 기대 {scope!r}")
     expected = "신고 실행: read-a"
@@ -140,3 +151,89 @@ def test_verbatim_text_is_rendered_exactly() -> None:
     expected = f"전문: “{text}”"
     if expected not in rendered:
         pytest.fail(f"verbatim 미분류 항목 문언 기대 {expected!r}")
+
+
+def test_early_union_without_split_reports_renders_one_agreement_line() -> None:
+    """두 실행 전건 일치 때 10-b가 빈 표 대신 합의 상태 한 줄을 보여야 한다."""
+    rendered = render_unclassified(
+        [],
+        convergence_early={
+            "unclassified_dependents": [
+                {
+                    "claim": "CL-3",
+                    "dependency_type": "unclassified",
+                    "text_status": "verbatim",
+                    "text_verbatim": "The assembly of claim 1 in a Markush form.",
+                    "reported_by": ["read-a", "read-b"],
+                }
+            ]
+        },
+    )
+    block = rendered.split("## 10-b. ★ 조기 합집합", 1)[1].split(
+        "## 11. ★ 맹검 스크리닝 메모", 1
+    )[0]
+    expected = "갈린 신고 없음 — 두 실행의 미분류 신고가 전건 일치"
+    if expected not in block:
+        pytest.fail(f"갈린 신고 0건 안내 기대 {expected!r}")
+    if "| `reported_by` |" in block:
+        pytest.fail("갈린 신고 0건인데 표를 렌더했다")
+
+
+def test_early_union_renders_only_split_reports_with_full_attribution() -> None:
+    """갈린 신고 n건은 n행·귀속·전문 전량이고, 일치 항목은 표에서 빠져야 한다."""
+    read_a_text = "The assembly of claim 1, selected from A, B, and C without truncation."
+    read_b_text = "The method of claim 2, when the sensor reports a conditional state."
+    agreed_text = "The apparatus of claim 1, wherein both readers agree."
+    rendered = render_unclassified(
+        [],
+        convergence_early={
+            "unclassified_dependents": [
+                {
+                    "claim": "CL-3",
+                    "dependency_type": "unclassified",
+                    "text_status": "verbatim",
+                    "text_verbatim": read_a_text,
+                    "reported_by": ["read-a"],
+                },
+                {
+                    "claim": "CL-4",
+                    "dependency_type": "unclassified",
+                    "text_status": "verbatim",
+                    "text_verbatim": read_b_text,
+                    "reported_by": ["read-b"],
+                },
+                {
+                    "claim": "CL-5",
+                    "dependency_type": "unclassified",
+                    "text_status": "verbatim",
+                    "text_verbatim": agreed_text,
+                    "reported_by": ["read-a", "read-b"],
+                },
+            ]
+        },
+    )
+    block = rendered.split("## 10-b. ★ 조기 합집합", 1)[1].split(
+        "## 11. ★ 맹검 스크리닝 메모", 1
+    )[0]
+    header = "| `reported_by` | `claim` | `dependency_type` | `text_status` | `text_verbatim` |"
+    if header not in block:
+        pytest.fail(f"10-b 귀속 표 머리 기대 {header!r}")
+    rows = [line for line in block.splitlines() if line.startswith("| `read-")]
+    if len(rows) != 2:
+        pytest.fail(f"갈린 신고 기대 2행, 실제 {len(rows)}행: {rows}")
+    for expected in ("`read-a`", "`read-b`", "`CL-3`", "`CL-4`", read_a_text, read_b_text):
+        if expected not in block:
+            pytest.fail(f"10-b 갈린 신고 표에 {expected!r} 이 없다")
+    if agreed_text in block or "`CL-5`" in block:
+        pytest.fail("두 실행이 일치 신고한 항목이 갈린 신고 표에 들어갔다")
+
+
+def test_legacy_run_without_early_verdict_renders_notice_without_error() -> None:
+    """조기 판정서 없는 구 런은 예외 없이 행위시법 안내 한 줄을 렌더해야 한다."""
+    rendered = render_unclassified([])
+    block = rendered.split("## 10-b. ★ 조기 합집합", 1)[1].split(
+        "## 11. ★ 맹검 스크리닝 메모", 1
+    )[0]
+    expected = "조기 판정서 없음 — 구 판 산출"
+    if expected not in block:
+        pytest.fail(f"조기 판정서 부재 안내 기대 {expected!r}")

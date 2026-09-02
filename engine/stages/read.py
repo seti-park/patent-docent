@@ -1931,7 +1931,16 @@ def run(
         write_claim_trees(paths, canonical)
         write_grounding_md(paths, canonical, payload)
         write_positioning_md(paths, canonical)
-        write_text(paths.material_spec_md, render(canonical, payload, contract, paths.repo))
+        write_text(
+            paths.material_spec_md,
+            render(
+                canonical,
+                payload,
+                contract,
+                paths.repo,
+                convergence_early=load_json(paths.convergence_early_json),
+            ),
+        )
 
         # ★ 최종 drop 이 `drop-proposed` 여도 러너는 멈추지 않는다(재정 P-A). 계약의 failure
         #   표에서 drop 행이 삭제되었고, 확정 재정의 자리는 CP1(승인 봉투의 drop_decision)
