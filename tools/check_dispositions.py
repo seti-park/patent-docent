@@ -3,20 +3,22 @@
 """지적 처분 원장 관문 (재정 2026-09-02 T27).
 
 이 도구가 주장하는 것은 **하나**다 — *「감수 원문의 총괄 머리말에 열거된 지적이 전부
-처분표에 있고, 처분표에 열거 밖 지적이 없으며, 처분 값이 4종 중 하나인가」*. 차집합은
+처분표에 있고, 처분표에 열거 밖 지적이 없으며, 처분 값과 격이 정해진 어휘 안인가」*. 차집합은
 **양방향으로** 0 이어야 한다.
 
 ★ 주장하지 않는 것 — **열거가 원문의 지적을 빠짐없이 담았는지는 기계가 모른다.** 감수 원문의
 어느 문단이 지적이고 어느 문단이 소견인지는 사람이 읽어야 갈리며, 지적 하나를 앞/뒷절반으로
 쪼갤지도 사람의 판단이다. 그 판단은 **반입 시점**에 일어난다(원장 T27 ⒜ ① — 주의가 가장 높은
 순간에 두라는 것이 그 결정의 취지다). 이 관문은 그렇게 열거된 것과 처분표를 대조할 뿐이다.
+포인터가 실재하는가, 사유가 뜻이 통하는가, `선행 종결` 이 사실인가도 사람이 지킨다. 관문은
+비공백만 보므로 `이연 / TBD / TBD` 는 통과한다.
 넓게도 좁게도 적지 않는다(M0.6 FAIL 사유와 2026-08-19 감수 A′ 의 거울상 판정).
 
 판정은 넷이다.
   G1 등재 현황 완전성 — `--lessons-root` 의 `*.md` 집합 == §0 `파일` 열 집합(양방향) · §0 중복 금지
   G2 상태 어휘       — §0 상태 ∈ {등재, 선행 종결} · `선행 종결` 은 포인터 필수 · §1 행 금지
   G3 열거 ↔ 처분표    — `등재` 파일마다 총괄 머리말 안에 열거 줄 정확히 하나 · id 집합이 §1 과 상등
-  G4 처분 행 규격     — 처분 4종 · 사유·포인터 비지 않음 · (파일, id) 중복 금지 · §1 파일 ⊆ §0 파일
+  G4 처분 행 규격     — 격 5종 · 처분 4종 · 사유·포인터 비지 않음 · (파일, id) 중복 금지 · §1 파일 ⊆ §0 파일
 
 총괄 머리말의 판별은 `tools/check_lesson_authorship.py` 를 **import 해 재사용**한다(절 분할
 `sections()` · 자기 신고 토큰 · 저자 표지 정규식). 판별 규칙을 두 벌 만들면 한 벌은 반드시
@@ -43,7 +45,7 @@ import re
 import shutil
 import sys
 import tempfile
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -62,6 +64,7 @@ STATUS_LISTED = "등재"
 STATUS_CLOSED_EARLIER = "선행 종결"
 STATUS_VOCABULARY: tuple[str, ...] = (STATUS_LISTED, STATUS_CLOSED_EARLIER)
 DISPOSITION_VOCABULARY: tuple[str, ...] = ("수용", "부분 수용", "기각", "이연")
+SEVERITY_VOCABULARY: tuple[str, ...] = ("BLOCKER", "HIGH", "MED", "LOW", "—")
 
 REGISTRY_HEADER: tuple[str, ...] = ("파일", "상태", "포인터")
 DISPOSITION_HEADER: tuple[str, ...] = ("파일", "지적 id", "격", "처분", "사유", "포인터")
@@ -115,11 +118,16 @@ class InputError(Exception):
 class ExitMarkerParser(argparse.ArgumentParser):
     """인자 오류에도 리포 관례의 종료 마커를 남긴다."""
 
+    def exit(self, status: int = 0, message: str | None = None) -> None:
+        if message:
+            print(message, end="", file=sys.stderr)
+        print(f"EXIT={status}")
+        raise SystemExit(status)
+
     def error(self, message: str) -> None:
         self.print_usage(sys.stderr)
         print(f"INPUT ERROR: {message}", file=sys.stderr)
-        print("EXIT=2")
-        raise SystemExit(2)
+        self.exit(2)
 
 
 # ---------------------------------------------------------------------------
@@ -196,13 +204,52 @@ def parse_tables(lines: list[str]) -> list[Table]:
     return tables
 
 
-def select_table(
-    tables: list[Table], header: tuple[str, ...]
-) -> tuple[Table | None, int]:
-    matched = [table for table in tables if table.header == header]
-    if len(matched) == 1:
-        return matched[0], 1
-    return None, len(matched)
+def first_table_in_section(
+    lines: list[str], tables: list[Table], section_prefix: str
+) -> Table | None:
+    """`## {section_prefix} ` 절 안에서 처음 나오는 표를 돌려준다."""
+    heading_prefix = f"## {section_prefix} "
+    start = next(
+        (index for index, line in enumerate(lines) if line.startswith(heading_prefix)),
+        None,
+    )
+    if start is None:
+        return None
+    end = next(
+        (
+            index
+            for index in range(start + 1, len(lines))
+            if lines[index].startswith("## ")
+        ),
+        len(lines),
+    )
+    return next(
+        (
+            table
+            for table in tables
+            if start < table.line_number - 1 < end
+        ),
+        None,
+    )
+
+
+def table_arity_findings(
+    table: Table, path: Path, rule: str, section: str
+) -> list[Finding]:
+    """데이터 행 셀 수가 그 표의 헤더 셀 수와 같은지 대조한다."""
+    expected = len(table.header)
+    return [
+        Finding(
+            rule=rule,
+            path=path,
+            line_number=row.line_number,
+            locus=f"{section} 표 arity",
+            expected=f"헤더와 같은 셀 수 {expected}",
+            actual=f"셀 수 {len(row.cells)}",
+        )
+        for row in table.rows
+        if len(row.cells) != expected
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -275,8 +322,8 @@ def evaluate(lessons_root: Path, dispositions_path: Path) -> list[Finding]:
     ledger_lines = read_lines(dispositions_path)
     tables = parse_tables(ledger_lines)
 
-    registry, registry_count = select_table(tables, REGISTRY_HEADER)
-    dispositions, disposition_count = select_table(tables, DISPOSITION_HEADER)
+    registry = first_table_in_section(ledger_lines, tables, "§0")
+    dispositions = first_table_in_section(ledger_lines, tables, "§1")
 
     if registry is None:
         findings.append(
@@ -285,10 +332,22 @@ def evaluate(lessons_root: Path, dispositions_path: Path) -> list[Finding]:
                 path=dispositions_path,
                 line_number=1,
                 locus="§0 등재 현황표",
-                expected=f"열 이름 {list(REGISTRY_HEADER)} 인 표 1개",
-                actual=f"{registry_count}개",
+                expected=f"열 이름 {list(REGISTRY_HEADER)} 인 표",
+                actual="§0 표 없음",
             )
         )
+    elif registry.header != REGISTRY_HEADER:
+        findings.append(
+            Finding(
+                rule="G1",
+                path=dispositions_path,
+                line_number=registry.line_number,
+                locus="§0 등재 현황표",
+                expected=f"열 이름 {list(REGISTRY_HEADER)}",
+                actual=f"열 이름 {list(registry.header)}",
+            )
+        )
+        registry = None
     if dispositions is None:
         findings.append(
             Finding(
@@ -296,11 +355,28 @@ def evaluate(lessons_root: Path, dispositions_path: Path) -> list[Finding]:
                 path=dispositions_path,
                 line_number=1,
                 locus="§1 처분표",
-                expected=f"열 이름 {list(DISPOSITION_HEADER)} 인 표 1개",
-                actual=f"{disposition_count}개",
+                expected=f"열 이름 {list(DISPOSITION_HEADER)} 인 표",
+                actual="§1 표 없음",
             )
         )
+    elif dispositions.header != DISPOSITION_HEADER:
+        findings.append(
+            Finding(
+                rule="G4",
+                path=dispositions_path,
+                line_number=dispositions.line_number,
+                locus="§1 처분표",
+                expected=f"열 이름 {list(DISPOSITION_HEADER)}",
+                actual=f"열 이름 {list(dispositions.header)}",
+            )
+        )
+        dispositions = None
     if registry is None or dispositions is None:
+        return findings
+
+    findings.extend(table_arity_findings(registry, dispositions_path, "G1", "§0"))
+    findings.extend(table_arity_findings(dispositions, dispositions_path, "G4", "§1"))
+    if findings:
         return findings
 
     # ---- G1 등재 현황 완전성
@@ -352,11 +428,23 @@ def evaluate(lessons_root: Path, dispositions_path: Path) -> list[Finding]:
     for row in dispositions.rows:
         name = dispositions.column(row, "파일").strip("` ")
         identifier = dispositions.column(row, "지적 id").strip("`* ")
+        severity = dispositions.column(row, "격").strip("`* ")
         disposition = dispositions.column(row, "처분").strip("`* ")
         reason = dispositions.column(row, "사유")
         pointer = dispositions.column(row, "포인터")
         rows_by_file.setdefault(name, []).append((row, identifier))
 
+        if severity not in SEVERITY_VOCABULARY:
+            findings.append(
+                Finding(
+                    rule="G4",
+                    path=dispositions_path,
+                    line_number=row.line_number,
+                    locus=f"§1 · {name} · {identifier}",
+                    expected=f"격 ∈ {list(SEVERITY_VOCABULARY)}",
+                    actual=repr(severity),
+                )
+            )
         if disposition not in DISPOSITION_VOCABULARY:
             findings.append(
                 Finding(
@@ -551,22 +639,28 @@ def run(lessons_root: Path, dispositions_path: Path) -> int:
 
 
 # ---------------------------------------------------------------------------
-# --self-test — 결함 6종을 임시 사본에 심어 거부를 실증한다
+# --self-test — 결함 10종을 임시 사본에 심어 거부를 실증한다
 
 
 def quiet_run(lessons_root: Path, dispositions_path: Path) -> int:
     """검사를 돌리되 출력은 삼킨다 — self-test 는 종료 코드만 본다."""
     sink = io.StringIO()
-    with redirect_stdout(sink):
+    with redirect_stdout(sink), redirect_stderr(sink):
         return run(lessons_root, dispositions_path)
 
 
 def canonical_probe_target(lessons_root: Path, dispositions_path: Path) -> tuple[str, Row, Table]:
     """결함을 심을 자리 — `등재` 이면서 §1 에 행이 있는 첫 파일과 그 첫 행."""
-    tables = parse_tables(read_lines(dispositions_path))
-    registry, _ = select_table(tables, REGISTRY_HEADER)
-    dispositions, _ = select_table(tables, DISPOSITION_HEADER)
-    if registry is None or dispositions is None:
+    lines = read_lines(dispositions_path)
+    tables = parse_tables(lines)
+    registry = first_table_in_section(lines, tables, "§0")
+    dispositions = first_table_in_section(lines, tables, "§1")
+    if (
+        registry is None
+        or registry.header != REGISTRY_HEADER
+        or dispositions is None
+        or dispositions.header != DISPOSITION_HEADER
+    ):
         raise InputError("self-test: §0·§1 표를 찾지 못해 결함을 심을 자리가 없다")
     for row in registry.rows:
         name = registry.column(row, "파일").strip("` ")
@@ -595,7 +689,7 @@ def replace_line(path: Path, line_number: int, replacement: list[str]) -> None:
 
 
 def self_test(lessons_root: Path, dispositions_path: Path) -> int:
-    """canon = exit 0 · 심은 결함 6종 = 전건 exit 1 을 실증한다."""
+    """canon = exit 0 · 심은 결함 10종 = 전건 exit 1 을 실증한다."""
     outcomes: list[tuple[str, int, int]] = []
 
     canonical = quiet_run(lessons_root, dispositions_path)
@@ -605,6 +699,7 @@ def self_test(lessons_root: Path, dispositions_path: Path) -> int:
         lessons_root, dispositions_path
     )
     target_id = disposition_table.column(target_row, "지적 id").strip("`* ")
+    severity_index = disposition_table.header.index("격")
     disposition_index = disposition_table.header.index("처분")
 
     with tempfile.TemporaryDirectory(prefix="check-dispositions-selftest-") as raw:
@@ -673,6 +768,48 @@ def self_test(lessons_root: Path, dispositions_path: Path) -> int:
             replace_line(target_file, line_number, replacement_factory(original))
             outcomes.append((f"{label} ({target_name})", quiet_run(lessons, ledger), 1))
 
+        # ⒢ 격을 어휘 밖 `CRITICAL` 로 변조
+        workspace = base / "g"
+        workspace.mkdir()
+        lessons, ledger = make_sandbox(lessons_root, dispositions_path, workspace)
+        mutated = list(target_row.cells)
+        mutated[severity_index] = "CRITICAL"
+        replace_line(ledger, target_row.line_number, ["| " + " | ".join(mutated) + " |"])
+        outcomes.append(("⒢ 격 값 변조 (CRITICAL)", quiet_run(lessons, ledger), 1))
+
+        # ⒣ §1 행에 셀 하나를 더해 7셀로 변조
+        workspace = base / "h"
+        workspace.mkdir()
+        lessons, ledger = make_sandbox(lessons_root, dispositions_path, workspace)
+        mutated = [*target_row.cells, "self-test extra"]
+        replace_line(ledger, target_row.line_number, ["| " + " | ".join(mutated) + " |"])
+        outcomes.append(("⒣ §1 데이터 행 7셀", quiet_run(lessons, ledger), 1))
+
+        # ⒤ §1 행에서 셀 하나를 빼 5셀로 변조
+        workspace = base / "i"
+        workspace.mkdir()
+        lessons, ledger = make_sandbox(lessons_root, dispositions_path, workspace)
+        mutated = list(target_row.cells[:-1])
+        replace_line(ledger, target_row.line_number, ["| " + " | ".join(mutated) + " |"])
+        outcomes.append(("⒤ §1 데이터 행 5셀", quiet_run(lessons, ledger), 1))
+
+        # ⒥ §1 제목만 바꿔 표를 정식 절 밖 decoy 로 만든다.
+        workspace = base / "j"
+        workspace.mkdir()
+        lessons, ledger = make_sandbox(lessons_root, dispositions_path, workspace)
+        ledger_lines = read_lines(ledger)
+        headings = [
+            index for index, line in enumerate(ledger_lines) if line.startswith("## §1 ")
+        ]
+        if len(headings) != 1:
+            raise InputError(
+                f"self-test: §1 제목이 {len(headings)}개라 결함을 심을 수 없다"
+            )
+        heading = headings[0]
+        ledger_lines[heading] = ledger_lines[heading].replace("## §1 ", "## §9 ", 1)
+        ledger.write_text("\n".join(ledger_lines) + "\n", encoding="utf-8")
+        outcomes.append(("⒥ §1 제목을 §9 로 변조 (decoy 표)", quiet_run(lessons, ledger), 1))
+
     failures = 0
     for label, got, want in outcomes:
         verdict = "OK" if got == want else "MISMATCH"
@@ -685,7 +822,7 @@ def self_test(lessons_root: Path, dispositions_path: Path) -> int:
         print("EXIT=1")
         return 1
 
-    print(f"RESULT: PASS — self-test {len(outcomes)}건 전건 일치 (canon 1 + 심은 결함 6종)")
+    print(f"RESULT: PASS — self-test {len(outcomes)}건 전건 일치 (canon 1 + 심은 결함 10종)")
     print("EXIT=0")
     return 0
 
@@ -713,7 +850,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--self-test",
         action="store_true",
-        help="임시 사본에 결함 6종을 심어 거부를 실증한다 (정본 무접촉)",
+        help="임시 사본에 결함 10종을 심어 거부를 실증한다 (정본 무접촉)",
     )
     args = parser.parse_args(argv)
 
@@ -736,4 +873,11 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        exit_code = main()
+    except Exception as exc:  # 방어선: 어떤 입력에서도 traceback 대신 규약화된 입력 오류.
+        message = str(exc).replace("\n", "\\n")
+        print(f"내부 오류: {type(exc).__name__}: {message}")
+        print("EXIT=2")
+        exit_code = 2
+    sys.exit(exit_code)

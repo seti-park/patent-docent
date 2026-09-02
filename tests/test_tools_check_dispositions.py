@@ -75,6 +75,18 @@ def require_output_contains(
         pytest.fail(f"{label} OUTPUT MISMATCH: missing={missing!r}\n{output(proc)}")
 
 
+def require_last_output_line(
+    proc: subprocess.CompletedProcess[str], expected: str, label: str
+) -> None:
+    combined = proc.stdout + proc.stderr
+    lines = combined.splitlines()
+    actual = lines[-1] if lines else ""
+    if actual != expected:
+        pytest.fail(
+            f"{label} LAST LINE MISMATCH: got={actual!r} want={expected!r}\n{output(proc)}"
+        )
+
+
 def sandbox(tmp_path: Path) -> tuple[Path, Path]:
     lessons = tmp_path / "lessons"
     ledger = tmp_path / "DISPOSITIONS.md"
@@ -113,6 +125,11 @@ def test_canonical_ledger_passes_with_pythonoptimize() -> None:
 def test_self_test_passes() -> None:
     proc = run_tool(LESSONS, DISPOSITIONS, self_test=True)
     require_exit(proc, 0, "self-test")
+    require_output_contains(
+        proc,
+        ("⒢ 격 값 변조", "⒣ §1 데이터 행 7셀", "⒤ §1 데이터 행 5셀", "⒥ §1 제목", "심은 결함 10종"),
+        "self-test 변조 10종",
+    )
 
 
 def test_self_test_passes_with_pythonoptimize() -> None:
@@ -121,7 +138,7 @@ def test_self_test_passes_with_pythonoptimize() -> None:
 
 
 # ---------------------------------------------------------------------------
-# 결함 6종 — 여기서 직접 심는다
+# 결함 10종 — 여기서 직접 심는다
 
 
 def test_missing_disposition_row_is_rejected(tmp_path: Path) -> None:
@@ -211,6 +228,101 @@ def test_duplicate_enumeration_line_is_rejected(tmp_path: Path) -> None:
     proc = run_tool(lessons, ledger)
     require_exit(proc, 1, "⒡ 열거 줄 두 개")
     require_output_contains(proc, ("G3", TARGET_LESSON, "2개"), "⒡ 열거 줄 두 개")
+
+
+def test_unknown_severity_is_rejected_in_plain_and_optimized_modes(tmp_path: Path) -> None:
+    """⒢ 격 `CRITICAL` 은 G4 어휘 대조가 잡는다."""
+    lessons, ledger = sandbox(tmp_path)
+
+    def transform(lines: list[str]) -> list[str]:
+        index = locate_once(lines, TARGET_ROW_PREFIX, ledger)
+        cells = [cell.strip() for cell in lines[index].strip().strip("|").split("|")]
+        cells[2] = "CRITICAL"
+        lines[index] = "| " + " | ".join(cells) + " |"
+        return lines
+
+    rewrite_lines(ledger, transform)
+    for optimized in (False, True):
+        label = f"⒢ 격 CRITICAL optimized={optimized}"
+        proc = run_tool(lessons, ledger, optimized=optimized)
+        require_exit(proc, 1, label)
+        require_output_contains(proc, ("G4", "격 ∈", "'CRITICAL'"), label)
+
+
+def test_seven_cell_row_is_rejected_in_plain_and_optimized_modes(tmp_path: Path) -> None:
+    """⒣ 헤더가 6셀인 §1 표의 7셀 데이터 행은 arity 실패다."""
+    lessons, ledger = sandbox(tmp_path)
+    mutated_line_number = 0
+
+    def transform(lines: list[str]) -> list[str]:
+        nonlocal mutated_line_number
+        index = locate_once(lines, TARGET_ROW_PREFIX, ledger)
+        mutated_line_number = index + 1
+        cells = [cell.strip() for cell in lines[index].strip().strip("|").split("|")]
+        cells.append("extra")
+        lines[index] = "| " + " | ".join(cells) + " |"
+        return lines
+
+    rewrite_lines(ledger, transform)
+    for optimized in (False, True):
+        label = f"⒣ 7셀 optimized={optimized}"
+        proc = run_tool(lessons, ledger, optimized=optimized)
+        require_exit(proc, 1, label)
+        require_output_contains(
+            proc,
+            ("G4", f"{ledger}:{mutated_line_number}", "arity", "셀 수 6", "셀 수 7"),
+            label,
+        )
+
+
+def test_five_cell_row_is_clean_rejection_in_plain_and_optimized_modes(
+    tmp_path: Path,
+) -> None:
+    """⒤ 5셀 행은 traceback 없이 exit 1 및 마지막 `EXIT=1` 로 끝난다."""
+    lessons, ledger = sandbox(tmp_path)
+    mutated_line_number = 0
+
+    def transform(lines: list[str]) -> list[str]:
+        nonlocal mutated_line_number
+        index = locate_once(lines, TARGET_ROW_PREFIX, ledger)
+        mutated_line_number = index + 1
+        cells = [cell.strip() for cell in lines[index].strip().strip("|").split("|")]
+        cells.pop()
+        lines[index] = "| " + " | ".join(cells) + " |"
+        return lines
+
+    rewrite_lines(ledger, transform)
+    for optimized in (False, True):
+        label = f"⒤ 5셀 optimized={optimized}"
+        proc = run_tool(lessons, ledger, optimized=optimized)
+        require_exit(proc, 1, label)
+        require_output_contains(
+            proc,
+            ("G4", f"{ledger}:{mutated_line_number}", "arity", "셀 수 6", "셀 수 5"),
+            label,
+        )
+        if "Traceback" in proc.stdout + proc.stderr:
+            pytest.fail(f"{label} TRACEBACK LEAK\n{output(proc)}")
+        require_last_output_line(proc, "EXIT=1", label)
+
+
+def test_section_one_decoy_table_is_rejected_in_plain_and_optimized_modes(
+    tmp_path: Path,
+) -> None:
+    """⒥ §1 제목을 §9 로 바꾸면 그 아래 같은 헤더 표는 무시한다."""
+    lessons, ledger = sandbox(tmp_path)
+
+    def transform(lines: list[str]) -> list[str]:
+        index = locate_once(lines, "## §1 ", ledger)
+        lines[index] = lines[index].replace("## §1 ", "## §9 ", 1)
+        return lines
+
+    rewrite_lines(ledger, transform)
+    for optimized in (False, True):
+        label = f"⒥ §1 밖 decoy optimized={optimized}"
+        proc = run_tool(lessons, ledger, optimized=optimized)
+        require_exit(proc, 1, label)
+        require_output_contains(proc, ("G4", "§1 표 없음"), label)
 
 
 # ---------------------------------------------------------------------------
