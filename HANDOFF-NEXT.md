@@ -8,6 +8,7 @@
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
 
 **★ 09-03 10차 갱신 — B′ 좁은 재감사 = FAIL 7건(MED 2 · LOW 5 · `docs/lessons/2026-09-03-opus-audit-round-b-prime.md` · 처분 `D-20260903-03` §8 · DISPOSITIONS 125행). RB-1(HIGH)은 닫혔다 — 감사가 정합 편집을 6종으로 확장해도 도출식 시험이 전건 붉음(관문 7종은 초록). RC-1 = 델타 미러 rename 경계 · RC-2 = 도출식 배제 근거의 우연·후건 무재정 → 12 우주 − 명시 배제 3집합으로 재작성. 전부 수용 → 라운드 B″ 발주**(sol-coder · worktree `round-b-2` · 발주문 = drafts `SPEC-round-b-2.md` · 레인 디렉터리 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/sol-coder-round-b-2/`). B″ 의 감사는 **T31·T32 소라운드 감사에 합본**(§8 근거 · Owner 가 다르게 보면 별건). 회수 = 총괄 재현(rename 경계 · 정합 편집 2종 양성 대조) → 병합 → **T31·T32 소라운드 발주**.
+**[추기 05:59] 라운드 B″ 를 발주했다** — worktree `.worktrees/round-b-2`(브랜치 `round-b-2` · `eb1cee4` 분기) · 발주문 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/order-round-b-2.md`(= drafts `SPEC-round-b-2.md` · §1 ①~⑦ · §2 양성 대조 셋) · 레인 디렉터리 `/tmp/claude-1000/-home-laptop/a5006bbe-a0f2-432d-97d2-b3b14a2f84eb/scratchpad/sol-coder-round-b-2/`(`status` PID/START/EXIT · `final.txt`) · 예상 20~40분. 회수 = 총괄 재현(§4 + 양성 대조 셋 직접) → worktree 커밋 → rebase·ff → **T31·T32 소라운드 발주**(감사 합본).
 **Owner 사후 확인(신규)** — ⓖ RC-2 처분의 규율 11 판단(「12 우주 단언 + 골든이 재정을 강제하므로 기본값 입법 아님 → 상신 불요」 · §8) ⓗ B″ 감사를 소라운드 감사에 합본한 결정.
 
 > [정정 2026-09-03 · 10차] 아래 9차 문단의 「지금 할 일 = 좁은 재감사 발주」는 **끝났다**. 경위 보존용으로 남긴다.
