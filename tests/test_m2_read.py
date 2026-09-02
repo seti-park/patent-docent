@@ -24,6 +24,7 @@ import os
 import re
 import shutil
 import stat
+import subprocess
 import sys
 
 import pytest
@@ -1780,6 +1781,30 @@ def _ledger_fingerprint(path: str):
     return len(blob), hashlib.sha256(blob).hexdigest()
 
 
+def _main_worktree_by_git(tree: str) -> str:
+    """`tree` 가 속한 **주 작업 트리** — git 에 직접 물어 구한다(`engine.gitpin` 을 거치지 않는다).
+
+    공용 git 디렉터리(`--git-common-dir`)의 부모가 주 작업 트리다. 주 트리에서는 `tree` 자신이고,
+    링크된 worktree 에서는 `.worktrees/<x>` 의 바깥이다. git 을 못 부르면 `tree` 를 돌려준다 —
+    그때는 엔진도 같은 폴백(`git-unavailable`)을 타므로 기대값이 어긋나지 않는다.
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "-C", tree, "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return os.path.realpath(tree)
+    if proc.returncode != 0:
+        return os.path.realpath(tree)
+    common = proc.stdout.strip()
+    if os.path.basename(common) != ".git":
+        return os.path.realpath(tree)
+    return os.path.realpath(os.path.dirname(common))
+
+
 def _direct_engine_ledger_calls() -> list[str]:
     """`shadow_root` 없이 엔진의 원장 기입 경로를 부르는 테스트 코드 자리(파일:행)."""
     guarded = {("read_stage", "run"), ("read_stage", "append_screening_ledger")}
@@ -1812,8 +1837,13 @@ def test_test_suite_does_not_write_production_shadow_ledger(tmp_path) -> None:
     재정 P-U2 가 "표본은 자기완결 미니 세계"라고 못 박은 원칙을 재정 P-U4 의 원장에 적용한다.
     """
     # ① 생산 기본값은 그대로다 — 격리가 생산 자리를 옮긴 것이 아님을 함께 못 박는다(재정 P-U4).
+    #    기대값은 **주 작업 트리**의 `ledgers/shadow/screening.jsonl` 이다 — 링크된 worktree 에서
+    #    돌아도 같다(`engine/paths.py#shadow_ledger_root` ③ · 원장은 worktree 와 함께 사라지면 안 된다).
+    #    2026-09-02 정정: 구 판은 `REPO`(이 파일이 놓인 트리) 를 기대해 `.worktrees/*` 안의 레인
+    #    시험이 자기 잘못 없이 빨개졌다. 주 트리는 엔진(`engine.gitpin`)이 아니라 git 에 **따로**
+    #    물어 구한다 — 같은 함수에서 기대값을 받으면 이 확인은 항진식이 된다.
     production = engine_paths.shadow_screening_ledger()
-    expected = os.path.join(REPO, "ledgers", "shadow", "screening.jsonl")
+    expected = os.path.join(_main_worktree_by_git(REPO), "ledgers", "shadow", "screening.jsonl")
     if production != expected:
         pytest.fail(f"생산 원장 자리가 옮겨졌다: {production!r} (기대 {expected!r})")
 
