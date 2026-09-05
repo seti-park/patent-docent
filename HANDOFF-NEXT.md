@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(31차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(32차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 32차 갱신 — M1b 3차 두 도전 = 둘 다 REVISE 5(M2b-1 MT-1~5 · M2b-2 MU-1~5 · 기각 0 · 값 공간 상신 필요 0).** 원문 `docs/lessons/2026-09-06-astra-m1b-m2b1v3.md`·`-m2b2v3.md` · 처분 `D-20260905-02` **§10** · DISPOSITIONS 257행(41차). 끊긴 지점 = 자문 처분을 발주문으로 옮긴 자리(잔존 5 · 신규 5): **MT-1** 세션 픽스처는 수집 뒤 설치 → 감싸기를 `pytest_sessionstart` 에서 · **MU-1** 「PermissionError 부재 = 열지 않음」 불성립(구 코드 `except OSError` 흡수) → `_bare_sha256_file` 호출 계수 · **MU-2** V6 제거해도 V7 이 로그 ⑶ 을 잡음 → 토큰 변화로 검출 · **MT-3·MU-3** 대조표에 관측 열과 시험 판정 열 분리 · MT-2(사유 토큰) · MT-4(exit 5 · 프로브 재설치) · MT-5(②③ 개별 제거) · MU-4(grep) · MU-5(m16 사실). **지금 할 일 = 두 발주문 v5 → M1b 4차(지적 `MV-*`/`MW-*` · 레인 `pd-lanes/astra-m1b-m2b1v4/`·`-m2b2v4/` · 사본 재핀 = 이 기록 커밋) → PASS → sol-coder M2b-1 → 재현 → 병합 → M2b-2 → fable xhigh 감사.** 규약은 31차 이하 그대로.
+
+> [정정 2026-09-06 · 32차] 아래 31차 문단의 「지금 할 일 = 두 발주문 v4 저작 → M1b 3차」는 **끝났다**(둘 다 REVISE 5 → §10). 경위 보존용으로 남긴다.
 
 **★ 09-06 31차 갱신 — 자문 회신 접수 · 처분 완료(NOT-READY · 8건 전부 수용 · 재정 사항 0).** 원문 = `docs/lessons/2026-09-06-astra-advice-m2b-gate-and-values.md`(봉투 `~/projects/workspaces/advice/m2b-gate-and-values-20260905-2357/REPLY.md` · ENVELOPE sha 일치) · 처분 = `docs/decisions/D-20260905-02-pdm2b-seats.md` **§9**(질문 ⓐ~ⓗ 답·처분 표 + 지적별) · DISPOSITIONS 247행(40차). **끊긴 지점**: M2b-1 = 정적 규칙을 **즉시 평가 (부모, 필드) 닫힌 허용 목록**으로(A-01) · 헬퍼에 호출 대상 결속(`read_stage.shadow_screening_ledger` 감싸기 · A-02) · 원장 경로 realpath/samefile 을 쓰기 전에(A-03) · **시험 전용 두 층 = `tests/conftest.py` `pytest_sessionstart` 정적 관문 + 세션 autouse `append_screening_ledger` 생산 거부**(A-04 · 함수는 `tests/ledger_guard.py`) · 헬퍼 음성 9칸(A-05). M2b-2 = `read_run`·`task` **소속 검사**(B-01 · `READ_RUNS`·`LANE_TASKS` 상수 + 다리 시험) · **`lane_file`** 말단 경로 포함(B-02 · 5 호출 자리) · 종료선·비게시 강제 미구현 = SPEC §8.4 **G-12** 백로그 등재. 절차 = 두 발주문에 **§0′ 변경별 증명표**(C-01) · §2 대조 = 완성본 기준 최소 변조(ⓖ). 엔진 동적 강제(ⓑ)는 **이연**(시험 전용 층이 부족하다고 확인될 때 Owner 재정). **지금 할 일 = 두 발주문 v4 저작(drafts `SPEC-round-m2b1.md`·`SPEC-round-m2b2.md` · v3 는 `.v3.md`) → M1b 3차 각각(사본 재핀 = 이 기록 커밋 · 지적 `MT-*`/`MU-*` · 레인 `pd-lanes/astra-m1b-m2b1v3/`·`astra-m1b-m2b2v3/`) → PASS → sol-coder M2b-1(worktree `round-m2b1` · 이 기록 커밋 분기) → 재현 → 병합 → M2b-2 → fable xhigh 감사.** 좌석·자문·킵얼라이브 규약은 30차 이하 그대로.
 
