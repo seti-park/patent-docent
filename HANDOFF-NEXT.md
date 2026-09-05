@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(37차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(38차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 38차 갱신 — PD-M2b 합본 감사(fable xhigh · M9 4회째) = PASS · LOW 6(RL-1~6) → PD-M2b 집행분 감사상 종결**(`docs/lessons/2026-09-06-fable-audit-round-m2b.md` · `D-20260905-02` **§16** · DISPOSITIONS 278행(45차 · RL-2 로 §0 계수를 실물 60/12/72 로 정정 · RL-3 로 「행 수 = 데이터 행만」)). 감사 세션 사고 1 = 감사자가 pytest 를 배경으로 띄우고 「기다리겠다」로 응답 → 단발 모드 종료 → `--resume` 재접속으로 판정 회수(**LANE-RUNTIME 함정 N** · 안내문 정본 drafts `fable-audit-brief-header.md`). 처분: RL-1~3 기록 정정(이 커밋) · RL-4 발주문 문언 · RL-5(conftest 원본 보관 우회)·RL-6(`lane_file` name) **이월 → 다음 코드 라운드**. **지금 할 일 = T40 ④ A 비교 실측 착수**(재정 `ruling-20260905-05-T40.md` §4 · 소재 WO2026-128750 · 계측 브랜치에 계약 값만 다른 커밋 셋(main 무접촉) · R0 현행 좌석 재런(잡음 폭) · R1 decompose·synthesize `opus-5/xhigh` · R2 ground-dependent `sonnet-5/high` · 레인 = Workflow `{model, effort}` 하드 지정 · `run_kind: partial` · 임계 선등록 = §4 ① ② · 기준 = 09-01 런 `runs/gdm-wo2026128750a1-agent-memory`(engine `d4e6ca2`) · 결과 표 + Owner 발췌 2건 → ①② 재정(한 줄 회신 또는 새 브리핑) → M2b-3 좌석 값 커밋(+ RL-5·6 이월분)). 실측 설계는 새 국면이라 **압축 뒤 ROUTING §5 재독 · 발주문 §0′ 증명표 형식 · Workflow model 하드 지정**(기억 `workflow-model-inherit-trap`)부터. 규약은 37차 이하 그대로.
+
+> [정정 2026-09-06 · 38차] 아래 37차 문단의 「지금 할 일 = 감사 회수」는 **끝났다**(PASS · §16). 경위 보존용으로 남긴다.
 
 **★ 09-06 37차 갱신 — 합본 감사 발주문 M1b 도전 = REVISE 9(MX-1~9 · HIGH 1 = 레인 diff 는 축약본 · 전부 수용 · `D-20260905-02` §15) → v2 → 재도전 없이 fable xhigh 감사 발주.** 사본 `~/projects/workspaces/pd-audit-round-m2b`(재핀 = 이 기록 커밋) · 레인 `pd-lanes/fable-audit-round-m2b/`(brief.md · runner.sh · `setsid nohup` · Monitor `EXIT=`) · basetemp `pd-audit12-basetemp` · 지적 `RL-*`. **지금 할 일 = 감사 회수**(`status` `EXIT=` → `out.txt`·`usage.json` → 원문 `docs/lessons/2026-09-06-fable-audit-round-m2b.md` 규율 10 보존 → DISPOSITIONS → D-02 §16 처분 → FAIL 이면 수리 라운드(sol-coder · M1b) · PASS 면 **T40 ④ A 비교 실측 착수**(계측 브랜치 · R0/R1/R2 · Workflow · `run_kind: partial`)). 규약은 36차 이하 그대로.
 
