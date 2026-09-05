@@ -1,15 +1,21 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-05(16차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-05(17차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
 
-**★ 09-05 16차 갱신 — 라운드 RE 병합(`573dcdc` · RE-1·RE-3·RE-4 + 감사자 ⒜⒝ · sol-coder 1턴 · 레인 디렉터리 홈 fs · 총괄 재현 pytest 두 모드·관문 7종·self-test · **차별 대조 셋 = 새 시험 2건이 수리 전 코드에서 붉고 수리 후 초록 · RE-1 은 한 줄 삭제** · ⒜ 고유 변조 없음). 기록 = `D-20260903-04` **§13**(재현표 · 차별 대조 · **일시 실패 4건 [미확인]** — plain 1회차만 · 재실행 전건 초록 · 명단 3건은 총괄이 `tail` 로 잃음 → 골격 ⑽ 추기) · **§14**(레인 보고 전문).**
+**★ 09-05 17차 갱신 — 라운드 RE 좁은 재감사 2(opus max · `docs/lessons/2026-09-05-opus-audit-round-re.md`) = FAIL 8건(MED 3 · LOW 5 · 처분 `D-20260903-04` **§15** · DISPOSITIONS 146행). 값·집행은 닫혔다(RE-4·5·6 closed · hunk 0 · 실런 판독본 3건 전후 sha256 동일 · 감사자 plain 2회 초록). 다섯이 다시 증명 방식 — RF-1 허용 실행값 확장에 시험 0(원복해도 전건 초록) · RF-2 「고유 변조 없음」은 탐색 공간의 함수(실제 고유 관할 = 계약+관문 사본 협조 편집 · 변조 H) · RF-3 §13 기제 귀속 무근거(공유 자원은 머신 수준) · RF-4 혼재 침묵 · RF-5 `[a,a]` 거짓 일치 · RF-6 N 단언 판별력 0 · RF-7 16차 줄 · RF-8 골격 ⒀ 한 방향. 전부 수용 → 문서 넷은 이 커밋(§13 재정정 · ⒀ 개정 · ⑾ 추기 `TMPDIR` · **⒁ 신설** 탐색 공간 명시) · 코드 넷 + ⒜ 주석은 **라운드 RF**.**
+**Owner 결정(육성 「전부 추천대로 진행 부탁해」 · 11:1x)** = ⑴ `screening_memos[].read_run` enum 결속 ⓐ · ⑵ `reported_by` `maxItems: 2` ⓐ · ⑶ LANE-RUNTIME 함정 편입은 L-049·L-050 이관 때 · ⑷ 사후 확인 ⓖ~ⓠ 추인 → **재정 T35·T36**(`ruling-20260905-01-T35-T36.md` · 다음 커밋 · RULINGS-LEDGER §3 두 행 → 포인터).
+**지금 할 일 = 라운드 RF + T35 합본 발주 → 회수**(sol-coder · worktree `round-rf-t35` · 발주문 drafts `SPEC-round-rf-t35.md` · 레인 디렉터리 홈 fs `~/projects/workspaces/pd-lanes/sol-coder-round-rf-t35/` · **반경 둘이 겹치지 않으므로 커밋은 둘**(RF · T35) · 차별 대조는 ⒀ 개정판 두 방향 · `TMPDIR` 홈 fs) → 병합 → **좁은 재감사 3**(opus max · `RG-*` · RF+T35 합본 · 종료 조건 마커 한 줄) → PASS 면 **PD-M2a 라운드 B 계열 종결 상신**. 세션이 끊겼다면 레인 디렉터리의 `status`(`EXIT=`)·`final.txt` 로 회수한다. **Owner 사후 확인(신규)** — **ⓡ 재감사 2 RF-1~RF-8 전부 수용 · RF 와 T35 를 한 worktree 에 합본한 결정 · 골격 ⒁ 신설·⒀ 개정·⑾ 추기**.
+
+> [정정 2026-09-05 · 17차] 아래 16차 문단의 「지금 할 일 = 좁은 재감사 2 회수」는 **끝났다**(FAIL 8 → §15). 경위 보존용으로 남긴다.
+
+**★ 09-05 16차 갱신 — 라운드 RE 병합(`573dcdc` · RE-1·RE-3·RE-4 + 감사자 ⒜⒝ · sol-coder 1턴 · 레인 디렉터리 홈 fs · 총괄 재현 pytest 두 모드·관문 7종·self-test · **차별 대조 셋 = 새 시험 2건이 수리 전 코드에서 붉고 수리 후 초록 · RE-1 은 한 줄 삭제** · ⒜ 고유 변조 없음). 기록 = `D-20260903-04` **§13**(재현표 · 차별 대조 · **일시 실패 4건**([미확인] → 정정 → **재정정 RF-3** · §13) — plain 1회차만 · 재실행 전건 초록 · 명단 3건은 총괄이 `tail` 로 잃음 → 골격 ⑽ 추기) · **§14**(레인 보고 전문).**
 **지금 할 일 = 좁은 재감사 2 회수**(`좌석 M9` opus max · 발주 = 이 커밋 직후 · 대상 = `573dcdc` 전 hunk + RE-1~RE-6 폐쇄 + §13·§14 · 지적 ID **`RF-*`** · 격리 사본 `/home/laptop/projects/workspaces/pd-audit-round-re`(clone · **이 커밋** 체크아웃 · `.audit-sandbox` 마커) · 발주문 = drafts `AUDIT-ORDER-round-re.md` · **레인 디렉터리 = 홈 fs `/home/laptop/projects/workspaces/pd-lanes/opus-audit-round-re/`**(`status` 의 `EXIT=` · `raw.json` → `jq -r .result` = 원문 · `usage.json`) · 종료 조건 = status 는 `?? .audit-sandbox` 한 줄 · **감사 중 정본 커밋 금지**). **세션이 끊겼다면**: `status` 에 `EXIT=` 가 있으면 회수(원문 → `docs/lessons/2026-09-05-opus-audit-round-re.md` · 규율 10 머리말 · `지적 열거 =` · DISPOSITIONS §0·§1 · D-04 §15 처분) · 없고 프로세스도 없으면 사망(재발주) · PASS 면 **PD-M2a 라운드 B 계열 종결 상신** · FAIL 이면 라운드 RF.
-**Owner 결정 2건(한 재정)** = ⑴ `screening_memos[].read_run` enum 결속(추천 ⓐ) ⑵ `reported_by` `maxItems: 2`(추천 = 넣는다) — 자료 = 아티팩트 `b1d1ce3c-…` · drafts `OWNER-DECISION-read-run-enum.html`. **Owner 사후 확인(누적)** — ⓖ~ⓟ(15차) + **ⓠ 일시 실패 4건 — 원인은 중복 인스턴스(같은 대화의 데몬 배경 잡)가 같은 worktree 에서 pytest 를 동시에 돌린 간섭으로 확인**(§13 정정 · 재실행 전건 초록 · 그 인스턴스는 커밋·잔재 0 보고 · Owner 가 그 배경 잡을 닫아야 한다 · 새 함정 = 기억 `duplicate-session-instance-trap`).
+**Owner 결정 2건(한 재정)** = ⑴ `screening_memos[].read_run` enum 결속(추천 ⓐ) ⑵ `reported_by` `maxItems: 2`(추천 = 넣는다) — 자료 = 아티팩트 `b1d1ce3c-…` · drafts `OWNER-DECISION-read-run-enum.html`. **Owner 사후 확인(누적)** — ⓖ~ⓟ(15차) + **ⓠ 일시 실패 4건 — 중복 인스턴스(같은 대화의 데몬 배경 잡)의 동시 pytest 와 시각이 겹친 것은 확인 · 기제는 머신 수준 자원 경합 가설(§13 재정정 RF-3 — 「같은 worktree」 귀속은 근거 없음) · 재실행 전건 초록 위에서 병합** · 그 인스턴스는 커밋·잔재 0 보고 · Owner 가 그 배경 잡을 닫아야 한다 · 기억 `duplicate-session-instance-trap`.
 
 > [정정 2026-09-05 · 16차] 아래 15차 문단의 「지금 할 일 = 라운드 RE 발주 → 회수」는 **끝났다**(`573dcdc`). 경위 보존용으로 남긴다.
 
