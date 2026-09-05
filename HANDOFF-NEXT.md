@@ -1,11 +1,16 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-05(23차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-05(24차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-05 24차 갱신 — 재감사 5(RI · M9 fable xhigh 첫 적용 · `docs/lessons/2026-09-05-fable-audit-round-m2a1.md`) = PASS · LOW 3(RI-1 시험 공백 → M2a-2 ⑤ 이월 · RI-2·RI-3 기록 오기 정정) · `D-20260903-04` §33(첫 관측 = 54턴 · 18.5분 · $5.95 · 절단 없음).** 라운드 M2a-1(B-1) 감사상 닫힘. Owner 결정 대기 **0**.
+**지금 할 일 = 라운드 M2a-2(G-5 · 재정 T38 집행).** 발주문 drafts `SPEC-round-m2a2.md`(v1 · 좌표 `c7b97f1` 판 · ⑤ = RI-1 ⓓ1 시험) → **M1b astra high 도전**(`sol-audit.sh run --model gpt-6-astra --effort high` · setsid · 사본 = 이 기록 커밋 detached + `bundle/`) → PASS/REVISE 반영 → sol-coder(worktree `round-m2a2` · `setsid nohup` · 레인 `pd-lanes/sol-coder-round-m2a2/`) → 총괄 재현(전체 pytest 두 모드 순차 · 홈 fs basetemp/TMPDIR · 차별 대조 (i) 구 트리 직접) → 커밋 → **리포 루트 cwd 에서** rebase·ff 병합·worktree 제거 → 기록 커밋 → 재감사 6(fable xhigh · 러너 템플릿 drafts `fable-audit-runner.template.sh` · 안내문 `fable-audit-brief-preamble.md`). 백로그 8(§27 ⑴~⑺ + §33 ⑻ `__pycache__` 누출).
+
+> [정정 2026-09-05 · 24차] 아래 23차 문단의 「지금 할 일 = 재감사 5」는 **끝났다**(PASS). 경위 보존용으로 남긴다.
 
 **★ 09-05 23차 갱신 — 라운드 M2a-1(B-1 · 재정 T3 집행) 병합 `0f00dc7`**(sol-coder · 발주문 v3 · M1b astra high 2회 경유 · 재현 819/819 두 모드 · 차별 대조 (i) 구 6 붉음→신 8 초록 · `D-20260903-04` **§30** 회수 · §31 레인 보고). **재정 T38 등재 `f3bd05b`**(G-5 전제 셋 · `ruling-20260905-03-T38.md` · Owner 결정 대기 **0**).
 **지금 할 일 = 재감사 5(RI) — M9 fable xhigh 첫 적용.** **[추기 16:4x] M1b astra high(재감사 5 발주문) = REVISE 2(MI-1·MI-2 · MED · §32) → 발주문 정정 → 발주(사본 재핀 = 이 기록 커밋).** 발주문 drafts `AUDIT-ORDER-round-m2a1.md`(대상 `0f00dc7` + 이 기록 커밋) → M1b astra high 도전(`sol-audit.sh run --model gpt-6-astra --effort high` · setsid) → 감사 발주(LANE-RUNTIME 「M9 감사 호출 꼴」 · 러너 템플릿 drafts `fable-audit-runner.template.sh` · 격리 사본 `~/projects/workspaces/pd-audit-round-m2a1` + `.audit-sandbox` 마커 · basetemp/TMPDIR 홈 fs `pd-audit8-basetemp` · setsid · `usage.json` 보존) · **감사 중 정본 커밋 금지**. PASS → **라운드 M2a-2(G-5 · 재정 T38)**: 발주문 초안 drafts `SPEC-round-m2a2.md` v1(좌표는 `0f00dc7` 판 `read.py` 로 재실측 뒤 확정) → M1b astra high → sol-coder(worktree `round-m2a2`) → 재현 → 병합 → 재감사 6. **절차 주의(§30)**: 병합·worktree 제거는 **리포 루트 cwd** 에서 — worktree 안에서 `merge --ff-only` 는 자기 브랜치 no-op 이고 `worktree remove` 가 cwd 를 지운다.
