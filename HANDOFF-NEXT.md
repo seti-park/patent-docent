@@ -1,11 +1,16 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-05(28차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-05(29차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-05 29차 갱신 — 재정 T39: PD-M2a 러너 무결성(B-1 + G-5) 종결 선언(① A) · 사후 확인 ⓦ fail-closed 추인(② A)**(`ruling-20260905-04-T39.md` · 브리핑 `3292f4fc-…` 2판 배너 · `D-20260903-04` §46). 열린 사후 확인 = **없음**. Owner 재정 대기 = **0**.
+**지금 할 일 = PD-M2b 착수 — 발주문 설계부터.** 로드맵 정본 = `ruling-20260901-06-T15.md` §1 ⒜(PD-M2b = G-1~G-4 좌석·계약 어휘 · B-2 `lane_id` 어휘·경계 강제(재정 T4)) + **백로그 ⑼**(정적 관문 `_direct_engine_ledger_calls` 가 `shadow_root=None` 을 통과 · `D-04` §45 · 첫 소라운드 후보) + ⓦ 부속 docstring 한 줄(`_write_shadow_pointer` refused 분기 · 첫 커밋에). 절차 = 설계 메모 → M1b astra high 도전(PASS 까지) → sol-coder(worktree · `setsid nohup` · 레인 홈 fs) → 총괄 재현(전체 두 모드 순차 · 홈 fs basetemp/TMPDIR · 차별 대조 직접) → 커밋·rebase(worktree) → 병합·worktree 제거(**리포 루트 cwd**) → 기록 → fable xhigh 감사(러너 템플릿 drafts `fable-audit-runner.template.sh` · 안내문 `fable-audit-brief-preamble.md` · **발주 직전 `brief.md` 판 표식 실측** · Monitor 감시) · 자문 트리거는 `advice-bundle.sh` 봉투(L-054). 백로그 9 = `D-04` §27 ⑴~⑺ · §33 ⑻ · §45 ⑼.
+
+> [정정 2026-09-05 · 29차] 아래 28차 문단의 「지금 할 일 = T39 종결 상신 브리핑 발행」은 **끝났다**(T39). 경위 보존용으로 남긴다.
 
 **★ 09-05 28차 갱신 — 좁은 재감사 7(RK · fable xhigh 3회째 · `docs/lessons/2026-09-05-fable-audit-round-m2a3.md`) = PASS · 신규 0 · RJ-1~4 closed · `D-20260903-04` **§45**(계열 종합 · M9 관측 3 = 25턴 · 12.3분 · $4.85 · 백로그 ⑼ 후보).** **PD-M2a 러너 무결성(B-1 + G-5) 감사상 닫힘.** 열린 사후 확인 = ⓦ 1건(+ RJ-5 병기). Owner 재정 대기 = **T39(발행 예정)**.
 **[추기 20:1x] T39 브리핑 발행 = 아티팩트 `3292f4fc-f855-4846-8f22-8637e4b98a26`(drafts `OWNER-BRIEF-T39-m2a-closure.html` · 회신 서식 `T39: ① A / ② A` · ① 국면 종결 A 지금/B 백로그 ⑼ 뒤/C 전면 재감사 뒤 · ② ⓦ A fail-closed 추인/B fail-open/C fail-closed+refused 기록). Owner 결정 대기 1건.** **지금 할 일 = T39 종결 상신 브리핑 발행**(`/decision-brief` · drafts `OWNER-BRIEF-T39-m2a-closure.html` · 재정 ① 종결 선언 ② ⓦ 처분 A/B/C · RJ-5 병기 · 자잘 = 백로그 ⑻⑼ · 다음 = PD-M2b) → Owner 회신 `T39: ① A / ② A` → `ruling-20260905-04-T39.md` · RULINGS-LEDGER §2 · 브리핑 2판 배너 → **PD-M2b(G-1~G-4 · B-2)** 발주문 설계(M1b astra high → sol-coder → fable xhigh 감사 · 좌석 규약 = 이 파일 위 추기 · 자문은 advice-bundle 봉투). 상신 발행 = 단계 경계 → `/compact`.
