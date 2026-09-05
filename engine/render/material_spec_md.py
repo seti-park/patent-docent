@@ -93,6 +93,11 @@ def _fact_line(item: dict) -> str:
     )
 
 
+def _has_duplicate_values(values: list) -> bool:
+    """JSON 값의 해시 가능성을 가정하지 않고 같은 값의 재등장을 찾는다."""
+    return any(value in values[:index] for index, value in enumerate(values))
+
+
 def render(
     spec: dict,
     convergence: dict | None = None,
@@ -483,40 +488,46 @@ def render(
             and len(entry["reported_by"]) == 1
             and all(reporter in allowed_reporters for reporter in entry["reported_by"])
         ]
+        invalid_attribution_count = sum(
+            not isinstance(entry.get("reported_by"), list)
+            or len(entry["reported_by"]) >= 3
+            or any(reporter not in allowed_reporters for reporter in entry["reported_by"])
+            or _has_duplicate_values(entry["reported_by"])
+            for entry in early_unclassified
+        )
+        # 10-b 갈래 우선 규칙: 현행 술어가 하나라도 참이면 귀속 없음 한 줄만 낸다.
+        # 규격 밖·표·전건 일치 판정은 이 가드가 거짓일 때만 적용한다.
         if missing_attribution:
             out("귀속 정보 없음 — 구 판 산출(재정 T23 이전)")
             out()
-        elif all(
-            isinstance(entry.get("reported_by"), list)
-            and len(entry["reported_by"]) == 2
-            and all(reporter in allowed_reporters for reporter in entry["reported_by"])
-            for entry in early_unclassified
-        ):
-            out("갈린 신고 없음 — 두 실행의 미분류 신고가 전건 일치")
-            out()
-        elif split_reports:
-            out("| `reported_by` | `claim` | `dependency_type` | `text_status` | `text_verbatim` |")
-            out("|---|---|---|---|---|")
-            for entry in split_reports:
-                reported_by = ", ".join(entry.get("reported_by") or [])
-                out(
-                    f"| `{reported_by}` | `{entry.get('claim', '')}` | "
-                    f"`{entry.get('dependency_type', '')}` | `{entry.get('text_status', '')}` | "
-                    f"{entry.get('text_verbatim', '')} |"
-                )
-            out()
         else:
-            invalid_attribution_count = sum(
-                not isinstance(entry.get("reported_by"), list)
-                or len(entry["reported_by"]) >= 3
-                or any(reporter not in allowed_reporters for reporter in entry["reported_by"])
+            if invalid_attribution_count:
+                out(
+                    "귀속 값이 규격 밖 — 두 실행(read-a·read-b) 외 값 또는 형태 이상 · "
+                    f"갈린 신고 판정 불가 · 항목 {invalid_attribution_count}건"
+                )
+                out()
+            if split_reports:
+                out("| `reported_by` | `claim` | `dependency_type` | `text_status` | `text_verbatim` |")
+                out("|---|---|---|---|---|")
+                for entry in split_reports:
+                    reported_by = ", ".join(entry.get("reported_by") or [])
+                    out(
+                        f"| `{reported_by}` | `{entry.get('claim', '')}` | "
+                        f"`{entry.get('dependency_type', '')}` | `{entry.get('text_status', '')}` | "
+                        f"{entry.get('text_verbatim', '')} |"
+                    )
+                out()
+            elif all(
+                isinstance(entry.get("reported_by"), list)
+                and len(entry["reported_by"]) == 2
+                and all(reporter in allowed_reporters for reporter in entry["reported_by"])
+                and not _has_duplicate_values(entry["reported_by"])
                 for entry in early_unclassified
-            )
-            out(
-                "귀속 값이 규격 밖 — 두 실행(read-a·read-b) 외 값 또는 형태 이상 · "
-                f"갈린 신고 판정 불가 · 항목 {invalid_attribution_count}건"
-            )
-            out()
+            ):
+                # all([])도 참이다. 미분류 0건은 현행 계약대로 전건 일치로 표면화한다.
+                out("갈린 신고 없음 — 두 실행의 미분류 신고가 전건 일치")
+                out()
 
     # -- 11. 맹검 스크리닝 메모 (재정 P-A · P-U4) ---------------------------
     memos = convergence.get("screening_memos") or []

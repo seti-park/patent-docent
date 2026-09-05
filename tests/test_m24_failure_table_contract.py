@@ -126,8 +126,8 @@ def test_terminal_action_and_gate_escalation_fail_closed() -> None:
     contract = load_stage_contract("read", None)
     schema = _check_row(contract, "read.schema")
     mutations = []
-    no_then = copy.deepcopy(schema); no_then.pop("then"); mutations.append(no_then)
-    retry_then = copy.deepcopy(schema); retry_then["then"] = "retry(1)"; mutations.append(retry_then)
+    no_then = copy.deepcopy(dict(schema)); no_then.pop("then"); mutations.append(no_then)
+    retry_then = copy.deepcopy(dict(schema)); retry_then["then"] = "retry(1)"; mutations.append(retry_then)
     nonretry_then = copy.deepcopy(failure_row_of_kind(contract, "gate-escalation")); nonretry_then["then"] = "halt"; mutations.append(nonretry_then)
     for row in mutations:
         with pytest.raises(StageError):
@@ -260,6 +260,10 @@ def test_ledger_exclusions_derive_exit_retry_independently() -> None:
     contract_exit = set(_point(contract, "exit")["checks"])
     if contract_exit != derived:
         pytest.fail(f"계약 exit 승인 집합이 원장 도출값과 다르다: {sorted(derived)!r}")
+    # 이 단언이 고유하게 무는 것 = 계약(`read.yaml`)과 관문 동결 사본
+    # (`tools/check_failure_table.py` `APPROVED_FAILURE_TABLE`)의 협조 편집(예: 두 곳의
+    # `action: escalate → halt`). 계약 단독 변조는 관문 G1 이 항상 잡으므로 이 단언은 그 경우
+    # 형제 시험과 함께 붉을 뿐이다 — docstring 「계약·엔진·관문 사본과 독립」의 실물.
     for check_id in POST_LOOP_NO_RETRY:
         row = _check_row(contract, check_id)
         if not (

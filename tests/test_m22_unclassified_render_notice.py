@@ -228,41 +228,134 @@ def test_early_union_renders_only_split_reports_with_full_attribution() -> None:
         pytest.fail("두 실행이 일치 신고한 항목이 갈린 신고 표에 들어갔다")
 
 
-def test_early_union_out_of_spec_attribution_always_renders_a_verdict() -> None:
-    """규격 밖 귀속에서도 10-b가 제목만 남기면 판정 표면의 전역성이 깨진다."""
-    cases = (
-        (["read-a", "read-b", "read-c"], 1),
-        ("read-a", 1),
+MISSING_REPORTED_BY = object()
+
+
+ATTRIBUTION_SHAPE_CASES = (
+    pytest.param([["read-a"], []], 1, 0, 0, 0, 0, id="G01-singleton-plus-empty"),
+    pytest.param([[]], 1, 0, 0, 0, 0, id="G02-empty-list"),
+    pytest.param([MISSING_REPORTED_BY], 1, 0, 0, 0, 0, id="G03-key-absent"),
+    pytest.param([None], 1, 0, 0, 0, 0, id="G04-null"),
+    pytest.param([False], 1, 0, 0, 0, 0, id="G05-false"),
+    pytest.param([0], 1, 0, 0, 0, 0, id="G06-zero"),
+    pytest.param([""], 1, 0, 0, 0, 0, id="G07-empty-string"),
+    pytest.param([{}], 1, 0, 0, 0, 0, id="G08-empty-object"),
+    pytest.param([[], ["read-c"], ["read-a"]], 1, 0, 0, 0, 0, id="G09-empty-plus-invalid-plus-singleton"),
+    pytest.param([["read-a", "read-b", "read-c"]], 0, 1, 1, 0, 0, id="I01-length-three"),
+    pytest.param(["read-a"], 0, 1, 1, 0, 0, id="I02-string"),
+    pytest.param([5], 0, 1, 1, 0, 0, id="I03-number"),
+    pytest.param([{"read-a": 1}], 0, 1, 1, 0, 0, id="I04-object"),
+    pytest.param([["read-c"]], 0, 1, 1, 0, 0, id="I05-unknown-singleton"),
+    pytest.param([["read-c", "read-d"]], 0, 1, 1, 0, 0, id="I06-two-unknown-values"),
+    pytest.param([["read-a", "read-b"], ["read-c"]], 0, 1, 1, 0, 0, id="I07-agreement-plus-invalid"),
+    pytest.param([["read-a", "read-a"]], 0, 1, 1, 0, 0, id="I08-duplicate-a"),
+    pytest.param([True], 0, 1, 1, 0, 0, id="I09-true"),
+    pytest.param([[None]], 0, 1, 1, 0, 0, id="I10-list-null"),
+    pytest.param([[False]], 0, 1, 1, 0, 0, id="I11-list-false"),
+    pytest.param([[{}]], 0, 1, 1, 0, 0, id="I12-list-object"),
+    pytest.param([[[]]], 0, 1, 1, 0, 0, id="I13-list-list"),
+    pytest.param([[{}, {}]], 0, 1, 1, 0, 0, id="I14-duplicate-unhashable-objects"),
+    pytest.param([["read-b", "read-b"]], 0, 1, 1, 0, 0, id="I15-duplicate-b"),
+    pytest.param(
+        [["read-a", "read-b", "read-c"], ["read-a", "read-b", "read-c"]],
+        0,
+        1,
+        2,
+        0,
+        0,
+        id="I2-01-two-length-three-items",
+    ),
+    pytest.param(
+        [["read-a"], ["read-a", "read-b", "read-c"]],
+        0,
+        1,
+        1,
+        1,
+        0,
+        id="I1T01-invalid-then-one-table-row",
+    ),
+    pytest.param([["read-a", "read-b"]], 0, 0, 0, 0, 1, id="A01-a-b"),
+    pytest.param([["read-b", "read-a"]], 0, 0, 0, 0, 1, id="A02-b-a"),
+    pytest.param([], 0, 0, 0, 0, 1, id="A03-no-unclassified-items"),
+    pytest.param([["read-a"]], 0, 0, 0, 1, 0, id="T01-singleton-a"),
+)
+
+
+@pytest.mark.parametrize(
+    (
+        "reported_by_values",
+        "expected_missing",
+        "expected_invalid_lines",
+        "expected_invalid_count",
+        "expected_rows",
+        "expected_agreement",
+    ),
+    ATTRIBUTION_SHAPE_CASES,
+)
+def test_early_union_attribution_shape_table(
+    reported_by_values,
+    expected_missing: int,
+    expected_invalid_lines: int,
+    expected_invalid_count: int,
+    expected_rows: int,
+    expected_agreement: int,
+) -> None:
+    """MB-2 형태표 30사례 — 우선순위·계수·표·합의와 혼재 순서를 사례별 고정한다."""
+    entries = []
+    for index, reported_by in enumerate(reported_by_values):
+        entry = {
+            "claim": f"CL-{index + 3}",
+            "dependency_type": "unclassified",
+            "text_status": "verbatim",
+            "text_verbatim": f"Attribution shape case item {index + 1}.",
+        }
+        if reported_by is not MISSING_REPORTED_BY:
+            entry["reported_by"] = reported_by
+        entries.append(entry)
+
+    rendered = render_unclassified(
+        [], convergence_early={"unclassified_dependents": entries}
     )
-    for reported_by, expected_count in cases:
-        rendered = render_unclassified(
-            [],
-            convergence_early={
-                "unclassified_dependents": [
-                    {
-                        "claim": "CL-3",
-                        "dependency_type": "unclassified",
-                        "text_status": "verbatim",
-                        "text_verbatim": "Out-of-contract attribution shape.",
-                        "reported_by": reported_by,
-                    }
-                ]
-            },
+    block = rendered.split(
+        "## 10-b. ★ 조기 합집합 — 두 실행이 갈린 미분류 신고 (재정 T31)", 1
+    )[1].split("## 11. ★ 맹검 스크리닝 메모", 1)[0]
+    invalid_line = "귀속 값이 규격 밖 — 두 실행(read-a·read-b) 외 값 또는 형태 이상"
+    table_header = "| `reported_by` | `claim` | `dependency_type` | `text_status` | `text_verbatim` |"
+    agreement_line = "갈린 신고 없음 — 두 실행의 미분류 신고가 전건 일치"
+    rows = [line for line in block.splitlines() if line.startswith("| `read-")]
+
+    actual_missing = block.count("귀속 정보 없음 — 구 판 산출(재정 T23 이전)")
+    if actual_missing != expected_missing:
+        pytest.fail(f"귀속 정보 없음 기대 {expected_missing}회, 실제 {actual_missing}회: {block!r}")
+    actual_invalid_lines = block.count(invalid_line)
+    if actual_invalid_lines != expected_invalid_lines:
+        pytest.fail(
+            f"규격 밖 안내 기대 {expected_invalid_lines}회, 실제 {actual_invalid_lines}회: {block!r}"
         )
-        block = rendered.split(
-            "## 10-b. ★ 조기 합집합 — 두 실행이 갈린 미분류 신고 (재정 T31)", 1
-        )[1].split(
-            "## 11. ★ 맹검 스크리닝 메모", 1
-        )[0]
-        if not block.strip():
-            pytest.fail(f"규격 밖 reported_by={reported_by!r} 인데 10-b 본문이 비었다")
-        if block.count("전건 일치") != 0:
-            pytest.fail(f"규격 밖 reported_by={reported_by!r} 에 전건 일치를 선언했다: {block!r}")
-        if block.count("규격 밖") != 1:
-            pytest.fail(f"규격 밖 reported_by={reported_by!r} 안내 기대 1회: {block!r}")
-        expected = f"항목 {expected_count}건"
-        if expected not in block:
-            pytest.fail(f"규격 밖 항목 수 기대 {expected!r}: {block!r}")
+    if expected_invalid_lines:
+        expected_count_text = f"항목 {expected_invalid_count}건"
+        if expected_count_text not in block:
+            pytest.fail(f"규격 밖 계수 기대 {expected_count_text!r}: {block!r}")
+    expected_headers = 1 if expected_rows else 0
+    actual_headers = block.count(table_header)
+    if actual_headers != expected_headers:
+        pytest.fail(f"표 머리 기대 {expected_headers}회, 실제 {actual_headers}회: {block!r}")
+    if len(rows) != expected_rows:
+        pytest.fail(f"표 본문 기대 {expected_rows}행, 실제 {len(rows)}행: {rows!r}")
+    actual_agreement = block.count(agreement_line)
+    if actual_agreement != expected_agreement:
+        pytest.fail(f"전건 일치 기대 {expected_agreement}회, 실제 {actual_agreement}회: {block!r}")
+
+    if expected_missing:
+        forbidden = [token for token in (invalid_line, table_header, agreement_line) if token in block]
+        if forbidden:
+            pytest.fail(f"귀속 없음 우선 갈래에 후순위 출력이 섞였다: {forbidden!r}")
+    if (
+        expected_invalid_lines
+        and expected_rows
+        and block.index(invalid_line) >= block.index(table_header)
+    ):
+        pytest.fail("혼재 출력은 규격 밖 안내 줄이 표 머리보다 앞서야 한다")
 
 
 def test_legacy_run_without_early_verdict_renders_notice_without_error() -> None:
