@@ -8,6 +8,7 @@
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
 
 **★ 09-05 18차 갱신 — 라운드 RF 병합 `2d01e91` + 재정 T35 집행 병합 `4bb2579`**(한 worktree · 4번 발주 · blocked 3 · M1b astra 도전 2회 반영 · 두 커밋 반경 겹침 0 · 총괄 재현 pytest 두 모드·관문 7종·SUMMARY 행·차별 대조 축 (i) 직접 재현 = 구 구현에서 A-차별 3 + B (i) 2 만 붉음). 기록 = `D-20260903-04` **§18**(재현표 · 발주자 오류 12건 — 셋은 레인 blocked · 아홉은 M1b 가 집행 전 포착 · 감사 포착 0) · **§19**(3차 보고) · **§20**(4차 보고).
+**[추기 13:1x] M1b 런 3/3 = REVISE 6(MD-1~MD-6 · `docs/lessons/2026-09-05-astra-m1b-audit3.md` · §21 · 전부 발주자 귀책 · 강등 없음 · 첫 기동은 세션 재개로 사망 → `setsid` 재기동 · 골격 ⑿ 추기). 파일럿 3/3 종료 · **ROUTING v2.1 은 그 사이 M1b 를 astra high 로 확정(L-052 ⑩)** — 다음 M1b 부터 high · 약정 블록 불요. 발주문 정정 뒤 재감사 3 발주.**
 **지금 할 일 = M1b 런 3/3(재감사 3 발주문 도전 · drafts `AUDIT-ORDER-round-rf-t35.md` · 레인 디렉터리 `pd-lanes/astra-m1b-audit3/`) → 정정 → 좁은 재감사 3**(`좌석 M9` opus max · `RG-*` · 사본 `~/projects/workspaces/pd-audit-round-rf-t35` · 레인 디렉터리 홈 fs `pd-lanes/opus-audit-round-rf-t35/` · 대상 = `2d01e91` + `4bb2579` + 기록 커밋 · **감사 중 정본 커밋 금지**) → 회수(원문 `docs/lessons/2026-09-05-opus-audit-round-rf-t35.md` · DISPOSITIONS · D-04 §21 처분) → **PASS 면 PD-M2a 라운드 B 계열 종결 상신** · FAIL 이면 라운드 RG. 세션이 끊겼다면 레인 디렉터리 `status`(`EXIT=`)·`raw.json`/`FINAL` 로 회수. **Owner 사후 확인(누적 · 열린 것)** — ⓡ(재감사 2 처분·합본 결정·⒀⒁⑾) · ⓢ(M1b 상설화 방침 · astra 런 1·2 강등 없음 판정) · **ⓣ RF·T35 두 커밋을 한 worktree·한 레인으로 저작하고 반경별로 가른 것 · 차별 대조 축 (ii) 는 레인 실출력만으로 수락한 것**.
 
 > [정정 2026-09-05 · 18차] 아래 17차 문단과 그 추기들의 「지금 할 일 = 라운드 RF+T35 발주 → 회수」는 **끝났다**(`2d01e91` · `4bb2579`). 경위 보존용으로 남긴다.
