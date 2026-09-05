@@ -12,7 +12,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 if REPO not in sys.path:
     sys.path.insert(0, REPO)
 
-from engine.render.material_spec_md import render  # noqa: E402
+from engine.render.material_spec_md import _has_duplicate_values, render  # noqa: E402
 
 
 def render_unclassified(
@@ -38,6 +38,32 @@ def render_unclassified(
         repo=REPO,
         convergence_early=convergence_early,
     )
+
+
+def test_has_duplicate_values_does_not_assume_hashability() -> None:
+    """이 방어는 렌더 호출점에서 도달 불능(허용값 검사가 앞선다 · 재감사 3 RG-2) —
+    헬퍼 단위에서 해시 가능성 비가정을 고정한다.
+    """
+    # 비해시 객체의 중복과 비중복을 직접 판별한다.
+    if _has_duplicate_values([{}, {}]) is not True:
+        pytest.fail("빈 객체 중복을 찾지 못했다")
+    if _has_duplicate_values([{}, {"a": 1}]) is not False:
+        pytest.fail("서로 다른 비해시 객체를 중복으로 보았다")
+    # 위치와 순서가 달라도 비해시 객체 비교가 보존되어야 한다.
+    if _has_duplicate_values([{}, {"a": 1}, {}]) is not True:
+        pytest.fail("비인접 빈 객체 중복을 찾지 못했다")
+    if _has_duplicate_values([{"a": 1}, {}]) is not False:
+        pytest.fail("역순의 서로 다른 비해시 객체를 중복으로 보았다")
+    # 리스트 원소도 해시 가능성을 가정하지 않고 비교한다.
+    if _has_duplicate_values([[1], [1]]) is not True:
+        pytest.fail("같은 리스트 원소의 중복을 찾지 못했다")
+    if _has_duplicate_values([[1], [2]]) is not False:
+        pytest.fail("서로 다른 리스트 원소를 중복으로 보았다")
+    # 해시 가능한 문자열에 대한 기존 중복 판별도 회귀하지 않는다.
+    if _has_duplicate_values(["read-a", "read-a"]) is not True:
+        pytest.fail("같은 문자열의 중복을 찾지 못했다")
+    if _has_duplicate_values(["read-a", "read-b"]) is not False:
+        pytest.fail("서로 다른 문자열을 중복으로 보았다")
 
 
 def test_unclassified_items_render_actual_attribution_without_the_old_notice() -> None:
