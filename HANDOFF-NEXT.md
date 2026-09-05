@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(32차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(33차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 33차 갱신 — M2b-2 M1b 4차 = REVISE LOW 3(MW-1~3 · 문언만 · 값 공간 상신 0) → v6 → 5차 없이 sol-coder 발주(M2a-1 선례 · `D-20260905-02` §11).** 원문 `docs/lessons/2026-09-06-astra-m1b-m2b2v4.md` · DISPOSITIONS 260행(42차). **순서 변경**: M2b-2 sol-coder 를 먼저(worktree `round-m2b2` · 레인 `pd-lanes/sol-coder-round-m2b2/` · 발주문 v6 = drafts `SPEC-round-m2b2.md`) · M2b-1 은 4차 도전(`pd-lanes/astra-m1b-m2b1v4/` · 지적 `MV-*`) 회수 뒤 — **두 레인의 전체 pytest 는 동시에 돌리지 않는다**(M2b-1 sol-coder 는 M2b-2 레인 EXIT 뒤 기동). **지금 할 일 = sol-coder M2b-2 회수(`status` `EXIT=` · `final.txt`) → 총괄 재현(전체 두 모드 순차 · §2 대조표 직접) → worktree 커밋 · rebase → 리포 루트 cwd 에서 ff 병합 · worktree 제거 → 기록 → M2b-1 4차 회수·처분 → (PASS/LOW 면) sol-coder M2b-1 → 같은 절차 → fable xhigh 감사(합본).** 규약은 32차 이하 그대로.
+
+> [정정 2026-09-06 · 33차] 아래 32차 문단의 「지금 할 일 = 두 발주문 v5 → M1b 4차」는 **끝났다**(M2b-2 = LOW 3 → 집행 · M2b-1 = 회수 대기). 경위 보존용으로 남긴다.
 
 **★ 09-06 32차 갱신 — M1b 3차 두 도전 = 둘 다 REVISE 5(M2b-1 MT-1~5 · M2b-2 MU-1~5 · 기각 0 · 값 공간 상신 필요 0).** 원문 `docs/lessons/2026-09-06-astra-m1b-m2b1v3.md`·`-m2b2v3.md` · 처분 `D-20260905-02` **§10** · DISPOSITIONS 257행(41차). 끊긴 지점 = 자문 처분을 발주문으로 옮긴 자리(잔존 5 · 신규 5): **MT-1** 세션 픽스처는 수집 뒤 설치 → 감싸기를 `pytest_sessionstart` 에서 · **MU-1** 「PermissionError 부재 = 열지 않음」 불성립(구 코드 `except OSError` 흡수) → `_bare_sha256_file` 호출 계수 · **MU-2** V6 제거해도 V7 이 로그 ⑶ 을 잡음 → 토큰 변화로 검출 · **MT-3·MU-3** 대조표에 관측 열과 시험 판정 열 분리 · MT-2(사유 토큰) · MT-4(exit 5 · 프로브 재설치) · MT-5(②③ 개별 제거) · MU-4(grep) · MU-5(m16 사실). **지금 할 일 = 두 발주문 v5 → M1b 4차(지적 `MV-*`/`MW-*` · 레인 `pd-lanes/astra-m1b-m2b1v4/`·`-m2b2v4/` · 사본 재핀 = 이 기록 커밋) → PASS → sol-coder M2b-1 → 재현 → 병합 → M2b-2 → fable xhigh 감사.** 규약은 31차 이하 그대로.
 
