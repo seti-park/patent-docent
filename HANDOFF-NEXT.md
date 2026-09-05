@@ -1,11 +1,16 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-05(25차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-05(26차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-05 26차 갱신 — 재감사 6(RJ · fable xhigh 2회째 · `docs/lessons/2026-09-05-fable-audit-round-m2a2.md`) = FAIL(MED 1 · LOW 4 · **구현 결함 0** · 시험 공백) · `D-20260903-04` §39(관측 2 = 66턴 · 39.3분 · $9.82).** RJ-1~4 → **수리 라운드 M2a-3(시험만 · 엔진 무접촉 · m26 에 ⓙⓚⓛⓜ 추가)** · RJ-5 → ⓦ 상신 병기. 열린 사후 확인 = ⓦ 1건(+ RJ-5 병기). Owner 재정 대기 0.
+**지금 할 일 = 라운드 M2a-3.** 발주문 drafts `SPEC-round-m2a3.md`(시험 4묶음 · 차별 대조 = 감사 원문 ③ 표의 D7·D6 / D2·D2b / D1 / D3·D4·D5 변조가 현 스위트 초록 → 새 시험 붉음) → M1b astra high → sol-coder(worktree `round-m2a3`) → 재현(전체 두 모드 · 차별 대조 직접) → 병합(**리포 루트 cwd**) → 기록 → **좁은 재감사 7(RK · 축소 범위 · fable xhigh · 전체 plain 1모드)** → PASS → **PD-M2a 러너 무결성 종결 상신(T39 · `/decision-brief` · ⓦ + RJ-5 추인 포함)** → PD-M2b.
+
+> [정정 2026-09-05 · 26차] 아래 25차 문단의 「지금 할 일 = 재감사 6」는 **끝났다**(FAIL · 시험 공백). 경위 보존용으로 남긴다.
 
 **★ 09-05 25차 갱신 — 라운드 M2a-2(G-5 · 재정 T38 집행) 병합 `1573591`**(sol-coder · 발주문 v3 · M1b astra high 2회 MJ·MK · 재현 835/835 두 모드 · 차별 대조 (i) 구 13 붉음→신 초록 · `D-20260903-04` **§36** 회수 · §37 레인 보고). **열린 사후 확인 = ⓦ 1건**(판정 불가 = fail-closed StageError · 총괄 재량 · §34·§35 · 뒤집으면 `_run_is_terminated` 의 판정 불가 분기 + m26 ⓘ 시험 기대값). Owner 재정 대기 0.
 **지금 할 일 = 재감사 6(RJ · M9 fable xhigh 2회째).** **[추기 18:0x] M1b astra high(재감사 6 발주문) = REVISE 4(ML-1~4 · MED 2 LOW 2 · §38) → 발주문 정정 → 발주(사본 재핀 = 이 기록 커밋).** 발주문 drafts `AUDIT-ORDER-round-m2a2.md`(대상 `1573591` + 이 기록 커밋 · 자리표 채울 것) → M1b astra high 도전(사본 = 이 기록 커밋 detached + `bundle/`) → 감사 발주(러너 템플릿 `fable-audit-runner.template.sh` · 안내문 `fable-audit-brief-preamble.md` · 사본 `~/projects/workspaces/pd-audit-round-m2a2` · basetemp `pd-audit9-basetemp` · setsid) · **감사 중 정본 커밋 금지** · 감사 중 배경 대기 명령은 메모리 부족으로 죽으니 Monitor 로. PASS → **PD-M2a 러너 무결성 종결 상신**(B-1 + G-5 · `/decision-brief` · ⓦ 추인 포함) → PD-M2b(G-1~G-4 · B-2). 백로그 8(§27 ⑴~⑺ + §33 ⑻).
