@@ -8,7 +8,7 @@
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
 
 **★ 09-05 22차 갱신 — 재정 T37: PD-M2a 라운드 B 계열 종결 선언(① A) · 사후 확인 ⓡ~ⓥ 추인(② A)**(`ruling-20260905-02-T37.md` · 브리핑 `43141fdb-…` 2판 배너). 열린 사후 확인 = **없음**. **좌석 규약 갱신(ROUTING v2.1 · agents `b1aa4ae` 실측 · T37 §3)**: **M1b = astra high** · **M9(sol·astra 저작 감사) = fable xhigh(CLI · allowlist · 폴백 opus xhigh) · opus max 퇴출(L-053)** · M3 sol-coder high · M2 astra medium(약정) — 이 계열의 감사 7회는 당시 정본 opus max 로 돌았다(기록).
-**지금 할 일 = PD-M2 잔여 좌표로 이동.** 후보 순서(총괄 안 · 다음 세션이 실측 뒤 확정): ⑴ **절차 문서 라운드**(PD-M2 절차 문서 · `reader/procedure/` · T33 F1·F2 이력 이동은 골든 뒤 조건 충족 → 이 라운드에 동반) — 백로그 ⑵(출구 재시도 8종 행위 시험)·⑶(`read.run` 프로덕션 호출자·조기 판정서 부재 예외 처분)·⑸(10-b 방어 근거 성문화)를 여기서 ⑵ 백로그 ⑴ reader 폴백 제거는 이식 단위(READER-VERSION · N15) — 별건 ⑶ ⑷ flaky 관측 · ⑹ LANE-RUNTIME 편입(이관 때) · ⑺ LEDGER 셀 형식. 발주문은 **M1b astra high** 를 거쳐 집행 · 감사는 **fable xhigh**(LANE-RUNTIME 「Fable 좌석 호출 경로」 + L-053 allowlist 규격 재독 뒤). **Owner 결정 대기 = 없음.**
+**지금 할 일 = PD-M2 잔여 좌표로 이동.** 후보 순서(총괄 안 · 다음 세션이 실측 뒤 확정): ⑴ **[정정 15:4x] 로드맵 정본은 재정 T15 §1 ⒜·T1 — 다음 = PD-M2a 러너 무결성 = B-1(레인 로그 검사를 디스크 기록본으로 · T3) + G-5(종결 재진입 멱등 가드) · 신규 재정 0 → 라운드 M2a-1**(발주문 drafts `SPEC-round-m2a1.md` · M1b astra high 도전 15:42 기동 `pd-lanes/astra-m1b-m2a1/`) → PD-M2b(G-1~G-4 · B-2) → PD-M2c. 「절차 문서 라운드」라는 앞 문언은 총괄 오기 — T33 ① 은 `8259075` 로 이미 집행됐다. 백로그 ⑵⑶⑸ 는 M2a-1 뒤 또는 M2c 골든과 함께 ⑵ 백로그 ⑴ reader 폴백 제거는 이식 단위(READER-VERSION · N15) — 별건 ⑶ ⑷ flaky 관측 · ⑹ LANE-RUNTIME 편입(이관 때) · ⑺ LEDGER 셀 형식. 발주문은 **M1b astra high** 를 거쳐 집행 · 감사는 **fable xhigh**(LANE-RUNTIME 「Fable 좌석 호출 경로」 + L-053 allowlist 규격 재독 뒤). **Owner 결정 대기 = 없음.**
 
 > [정정 2026-09-05 · 22차] 아래 21차 문단의 「지금 할 일 = Owner 상신」은 **끝났다**(T37). 경위 보존용으로 남긴다.
 
