@@ -114,8 +114,9 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-05-astra-m1b-m2b2.md | 등재 | — |
 | 2026-09-05-astra-m1b-m2b2v2.md | 등재 | — |
 | 2026-09-05-fable-audit-round-m2a3.md | 등재 | — |
+| 2026-09-06-astra-advice-m2b-gate-and-values.md | 등재 | — |
 
-**계수** — `등재` **28** · `선행 종결` **12** · 합 **40**(`docs/lessons/` 전 파일). **[정정 2026-09-03 · 합본 감사 반입]** 직전 판 27/12/39. **[정정 2026-09-03 · B′ 재감사 반입]** 직전 판 26/12/38. **[정정 2026-09-03 · 라운드 B 감사 반입]** 직전 판 25/12/37. **[정정 2026-09-03]** 아래 구 문언 「등재 7 · 선행 종결 12 · 합 19」는 라운드 C 반입(`852cdd`) 시점의 계수이며, 그 뒤 도전 원문 v2~v18 반입이 이 줄을 따라가지 않았다 — 오류 수정(규율 11 ③). 관문 G1 은 집합 상등을 보고 이 계수는 보지 않는다.
+**계수** — `등재` **29** · `선행 종결` **12** · 합 **41**(`docs/lessons/` 전 파일). **[정정 2026-09-06 · 자문 회신 반입]** 직전 판 28/12/40. **[정정 2026-09-03 · 합본 감사 반입]** 직전 판 27/12/39. **[정정 2026-09-03 · B′ 재감사 반입]** 직전 판 26/12/38. **[정정 2026-09-03 · 라운드 B 감사 반입]** 직전 판 25/12/37. **[정정 2026-09-03]** 아래 구 문언 「등재 7 · 선행 종결 12 · 합 19」는 라운드 C 반입(`852cdd`) 시점의 계수이며, 그 뒤 도전 원문 v2~v18 반입이 이 줄을 따라가지 않았다 — 오류 수정(규율 11 ③). 관문 G1 은 집합 상등을 보고 이 계수는 보지 않는다.
 
 **계수** — `등재` **7** · `선행 종결` **12** · 합 **19**(`docs/lessons/` 전 파일).
 
@@ -363,6 +364,16 @@ ROUTING §5 ⑼ *「처분 없이 사라진 지적은 없어야 한다」* 를 �
 | 2026-09-05-astra-m1b-m2b2v2.md | MS-3 | MED | 수용 | 「산출 0」의 배치 조건(입력·법 리포 = run_root 밖) 미명시 · (c) 산출 0 단언 없음(발주자) — v3: 배치 조건 + (a)~(c) 각각 run_root 부재/빈 단언 | `D-20260905-02-pdm2b-seats.md` §8 |
 | 2026-09-05-astra-m1b-m2b2v2.md | MS-4 | MED | 수용 | 로그 위조 「구 코드도 fail」이 Replay 어댑터(지문 null · 면제) 경로에서 불성립(발주자) — v3: FileLaneAdapter 실왕복의 비null 지문 행 · 변조 전 pass / 구판 digest-file-missing + 토큰 부재 / 수리 후 토큰 | `D-20260905-02-pdm2b-seats.md` §8 |
 | 2026-09-05-astra-m1b-m2b2v2.md | MS-5 | LOW | 수용 | containment 제거 시 「symlink 칸만 붉음」 거짓 — 로그 symlink 음성도 붉음(발주자) — v3: 둘 붉음 · 어휘 음성·루트 symlink 양성 초록으로 문언 정정 · §0 :7 의 「:26 = §6.7」 잔재 정정 | `D-20260905-02-pdm2b-seats.md` §8 |
+| 2026-09-06-astra-advice-m2b-gate-and-values.md | A-01 | HIGH | 수용 | 정적 관문의 실행 경계 블랙리스트가 `TypeAlias.value`·`AnnAssign.annotation` 지연 평가를 통과시킨다(자문 축약 재현)(발주자) — v4: 「즉시 평가 (부모 노드, 필드) 닫힌 허용 목록」으로 규칙 전환 · 목록 밖은 전부 offender · 음성 (i)(j)(l) · 양성 (k) `AnnAssign.value` | `D-20260905-02-pdm2b-seats.md` §9 |
+| 2026-09-06-astra-advice-m2b-gate-and-values.md | A-02 | HIGH | 수용 | 헬퍼가 검증한 트리와 실제 엔진 호출의 원장 대상 사이에 결속 없음 · 빈 `*trees` 허용(발주자) — v4: 트리 ≥1 · 블록 동안 `read_stage.shadow_screening_ledger` 를 감싸 해석 결과를 검증(tmp 안 · 생산과 samefile 아님 · `shadow_root=None` 은 기대 원장 집합 소속) · 위반은 쓰기 전 `pytest.fail` · 음성 (ⅲ)(ⅶ) | `D-20260905-02-pdm2b-seats.md` §9 |
+| 2026-09-06-astra-advice-m2b-gate-and-values.md | A-03 | HIGH | 수용 | `<tmp>/main/ledgers` symlink → 생산이면 진입 ①②③ 통과 뒤 ④ 가 쓴 뒤에 잡는다(발주자) — v4: 진입 ③′ 기대 원장 realpath 가 tmp 안 + 존재 시 `samefile` 부정 · 쓰기 전 차단은 A-02 감싸기 자리 · `finally` 지문의 보증 문언을 「전후 바이트 변경 탐지」로 한정 · 음성 (ⅵ) | `D-20260905-02-pdm2b-seats.md` §9 |
+| 2026-09-06-astra-advice-m2b-gate-and-values.md | A-04 | HIGH | 수용 | 정적 관문이 한 시험 함수 안 통주 뒤에 돌아 다른 시험의 선행 기입을 봉쇄하지 않는다(발주자) — v4: 시험 전용 두 층 = `tests/conftest.py` `pytest_sessionstart` 정적 관문(UsageError · 수집 전) + 세션 autouse `read_stage.append_screening_ledger` 감싸기(생산 원장 해석 시 `pytest.fail` · 기입 전) · 함수는 `tests/ledger_guard.py` 로 · 엔진 pytest 인식 분기·허가 객체는 **이연**(시험 전용 대안 부족 확인 시 Owner 재정) | `D-20260905-02-pdm2b-seats.md` §9 |
+| 2026-09-06-astra-advice-m2b-gate-and-values.md | A-05 | MED | 수용 | 헬퍼 음성 2칸으로 4중 보호 각 분기 독립 검증 불가(발주자) — v4: 음성 9칸(외부 트리 · 빈 트리 · 외부 주 트리에 연결된 tmp worktree · tmp 안 생산 자리 · 원장 symlink · 결속 위반 · 지문 동일+본문 예외 보존 · 지문 변경+`__context__` · 변경 탐지) | `D-20260905-02-pdm2b-seats.md` §9 |
+| 2026-09-06-astra-advice-m2b-gate-and-values.md | B-01 | HIGH | 수용 | 정규식 형태 검사만으로 T4 「계약 어휘 검증」 전부 집행 주장 불가 — `other/unknown/batch-0` 통과(발주자) — v4: `read_run`·`task` **소속 검사** 추가(`READ_RUNS`·`LANE_TASKS` 상수 = `contract.py` · 정본 = 스키마 `$defs.read_run` enum · `read.yaml#lane.sub_lanes[].id` · 다리 시험 2) · 필드 정합은 여전히 조립 자리 보장(MR-1) · B-2 마커 문언 = 형태+소속+루트 포함 | `D-20260905-02-pdm2b-seats.md` §9 |
+| 2026-09-06-astra-advice-m2b-gate-and-values.md | B-02 | HIGH | 수용 | `lane_dir` 디렉터리 포함 검사는 말단 `request.md` symlink 를 보호하지 않는다(발주자) — v4: `lane_file(root, lane_id, name)` 신설(최종 경로 realpath 포함) · 호출 5자리(`read.py` 로그 검사 · file_adapter 3 · replay_adapter 1) · 말단 symlink 음성 · 로그 대조 = 루트 밖 파일(mode 000 · 지문 일치) → 「루트 밖」 finding · `PermissionError` 없음(열지 않았다) | `D-20260905-02-pdm2b-seats.md` §9 |
+| 2026-09-06-astra-advice-m2b-gate-and-values.md | C-01 | MED | 수용 | 반복 결함(좌표 오기 · 문언 상충 · 잘못된 이유의 붉음 · 허가 초과)의 뿌리 = 권한·좌표·순서·대조를 잇는 단일 기준 부재(발주자) — v4: 두 발주문 §0′ **변경별 증명표**(재정 원문 · 기준 blob · 앵커 · 허용 입력 전후 · 최소 반례 · 기준판 · 기대 실패 사유 · 실출력 칸) · 골격 ⒃ 후보로 등재(Owner 재정 뒤 ROUTING 성문화) | `D-20260905-02-pdm2b-seats.md` §9 |
+
+**행 수 = 247**(`등재` 54파일의 지적 전건). **[정정 2026-09-06 · 40차]** 직전 판 **239** — 자문 회신(m2b-gate-and-values · 두 라운드 합본) 원문 반입(A 5 · B 2 · C 1) · 전부 수용 · 엔진 동적 강제는 이연.
 
 **행 수 = 239**(`등재` 53파일의 지적 전건). **[정정 2026-09-05 · 39차]** 직전 판 **234** — M1b astra high 2차 도전(라운드 M2b-2 v2) 원문 반입(MS 5) · 전부 수용 · 자문 트리거 ⓑ.
 
