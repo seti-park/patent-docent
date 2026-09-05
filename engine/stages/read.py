@@ -1556,6 +1556,10 @@ def run(
     #   무편집성에 있으므로 이미 쓴 행을 지우거나 갱신해 고칠 수는 없다. 그러므로 애초에
     #   **적지 않는다** — 아직 끝나지 않은 런은 기록할 관찰이 아니라 진행 중인 상태다.
     terminated = True
+    # 재정 T3 — 출구 검사가 소비한 디스크 기록본을 `finally`가 메모리 저널로 덮지 않는다.
+    # ⑨ 전에 멈춘 경로만 아래 `finally`에서 처음 기록한다. 게시 뒤 재독이 실패한 경우에도
+    # 이 플래그는 참이므로 손상·부재를 메모리 사본으로 자동 복원하지 않는다.
+    lane_log_published = False
     try:
         # ②③④ 분해 → 맹검 메모 → 실행별 청구항 소유 검사 → 조기 수렴(재정 T16).
         pending = list(read_runs)
@@ -1867,18 +1871,25 @@ def run(
                 + f" — 기록: {paths.lane_log}"
             )
 
-        # ⑨ 출구 검사 + 레인 로그 형태 판정 + 레인 로그 지문 **값** 판정.
+        # ⑨ 레인 로그 게시 → 디스크 기록본 재독 → 출구 검사 + 레인 로그 형태·지문 **값** 판정.
         #
         # ★ 둘은 따로 보고된다(재정 2026-08-31 Q1) — 형태와 값은 다른 주장이고, 한 행이 둘을
         #   지면 어느 쪽이 통과시켰는지 판정문에서 사라진다. 값 검사의 대조 대상은 어댑터가
         #   요청 파일을 쓴 자리이며, 요청 파일을 쓰지 않는 어댑터(재생 어댑터)는 `root` 가
         #   없으므로 `None` 이 간다 — 그 경우 전 행이 명시 `null` 이어야 정합이다.
+        #
+        # 재정 2026-08-31 T3 — 판정 대상은 메모리 저널이 아니라 **먼저 게시하고 다시 읽은**
+        # 기록본이다. 두 검사의 서명과 구현은 그대로 두고, 재독 rows를 별도 저널에 담아 검사
+        # 한 벌만 실행한다. 이 뒤에는 `journal`에 행을 추가하는 코드가 없다.
+        _finish_lane_log(paths, journal)
+        lane_log_published = True
+        recorded = _load_recorded_lane_log(paths)
         rows = [
             entry_row,
             *rows,
-            check_lane_log_shape(journal, read_runs=read_runs, canonical=canonical_run),
+            check_lane_log_shape(recorded, read_runs=read_runs, canonical=canonical_run),
             check_lane_log_digest_value(
-                journal, lanes_root=getattr(adapter, "root", None)
+                recorded, lanes_root=getattr(adapter, "root", None)
             ),
         ]
 
@@ -1958,7 +1969,10 @@ def run(
         terminated = False
         raise
     finally:
-        _finish_lane_log(paths, journal)
+        # ⑨ 전에 멈춘 런(`LanePending` 포함)은 종전처럼 메모리 저널을 남긴다. ⑨에서 게시한
+        # 기록본은 검사 실패·재독 실패 뒤에도 다시 쓰지 않는다 — 검사 입력 자체가 감사 자료다.
+        if not lane_log_published:
+            _finish_lane_log(paths, journal)
         # 메모는 런의 **성패**와 무관하게 남는다 — 축적물이 목적이므로 중단된 런의 관찰도
         # 신호다. 성패와 종결은 다른 축이며, 여기서 가르는 것은 종결 여부 하나다.
         written = None
@@ -2006,6 +2020,48 @@ def _gate_escalation_verdict(contract: dict) -> tuple[str, str | None]:
 
 def _finish_lane_log(paths: RunPaths, journal: LaneJournal) -> None:
     write_json(paths.lane_log, journal.rows)
+
+
+def _load_recorded_lane_log(paths: RunPaths) -> LaneJournal:
+    """게시한 `lane-log.json`을 검사 입력으로 재독한다(재정 T3).
+
+    파일 부재·JSON 파싱 실패·`list[dict]` 바깥의 최상위 형태는 품질 검사의 소견이 아니라
+    러너가 자기 기록을 다시 읽지 못한 결함이다. 빈 목록과 dict 내부 결함은 기존 두 검사에
+    맡긴다. 호출자는 게시 플래그를 이미 세웠으므로 이 예외 뒤에도 손상본을 복원하지 않는다.
+    """
+    try:
+        loaded = load_json(paths.lane_log)
+    except FileNotFoundError as exc:
+        raise StageError(
+            f"레인 로그 기록본 재독 실패: {paths.lane_log} — 파일이 없다({exc}); "
+            "검사 실패가 아니라 런 결함"
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise StageError(
+            f"레인 로그 기록본 재독 실패: {paths.lane_log} — JSON 파싱 오류({exc}); "
+            "검사 실패가 아니라 런 결함"
+        ) from exc
+    except (OSError, UnicodeError) as exc:
+        raise StageError(
+            f"레인 로그 기록본 재독 실패: {paths.lane_log} — 읽기 오류({exc}); "
+            "검사 실패가 아니라 런 결함"
+        ) from exc
+
+    if not isinstance(loaded, list):
+        raise StageError(
+            f"레인 로그 기록본 재독 실패: {paths.lane_log} — 최상위가 list[dict]가 아니다"
+            f"({type(loaded).__name__}); 검사 실패가 아니라 런 결함"
+        )
+    for index, entry in enumerate(loaded):
+        if not isinstance(entry, dict):
+            raise StageError(
+                f"레인 로그 기록본 재독 실패: {paths.lane_log} — {index}번 행이 dict가 아니다"
+                f"({type(entry).__name__}); 검사 실패가 아니라 런 결함"
+            )
+
+    recorded = LaneJournal()
+    recorded.rows = loaded
+    return recorded
 
 
 def _write_shadow_pointer(
