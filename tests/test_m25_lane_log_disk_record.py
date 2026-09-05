@@ -264,3 +264,39 @@ def test_normal_completion_publishes_once_and_matches_memory_rows(
         pytest.fail(f"정상 로그 게시 기대 1회, 실제 {observed['writes']}회")
     if load_json(RunPaths(root).lane_log) != observed["memory_rows"]:
         pytest.fail("정상 완료 로그가 메모리 journal.rows와 다르다")
+
+
+def test_first_lane_log_publish_oserror_falls_back_to_memory_journal(
+    tmp_path, monkeypatch
+) -> None:
+    """첫 게시가 실패하면 원 예외를 보존하면서 finally가 메모리 저널을 기록해야 한다."""
+    root, adapter = _prepared_run(tmp_path)
+    paths = RunPaths(root)
+    original_write_json = read_stage.write_json
+    observed = {"lane_log_calls": 0, "fallback_rows": None}
+
+    def fail_first_lane_log_publish(path, payload) -> None:
+        if path == paths.lane_log:
+            observed["lane_log_calls"] += 1
+            if observed["lane_log_calls"] == 1:
+                raise OSError("첫 lane-log 게시 실패")
+            observed["fallback_rows"] = copy.deepcopy(payload)
+        original_write_json(path, payload)
+
+    monkeypatch.setattr(read_stage, "write_json", fail_first_lane_log_publish)
+    with pytest.raises(OSError, match="첫 lane-log 게시 실패"):
+        m2.run_read_stage(run_root=root, adapter=adapter, rules=m2.RULES)
+
+    if observed["lane_log_calls"] != 2:
+        pytest.fail(
+            "첫 게시 실패 뒤 finally 폴백 기대 총 2회 호출, 실제 "
+            f"{observed['lane_log_calls']}회"
+        )
+    if not os.path.isfile(paths.lane_log):
+        pytest.fail("첫 게시 OSError 뒤 finally 폴백 lane-log.json이 없다")
+    if load_json(paths.lane_log) != observed["fallback_rows"]:
+        pytest.fail("finally 폴백 기록이 예외 시점의 메모리 journal.rows와 다르다")
+    if not os.path.isfile(paths.shadow_pointer):
+        pytest.fail("첫 게시 OSError 뒤 종전 finally 포인터 기록이 사라졌다")
+    if not os.path.isfile(m2.shadow_ledger_for(root)):
+        pytest.fail("첫 게시 OSError 뒤 종전 finally 원장 기록이 사라졌다")

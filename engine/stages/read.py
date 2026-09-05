@@ -104,6 +104,7 @@ APPROVAL_SCHEMA = ("contracts", "schemas", "approval-envelope.schema.json")
 CONVERGENCE_CHECK_ID = "read.convergence"
 LANE_LOG_SHAPE_CHECK_ID = "read.lane-log-shape"
 LANE_LOG_DIGEST_VALUE_CHECK_ID = "read.lane-log-digest-value"
+_TERMINATION_EVIDENCE_ABSENT = object()
 
 # ★ 엔진 소관 검사 id 의 단일 목록(재정 2026-08-31 Q1 의 집행 형태).
 #
@@ -1055,6 +1056,150 @@ def append_screening_ledger(
     return path
 
 
+def _termination_error(
+    *, run_id: str, evidence: str, path: str, reason: str
+) -> StageError:
+    """G-5 판정 자료가 실재하지만 참/거짓으로 안전하게 읽히지 않을 때 닫아 실패한다."""
+    return StageError(
+        "종결 판정 불가 — G-5 · "
+        f"run_id={run_id} · 근거={evidence} · 경로={path} · 사유={reason}"
+    )
+
+
+def _load_termination_json(path: str, *, run_id: str, evidence: str):
+    """종결 근거 JSON을 읽는다. 부재만 거짓이며, 실재하는 손상본은 판정 불가다."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return json.load(handle)
+    except FileNotFoundError:
+        return _TERMINATION_EVIDENCE_ABSENT
+    except json.JSONDecodeError as exc:
+        raise _termination_error(
+            run_id=run_id,
+            evidence=evidence,
+            path=path,
+            reason=f"JSON 파싱 오류({exc})",
+        ) from exc
+    except (OSError, UnicodeError) as exc:
+        raise _termination_error(
+            run_id=run_id,
+            evidence=evidence,
+            path=path,
+            reason=f"읽기 오류({exc})",
+        ) from exc
+
+
+def _run_is_terminated(
+    paths: RunPaths, *, run_id: str, shadow_root: str | None
+) -> tuple[bool, str | None]:
+    """T38 ③의 세 근거를 순서대로 읽어 런 종결 여부와 첫 참 근거를 돌려준다.
+
+    각 근거의 부재·유효한 비참만 다음 근거로 넘어간다. 실재하는 근거의 파싱·형태·읽기
+    오류와 원장 루트 거부는 근거 부재로 접지 않고 즉시 ``StageError``로 닫는다.
+    """
+    pointer_evidence = "shadow_pointer"
+    pointer = _load_termination_json(
+        paths.shadow_pointer, run_id=run_id, evidence=pointer_evidence
+    )
+    if pointer is not _TERMINATION_EVIDENCE_ABSENT:
+        if not isinstance(pointer, dict):
+            raise _termination_error(
+                run_id=run_id,
+                evidence=pointer_evidence,
+                path=paths.shadow_pointer,
+                reason=f"최상위가 객체가 아님({type(pointer).__name__})",
+            )
+        pointer_terminated = pointer.get("terminated")
+        if not isinstance(pointer_terminated, bool):
+            raise _termination_error(
+                run_id=run_id,
+                evidence=pointer_evidence,
+                path=paths.shadow_pointer,
+                reason="terminated가 bool이 아님",
+            )
+        if pointer_terminated:
+            return True, pointer_evidence
+
+    convergence_evidence = "convergence.json"
+    convergence = _load_termination_json(
+        paths.convergence_json, run_id=run_id, evidence=convergence_evidence
+    )
+    if convergence is not _TERMINATION_EVIDENCE_ABSENT:
+        if not isinstance(convergence, dict):
+            raise _termination_error(
+                run_id=run_id,
+                evidence=convergence_evidence,
+                path=paths.convergence_json,
+                reason=f"최상위가 객체가 아님({type(convergence).__name__})",
+            )
+        phase = convergence.get("phase")
+        if not isinstance(phase, str):
+            raise _termination_error(
+                run_id=run_id,
+                evidence=convergence_evidence,
+                path=paths.convergence_json,
+                reason="phase가 문자열이 아님",
+            )
+        if phase == "full":
+            return True, convergence_evidence
+
+    ledger_evidence = "shadow_ledger"
+    try:
+        ledger = shadow_screening_ledger(paths.repo, shadow_root)
+    except ShadowLedgerRootError as exc:
+        raise _termination_error(
+            run_id=run_id,
+            evidence=ledger_evidence,
+            path=os.path.join(paths.repo, *SHADOW_LEDGER_RELATIVE),
+            reason=f"원장 루트 판정 거부({exc})",
+        ) from exc
+
+    found = False
+    try:
+        with open(ledger, encoding="utf-8") as handle:
+            for line_number, line in enumerate(handle, start=1):
+                if not line.strip():
+                    continue
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    raise _termination_error(
+                        run_id=run_id,
+                        evidence=ledger_evidence,
+                        path=ledger,
+                        reason=f"JSONL {line_number}행 파싱 오류({exc})",
+                    ) from exc
+                if not isinstance(row, dict):
+                    raise _termination_error(
+                        run_id=run_id,
+                        evidence=ledger_evidence,
+                        path=ledger,
+                        reason=f"JSONL {line_number}행이 객체가 아님({type(row).__name__})",
+                    )
+                row_run_id = row.get("run_id")
+                if not isinstance(row_run_id, str):
+                    raise _termination_error(
+                        run_id=run_id,
+                        evidence=ledger_evidence,
+                        path=ledger,
+                        reason=f"JSONL {line_number}행 run_id가 누락됐거나 문자열이 아님",
+                    )
+                if row_run_id == run_id:
+                    found = True
+    except FileNotFoundError:
+        return False, None
+    except (OSError, UnicodeError) as exc:
+        raise _termination_error(
+            run_id=run_id,
+            evidence=ledger_evidence,
+            path=ledger,
+            reason=f"읽기 오류({exc})",
+        ) from exc
+    if found:
+        return True, ledger_evidence
+    return False, None
+
+
 # ---------------------------------------------------------------------------
 # 조기 수렴 · 접지 진입 게이트 (재정 P-4 · P-U3)
 # ---------------------------------------------------------------------------
@@ -1503,9 +1648,25 @@ def run(
     대개 임시 git 리포이므로 판정은 그 임시 리포를 정직하게 가리킬 뿐이다.
     """
     paths = RunPaths(run_root, repo)
+    run_meta = load_yaml(paths.run_yaml)
+    run_id = str(run_meta.get("run_id", ""))
+    already_terminated, termination_evidence = _run_is_terminated(
+        paths, run_id=run_id, shadow_root=shadow_root
+    )
+    if already_terminated:
+        if termination_evidence == "shadow_pointer":
+            evidence_path = paths.shadow_pointer
+        elif termination_evidence == "convergence.json":
+            evidence_path = paths.convergence_json
+        else:
+            evidence_path = shadow_screening_ledger(paths.repo, shadow_root)
+        raise StageError(
+            "종결한 런 재호출 — 원장 오염 방지 · G-5 · 재정 T38 ② · "
+            f"run_id={run_id} · 근거={termination_evidence} · 경로={evidence_path}"
+        )
+
     contract = paths.contracts[STAGE_ID]
     paths.ensure_read_dirs()
-    run_meta = load_yaml(paths.run_yaml)
 
     # ① 진입 지문 검사(재정 P-C).
     #
@@ -1547,15 +1708,14 @@ def run(
     #   러너는 늘리지 않는다. `convergence_detail.attempt` 도 해당 판정점의 실행 회차를 싣는다.
     decompose_attempt: dict[str, int] = {name: 0 for name in read_runs}
     early_convergence_attempt = 0
-    run_id = str(run_meta.get("run_id", ""))
-
     # ★ 원장 기입은 런이 **종결**될 때 한 번이다(재정 P-U4 의 "한 행" 문언 이행).
-    #   `LanePending` 은 오류가 아니라 상태이며 오케스트레이터가 서브에이전트를 붙이고 같은
+    #   `LanePending` 과 조기 상신은 오류가 아니라 진행 중 상태이며 오케스트레이터가 같은
     #   스테이지를 다시 부른다 — 그 재진입마다 원장에 적으면 한 run_id 아래 미완성 행이
-    #   쌓인다(2026-08-18 감수 실측: 4행, 앞 3행은 `final_verdict: null`). 축적물의 값은
-    #   무편집성에 있으므로 이미 쓴 행을 지우거나 갱신해 고칠 수는 없다. 그러므로 애초에
-    #   **적지 않는다** — 아직 끝나지 않은 런은 기록할 관찰이 아니라 진행 중인 상태다.
+    #   쌓인다(2026-08-18 감수 실측: 4행, 앞 3행은 `final_verdict: null`; T38 상신 실측:
+    #   조기 1행 + 최종 1행). 축적물의 값은 무편집성에 있으므로 이미 쓴 행을 지우거나 갱신해
+    #   고칠 수는 없다. 그러므로 애초에 **적지 않는다** — 아직 끝나지 않은 런은 진행 중이다.
     terminated = True
+    awaiting: str | None = None
     # 재정 T3 — 출구 검사가 소비한 디스크 기록본을 `finally`가 메모리 저널로 덮지 않는다.
     # ⑨ 전에 멈춘 경로만 아래 `finally`에서 처음 기록한다. 게시 뒤 재독이 실패한 경우에도
     # 이 플래그는 참이므로 손상·부재를 메모리 사본으로 자동 복원하지 않는다.
@@ -1745,6 +1905,10 @@ def run(
                 status, reason_label = _failure_verdict(contract, [early_row])
             else:
                 status, reason_label = _gate_escalation_verdict(contract)
+            # 재정 T38 ① — 조기 상신은 종결이 아니라 Owner '계속' 봉투를 기다리는 상태다.
+            # `finally`는 진행 중 런을 원장에 기입하지 않고 포인터에 대기 사유만 남긴다.
+            terminated = False
+            awaiting = CONTINUE_CHECKPOINT
             return {
                 "rows": early_rows,
                 "spec": None,
@@ -1973,8 +2137,8 @@ def run(
         # 기록본은 검사 실패·재독 실패 뒤에도 다시 쓰지 않는다 — 검사 입력 자체가 감사 자료다.
         if not lane_log_published:
             _finish_lane_log(paths, journal)
-        # 메모는 런의 **성패**와 무관하게 남는다 — 축적물이 목적이므로 중단된 런의 관찰도
-        # 신호다. 성패와 종결은 다른 축이며, 여기서 가르는 것은 종결 여부 하나다.
+        # 종결 런의 메모는 **성패**와 무관하게 남는다. 다만 LanePending과 조기 상신은 아직
+        # 진행 중이므로 적지 않는다(재정 T38 ①). 성패와 종결은 다른 축이며 여기서는 후자만 본다.
         written = None
         if terminated:
             written = append_screening_ledger(
@@ -1993,6 +2157,7 @@ def run(
             written=written,
             terminated=terminated,
             memo_count=len(memos),
+            awaiting=awaiting,
         )
 
 
@@ -2071,6 +2236,7 @@ def _write_shadow_pointer(
     written: str | None,
     terminated: bool,
     memo_count: int,
+    awaiting: str | None = None,
 ) -> None:
     """`10-read/lanes/shadow-ledger.json` — 이 런이 **어느 섀도 원장에 썼는가**(재정 P-U4).
 
@@ -2094,6 +2260,8 @@ def _write_shadow_pointer(
         "terminated": terminated,
         "memo_count": memo_count,
     }
+    if awaiting is not None:
+        payload["awaiting"] = awaiting
     try:
         root, source = shadow_ledger_root(paths.repo, shadow_root)
     except ShadowLedgerRootError as exc:
