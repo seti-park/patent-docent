@@ -26,7 +26,7 @@ lane:
   sub_lanes:
     - id: decompose
       model: opus-5
-      effort: max
+      effort: xhigh
       scope: "D5 ① 청구항 구성요소 전 분해 + ② 관계 트리"
     - id: ground-independent
       model: opus-5
@@ -43,7 +43,7 @@ lane:
         구 문언은 "정확성을 보증한다"고 적어 검사의 관할을 실제보다 넓게 말했다).
     - id: synthesize
       model: opus-5
-      effort: max
+      effort: xhigh
       scope: "D5 ④ 유기적 통합 + ⑤ 포지셔닝 + 기술적 함의(implication)"
   # 레인 규약(SPEC §7.3 펜 배정 규율 2·3을 독해 레인에도 적용한다).
   lane_discipline:
