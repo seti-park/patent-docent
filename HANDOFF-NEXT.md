@@ -1,11 +1,17 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-05(14차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-05(15차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-05 15차 갱신 — 라운드 RD 좁은 재감사(opus max · `docs/lessons/2026-09-05-opus-audit-round-rd.md`) = FAIL 6건(MED 1 · LOW 5 · 처분 `D-20260903-04` **§12** · DISPOSITIONS 138행). 값·집행은 닫혔다(RD-1·4·5·6 closed · 명령되지 않은 hunk 0 · 실런 판독본 3건 전후 바이트 동일 · 변조 10종 중 8 붉음). 무게중심 = 「고쳤다」의 증명 방식 — RE-1 RD-3 교체 단언이 다시 항진식(발주자 술어 지정) · RE-2 RD-3 양성 대조가 수리 전에도 붉음 · RE-3 10-b 사슬 `else` 부재(길이 ≥3 에서 본문 공백) · RE-4 RD-2 가드가 판별 불가 + 발화 시 「구 판」 거짓 출처 · RE-5·RE-6 총괄 기록. 전부 수용 → RE-5·RE-6 이 커밋 · 골격 **⒀ 차별 대조** 신설(`D-20260902-02` §5) · 감사자 ⒞(`reported_by` `maxItems: 2`)는 값 공간 축소라 **Owner 상신 추가**.**
+**지금 할 일 = 라운드 RE 발주 → 회수**(sol-coder · worktree `round-re` · 발주문 = drafts `SPEC-round-re.md` · 레인 디렉터리 = **홈 fs** `~/projects/workspaces/pd-lanes/sol-coder-round-re/` · 반경·양성 대조(전부 차별 대조 · 골격 ⒀) = `D-04` §12 「다음」 · ① RE-1 죽은 연언 삭제 + 고유 변조 기재 ② RE-3 `else` 갈래 + 전역성 시험 + `dict | None` ③ RE-4 가드 제거(러너는 부재를 실패로) + 부재 시 실패 시험 + SPEC 「재렌더」 삭제) → 총괄 재현(차별 대조 셋 = 수리 전 초록·수리 후 붉음 실출력) → 병합 → **좁은 재감사 2**(opus max · 지적 ID `RF-*` · 종료 조건은 「status = `?? .audit-sandbox` 한 줄」로) → PASS 면 **PD-M2a 라운드 B 계열 종결 상신**.
+**Owner 결정 2건** = ⑴ `screening_memos[].read_run` enum 결속(`ruling-20260902-02` §5 ② · 추천 ⓐ) ⑵ **`unclassified_dependents[].reported_by` 에 `maxItems: 2`**(재감사 ⒞ · `RULINGS-LEDGER.md` §3 신설 행 · 추천 = 넣는다) — 둘 다 `convergence.schema.json` 의 read_run 값 공간이라 **한 재정으로 묶어** 올린다. 결정 자료(그림) = 아티팩트 `b1d1ce3c-…` · drafts `OWNER-DECISION-read-run-enum.html`. **Owner 사후 확인(누적)** — ⓖ~ⓞ(14차) + **ⓟ 재감사 RE-1~RE-6 전부 수용 · RE-4 처분을 「가드 제거·부재 = 실패」로 정한 것 · 골격 ⒀ 신설**.
+
+> [정정 2026-09-05 · 15차] 아래 14차 문단의 「지금 할 일 = 좁은 재감사」는 **끝났다**(FAIL 6 → §12). 경위 보존용으로 남긴다.
 
 **★ 09-05 14차 갱신 — 라운드 RD 병합(`87cf794` · RD-1~RD-5 · sol-coder 1턴 · 총괄 재현 pytest 두 모드·관문 7종 두 모드·self-test·cmp·AST·hunk 1·보호 반경 0 · 양성 대조 RD-1·RD-3·RD-4·RD-5). 기록 = `D-20260903-04` **§10**(재현표 · 총괄 오류 2건 — ① 레인 산출을 tmpfs 스크래치에만 둬 09-04 소거로 `final.txt` 유실 → 세션 transcript 에서 복구(drafts `LANE-REPORT-round-rd.recovered.txt` · 바이트 동일성 [미검증]) ② basetemp `.gitignore *` 조건을 골격 ⑾ 에 늦게 적음) · **§11**(레인 보고 복구본). 발주문 골격 = `D-20260902-02` §5 **⑾ 추기 · ⑿ 신설**(레인 디렉터리·발주문 원본은 홈 fs · 스크래치 금지). RD-6 은 `9817bec` D-03 §1.**
 **지금 할 일 = 좁은 재감사**(`좌석 M9` opus max · sol 저작 → opus · 대상 = `87cf794` 전 hunk + RD-1~RD-6 폐쇄 + 이 커밋의 기록(D-04 §10·§11 · 골격 ⑾⑿ · 14차) · 지적 ID **`RE-*`** · 격리 사본 `/home/laptop/projects/workspaces/pd-audit-round-rd`(`git clone --no-hardlinks` · **이 커밋** 체크아웃 · 루트 `.audit-sandbox` 마커 path/pin/order/disposable) · 발주문 = drafts `AUDIT-ORDER-round-rd.md` · 레인 디렉터리 = **홈 fs** `/home/laptop/projects/workspaces/pd-lanes/opus-audit-round-rd/`(골격 ⑿ · `runner.sh`·`status`·`raw.json`·`out.txt`·`usage.json`) · 호출 = `claude -p --model claude-opus-5 --effort max --output-format json`(`CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000` · `MEMORY_HOOKS=off` · cwd = 사본) · basetemp 홈 fs `pd-audit4-basetemp` · **감사 중 정본 커밋 금지**). 회수 = 원문 `docs/lessons/2026-09-05-opus-audit-round-rd.md` 보존(규율 10 · `지적 열거 =` 한 줄 · 마커) + DISPOSITIONS §0·§1 + 처분(D-04 §12) → **PASS 면 PD-M2a 라운드 B 계열 종결 상신**(백로그 셋 = D-04 §5) · FAIL 이면 라운드 RE.
