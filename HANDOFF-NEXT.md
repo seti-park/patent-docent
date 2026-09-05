@@ -8,7 +8,7 @@
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
 
 **★ 09-05 27차 갱신 — 라운드 M2a-3(재감사 6 시험 공백 수리 · 시험만) 병합 `8ceea90`**(sol-coder v2 · M1b MM 6 → MN PASS · 843/843 두 모드 · D7 직접 재현 ⓙ+ⓜ3 붉음 · `D-20260903-04` **§42** 회수 · §43 레인 보고). 열린 사후 확인 = ⓦ 1건(+ RJ-5 병기). Owner 재정 대기 0.
-**지금 할 일 = 좁은 재감사 7(RK · 축소 범위 · M9 fable xhigh 3회째).** 발주문 drafts `AUDIT-ORDER-round-m2a3.md`(대상 `8ceea90` + 이 기록 커밋 · 자리표 채울 것) → M1b astra high 도전 → 감사 발주(사본 `pd-audit-round-m2a3` · basetemp `pd-audit10-basetemp` · **발주 직전 `bundle/`·`brief.md` 판 표식 실측** · setsid · Monitor) · 감사 중 정본 커밋 금지. **PASS → PD-M2a 러너 무결성 종결 상신 T39**(`/decision-brief` · 재정 = ① 종결 선언 ② ⓦ 추인(판정 불가 = fail-closed · RJ-5 거부 기록 소실 병기 · 감사자 판단 = S2 오류 처리 재량)) → PD-M2b(G-1~G-4 · B-2). **FAIL → 같은 상신 2회째 FAIL = 자문 트리거 ⓑ → `advice-bundle.sh` 봉투를 Owner 에게**(L-054 · fable CLI 자문 금지). 백로그 8.
+**지금 할 일 = 좁은 재감사 7(RK · 축소 범위 · M9 fable xhigh 3회째).** **[추기 19:5x] M1b astra high(재감사 7 발주문) = REVISE 1(MO-1 LOW · §44) → 발주문 정정 → 발주(사본 재핀 = 이 기록 커밋).** 발주문 drafts `AUDIT-ORDER-round-m2a3.md`(대상 `8ceea90` + 이 기록 커밋 · 자리표 채울 것) → M1b astra high 도전 → 감사 발주(사본 `pd-audit-round-m2a3` · basetemp `pd-audit10-basetemp` · **발주 직전 `bundle/`·`brief.md` 판 표식 실측** · setsid · Monitor) · 감사 중 정본 커밋 금지. **PASS → PD-M2a 러너 무결성 종결 상신 T39**(`/decision-brief` · 재정 = ① 종결 선언 ② ⓦ 추인(판정 불가 = fail-closed · RJ-5 거부 기록 소실 병기 · 감사자 판단 = S2 오류 처리 재량)) → PD-M2b(G-1~G-4 · B-2). **FAIL → 같은 상신 2회째 FAIL = 자문 트리거 ⓑ → `advice-bundle.sh` 봉투를 Owner 에게**(L-054 · fable CLI 자문 금지). 백로그 8.
 
 > [정정 2026-09-05 · 27차] 아래 26차 문단의 「지금 할 일 = 라운드 M2a-3」는 **끝났다**(병합). 경위 보존용으로 남긴다.
 
