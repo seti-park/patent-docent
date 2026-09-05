@@ -1,11 +1,16 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-05(27차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-05(28차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-05 28차 갱신 — 좁은 재감사 7(RK · fable xhigh 3회째 · `docs/lessons/2026-09-05-fable-audit-round-m2a3.md`) = PASS · 신규 0 · RJ-1~4 closed · `D-20260903-04` **§45**(계열 종합 · M9 관측 3 = 25턴 · 12.3분 · $4.85 · 백로그 ⑼ 후보).** **PD-M2a 러너 무결성(B-1 + G-5) 감사상 닫힘.** 열린 사후 확인 = ⓦ 1건(+ RJ-5 병기). Owner 재정 대기 = **T39(발행 예정)**.
+**지금 할 일 = T39 종결 상신 브리핑 발행**(`/decision-brief` · drafts `OWNER-BRIEF-T39-m2a-closure.html` · 재정 ① 종결 선언 ② ⓦ 처분 A/B/C · RJ-5 병기 · 자잘 = 백로그 ⑻⑼ · 다음 = PD-M2b) → Owner 회신 `T39: ① A / ② A` → `ruling-20260905-04-T39.md` · RULINGS-LEDGER §2 · 브리핑 2판 배너 → **PD-M2b(G-1~G-4 · B-2)** 발주문 설계(M1b astra high → sol-coder → fable xhigh 감사 · 좌석 규약 = 이 파일 위 추기 · 자문은 advice-bundle 봉투). 상신 발행 = 단계 경계 → `/compact`.
+
+> [정정 2026-09-05 · 28차] 아래 27차 문단의 「지금 할 일 = 좁은 재감사 7」은 **끝났다**(PASS). 경위 보존용으로 남긴다.
 
 **★ 09-05 27차 갱신 — 라운드 M2a-3(재감사 6 시험 공백 수리 · 시험만) 병합 `8ceea90`**(sol-coder v2 · M1b MM 6 → MN PASS · 843/843 두 모드 · D7 직접 재현 ⓙ+ⓜ3 붉음 · `D-20260903-04` **§42** 회수 · §43 레인 보고). 열린 사후 확인 = ⓦ 1건(+ RJ-5 병기). Owner 재정 대기 0.
 **지금 할 일 = 좁은 재감사 7(RK · 축소 범위 · M9 fable xhigh 3회째).** **[추기 19:5x] M1b astra high(재감사 7 발주문) = REVISE 1(MO-1 LOW · §44) → 발주문 정정 → 발주(사본 재핀 = 이 기록 커밋).** 발주문 drafts `AUDIT-ORDER-round-m2a3.md`(대상 `8ceea90` + 이 기록 커밋 · 자리표 채울 것) → M1b astra high 도전 → 감사 발주(사본 `pd-audit-round-m2a3` · basetemp `pd-audit10-basetemp` · **발주 직전 `bundle/`·`brief.md` 판 표식 실측** · setsid · Monitor) · 감사 중 정본 커밋 금지. **PASS → PD-M2a 러너 무결성 종결 상신 T39**(`/decision-brief` · 재정 = ① 종결 선언 ② ⓦ 추인(판정 불가 = fail-closed · RJ-5 거부 기록 소실 병기 · 감사자 판단 = S2 오류 처리 재량)) → PD-M2b(G-1~G-4 · B-2). **FAIL → 같은 상신 2회째 FAIL = 자문 트리거 ⓑ → `advice-bundle.sh` 봉투를 Owner 에게**(L-054 · fable CLI 자문 금지). 백로그 8.
