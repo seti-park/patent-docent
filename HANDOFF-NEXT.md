@@ -1,11 +1,17 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-05(15차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-05(16차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-05 16차 갱신 — 라운드 RE 병합(`573dcdc` · RE-1·RE-3·RE-4 + 감사자 ⒜⒝ · sol-coder 1턴 · 레인 디렉터리 홈 fs · 총괄 재현 pytest 두 모드·관문 7종·self-test · **차별 대조 셋 = 새 시험 2건이 수리 전 코드에서 붉고 수리 후 초록 · RE-1 은 한 줄 삭제** · ⒜ 고유 변조 없음). 기록 = `D-20260903-04` **§13**(재현표 · 차별 대조 · **일시 실패 4건 [미확인]** — plain 1회차만 · 재실행 전건 초록 · 명단 3건은 총괄이 `tail` 로 잃음 → 골격 ⑽ 추기) · **§14**(레인 보고 전문).**
+**지금 할 일 = 좁은 재감사 2 회수**(`좌석 M9` opus max · 발주 = 이 커밋 직후 · 대상 = `573dcdc` 전 hunk + RE-1~RE-6 폐쇄 + §13·§14 · 지적 ID **`RF-*`** · 격리 사본 `/home/laptop/projects/workspaces/pd-audit-round-re`(clone · **이 커밋** 체크아웃 · `.audit-sandbox` 마커) · 발주문 = drafts `AUDIT-ORDER-round-re.md` · **레인 디렉터리 = 홈 fs `/home/laptop/projects/workspaces/pd-lanes/opus-audit-round-re/`**(`status` 의 `EXIT=` · `raw.json` → `jq -r .result` = 원문 · `usage.json`) · 종료 조건 = status 는 `?? .audit-sandbox` 한 줄 · **감사 중 정본 커밋 금지**). **세션이 끊겼다면**: `status` 에 `EXIT=` 가 있으면 회수(원문 → `docs/lessons/2026-09-05-opus-audit-round-re.md` · 규율 10 머리말 · `지적 열거 =` · DISPOSITIONS §0·§1 · D-04 §15 처분) · 없고 프로세스도 없으면 사망(재발주) · PASS 면 **PD-M2a 라운드 B 계열 종결 상신** · FAIL 이면 라운드 RF.
+**Owner 결정 2건(한 재정)** = ⑴ `screening_memos[].read_run` enum 결속(추천 ⓐ) ⑵ `reported_by` `maxItems: 2`(추천 = 넣는다) — 자료 = 아티팩트 `b1d1ce3c-…` · drafts `OWNER-DECISION-read-run-enum.html`. **Owner 사후 확인(누적)** — ⓖ~ⓟ(15차) + **ⓠ 일시 실패 4건을 [미확인]으로 기록하고 병합한 판단**(두 full 재실행 전건 초록 · 실패 시험이 RE 반경 밖 · 골격 ⑽ 추기).
+
+> [정정 2026-09-05 · 16차] 아래 15차 문단의 「지금 할 일 = 라운드 RE 발주 → 회수」는 **끝났다**(`573dcdc`). 경위 보존용으로 남긴다.
 
 **★ 09-05 15차 갱신 — 라운드 RD 좁은 재감사(opus max · `docs/lessons/2026-09-05-opus-audit-round-rd.md`) = FAIL 6건(MED 1 · LOW 5 · 처분 `D-20260903-04` **§12** · DISPOSITIONS 138행). 값·집행은 닫혔다(RD-1·4·5·6 closed · 명령되지 않은 hunk 0 · 실런 판독본 3건 전후 바이트 동일 · 변조 10종 중 8 붉음). 무게중심 = 「고쳤다」의 증명 방식 — RE-1 RD-3 교체 단언이 다시 항진식(발주자 술어 지정) · RE-2 RD-3 양성 대조가 수리 전에도 붉음 · RE-3 10-b 사슬 `else` 부재(길이 ≥3 에서 본문 공백) · RE-4 RD-2 가드가 판별 불가 + 발화 시 「구 판」 거짓 출처 · RE-5·RE-6 총괄 기록. 전부 수용 → RE-5·RE-6 이 커밋 · 골격 **⒀ 차별 대조** 신설(`D-20260902-02` §5) · 감사자 ⒞(`reported_by` `maxItems: 2`)는 값 공간 축소라 **Owner 상신 추가**.**
 **지금 할 일 = 라운드 RE 발주 → 회수**(sol-coder · worktree `round-re` · 발주문 = drafts `SPEC-round-re.md` · 레인 디렉터리 = **홈 fs** `~/projects/workspaces/pd-lanes/sol-coder-round-re/` · 반경·양성 대조(전부 차별 대조 · 골격 ⒀) = `D-04` §12 「다음」 · ① RE-1 죽은 연언 삭제 + 고유 변조 기재 ② RE-3 `else` 갈래 + 전역성 시험 + `dict | None` ③ RE-4 가드 제거(러너는 부재를 실패로) + 부재 시 실패 시험 + SPEC 「재렌더」 삭제) → 총괄 재현(차별 대조 셋 = 수리 전 초록·수리 후 붉음 실출력) → 병합 → **좁은 재감사 2**(opus max · 지적 ID `RF-*` · 종료 조건은 「status = `?? .audit-sandbox` 한 줄」로) → PASS 면 **PD-M2a 라운드 B 계열 종결 상신**.
