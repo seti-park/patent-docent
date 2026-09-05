@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(36차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(37차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 37차 갱신 — 합본 감사 발주문 M1b 도전 = REVISE 9(MX-1~9 · HIGH 1 = 레인 diff 는 축약본 · 전부 수용 · `D-20260905-02` §15) → v2 → 재도전 없이 fable xhigh 감사 발주.** 사본 `~/projects/workspaces/pd-audit-round-m2b`(재핀 = 이 기록 커밋) · 레인 `pd-lanes/fable-audit-round-m2b/`(brief.md · runner.sh · `setsid nohup` · Monitor `EXIT=`) · basetemp `pd-audit12-basetemp` · 지적 `RL-*`. **지금 할 일 = 감사 회수**(`status` `EXIT=` → `out.txt`·`usage.json` → 원문 `docs/lessons/2026-09-06-fable-audit-round-m2b.md` 규율 10 보존 → DISPOSITIONS → D-02 §16 처분 → FAIL 이면 수리 라운드(sol-coder · M1b) · PASS 면 **T40 ④ A 비교 실측 착수**(계측 브랜치 · R0/R1/R2 · Workflow · `run_kind: partial`)). 규약은 36차 이하 그대로.
+
+> [정정 2026-09-06 · 37차] 아래 36차 문단의 「지금 할 일 = fable xhigh 합본 감사(M1b 도전 →)」 중 M1b 도전은 **끝났다**(REVISE 9 → v2). 경위 보존용으로 남긴다.
 
 **★ 09-06 36차 갱신 — 라운드 M2b-1 병합 `1bf24f1`**(sol-coder PASS · 총괄 재현 909/909 두 모드 · 관문 7종 · docstring 3검사 · `D-20260905-02` **§14**). PD-M2b 집행분 = G-4 `partial` · B-2 `lane_id` · 백로그 ⑼(세 층 = `tests/ledger_guard.py` 허용 목록 관문 + 헬퍼 결속 + `conftest.py` 세션 거부) **전부 병합**. 남은 것 = G-1~G-3 좌석(T40 ①② · ④ A 비교 실측 뒤) · G-12(재정 필요) · 자문 ⓑ(이연). **지금 할 일 = fable xhigh 합본 감사**(drafts `AUDIT-ORDER-round-m2b.md` 자리표 채움 → M1b astra high 도전(사본 `pd-m1b-m2b2` 재핀 · 지적 `MX-*`) → 격리 사본 `~/projects/workspaces/pd-audit-round-m2b`(`git clone --no-hardlinks` · 기록 커밋 detached · `.audit-sandbox`) · 레인 `pd-lanes/fable-audit-round-m2b/`(brief.md · runner = drafts `fable-audit-runner.template.sh`) · basetemp `pd-audit12-basetemp` · `setsid nohup` · Monitor · 지적 `RL-*` → 처분 → T40 ④ A 비교 실측). 규약은 35차 이하 그대로.
 
