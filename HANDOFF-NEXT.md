@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(38차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(39차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 39차 갱신 — T40 ④ A 비교 실측 착수 국면.** 재정 **T40 ⑤**(Owner 육성 `T40 ④ 봉투 대행 승인` · `ruling-20260905-05-T40.md` §5 · `6d92cad`) = 실측 3 런의 조기 수렴 escalation-trigger 축 미달에만 총괄이 '계속' 봉투 대행. 실측 설계 메모 = drafts `T40-MEASURE-DESIGN.md`(**v2** · v1 = `.v1.md`) · **M1b 1차 = REVISE 13(MY-1~13 · BLOCKER 1 = 27항목 대응표 부재 · 전부 수용 · `docs/lessons/2026-09-06-astra-m1b-t40-measure.md` · `D-20260905-02` **§17**)**. 계측 브랜치(main 무접촉 · 병합 금지) = **`t40-base` `ad4c6c3`**(main + `reader/procedure/` 를 09-01 핀 `d4e6ca2` 판으로 — 재정 §4 「같은 절차 문서」 이행) · `t40-r1` `530b096`(decompose·synthesize xhigh) · `t40-r2` `00e0bed`(ground-dependent sonnet-5/high). 스크립트 = `~/projects/workspaces/pd-lanes/t40-measure/`(`t40_drive.py` 종료 코드 0/10/11/12/13/14 · `t40_lanes.workflow.js` · `t40_metrics.py` · `t40_excerpts.py` · `t40_envelope.py` · 기준 런 자체 시험 통과). **지금 할 일 = M1b 2차 도전 기동(사본 `pd-m1b-t40` 재핀 · 지적 `MZ-*`) → PASS → `git worktree add --detach .worktrees/gdm-wo2026128750a1-t40-r{0,1,2} <핀>` → `t40_drive.py source r0|r1|r2` → `read` → 배치 A-a(read-a ×3 · Workflow `scriptPath` + args lanes) → 첫 배치 transcript model 검증 → A-b → (exit 11 이면 `t40_envelope.py --quote 'T40 ④ 봉투 대행 승인' --located-at 'ruling-20260905-05-T40.md §5' --write`) → B → C → `t40_metrics.py --first-early` → 결과 표 D-02 §18 + 발췌 2건(`t40_excerpts.py`) → Owner ①② 재정(한 줄 또는 새 브리핑) → M2b-3.** 규약은 38차 이하 그대로(관문 뒤 별도 커밋 · `docs/` 만 커밋 · 레인 산출은 홈 fs).
+
+> [정정 2026-09-06 · 39차] 아래 38차 문단의 「지금 할 일 = T40 ④ A 비교 실측 착수」는 **설계·1차 도전까지 진행됐다**(§17). 경위 보존용으로 남긴다.
 
 **★ 09-06 38차 갱신 — PD-M2b 합본 감사(fable xhigh · M9 4회째) = PASS · LOW 6(RL-1~6) → PD-M2b 집행분 감사상 종결**(`docs/lessons/2026-09-06-fable-audit-round-m2b.md` · `D-20260905-02` **§16** · DISPOSITIONS 278행(45차 · RL-2 로 §0 계수를 실물 60/12/72 로 정정 · RL-3 로 「행 수 = 데이터 행만」)). 감사 세션 사고 1 = 감사자가 pytest 를 배경으로 띄우고 「기다리겠다」로 응답 → 단발 모드 종료 → `--resume` 재접속으로 판정 회수(**LANE-RUNTIME 함정 N** · 안내문 정본 drafts `fable-audit-brief-header.md`). 처분: RL-1~3 기록 정정(이 커밋) · RL-4 발주문 문언 · RL-5(conftest 원본 보관 우회)·RL-6(`lane_file` name) **이월 → 다음 코드 라운드**. **지금 할 일 = T40 ④ A 비교 실측 착수**(재정 `ruling-20260905-05-T40.md` §4 · 소재 WO2026-128750 · 계측 브랜치에 계약 값만 다른 커밋 셋(main 무접촉) · R0 현행 좌석 재런(잡음 폭) · R1 decompose·synthesize `opus-5/xhigh` · R2 ground-dependent `sonnet-5/high` · 레인 = Workflow `{model, effort}` 하드 지정 · `run_kind: partial` · 임계 선등록 = §4 ① ② · 기준 = 09-01 런 `runs/gdm-wo2026128750a1-agent-memory`(engine `d4e6ca2`) · 결과 표 + Owner 발췌 2건 → ①② 재정(한 줄 회신 또는 새 브리핑) → M2b-3 좌석 값 커밋(+ RL-5·6 이월분)). 실측 설계는 새 국면이라 **압축 뒤 ROUTING §5 재독 · 발주문 §0′ 증명표 형식 · Workflow model 하드 지정**(기억 `workflow-model-inherit-trap`)부터. 규약은 37차 이하 그대로.
 
