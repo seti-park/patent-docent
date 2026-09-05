@@ -25,7 +25,7 @@ ID 를 `numeric_refs` 로 되가리키므로 번호가 겹치면 그 참조의 �
 
 from __future__ import annotations
 
-from .contract import LaneContractError, LaneRequest
+from .contract import LANE_TASKS, LaneContractError, LaneRequest
 from ..paths import load_stage_contract, repo_root
 
 # 한 배치의 최대 요청 수. "30 미만"이므로 29 다.
@@ -48,12 +48,7 @@ MAX_FANOUT = 29
 # `M<n>` 은 런 내부 순번일 뿐 의미를 갖지 않으므로(SPEC §2.4) 번호가 띄엄띄엄해도 무해하다.
 ID_BAND_WIDTH = 1000
 
-TASKS: tuple[str, ...] = (
-    "decompose",
-    "ground-independent",
-    "ground-dependent",
-    "synthesize",
-)
+TASKS: tuple[str, ...] = LANE_TASKS
 
 # 작업 ↔ 절차 문서. 문서 자체가 프롬프트이며 정본은 `reader/procedure/` 에 있다.
 PROCEDURE_DOCS: dict[str, str] = {

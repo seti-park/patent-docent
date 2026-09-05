@@ -9,7 +9,7 @@ schema: run-kinds/v0
 version: "0"
 
 # ---------------------------------------------------------------------------
-# 런 종류 2종
+# 런 종류 3종
 # ---------------------------------------------------------------------------
 kinds:
   rehearsal:
@@ -66,6 +66,23 @@ kinds:
       아래 requirements 를 전부 충족해야 런을 시작할 수 있다. 회차가 아니라 상태 조건이
       게시 런 진입을 결정한다.
 
+  partial:
+    purpose: "부분 시험 — 발주가 정한 스테이지까지만 도는 런. 예행 런이 아니다(재정 T6 · T40 ③)."
+    publishes: false
+    requires_defense_layers: false
+    terminates_at: declared
+    terminates_at_field: partial_until  # 필수 · 비어 있으면 런 시작 불가
+    # SPEC §1.3~§1.15 스테이지 id가 정본이며, 어긋나면 SPEC이 이긴다.
+    terminates_at_enum:
+      [source, read, material_approval, freeze, design, figures, compose, gate, probe,
+       critique, ship_approval, ship, feedback]
+    anchor_ledger: excluded
+    deliverables: []  # 통주 리포트 의무 없음
+    scope_note: >-
+      처음부터 부분으로 선언한 런이다. 09-01 이전 실물 런 4건은 행위시법으로 rehearsal
+      그대로다(T40 ⓑ). 종료선 초과 실행의 차단과 비게시의 강제는 이 계약이 선언만 하며
+      집행은 백로그 G-12다(자문 ⓕ).
+
 # ---------------------------------------------------------------------------
 # 게시 런 자격 요건 3종 (전부 충족해야 런 시작 가능)
 # ---------------------------------------------------------------------------
@@ -97,11 +114,16 @@ enforcement:
   on_unmet_note: "미충족 시 런 시작 불가. 부분 가동으로 진행하지 않는다."
   report_row: contracts/schemas/verdict-check-row.schema.json   # 판정 행 서식(재정 N5)
 
+enforcement_run_kind:
+  rule: "run.yaml#run_kind 는 run_kind_enum 의 값이어야 하며, partial 이면 partial_until 이 terminates_at_enum 의 값이어야 한다. 위반 = 런 시작 불가(StageError · 어떤 산출물도 만들기 전)."
+  implemented_by: engine/stages/source.py#run
+  ruling: "재정 2026-09-05 T40 ③ + 자잘 ⓐ"
+
 # ---------------------------------------------------------------------------
 # run.yaml 결속
 # ---------------------------------------------------------------------------
 run_yaml_field: run_kind
-run_kind_enum: [rehearsal, publish]
+run_kind_enum: [rehearsal, publish, partial]
 first_run: rehearsal          # 재정 N10 — 첫 런 = 예행
 
 amendment: "배치 리뷰 상신 → Owner 재정 → docs/decisions/ 등재 → 이 파일 수정"

@@ -73,10 +73,12 @@ from . import (
 )
 from ..lanes.contract import (
     REQUEST_MD,
+    LaneContractError,
     LanePending,
     LaneRequest,
     LaneResponse,
     LaneStaleResponseError,
+    lane_file,
 )
 from ..lanes.plan import (
     harvest_band_start,
@@ -1530,11 +1532,21 @@ def check_lane_log_digest_value(
             deferred += 1
             continue
 
-        request_md = (
-            None
-            if lanes_root is None
-            else os.path.join(lanes_root, *lane_id.split("/"), REQUEST_MD)
-        )
+        try:
+            request_md = (
+                None
+                if lanes_root is None
+                else lane_file(lanes_root, lane_id, REQUEST_MD)
+            )
+        except LaneContractError as exc:
+            row.add(
+                "lane-log.digest-path-contract",
+                locus,
+                f"lane_id={lane_id!r}",
+                "계약 어휘와 레인 루트 포함(디렉터리·말단)",
+                str(exc),
+            )
+            continue
         present = request_md is not None and os.path.isfile(request_md)
 
         if declared is None:

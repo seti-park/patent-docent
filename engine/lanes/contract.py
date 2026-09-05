@@ -36,6 +36,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
@@ -44,6 +45,21 @@ from jsonschema import Draft202012Validator
 REQUEST_JSON = "request.json"
 REQUEST_MD = "request.md"
 RESPONSE_JSON = "response.json"
+
+LANE_ID_PATTERN = re.compile(
+    r"^(?P<read_run>[a-z0-9]+(?:-[a-z0-9]+)*)/"
+    r"(?P<task>[a-z0-9]+(?:-[a-z0-9]+)*)(?:/retry-(?P<retry>[1-9][0-9]*))?/"
+    r"batch-(?P<batch>0|[1-9][0-9]*)$"
+)
+# 정본 = contracts/schemas/convergence.schema.json#$defs.read_run. 다리 시험이 상등을 고정한다.
+READ_RUNS: tuple[str, ...] = ("read-a", "read-b")
+# 정본 = contracts/stages/read.yaml#lane.sub_lanes[].id. 같은 다리 시험이 상등을 고정한다.
+LANE_TASKS: tuple[str, ...] = (
+    "decompose",
+    "ground-independent",
+    "ground-dependent",
+    "synthesize",
+)
 
 # 응답이 요청 지문을 반향하는 자리(응답 JSON 최상위 키).
 INPUT_DIGEST_KEY = "input_digest"
@@ -83,6 +99,23 @@ DIGEST_ROW_ANCHOR = "| 절차 문서 |"
 
 class LaneContractError(Exception):
     """요청·응답이 계약을 어겼다(필수 필드 부재·스키마 위반·lane_id 불일치)."""
+
+
+def _check_lane_id_vocabulary(lane_id: str) -> re.Match[str]:
+    """`lane_id`의 계약 형태와 read_run·task 정본 집합 소속을 검사한다."""
+    match = LANE_ID_PATTERN.fullmatch(lane_id) if isinstance(lane_id, str) else None
+    if match is None:
+        raise LaneContractError(
+            "lane_id 가 계약 어휘(read.yaml#lane.lane_id_vocabulary.form)를 벗어난다 — "
+            f"어휘 위반(형태) · 재정 T4 · lane_id={lane_id!r}"
+        )
+    if match["read_run"] not in READ_RUNS or match["task"] not in LANE_TASKS:
+        raise LaneContractError(
+            "lane_id 가 계약 어휘의 정본 집합을 벗어난다 — 어휘 위반(소속) · "
+            "read_run/task 가 정본 집합 밖 · 재정 T4 · "
+            f"lane_id={lane_id!r} · read_run={match['read_run']!r} · task={match['task']!r}"
+        )
+    return match
 
 
 class LaneStaleResponseError(LaneContractError):
@@ -129,6 +162,9 @@ class LaneRequest:
 
     `lane_id` 는 요청·응답 파일의 좌표이자 레인 기록의 키다
     (예: `read-a/ground-independent/batch-2`).
+
+    형태와 read_run·task의 정본 집합 소속을 보고 필드 정합은 보지 않는다.
+    예컨대 `read-b/decompose/batch-0`에 `task=synthesize`를 짝지은 요청은 통과한다.
 
     ★ `repo_root` 가 필수인 이유(재정 2026-08-19 S4). 요청서는 `prompt_path` 가 가리키는 절차
     문서의 **본문을 인라인**하며 지문은 그 본문의 함수다. 따라서 **어느 절차 트리의 본문을
@@ -180,6 +216,7 @@ class LaneRequest:
             )
         if not isinstance(self.batch, int) or self.batch < 0:
             raise LaneContractError(f"레인 요청 {self.lane_id} 의 batch 가 음수·비정수다")
+        _check_lane_id_vocabulary(self.lane_id)
 
     def _request_json_body(self) -> dict:
         """`request.json` 본문 그대로(`REQUEST_JSON_FIELDS` 순서)."""
@@ -416,7 +453,36 @@ def render_request_md(request: LaneRequest, repo_root: str | None = None) -> str
 
 
 def lane_dir(root: str, lane_id: str) -> str:
-    return os.path.join(root, *lane_id.split("/"))
+    """T4 어휘·디렉터리 포함을 강제한다. 구 판은 맨 `os.path.join`이었다."""
+    _check_lane_id_vocabulary(lane_id)
+    path = os.path.join(root, *lane_id.split("/"))
+    root_real = os.path.realpath(root)
+    if not os.path.realpath(path).startswith(root_real + os.sep):
+        raise LaneContractError(
+            "lane_id 가 레인 루트 밖을 가리킨다 — 루트 밖(디렉터리) · "
+            f"재정 T4 · lane_id={lane_id!r} · root={root!r}"
+        )
+    return path
+
+
+def lane_file(root: str, lane_id: str, name: str) -> str:
+    """말단까지 루트 포함을 검사한다(B-02).
+
+    경로를 열거나 쓰기 직전에 부른다. 검사와 I/O 사이의 교체는 안 보는 축이다(자문 ⓓ).
+    """
+    directory = lane_dir(root, lane_id)
+    if not isinstance(name, str) or not name or "/" in name or ".." in name:
+        raise LaneContractError(
+            f"레인 아티팩트 이름이 계약 어휘를 벗어난다 — 어휘 위반 · name={name!r}"
+        )
+    path = os.path.join(directory, name)
+    root_real = os.path.realpath(root)
+    if not os.path.realpath(path).startswith(root_real + os.sep):
+        raise LaneContractError(
+            "레인 아티팩트가 레인 루트 밖을 가리킨다 — 루트 밖(말단) · "
+            f"재정 T4 · lane_id={lane_id!r} · name={name!r} · root={root!r}"
+        )
+    return path
 
 
 def load_response(request: LaneRequest, path: str) -> LaneResponse:

@@ -29,6 +29,7 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 # 계약 파일 위치. 이 둘만이 러너가 아는 "리포 안의 자리"다.
 _STAGE_CONTRACT_DIR = ("contracts", "stages")
 _FORMAT_PARAMETERS = ("contracts", "format-parameters.yaml")
+_RUN_KINDS = ("contracts", "run-kinds.yaml")
 _READER_VERSION = ("reader", "READER-VERSION")
 
 # 러너가 파생시키는 하위 이름(계약 미선언 — 위 docstring 참조).
@@ -108,6 +109,19 @@ def format_parameter(dotted: str, repo: str | None = None) -> Any:
             )
         cursor = cursor[key]
     return cursor
+
+
+def run_kinds_contract(repo: str | None = None) -> dict:
+    """런 종류 계약(`contracts/run-kinds.yaml`)을 결박된 리포에서 읽는다."""
+    target = os.path.join(repo or _REPO_ROOT, *_RUN_KINDS)
+    try:
+        with open(target, encoding="utf-8") as handle:
+            data = yaml.safe_load(handle)
+    except FileNotFoundError as exc:
+        raise PathContractError(f"런 종류 계약이 없다: {target}") from exc
+    if not isinstance(data, dict) or "run_kind_enum" not in data:
+        raise PathContractError(f"런 종류 계약에 run_kind_enum 이 없다: {target}")
+    return data
 
 
 def reader_version(repo: str | None = None) -> str:

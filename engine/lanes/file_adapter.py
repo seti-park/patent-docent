@@ -27,6 +27,7 @@ from .contract import (
     LaneRequest,
     LaneResponse,
     lane_dir,
+    lane_file,
     load_response,
     render_request_md,
 )
@@ -48,7 +49,7 @@ class FileLaneAdapter:
         pending: list[str] = []
         responses: list[LaneResponse] = []
         for request in requests:
-            path = os.path.join(lane_dir(self.root, request.lane_id), RESPONSE_JSON)
+            path = lane_file(self.root, request.lane_id, RESPONSE_JSON)
             if not os.path.exists(path):
                 pending.append(request.lane_id)
                 continue
@@ -80,9 +81,10 @@ class FileLaneAdapter:
         body = json.dumps(
             request.to_dict(), ensure_ascii=False, indent=2, sort_keys=True
         ) + "\n"
-        _write_if_changed(os.path.join(directory, REQUEST_JSON), body)
+        _write_if_changed(lane_file(self.root, request.lane_id, REQUEST_JSON), body)
         _write_if_changed(
-            os.path.join(directory, REQUEST_MD), render_request_md(request, self.repo)
+            lane_file(self.root, request.lane_id, REQUEST_MD),
+            render_request_md(request, self.repo),
         )
         return directory
 
@@ -99,7 +101,7 @@ class FileLaneAdapter:
         전체, 후자는 그 행을 뺀 본문). 둘의 관계는 계약이 선언하고
         (`read.yaml#lane.round_trip_binding`) 제3자는 `grep -v` 한 줄로 후자를 복원한다.
         """
-        path = os.path.join(lane_dir(self.root, request.lane_id), REQUEST_MD)
+        path = lane_file(self.root, request.lane_id, REQUEST_MD)
         with open(path, "rb") as handle:
             return hashlib.sha256(handle.read()).hexdigest()
 

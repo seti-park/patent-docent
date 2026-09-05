@@ -22,7 +22,7 @@ from .contract import (
     LanePending,
     LaneRequest,
     LaneResponse,
-    lane_dir,
+    lane_file,
     load_response,
 )
 
@@ -41,7 +41,7 @@ class ReplayLaneAdapter:
         pending: list[str] = []
         responses: list[LaneResponse] = []
         for request in requests:
-            path = os.path.join(lane_dir(self.root, request.lane_id), RESPONSE_JSON)
+            path = lane_file(self.root, request.lane_id, RESPONSE_JSON)
             if not os.path.exists(path):
                 pending.append(request.lane_id)
                 continue

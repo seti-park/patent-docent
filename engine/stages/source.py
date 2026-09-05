@@ -44,7 +44,13 @@ from . import (
     worst_status,
 )
 from .. import gitpin
-from ..paths import RunPaths, format_parameter, load_format_parameters, reader_version
+from ..paths import (
+    RunPaths,
+    format_parameter,
+    load_format_parameters,
+    reader_version,
+    run_kinds_contract,
+)
 
 STAGE_ID = "source"
 
@@ -520,6 +526,7 @@ def run(
     run_id: str,
     patent_meta: dict,
     run_kind: str = "rehearsal",
+    partial_until: str | None = None,
     repo: str | None = None,
     supersedes_run_root: str | None = None,
 ) -> dict:
@@ -538,6 +545,38 @@ def run(
     #    어느 커밋에서 고정되는지를 확정하지 못하면 그 뒤의 어떤 산출물도 "어떤 법 아래
     #    만들어졌는가"에 답할 수 없다. 확정한 값은 아래 ④에서 run.yaml 에 기입된다.
     commit, worktree = _engine_pin(paths, contract)
+
+    # run_kind 판정은 런 결박 직후, 승계 확인·원천 읽기·디렉터리 생성보다 먼저다(T40 ③).
+    # 법은 실행 중인 엔진 트리가 아니라 위에서 결박한 `paths.repo`의 계약이다(P-U1).
+    kinds = run_kinds_contract(paths.repo)
+    allowed = kinds["run_kind_enum"]
+    if run_kind not in allowed:
+        raise StageError(
+            "run_kind 어휘 위반 — 계약 run-kinds.yaml#run_kind_enum · 재정 T40 ③ · "
+            f"run_kind={run_kind!r} · 허용={allowed!r}"
+        )
+    if run_kind == "partial":
+        partial_contract = kinds.get("kinds", {}).get("partial")
+        if not isinstance(partial_contract, dict) or not isinstance(
+            partial_contract.get("terminates_at_enum"), list
+        ):
+            raise StageError(
+                "run_kind 어휘 위반 — 계약 "
+                "run-kinds.yaml#kinds.partial.terminates_at_enum 부재 · "
+                "재정 T39 ② · T40 ③"
+            )
+        partial_stages = partial_contract["terminates_at_enum"]
+        if partial_until not in partial_stages:
+            raise StageError(
+                "partial 런은 partial_until 이 필요하다 — 계약 "
+                "run-kinds.yaml#kinds.partial.terminates_at_enum · 재정 T40 ③ · "
+                f"partial_until={partial_until!r} · 허용={partial_stages!r}"
+            )
+    if run_kind != "partial" and partial_until is not None:
+        raise StageError(
+            "partial 이 아닌 런에 partial_until — 뜻 없는 값을 받지 않는다 · "
+            f"run_kind={run_kind!r} · partial_until={partial_until!r} · 재정 T40 ③"
+        )
 
     # ⓪' 승계 대상 확인(재정 P-U2). 봉인 **전에** 본다 — 링크가 설 수 없는 상태(표시 없음·
     #    이미 다른 런에 승계됨)라면 이 런은 열리기 전에 멈춰야 한다. 산출물을 만든 뒤에
@@ -643,6 +682,7 @@ def run(
         "stage": STAGE_ID,
         "run_id": run_id,
         "run_kind": run_kind,
+        "partial_until": partial_until,
         "source": {
             "input_path": os.path.abspath(source_patent_path),
             "original_sha256": original_digest,
@@ -674,6 +714,7 @@ def run(
         paths=paths,
         run_id=run_id,
         run_kind=run_kind,
+        partial_until=partial_until,
         patent_meta=patent_meta,
         canonical_digest=canonical_digest,
         repo=repo,
@@ -707,6 +748,7 @@ def _write_run_yaml(
     paths: RunPaths,
     run_id: str,
     run_kind: str,
+    partial_until: str | None,
     patent_meta: dict,
     canonical_digest: str,
     repo: str | None,
@@ -719,6 +761,8 @@ def _write_run_yaml(
     핀은 `_engine_pin` 이 확정한 값이며(재정 P-U1·P-8), 빈 문자열 골격을 남기지 않는다 —
     빈 핀은 "아직 아무도 쓰지 않았다"를 "결박이 있다"처럼 보이게 만든다. 기존 블록의 다른
     필드(`gate_version` 등)는 보존한다.
+
+    `partial_until` 은 비부분 런에서도 null로 적어 종료선의 부재를 선언한다.
 
     `supersedes`·`superseded_by` 는 **상호 링크의 두 끝**이다(재정 P-U2, 필드 명세 = SPEC §7.3).
     승계가 없는 평범한 런에서도 두 키를 null 로 적는 이유는, 링크의 부재가 **선언된 부재**여야
@@ -740,6 +784,7 @@ def _write_run_yaml(
         ),
         "status": "active",
         "run_kind": run_kind,
+        "partial_until": partial_until,
         "supersedes": supersedes if supersedes is not None else existing.get("supersedes"),
         "superseded_by": existing.get("superseded_by"),
         "patent": patent,

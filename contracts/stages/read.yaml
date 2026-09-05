@@ -166,6 +166,10 @@ lane:
   lane_id_vocabulary:
     ruling: "재정 2026-08-19 Q7 ②"
     form: "<read_run>/<task>[/retry-<n>]/batch-<k>"
+    pattern: "^(?P<read_run>[a-z0-9]+(?:-[a-z0-9]+)*)/(?P<task>[a-z0-9]+(?:-[a-z0-9]+)*)(?:/retry-(?P<retry>[1-9][0-9]*))?/batch-(?P<batch>0|[1-9][0-9]*)$"
+    membership: {read_run: "contracts/schemas/convergence.schema.json#$defs.read_run", task: "lane.sub_lanes[].id"}
+    enforced_by: [engine/lanes/contract.py#LaneRequest.__post_init__, engine/lanes/contract.py#lane_dir, engine/lanes/contract.py#lane_file]
+    ruling_enforcement: "재정 2026-08-31 T4 · 자문 2026-09-06 B-01·B-02"
     terms:
       batch: "팬아웃 분할의 순번(0부터). 재시도와 무관하다."
       first_attempt: >-
@@ -668,7 +672,9 @@ checks_before_exit:
       레인 로그가 적은 **요청 파일 지문의 값**이 그 자리의 request.md 와 일치한다
       (재정 2026-08-31 Q1). 행마다 셋 중 하나로 판정한다 — ⓐ 값이 64자리 지문이면 러너가
       **파일을 직접 열어** sha256 을 다시 내고 대조한다(불일치 = lane-log.digest-value-mismatch ·
-      파일 부재 = lane-log.digest-file-missing · 읽기 실패 = lane-log.digest-file-unreadable).
+      파일 부재 = lane-log.digest-file-missing · 읽기 실패 = lane-log.digest-file-unreadable ·
+      경로 조립이 계약 어휘·루트 포함(디렉터리·말단)을 벗어남 =
+      lane-log.digest-path-contract(재정 T4 · 라운드 M2b-2)).
       ⓑ 값이 명시 null 이면 **면제 주장**이며 자격은 선언이 아니라 **요청 파일의 부재**다 —
       파일이 실재하는데 null 이면 lane-log.digest-null-disguise 로 걸린다.
       ⓒ 칸 자체가 없거나 값이 빈 문자열인 행은 **여기서 세지 않는다**(read.lane-log-shape 의

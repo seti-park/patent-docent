@@ -95,7 +95,7 @@
 | docent 전용 스키마 | `contracts/schemas/` |
 | **형식의 모든 수치** | `contracts/format-parameters.yaml` — 형식 파라미터 시트. 헌장 D11은 정체성 4문장만 갖는다(교정은 배치 리뷰 재정, 헌장 개정 불요) |
 | L0 규칙 목록·숫자 문법·문장 계수 | `contracts/l0-format.yaml` (형식 수치는 시트를 가리키는 포인터만 남는다) |
-| 런 종류·게시 런 전제조건 | `contracts/run-kinds.yaml` (`run_kind: rehearsal\|publish`) |
+| 런 종류·게시 런 전제조건 | `contracts/run-kinds.yaml` (`run_kind: rehearsal\|publish\|partial`) |
 | 조정 가능 파라미터(k·n·배치) | `contracts/parameters.yaml` (변경은 재정으로만) |
 | 화행 술어·결함 카탈로그·점수 린트 | `contracts/lexicon/` (등재는 재정으로만) |
 | 게이트 판정 행 서식 | `contracts/schemas/verdict-check-row.schema.json` |
