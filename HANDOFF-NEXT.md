@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(39차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(40차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 40차 갱신 — M1b 2차 = REVISE 9(MZ-1~9 · BLOCKER 1 = 짝짓기 실패의 자동 열위 계수 + 27 분모 변경 · 전부 수용 · `docs/lessons/2026-09-06-astra-m1b-t40-measure-v2.md` · `D-20260905-02` §17 추기).** 설계 메모 **v3**(drafts `T40-MEASURE-DESIGN.md` · v2 = `.v2.md`) + 스크립트 v3(구동 exit 0/10/11/12/13/14/15 · dispatch_id · `--first-early` 필수 · 발췌 1 = 기준 런 27 단위 고정 · Owner 명시 판정). **지금 할 일 = M1b 3차 도전 기동(사본 `pd-m1b-t40` 재핀 · 지적 `NA-*`) → PASS → 실측 착수(39차 문단의 순서 그대로 · 배치는 `t40_drive.py lanes <r> <batch>` 가 dispatch_id 를 부여).** 규약은 39차 이하 그대로.
+
+> [정정 2026-09-06 · 40차] 아래 39차 문단의 「지금 할 일 = M1b 2차 도전 기동」은 **끝났다**(REVISE 9 → v3). 경위 보존용으로 남긴다.
 
 **★ 09-06 39차 갱신 — T40 ④ A 비교 실측 착수 국면.** 재정 **T40 ⑤**(Owner 육성 `T40 ④ 봉투 대행 승인` · `ruling-20260905-05-T40.md` §5 · `6d92cad`) = 실측 3 런의 조기 수렴 escalation-trigger 축 미달에만 총괄이 '계속' 봉투 대행. 실측 설계 메모 = drafts `T40-MEASURE-DESIGN.md`(**v2** · v1 = `.v1.md`) · **M1b 1차 = REVISE 13(MY-1~13 · BLOCKER 1 = 27항목 대응표 부재 · 전부 수용 · `docs/lessons/2026-09-06-astra-m1b-t40-measure.md` · `D-20260905-02` **§17**)**. 계측 브랜치(main 무접촉 · 병합 금지) = **`t40-base` `ad4c6c3`**(main + `reader/procedure/` 를 09-01 핀 `d4e6ca2` 판으로 — 재정 §4 「같은 절차 문서」 이행) · `t40-r1` `530b096`(decompose·synthesize xhigh) · `t40-r2` `00e0bed`(ground-dependent sonnet-5/high). 스크립트 = `~/projects/workspaces/pd-lanes/t40-measure/`(`t40_drive.py` 종료 코드 0/10/11/12/13/14 · `t40_lanes.workflow.js` · `t40_metrics.py` · `t40_excerpts.py` · `t40_envelope.py` · 기준 런 자체 시험 통과). **지금 할 일 = M1b 2차 도전 기동(사본 `pd-m1b-t40` 재핀 · 지적 `MZ-*`) → PASS → `git worktree add --detach .worktrees/gdm-wo2026128750a1-t40-r{0,1,2} <핀>` → `t40_drive.py source r0|r1|r2` → `read` → 배치 A-a(read-a ×3 · Workflow `scriptPath` + args lanes) → 첫 배치 transcript model 검증 → A-b → (exit 11 이면 `t40_envelope.py --quote 'T40 ④ 봉투 대행 승인' --located-at 'ruling-20260905-05-T40.md §5' --write`) → B → C → `t40_metrics.py --first-early` → 결과 표 D-02 §18 + 발췌 2건(`t40_excerpts.py`) → Owner ①② 재정(한 줄 또는 새 브리핑) → M2b-3.** 규약은 38차 이하 그대로(관문 뒤 별도 커밋 · `docs/` 만 커밋 · 레인 산출은 홈 fs).
 
