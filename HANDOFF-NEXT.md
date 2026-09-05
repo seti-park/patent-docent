@@ -8,6 +8,7 @@
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
 
 **★ 09-05 20차 갱신 — 라운드 RG 병합 `6173b96`**(RG-2 헬퍼 단위 시험 · sol-coder 1턴 · M1b astra high ME-1 경유 · 총괄 재현 811·811 · 관문 7종 · 네 칸 대조표 직접 재현). 기록 = `D-20260903-04` **§24** · 레인 보고 **§25**.
+**[추기 15:0x] M1b astra high(재감사 4 발주문) = REVISE 4(MF-1~4 · 전부 LOW · §26) → 발주문 정정 · `6173b96` 메시지 §24→§25 오기 마커.**
 **지금 할 일 = 재감사 4(RH · 축소 범위)** — 발주문 drafts `AUDIT-ORDER-round-rg.md`(핀 = 이 커밋) → M1b astra high(`pd-lanes/astra-m1b-audit4/`) → opus max 발주(사본 `~/projects/workspaces/pd-audit-round-rg` · 레인 디렉터리 `pd-lanes/opus-audit-round-rg/` · 감사 중 정본 커밋 금지) → 회수(원문 `docs/lessons/2026-09-05-opus-audit-round-rg.md` · §26 처분) → **PASS 면 PD-M2a 라운드 B 계열 종결 상신(`/decision-brief`)** · FAIL 이면 라운드 RH. 세션이 끊겼다면 레인 디렉터리 `status`/`STATUS` 의 `EXIT=` 로 회수.
 
 > [정정 2026-09-05 · 20차] 아래 19차 문단의 「지금 할 일 = 라운드 RG」는 **끝났다**(`6173b96`). 경위 보존용으로 남긴다.
