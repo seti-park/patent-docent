@@ -1669,6 +1669,8 @@ claims
 
 **값 공간의 정본은 `contracts/schemas/convergence.schema.json`이다** — 자리표시 상수 · `text_status` enum · 양방향 제약 · `reported_by`의 실행 id enum과 비어 있지 않은 고유 배열 제약이 전부 그 파일에 있고, 이 절은 그것을 **가리킬 뿐**이다. 상수를 이 문서에 복제하지 않는 이유는 사본이 반드시 낡기 때문이며(§2.7의 같은 규율), 스펙과 계약이 어긋나면 **계약이 정본이고 스펙이 결함**이다.
 
+**재정 2026-09-05 T35.** ⑴ `screening_memos[].read_run`도 `$defs.read_run`을 참조하고 ⑵ `reported_by`는 `maxItems: 2`로 두 독해 실행의 명시 상한을 둔다 — 행위시법 P-U1에 따라 `runs/**` 기존 산출물에는 소급하지 않는다(`docs/decisions/ruling-20260905-01-T35-T36.md` §2 T35 ⑴⑵·§4).
+
 **그리고 미분류는 회피 통로가 아니다.** 청구항 본문에 **구조 표지 어형이 하나도 없는데** `unclassified`를 선언하면 규칙 `parse.unclassified-not-an-escape`가 **실패**시킨다. 이 봉쇄가 없으면 읽기 까다로운 종속항 전부에 미분류 표지를 붙여 검사를 공허하게 만드는 경로가 열리고, 그것이 M0.6 재감수가 반복해서 잡아낸 "침묵 통과"의 재발이다. **★ 판정 기준 정정(2026-08-18).** 구 문언은 기준을 *"5종 어형으로 파싱이 되고 그 집합이 `depends_on`과 일치하는데도"*로 적었으나 그것은 재정 P-1과 싸웠다 — 재정 원문은 "이 4구조를 **만나면** 표지"이고 표지의 대상은 **본문의 구조**인데, Markush 종속항은 대개 `of claim 1`로 평범하게 인용하므로 구 기준에서는 **재정을 따른 레인이 반드시 실패**했다. 표지 어형 목록의 정본 = `reader/reader-rules.yaml#dependency_citation.unclassified.structure_markers`. 규칙 정본 = `reader/reader-rules.yaml#dependency_citation.unclassified`. 입법 경로는 실물 축적 시 **건별 재정**(배치 리뷰 상신)이다.
 
 전 종속항이 `unclassified`이면 `checked == 0`이 되어 판정 행에 `vacuous: "empty-target"`이 자동 날인된다(재정 N5) — 정상 동작이며, "검사가 아무것도 세지 않고 통과한" 상태가 보고서에서 눈에 보인다.

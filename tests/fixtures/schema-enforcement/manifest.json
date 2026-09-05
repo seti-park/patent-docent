@@ -281,6 +281,20 @@
       "basis": "재정 2026-09-02 T32 §2·§3 ②. accept/convergence.unclassified-text-absent.json 을 복제해 canonical_selection.read_run 과 unclassified_dependents[].reported_by 를 read-b 로 바꾼 둘째 enum 값의 양성 대조 · RD-4."
     },
     {
+      "file": "accept/convergence.screening-memos-two-runs.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "accept",
+      "series": "T35 screening_memos[].read_run 유효 enum 두 값",
+      "basis": "재정 2026-09-05 T35 §2 ⑴·§4. accept/convergence.unclassified-text-absent.json 을 복제해 screening_memos 한 자리만 read-a·read-b 유효 메모 2건으로 채운 판. 두 enum 값의 수락 쪽 양성 대조다."
+    },
+    {
+      "file": "reject/convergence.screening-memo-read-run-unknown.json",
+      "schema": "contracts/schemas/convergence.schema.json",
+      "expect": "reject",
+      "series": "T35 screening_memos[].read_run 미등록 실행 거부",
+      "basis": "재정 2026-09-05 T35 §2 ⑴·§4. 복제 원본 = accept/convergence.screening-memos-two-runs.json + 바꾼 한 자리 = screening_memos[0].read_run 만 read-a → read-c."
+    },
+    {
       "file": "reject/convergence.canonical-read-run-unknown.json",
       "schema": "contracts/schemas/convergence.schema.json",
       "expect": "reject",

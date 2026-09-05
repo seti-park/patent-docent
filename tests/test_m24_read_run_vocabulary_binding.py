@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""재정 T32 — 독해 실행 id 단일 진원과 러너 판정서의 계약 적합성을 고정한다."""
+"""재정 T32·T35 — 독해 실행 id 단일 진원과 러너·실런 판정서의 계약 적합성을 고정한다."""
 
 from __future__ import annotations
 
@@ -23,6 +23,14 @@ import test_m21_retry_budget_by_judgment_point as m21  # noqa: E402
 
 
 SCHEMA_PATH = os.path.join(REPO, "contracts", "schemas", "convergence.schema.json")
+RUN_REPORTS = (
+    "runs/gdm-wo2026128750a1-agent-memory/10-read/convergence.json",
+    "runs/gdm-wo2026128750a1-agent-memory/10-read/convergence-early.json",
+    "runs/openai-us20260147854a1-cim-fp-2/10-read/convergence.json",
+    "runs/openai-us20260147854a1-cim-fp-2/10-read/convergence-early.json",
+    "runs/openai-us20260147854a1-cim-fp-3/10-read/convergence.json",
+    "runs/openai-us20260147854a1-cim-fp-3/10-read/convergence-early.json",
+)
 
 
 def load_schema() -> tuple[str, dict]:
@@ -46,16 +54,15 @@ def test_reported_by_enum_matches_default_read_runs_in_order() -> None:
         )
 
 
-def test_read_run_has_one_definition_two_references_and_one_literal() -> None:
-    """단일 진원을 세지 않으면 두 사용처가 다시 서로 다른 값 공간으로 늙을 수 있다."""
+def test_read_run_has_one_definition_three_references_and_one_literal() -> None:
+    """T35 — 단일 진원과 세 사용처가 다시 서로 다른 값 공간으로 늙지 않게 한다."""
     text, schema = load_schema()
     expected_ref = {"$ref": "#/$defs/read_run"}
     expected_definition = {
         "enum": ["read-a", "read-b"],
         "$comment": (
-            "재정 2026-09-02 T32 — 독해 실행 식별자의 단일 진원 · reported_by.items 와 "
-            "canonical_selection.read_run 이 참조한다 · screening_memos[].read_run 은 "
-            "§5 ② 상신 전이라 이 참조 밖"
+            "재정 2026-09-02 T32 · 2026-09-05 T35 — 독해 실행 식별자의 단일 진원 · "
+            "`reported_by.items` · `canonical_selection.read_run` · `screening_memos[].read_run` 셋이 참조한다"
         ),
     }
     if schema["$defs"].get("read_run") != expected_definition:
@@ -64,10 +71,20 @@ def test_read_run_has_one_definition_two_references_and_one_literal() -> None:
         "properties"
     ]["reported_by"]["items"]
     canonical = schema["properties"]["canonical_selection"]["properties"]["read_run"]
+    screening_memo = schema["properties"]["screening_memos"]["items"]["properties"]["read_run"]
     if reported_by_items != expected_ref:
         pytest.fail(f"reported_by.items 참조 기대 {expected_ref}, 실제 {reported_by_items}")
     if canonical.get("$ref") != expected_ref["$ref"]:
         pytest.fail(f"canonical_selection.read_run 참조가 없다: {canonical}")
+    expected_screening_memo = {
+        "$ref": "#/$defs/read_run",
+        "$comment": (
+            "재정 2026-09-05 T35 ⑴ — 독해 실행 식별자의 단일 진원에 편입(T32 가 남긴 둘째 "
+            "자유 문자열). 행위시법 P-U1 — runs/** 기존 산출물 무소급."
+        ),
+    }
+    if screening_memo != expected_screening_memo:
+        pytest.fail(f"screening_memos[].read_run 참조가 T35와 다르다: {screening_memo}")
 
     refs: list[str] = []
 
@@ -83,8 +100,8 @@ def test_read_run_has_one_definition_two_references_and_one_literal() -> None:
                 collect_refs(value)
 
     collect_refs(schema)
-    if len(refs) != 2:
-        pytest.fail(f"$defs.read_run 참조 기대 2곳, 실제 {len(refs)}곳")
+    if len(refs) != 3:
+        pytest.fail(f"$defs.read_run 참조 기대 3곳, 실제 {len(refs)}곳")
     literal_count = text.count('"read-a"')
     if literal_count != 1:
         pytest.fail(f'스키마의 "read-a" 리터럴 기대 1회, 실제 {literal_count}회')
@@ -96,11 +113,90 @@ def test_read_run_has_one_definition_two_references_and_one_literal() -> None:
     )
     if canonical.get("$comment") != expected_comment:
         pytest.fail(f"canonical_selection.read_run 정정 기록이 실물 문언과 다르다: {canonical}")
-    if schema["properties"]["screening_memos"]["items"]["properties"]["read_run"] != {
-        "type": "string",
-        "minLength": 1,
-    }:
-        pytest.fail("screening_memos[].read_run 을 재정 전 값 공간으로 좁혔다")
+
+
+def test_existing_run_reports_obey_read_run_enum_without_new_t35_rejections() -> None:
+    """T35 행위시법 — 현행 스키마에서 실런 6파일의 값·거부 사유를 고정한다."""
+    _, schema = load_schema()
+    enum = set(schema["$defs"]["read_run"]["enum"])
+    validator = Draft202012Validator(schema)
+    errors_by_path: dict[str, list] = {}
+    observed_memo_values: list[tuple[str, str]] = []
+    for relative_path in RUN_REPORTS:
+        with open(os.path.join(REPO, relative_path), encoding="utf-8") as handle:
+            payload = json.load(handle)
+        observed_memo_values.extend(
+            (relative_path, memo.get("read_run"))
+            for memo in payload.get("screening_memos", [])
+        )
+        errors_by_path[relative_path] = sorted(
+            validator.iter_errors(payload),
+            key=lambda error: (list(error.absolute_path), error.validator, error.message),
+        )
+
+    outside = sorted(
+        (relative_path, value)
+        for relative_path, value in observed_memo_values
+        if value not in enum
+    )
+    if outside:
+        pytest.fail(f"실런 screening_memos[].read_run 이 enum 밖이다: {outside!r}")
+
+    rejected = {relative_path for relative_path, errors in errors_by_path.items() if errors}
+    expected_legacy_rejection = {
+        "runs/openai-us20260147854a1-cim-fp-3/10-read/convergence.json"
+    }
+    if rejected != expected_legacy_rejection:
+        pytest.fail(f"실런의 현행 스키마 거부 집합이 예상과 다르다: {sorted(rejected)!r}")
+
+    # T23 이전 행위시법 산출물 · T35 는 새 거부를 만들지 않는다. 이 full 판정서의
+    # text_status·reported_by 부재만 기존 거부 사유이고, 나머지 5파일은 전부 accept다.
+    legacy_path = next(iter(expected_legacy_rejection))
+    legacy_errors = errors_by_path[legacy_path]
+    observed_errors = {
+        (error.validator, tuple(error.absolute_path), error.message)
+        for error in legacy_errors
+    }
+    expected_errors = {
+        ("required", ("unclassified_dependents", 0), "'text_status' is a required property"),
+        ("required", ("unclassified_dependents", 0), "'reported_by' is a required property"),
+    }
+    if observed_errors != expected_errors:
+        pytest.fail(f"T23 이전 실런의 전체 오류가 required 두 건과 다르다: {observed_errors!r}")
+    forbidden_keywords = [
+        error.validator for error in legacy_errors if error.validator in {"enum", "maxItems"}
+    ]
+    if forbidden_keywords:
+        pytest.fail(f"T35가 기존 실런에 enum·maxItems 거부를 만들었다: {forbidden_keywords!r}")
+
+
+def test_reported_by_max_items_survives_a_third_enum_value() -> None:
+    """T35 ⑵ — enum이 셋으로 넓어져도 reported_by의 설계 상한은 둘이다."""
+    _, schema = load_schema()
+    extended_schema = json.loads(json.dumps(schema))
+    extended_schema["$defs"]["read_run"]["enum"] = ["read-a", "read-b", "read-c"]
+    fixture_path = os.path.join(
+        REPO,
+        "tests",
+        "fixtures",
+        "schema-enforcement",
+        "accept",
+        "convergence.screening-memos-two-runs.json",
+    )
+    with open(fixture_path, encoding="utf-8") as handle:
+        payload = json.load(handle)
+    payload["unclassified_dependents"][0]["reported_by"] = ["read-a", "read-b", "read-c"]
+
+    errors = sorted(
+        Draft202012Validator(extended_schema).iter_errors(payload),
+        key=lambda error: (list(error.absolute_path), list(error.absolute_schema_path)),
+    )
+    keywords = [error.validator for error in errors]
+    if keywords != ["maxItems"]:
+        pytest.fail(
+            "확장 enum의 세 고유 실행은 enum·uniqueItems가 아니라 maxItems 하나로 거부되어야 한다: "
+            f"keywords={keywords!r}, errors={[error.message for error in errors]!r}"
+        )
 
 
 def test_runner_convergence_reports_validate_against_shared_read_run_enum(tmp_path) -> None:

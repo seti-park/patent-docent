@@ -157,9 +157,11 @@
           "text_verbatim": { "type": "string", "minLength": 1 },
           "text_status": { "enum": ["verbatim", "absent"] },
           "reported_by": {
+            "$comment": "재정 2026-09-05 T35 ⑵ — 두 독해 실행이라는 설계 의도의 명시 상한. 오늘은 `items.enum` 크기 2 + `uniqueItems` 가 같은 상한을 우연히 주지만, `enum` 에 셋째 실행이 들어와도 이 상한은 2 로 남는다(RD 좁은 재감사 ⒞).",
             "type": "array",
             "items": { "$ref": "#/$defs/read_run" },
             "minItems": 1,
+            "maxItems": 2,
             "uniqueItems": true
           }
         },
@@ -229,7 +231,7 @@
         "additionalProperties": false,
         "required": ["read_run", "direction", "note"],
         "properties": {
-          "read_run": { "type": "string", "minLength": 1 },
+          "read_run": { "$ref": "#/$defs/read_run", "$comment": "재정 2026-09-05 T35 ⑴ — 독해 실행 식별자의 단일 진원에 편입(T32 가 남긴 둘째 자유 문자열). 행위시법 P-U1 — runs/** 기존 산출물 무소급." },
           "direction": { "enum": ["concern", "clear"] },
           "note": { "type": "string", "minLength": 1 }
         }
@@ -275,7 +277,7 @@
   "$defs": {
     "read_run": {
       "enum": ["read-a", "read-b"],
-      "$comment": "재정 2026-09-02 T32 — 독해 실행 식별자의 단일 진원 · reported_by.items 와 canonical_selection.read_run 이 참조한다 · screening_memos[].read_run 은 §5 ② 상신 전이라 이 참조 밖"
+      "$comment": "재정 2026-09-02 T32 · 2026-09-05 T35 — 독해 실행 식별자의 단일 진원 · `reported_by.items` · `canonical_selection.read_run` · `screening_memos[].read_run` 셋이 참조한다"
     },
     "axis_id": {
       "$comment": "수렴 6축의 이름. convergence_detail.axes[].id 와 convergence_report 의 두 목록이 같은 어휘를 쓴다.",
