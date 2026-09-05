@@ -1,11 +1,16 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-05(24차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-05(25차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-05 25차 갱신 — 라운드 M2a-2(G-5 · 재정 T38 집행) 병합 `1573591`**(sol-coder · 발주문 v3 · M1b astra high 2회 MJ·MK · 재현 835/835 두 모드 · 차별 대조 (i) 구 13 붉음→신 초록 · `D-20260903-04` **§36** 회수 · §37 레인 보고). **열린 사후 확인 = ⓦ 1건**(판정 불가 = fail-closed StageError · 총괄 재량 · §34·§35 · 뒤집으면 `_run_is_terminated` 의 판정 불가 분기 + m26 ⓘ 시험 기대값). Owner 재정 대기 0.
+**지금 할 일 = 재감사 6(RJ · M9 fable xhigh 2회째).** 발주문 drafts `AUDIT-ORDER-round-m2a2.md`(대상 `1573591` + 이 기록 커밋 · 자리표 채울 것) → M1b astra high 도전(사본 = 이 기록 커밋 detached + `bundle/`) → 감사 발주(러너 템플릿 `fable-audit-runner.template.sh` · 안내문 `fable-audit-brief-preamble.md` · 사본 `~/projects/workspaces/pd-audit-round-m2a2` · basetemp `pd-audit9-basetemp` · setsid) · **감사 중 정본 커밋 금지** · 감사 중 배경 대기 명령은 메모리 부족으로 죽으니 Monitor 로. PASS → **PD-M2a 러너 무결성 종결 상신**(B-1 + G-5 · `/decision-brief` · ⓦ 추인 포함) → PD-M2b(G-1~G-4 · B-2). 백로그 8(§27 ⑴~⑺ + §33 ⑻).
+
+> [정정 2026-09-05 · 25차] 아래 24차 문단의 「지금 할 일 = 라운드 M2a-2」는 **끝났다**(병합). 경위 보존용으로 남긴다.
 
 **★ 09-05 24차 갱신 — 재감사 5(RI · M9 fable xhigh 첫 적용 · `docs/lessons/2026-09-05-fable-audit-round-m2a1.md`) = PASS · LOW 3(RI-1 시험 공백 → M2a-2 ⑤ 이월 · RI-2·RI-3 기록 오기 정정) · `D-20260903-04` §33(첫 관측 = 54턴 · 18.5분 · $5.95 · 절단 없음).** 라운드 M2a-1(B-1) 감사상 닫힘. Owner 결정 대기 **0**.
 **지금 할 일 = 라운드 M2a-2(G-5 · 재정 T38 집행).** **[추기 17:2x] M1b 2차(v2) = REVISE 5(MK-1~5 · BLOCKER 0 · §35) → v3 → sol-coder 발주(3차 도전 없이 · M2a-1 선례) · 레인 `pd-lanes/sol-coder-round-m2a2/` · worktree `round-m2a2`(`ec6000e` 분기).** **[추기 17:1x] M1b astra high(M2a-2 발주문 v1) = REVISE 6(MJ-1 BLOCKER ~ MJ-6 · §34) → v2 → M1b 2차. 열린 사후 확인 = ⓦ 1건(MJ-1 판정 불가 = fail-closed StageError · 총괄 재량 · Owner 추인 대기 · 뒤집으면 가드 함수 한 곳 + 시험 ⓘ).** 발주문 drafts `SPEC-round-m2a2.md`(v1 · 좌표 `c7b97f1` 판 · ⑤ = RI-1 ⓓ1 시험) → **M1b astra high 도전**(`sol-audit.sh run --model gpt-6-astra --effort high` · setsid · 사본 = 이 기록 커밋 detached + `bundle/`) → PASS/REVISE 반영 → sol-coder(worktree `round-m2a2` · `setsid nohup` · 레인 `pd-lanes/sol-coder-round-m2a2/`) → 총괄 재현(전체 pytest 두 모드 순차 · 홈 fs basetemp/TMPDIR · 차별 대조 (i) 구 트리 직접) → 커밋 → **리포 루트 cwd 에서** rebase·ff 병합·worktree 제거 → 기록 커밋 → 재감사 6(fable xhigh · 러너 템플릿 drafts `fable-audit-runner.template.sh` · 안내문 `fable-audit-brief-preamble.md`). 백로그 8(§27 ⑴~⑺ + §33 ⑻ `__pycache__` 누출).
