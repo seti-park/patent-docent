@@ -1,11 +1,16 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-05(26차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-05(27차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-05 27차 갱신 — 라운드 M2a-3(재감사 6 시험 공백 수리 · 시험만) 병합 `8ceea90`**(sol-coder v2 · M1b MM 6 → MN PASS · 843/843 두 모드 · D7 직접 재현 ⓙ+ⓜ3 붉음 · `D-20260903-04` **§42** 회수 · §43 레인 보고). 열린 사후 확인 = ⓦ 1건(+ RJ-5 병기). Owner 재정 대기 0.
+**지금 할 일 = 좁은 재감사 7(RK · 축소 범위 · M9 fable xhigh 3회째).** 발주문 drafts `AUDIT-ORDER-round-m2a3.md`(대상 `8ceea90` + 이 기록 커밋 · 자리표 채울 것) → M1b astra high 도전 → 감사 발주(사본 `pd-audit-round-m2a3` · basetemp `pd-audit10-basetemp` · **발주 직전 `bundle/`·`brief.md` 판 표식 실측** · setsid · Monitor) · 감사 중 정본 커밋 금지. **PASS → PD-M2a 러너 무결성 종결 상신 T39**(`/decision-brief` · 재정 = ① 종결 선언 ② ⓦ 추인(판정 불가 = fail-closed · RJ-5 거부 기록 소실 병기 · 감사자 판단 = S2 오류 처리 재량)) → PD-M2b(G-1~G-4 · B-2). **FAIL → 같은 상신 2회째 FAIL = 자문 트리거 ⓑ → `advice-bundle.sh` 봉투를 Owner 에게**(L-054 · fable CLI 자문 금지). 백로그 8.
+
+> [정정 2026-09-05 · 27차] 아래 26차 문단의 「지금 할 일 = 라운드 M2a-3」는 **끝났다**(병합). 경위 보존용으로 남긴다.
 
 **★ 09-05 26차 갱신 — 재감사 6(RJ · fable xhigh 2회째 · `docs/lessons/2026-09-05-fable-audit-round-m2a2.md`) = FAIL(MED 1 · LOW 4 · **구현 결함 0** · 시험 공백) · `D-20260903-04` §39(관측 2 = 66턴 · 39.3분 · $9.82).** RJ-1~4 → **수리 라운드 M2a-3(시험만 · 엔진 무접촉 · m26 에 ⓙⓚⓛⓜ 추가)** · RJ-5 → ⓦ 상신 병기. 열린 사후 확인 = ⓦ 1건(+ RJ-5 병기). Owner 재정 대기 0.
 **[좌석 규약 추기 18:5x · ROUTING §5 ⑽ 개정 L-054 · Owner 육성]** **자문(트리거 ⓐ 결정 직전 · ⓑ 같은 문제 2회 저항 · ⓒ 출하 직전)은 fable xhigh CLI 로 부르지 않는다 — `~/.claude/agents/bin/advice-bundle.sh --name <이름> --prompt <질문.md> <파일…>` 로 봉투(PROMPT.md · bundle.zip · ENVELOPE.md)를 만들어 Owner 에게 내고, 회신은 `REPLY.md` 원문 → 총괄 처분표.** 폴백(Owner 부재·긴급)만 fable xhigh CLI. **M9 감사(fable xhigh CLI)는 그대로.** 이 세션의 fable xhigh 호출은 전부 M9 감사였다(자문 호출 0). 다음 자문 후보 = 재감사 7 이 FAIL 이면 ⓑ 발동(같은 상신 2회째 FAIL) → 봉투.
