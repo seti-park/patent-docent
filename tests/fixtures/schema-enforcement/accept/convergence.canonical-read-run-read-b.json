@@ -35,7 +35,7 @@
   "grounding_exceptions": [],
   "phase": "early",
   "canonical_selection": {
-    "read_run": "read-a",
+    "read_run": "read-b",
     "rule": "declaration-order",
     "content_blind": true
   },
@@ -50,7 +50,7 @@
       "dependency_type": "unclassified",
       "text_verbatim": "«문언 없음»",
       "text_status": "absent",
-      "reported_by": ["read-a"]
+      "reported_by": ["read-b"]
     }
   ],
   "numeric_inventory": {

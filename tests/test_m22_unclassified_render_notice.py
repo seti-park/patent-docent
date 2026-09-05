@@ -237,3 +237,49 @@ def test_legacy_run_without_early_verdict_renders_notice_without_error() -> None
     expected = "조기 판정서 없음 — 구 판 산출"
     if expected not in block:
         pytest.fail(f"조기 판정서 부재 안내 기대 {expected!r}")
+
+
+def test_final_verdict_cannot_substitute_for_missing_early_verdict() -> None:
+    """최종 판정서만 있어도 조기 판정서 부재를 전건 일치로 갈음하지 않는다."""
+    rendered = render_unclassified(
+        [
+            {
+                "claim": "CL-3",
+                "dependency_type": "unclassified",
+                "text_status": "verbatim",
+                "text_verbatim": "Both final readers reported this dependent claim.",
+                "reported_by": ["read-a", "read-b"],
+            }
+        ],
+        convergence_early=None,
+    )
+    block = rendered.split("## 10-b. ★ 조기 합집합", 1)[1].split(
+        "## 11. ★ 맹검 스크리닝 메모", 1
+    )[0]
+    if "조기 판정서 없음 — 구 판 산출" not in block:
+        pytest.fail("최종 판정서를 조기 판정서로 갈음하지 않고 부재를 밝혀야 한다")
+    if "전건 일치" in block:
+        pytest.fail("조기 판정서가 없는데 최종 판정서로 전건 일치를 선언했다")
+
+
+def test_legacy_early_item_without_attribution_does_not_declare_agreement() -> None:
+    """reported_by 없는 구 조기 판정서는 귀속 부재를 밝히고 일치를 선언하지 않는다."""
+    rendered = render_unclassified(
+        [],
+        convergence_early={
+            "unclassified_dependents": [
+                {
+                    "claim": "CL-3",
+                    "dependency_type": "unclassified",
+                    "text_verbatim": "Legacy dependent claim text.",
+                }
+            ]
+        },
+    )
+    block = rendered.split("## 10-b. ★ 조기 합집합", 1)[1].split(
+        "## 11. ★ 맹검 스크리닝 메모", 1
+    )[0]
+    if "귀속 정보 없음 — 구 판 산출(재정 T23 이전)" not in block:
+        pytest.fail("reported_by 없는 구 조기 판정서에 귀속 정보 부재 안내가 없다")
+    if "전건 일치" in block:
+        pytest.fail("reported_by 없는 구 조기 판정서가 전건 일치를 선언했다")

@@ -135,9 +135,12 @@ def to_convergence_payload(
 
       `phase`               `"early"` = 조기 수렴 판정서(분해 직후, 재정 P-4) ·
                             `"full"` = 정본이 전 단계를 마친 최종 보고서.
-      `canonical_read_run`  정본으로 지정된 실행 식별자. 생략하면 `provenance.read_runs[0]`
-                            에서 읽는다 — 규칙이 **선언 순서**이므로 그 값이 곧 정본이다
-                            (내용맹·결정론, 품질 비교 금지 — 재정 P-4).
+      `canonical_read_run`  정본으로 지정된 실행 식별자. 생략하면
+                            `provenance.read_runs[0]` 로 폴백하지만 그 값은 역할 접미
+                            (`:canonical` 등)를 든 표기라 `convergence.schema.json` 의
+                            `read_run` enum 과 정합하지 않는다 — 러너는 항상
+                            `canonical_read_run` 을 명시 전달한다(재정 T32 §5 ③).
+                            폴백 제거는 백로그다.
       `screening_memos`     맹검 메모 2건(재정 P-A·P-U4). 러너가 레인 응답에서 모은다.
       `skipped_tokens`      수확에서 건너뛴 토큰. 주지 않으면 `read.value-derivation` 행이
                             남긴 것을 쓴다.

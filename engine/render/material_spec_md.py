@@ -28,7 +28,6 @@ from typing import Any
 from ..paths import load_stage_contract, repo_root
 
 APPROVAL_SCHEMA = ("contracts", "schemas", "approval-envelope.schema.json")
-_CONVERGENCE_EARLY_UNSET = object()
 
 # ★ 수치 인벤토리 계수의 **범위 표지**(2026-08-18 통주 2 처분).
 # 구 표면은 "전체 34건 — 참조 3건 표시"라고만 적었고, 그 런의 실제 역참조 대상은 4였다
@@ -100,14 +99,10 @@ def render(
     convergence: dict | None = None,
     contract: dict | None = None,
     repo: str | None = None,
-    convergence_early: Any = _CONVERGENCE_EARLY_UNSET,
+    convergence_early: Any = None,
 ) -> str:
     """재료 명세 1건의 KR 판독본. 같은 입력에 같은 바이트를 낸다."""
     contract = contract if contract is not None else load_stage_contract("read", repo)
-    # 기존 직접 호출은 final 판정서를 두 번째 인자로만 넘겼다. 그 호출은 같은 목록을 조기
-    # 판정서의 호환 입력으로 삼고, 파일 부재를 아는 호출자는 None 을 명시해 구 판을 드러낸다.
-    if convergence_early is _CONVERGENCE_EARLY_UNSET:
-        convergence_early = convergence
     checkpoint = contract.get("owner_checkpoint") or {}
     convergence = convergence or {}
     index = _item_by_id(spec)
@@ -480,15 +475,19 @@ def render(
         out()
     else:
         early_unclassified = convergence_early.get("unclassified_dependents") or []
+        missing_attribution = any(not entry.get("reported_by") for entry in early_unclassified)
         split_reports = [
             entry
             for entry in early_unclassified
             if len(entry.get("reported_by") or []) == 1
         ]
-        if not split_reports:
+        if missing_attribution:
+            out("귀속 정보 없음 — 구 판 산출(재정 T23 이전)")
+            out()
+        elif all(len(entry.get("reported_by") or []) == 2 for entry in early_unclassified):
             out("갈린 신고 없음 — 두 실행의 미분류 신고가 전건 일치")
             out()
-        else:
+        elif split_reports:
             out("| `reported_by` | `claim` | `dependency_type` | `text_status` | `text_verbatim` |")
             out("|---|---|---|---|---|")
             for entry in split_reports:

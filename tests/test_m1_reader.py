@@ -1188,7 +1188,7 @@ def test_convergence_payload_carries_three_cp1_blocks() -> None:
     """세 블록이 빠지면 CP1 표면이 '기계가 무엇을 보증하지 못했는가'를 보여주지 못한다(재정 R1·R3·N9)."""
     spec = golden_spec()
     rows = run_read_checks(context(spec, peer_spec=golden_spec()))
-    payload = to_convergence_payload(rows, spec)
+    payload = to_convergence_payload(rows, spec, canonical_read_run="read-a")
     if payload["schema"] != "convergence/v0" or payload["run_id"] != spec["run_id"]:
         pytest.fail(f"산출 머리가 다르다: {payload['schema']} / {payload['run_id']}")
     if len(payload["checks"]) != len(READ_CHECK_IDS):
@@ -1228,6 +1228,7 @@ def test_convergence_payload_validates_against_contract() -> None:
     spec = golden_spec()
     for peer in (golden_spec(), None):  # 2회차 있는 런과 없는 런(공허 경로) 둘 다
         rows = run_read_checks(context(spec, peer_spec=peer))
+        # 폴백 경로는 재현하지 않는다 — 폴백은 접미 표기를 내어 enum 과 정합하지 않음(재정 T32 §5 ③ · 합본 감사 RD-5)
         payload = to_convergence_payload(rows, spec, canonical_read_run="read-a")
         errors = sorted(validator.iter_errors(payload), key=str)
         if errors:

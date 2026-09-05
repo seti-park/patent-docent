@@ -262,7 +262,12 @@ def test_ledger_exclusions_derive_exit_retry_independently() -> None:
         pytest.fail(f"계약 exit 승인 집합이 원장 도출값과 다르다: {sorted(derived)!r}")
     for check_id in POST_LOOP_NO_RETRY:
         row = _check_row(contract, check_id)
-        if row.get("action") != "escalate" or "retry" in row or "points" in row:
+        if not (
+            row.get("action") == "escalate"
+            and not str(row.get("action", "")).startswith("retry(")
+            and "then" not in row
+            and "points" not in row
+        ):
             pytest.fail(f"T22 루프 뒤 합류 행이 무재시도 escalate가 아니다: {row!r}")
 
 

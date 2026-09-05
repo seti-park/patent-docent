@@ -2040,12 +2040,21 @@ def test_cp1_render_is_byte_deterministic(tmp_path) -> None:
     """렌더가 실행마다 달라지면 무엇이 승인되었는지 말할 수 없다."""
     root, outcome, _ = run_read(tmp_path)
     convergence = outcome["convergence"]
-    first = render(outcome["spec"], convergence)
-    second = render(copy.deepcopy(outcome["spec"]), copy.deepcopy(convergence))
+    first = render(outcome["spec"], convergence, convergence_early=None)
+    second = render(
+        copy.deepcopy(outcome["spec"]),
+        copy.deepcopy(convergence),
+        convergence_early=None,
+    )
     if first != second:
         pytest.fail("같은 입력의 두 렌더가 바이트로 다르다")
     on_disk = read_text(RunPaths(root).material_spec_md)
-    if on_disk != first:
+    with_early = render(
+        outcome["spec"],
+        convergence,
+        convergence_early=load_json(RunPaths(root).convergence_early_json),
+    )
+    if on_disk != with_early:
         pytest.fail("디스크의 판독본이 렌더 결과와 다르다")
 
 
@@ -2517,8 +2526,8 @@ def test_shared_fixture_corpus_runs_end_to_end() -> None:
         pytest.fail(f"공유 코퍼스가 검사를 통과하지 못한다: {failing} — {fail_rows(rows)}")
     from reader.lib import to_convergence_payload
 
-    payload = to_convergence_payload(rows, spec)
-    rendered = render(spec, payload)
+    payload = to_convergence_payload(rows, spec, canonical_read_run="read-a")
+    rendered = render(spec, payload, convergence_early=None)
     missing = [item["id"] for item in spec.get("items") or [] if item["id"] not in rendered]
     if missing:
         pytest.fail(f"공유 코퍼스 판독본에 없는 항목: {missing}")
