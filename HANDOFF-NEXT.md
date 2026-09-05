@@ -8,7 +8,7 @@
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
 
 **★ 09-05 28차 갱신 — 좁은 재감사 7(RK · fable xhigh 3회째 · `docs/lessons/2026-09-05-fable-audit-round-m2a3.md`) = PASS · 신규 0 · RJ-1~4 closed · `D-20260903-04` **§45**(계열 종합 · M9 관측 3 = 25턴 · 12.3분 · $4.85 · 백로그 ⑼ 후보).** **PD-M2a 러너 무결성(B-1 + G-5) 감사상 닫힘.** 열린 사후 확인 = ⓦ 1건(+ RJ-5 병기). Owner 재정 대기 = **T39(발행 예정)**.
-**지금 할 일 = T39 종결 상신 브리핑 발행**(`/decision-brief` · drafts `OWNER-BRIEF-T39-m2a-closure.html` · 재정 ① 종결 선언 ② ⓦ 처분 A/B/C · RJ-5 병기 · 자잘 = 백로그 ⑻⑼ · 다음 = PD-M2b) → Owner 회신 `T39: ① A / ② A` → `ruling-20260905-04-T39.md` · RULINGS-LEDGER §2 · 브리핑 2판 배너 → **PD-M2b(G-1~G-4 · B-2)** 발주문 설계(M1b astra high → sol-coder → fable xhigh 감사 · 좌석 규약 = 이 파일 위 추기 · 자문은 advice-bundle 봉투). 상신 발행 = 단계 경계 → `/compact`.
+**[추기 20:1x] T39 브리핑 발행 = 아티팩트 `3292f4fc-f855-4846-8f22-8637e4b98a26`(drafts `OWNER-BRIEF-T39-m2a-closure.html` · 회신 서식 `T39: ① A / ② A` · ① 국면 종결 A 지금/B 백로그 ⑼ 뒤/C 전면 재감사 뒤 · ② ⓦ A fail-closed 추인/B fail-open/C fail-closed+refused 기록). Owner 결정 대기 1건.** **지금 할 일 = T39 종결 상신 브리핑 발행**(`/decision-brief` · drafts `OWNER-BRIEF-T39-m2a-closure.html` · 재정 ① 종결 선언 ② ⓦ 처분 A/B/C · RJ-5 병기 · 자잘 = 백로그 ⑻⑼ · 다음 = PD-M2b) → Owner 회신 `T39: ① A / ② A` → `ruling-20260905-04-T39.md` · RULINGS-LEDGER §2 · 브리핑 2판 배너 → **PD-M2b(G-1~G-4 · B-2)** 발주문 설계(M1b astra high → sol-coder → fable xhigh 감사 · 좌석 규약 = 이 파일 위 추기 · 자문은 advice-bundle 봉투). 상신 발행 = 단계 경계 → `/compact`.
 
 > [정정 2026-09-05 · 28차] 아래 27차 문단의 「지금 할 일 = 좁은 재감사 7」은 **끝났다**(PASS). 경위 보존용으로 남긴다.
 
