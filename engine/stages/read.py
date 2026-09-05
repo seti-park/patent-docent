@@ -1938,11 +1938,7 @@ def run(
                 payload,
                 contract,
                 paths.repo,
-                convergence_early=(
-                    load_json(paths.convergence_early_json)
-                    if os.path.isfile(paths.convergence_early_json)
-                    else None
-                ),
+                convergence_early=load_json(paths.convergence_early_json),
             ),
         )
 

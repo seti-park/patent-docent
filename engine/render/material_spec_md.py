@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any
 
 from ..paths import load_stage_contract, repo_root
 
@@ -99,7 +98,7 @@ def render(
     convergence: dict | None = None,
     contract: dict | None = None,
     repo: str | None = None,
-    convergence_early: Any = None,
+    convergence_early: dict | None = None,
 ) -> str:
     """재료 명세 1건의 KR 판독본. 같은 입력에 같은 바이트를 낸다."""
     contract = contract if contract is not None else load_stage_contract("read", repo)
@@ -476,15 +475,23 @@ def render(
     else:
         early_unclassified = convergence_early.get("unclassified_dependents") or []
         missing_attribution = any(not entry.get("reported_by") for entry in early_unclassified)
+        allowed_reporters = ("read-a", "read-b")
         split_reports = [
             entry
             for entry in early_unclassified
-            if len(entry.get("reported_by") or []) == 1
+            if isinstance(entry.get("reported_by"), list)
+            and len(entry["reported_by"]) == 1
+            and all(reporter in allowed_reporters for reporter in entry["reported_by"])
         ]
         if missing_attribution:
             out("귀속 정보 없음 — 구 판 산출(재정 T23 이전)")
             out()
-        elif all(len(entry.get("reported_by") or []) == 2 for entry in early_unclassified):
+        elif all(
+            isinstance(entry.get("reported_by"), list)
+            and len(entry["reported_by"]) == 2
+            and all(reporter in allowed_reporters for reporter in entry["reported_by"])
+            for entry in early_unclassified
+        ):
             out("갈린 신고 없음 — 두 실행의 미분류 신고가 전건 일치")
             out()
         elif split_reports:
@@ -497,6 +504,18 @@ def render(
                     f"`{entry.get('dependency_type', '')}` | `{entry.get('text_status', '')}` | "
                     f"{entry.get('text_verbatim', '')} |"
                 )
+            out()
+        else:
+            invalid_attribution_count = sum(
+                not isinstance(entry.get("reported_by"), list)
+                or len(entry["reported_by"]) >= 3
+                or any(reporter not in allowed_reporters for reporter in entry["reported_by"])
+                for entry in early_unclassified
+            )
+            out(
+                "귀속 값이 규격 밖 — 두 실행(read-a·read-b) 외 값 또는 형태 이상 · "
+                f"갈린 신고 판정 불가 · 항목 {invalid_attribution_count}건"
+            )
             out()
 
     # -- 11. 맹검 스크리닝 메모 (재정 P-A · P-U4) ---------------------------

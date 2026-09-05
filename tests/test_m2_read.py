@@ -2058,6 +2058,35 @@ def test_cp1_render_is_byte_deterministic(tmp_path) -> None:
         pytest.fail("디스크의 판독본이 렌더 결과와 다르다")
 
 
+def test_cp1_render_fails_when_declared_early_verdict_is_missing(tmp_path, monkeypatch) -> None:
+    """러너가 접지 선언 입력 부재를 구 판 산출로 낮추면 깨진 런이 CP1까지 진행한다."""
+    root, source_outcome = run_source(tmp_path)
+    if source_outcome["status"] != "ok":
+        pytest.fail(f"source 대조군 실패: {source_outcome!r}")
+    lanes_root = write_lane_responses(
+        root,
+        payloads_by_run={"read-a": payload_set(), "read-b": payload_set()},
+    )
+    paths = RunPaths(root)
+    original_write_positioning = read_stage.write_positioning_md
+
+    def write_positioning_then_remove_early(run_paths, spec) -> None:
+        original_write_positioning(run_paths, spec)
+        os.remove(run_paths.convergence_early_json)
+
+    monkeypatch.setattr(read_stage, "write_positioning_md", write_positioning_then_remove_early)
+    with pytest.raises(FileNotFoundError):
+        run_read_stage(
+            run_root=root,
+            adapter=ReplayLaneAdapter(lanes_root),
+            rules=RULES,
+        )
+    if os.path.isfile(paths.material_spec_md):
+        rendered = read_text(paths.material_spec_md)
+        if "조기 판정서 없음 — 구 판 산출" in rendered:
+            pytest.fail("러너가 조기 판정서 부재를 구 판 산출로 낮춰 판독본을 썼다")
+
+
 def test_cp1_surface_separates_three_numeric_classes(tmp_path) -> None:
     """파생 수치가 원문 수치와 같은 층으로 보이면 '계산값을 실어도 되는가'를 판단할 자리가 없다."""
     root, _, _ = run_read(tmp_path)

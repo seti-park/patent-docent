@@ -264,7 +264,6 @@ def test_ledger_exclusions_derive_exit_retry_independently() -> None:
         row = _check_row(contract, check_id)
         if not (
             row.get("action") == "escalate"
-            and not str(row.get("action", "")).startswith("retry(")
             and "then" not in row
             and "points" not in row
         ):

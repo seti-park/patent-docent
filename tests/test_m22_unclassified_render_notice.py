@@ -228,6 +228,43 @@ def test_early_union_renders_only_split_reports_with_full_attribution() -> None:
         pytest.fail("두 실행이 일치 신고한 항목이 갈린 신고 표에 들어갔다")
 
 
+def test_early_union_out_of_spec_attribution_always_renders_a_verdict() -> None:
+    """규격 밖 귀속에서도 10-b가 제목만 남기면 판정 표면의 전역성이 깨진다."""
+    cases = (
+        (["read-a", "read-b", "read-c"], 1),
+        ("read-a", 1),
+    )
+    for reported_by, expected_count in cases:
+        rendered = render_unclassified(
+            [],
+            convergence_early={
+                "unclassified_dependents": [
+                    {
+                        "claim": "CL-3",
+                        "dependency_type": "unclassified",
+                        "text_status": "verbatim",
+                        "text_verbatim": "Out-of-contract attribution shape.",
+                        "reported_by": reported_by,
+                    }
+                ]
+            },
+        )
+        block = rendered.split(
+            "## 10-b. ★ 조기 합집합 — 두 실행이 갈린 미분류 신고 (재정 T31)", 1
+        )[1].split(
+            "## 11. ★ 맹검 스크리닝 메모", 1
+        )[0]
+        if not block.strip():
+            pytest.fail(f"규격 밖 reported_by={reported_by!r} 인데 10-b 본문이 비었다")
+        if block.count("전건 일치") != 0:
+            pytest.fail(f"규격 밖 reported_by={reported_by!r} 에 전건 일치를 선언했다: {block!r}")
+        if block.count("규격 밖") != 1:
+            pytest.fail(f"규격 밖 reported_by={reported_by!r} 안내 기대 1회: {block!r}")
+        expected = f"항목 {expected_count}건"
+        if expected not in block:
+            pytest.fail(f"규격 밖 항목 수 기대 {expected!r}: {block!r}")
+
+
 def test_legacy_run_without_early_verdict_renders_notice_without_error() -> None:
     """조기 판정서 없는 구 런은 예외 없이 행위시법 안내 한 줄을 렌더해야 한다."""
     rendered = render_unclassified([])
