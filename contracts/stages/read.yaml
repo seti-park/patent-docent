@@ -33,8 +33,8 @@ lane:
       effort: high
       scope: "D5 ③ 독립항 element 3중 접지"
     - id: ground-dependent
-      model: opus-5
-      effort: low
+      model: sonnet-5
+      effort: high
       scope: >-
         D5 ③ 종속항 additions 3중 접지. 저비용 레인 허용(재정 R3) — 관할을 낮춘 것이 아니라
         레인을 낮춘 것이다. ★ 다만 두 검사가 보증하는 것은 **구조**뿐이다(참조 해소·kind 제약·
