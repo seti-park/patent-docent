@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(34차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(35차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 35차 갱신 — 라운드 M2b-2 병합 `b0c4fb6`**(sol-coder PASS + 후속 소발주 · 총괄 재현 885/885 두 모드 · 관문 7종 · `D-20260905-02` **§13**). 실물: `run_kind` 3종 + `source.run` 진입 가드(`partial_until`) · `lane_id` 형태+소속+루트 포함(`lane_dir`·`lane_file`) · SPEC B-2·G-4 집행 마커 · **G-12 신설**(종료선·비게시 강제 미구현 · 승격 정책 = 재정 필요 · 백로그). 환경 사고 2: 하니스 배경 Bash 가 메모리 부족으로 죽음(→ 재현도 `setsid nohup`) · 후속 레인이 basetemp 를 `/tmp` 로 옮겨 tmpfs 포화(→ 발주문 문언 「임시물을 `/tmp` 로 옮기지 않는다」 · LANE-RUNTIME 후보). **지금 할 일 = sol-coder M2b-1(v6 · worktree `round-m2b1` · 이 기록 커밋 분기 · 레인 `pd-lanes/sol-coder-round-m2b1/`) → 회수 → 총괄 재현(`setsid nohup` · 두 모드 순차) → 커밋·rebase → 리포 루트 cwd ff 병합 → 기록 → fable xhigh 합본 감사(M2b-1+M2b-2 · 사본 `pd-audit-round-m2b` · basetemp `pd-audit12-basetemp`) → T40 ④ A 비교 실측.** 규약은 34차 이하 그대로.
+
+> [정정 2026-09-06 · 35차] 아래 34차 문단의 「지금 할 일 = sol-coder M2b-2 회수」는 **끝났다**(병합 `b0c4fb6`). 경위 보존용으로 남긴다.
 
 **★ 09-06 34차 갱신 — M2b-1 M1b 4차 = REVISE MED 4(MV-1~4 · 대조표 문언·배치 · 값 공간 상신 0) → v6 → 5차 없이 sol-coder 발주 결정(`D-20260905-02` §12 · M2a-2 선례).** 원문 `docs/lessons/2026-09-06-astra-m1b-m2b1v4.md` · DISPOSITIONS 264행(43차). **기동은 M2b-2 sol-coder 레인(`pd-lanes/sol-coder-round-m2b2/` · 01:15 기동) EXIT 뒤** — 전체 pytest 동시 금지. 절차 = M2b-2 회수·재현·병합 → `git worktree add .worktrees/round-m2b1 -b round-m2b1 HEAD`(리포 루트 cwd) → drafts `SPEC-round-m2b1.md`(v6) 의 분기 줄에 HEAD 기재 → `pd-lanes/sol-coder-round-m2b1/SPEC-round-m2b1.md` 로 복사 → `runner.sh` 기동 → Monitor → 회수 → 재현 → 병합 → fable xhigh 합본 감사. **지금 할 일 = sol-coder M2b-2 회수.** 규약은 33차 이하 그대로.
 
