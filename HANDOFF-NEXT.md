@@ -1,11 +1,16 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-05(22차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-05(23차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-05 23차 갱신 — 라운드 M2a-1(B-1 · 재정 T3 집행) 병합 `0f00dc7`**(sol-coder · 발주문 v3 · M1b astra high 2회 경유 · 재현 819/819 두 모드 · 차별 대조 (i) 구 6 붉음→신 8 초록 · `D-20260903-04` **§30** 회수 · §31 레인 보고). **재정 T38 등재 `f3bd05b`**(G-5 전제 셋 · `ruling-20260905-03-T38.md` · Owner 결정 대기 **0**).
+**지금 할 일 = 재감사 5(RI) — M9 fable xhigh 첫 적용.** 발주문 drafts `AUDIT-ORDER-round-m2a1.md`(대상 `0f00dc7` + 이 기록 커밋) → M1b astra high 도전(`sol-audit.sh run --model gpt-6-astra --effort high` · setsid) → 감사 발주(LANE-RUNTIME 「M9 감사 호출 꼴」 · 러너 템플릿 drafts `fable-audit-runner.template.sh` · 격리 사본 `~/projects/workspaces/pd-audit-round-m2a1` + `.audit-sandbox` 마커 · basetemp/TMPDIR 홈 fs `pd-audit8-basetemp` · setsid · `usage.json` 보존) · **감사 중 정본 커밋 금지**. PASS → **라운드 M2a-2(G-5 · 재정 T38)**: 발주문 초안 drafts `SPEC-round-m2a2.md` v1(좌표는 `0f00dc7` 판 `read.py` 로 재실측 뒤 확정) → M1b astra high → sol-coder(worktree `round-m2a2`) → 재현 → 병합 → 재감사 6. **절차 주의(§30)**: 병합·worktree 제거는 **리포 루트 cwd** 에서 — worktree 안에서 `merge --ff-only` 는 자기 브랜치 no-op 이고 `worktree remove` 가 cwd 를 지운다.
+
+> [정정 2026-09-05 · 23차] 아래 22차 문단의 「지금 할 일 = PD-M2 잔여 좌표로 이동 · 추기 …」는 **끝났다**(M2a-1 병합 · T38 등재). 경위 보존용으로 남긴다.
 
 **★ 09-05 22차 갱신 — 재정 T37: PD-M2a 라운드 B 계열 종결 선언(① A) · 사후 확인 ⓡ~ⓥ 추인(② A)**(`ruling-20260905-02-T37.md` · 브리핑 `43141fdb-…` 2판 배너). 열린 사후 확인 = **없음**. **좌석 규약 갱신(ROUTING v2.1 · agents `b1aa4ae` 실측 · T37 §3)**: **M1b = astra high** · **M9(sol·astra 저작 감사) = fable xhigh(CLI · allowlist · 폴백 opus xhigh) · opus max 퇴출(L-053)** · M3 sol-coder high · M2 astra medium(약정) — 이 계열의 감사 7회는 당시 정본 opus max 로 돌았다(기록).
 **지금 할 일 = PD-M2 잔여 좌표로 이동.** 후보 순서(총괄 안 · 다음 세션이 실측 뒤 확정): **[추기 16:1x] T38 재정 접수 `① A / ② A / ③ A` → `ruling-20260905-03-T38.md` · Owner 결정 대기 0 · G-5 = 라운드 M2a-2 로 집행(M2a-1 회수·병합 뒤 · M1b astra high → sol-coder → fable xhigh 감사).** **[추기 16:0x] M1b 2차(M2a-1 v2) = REVISE 5(MH · §29) → v3 로 sol-coder 발주 15:59(`pd-lanes/sol-coder-round-m2a1/` · worktree `round-m2a1`) · 회수 뒤 감사 = fable xhigh 첫 적용.** **[추기 16:0x] G-5 상신 발행 — 문서 `docs/decisions/D-20260905-01-g5-termination.md` · 브리핑 아티팩트 `492e8207-6c09-4e3e-a697-c610ab1c5f9c`(drafts `OWNER-BRIEF-T38-g5-termination.html`) · 회신 서식 `T38: ① A / ② A / ③ A` · **Owner 결정 대기 1건(재정 셋 묶음)**.** **[추기 15:5x] M1b astra high(M2a-1 발주문) = REVISE 6 · **BLOCKER MG-1**: G-5 가드가 T17 봉투 재진입을 끊음 → **라운드 M2a-1 = B-1 만**(v2) · **G-5 = 설계 메모 → Owner 상신**(종결 정의 · 원장 기입 시점 · 구 런 처분 · §28).** ⑴ **[정정 15:4x] 로드맵 정본은 재정 T15 §1 ⒜·T1 — 다음 = PD-M2a 러너 무결성 = B-1(레인 로그 검사를 디스크 기록본으로 · T3) + G-5(종결 재진입 멱등 가드) · 신규 재정 0 → 라운드 M2a-1**(발주문 drafts `SPEC-round-m2a1.md` · M1b astra high 도전 15:42 기동 `pd-lanes/astra-m1b-m2a1/`) → PD-M2b(G-1~G-4 · B-2) → PD-M2c. 「절차 문서 라운드」라는 앞 문언은 총괄 오기 — T33 ① 은 `8259075` 로 이미 집행됐다. 백로그 ⑵⑶⑸ 는 M2a-1 뒤 또는 M2c 골든과 함께 ⑵ 백로그 ⑴ reader 폴백 제거는 이식 단위(READER-VERSION · N15) — 별건 ⑶ ⑷ flaky 관측 · ⑹ LANE-RUNTIME 편입(이관 때) · ⑺ LEDGER 셀 형식. 발주문은 **M1b astra high** 를 거쳐 집행 · 감사는 **fable xhigh**(LANE-RUNTIME 「Fable 좌석 호출 경로」 + L-053 allowlist 규격 재독 뒤). **Owner 결정 대기 = 없음.**
