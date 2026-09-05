@@ -9,7 +9,7 @@
 
 **★ 09-05 26차 갱신 — 재감사 6(RJ · fable xhigh 2회째 · `docs/lessons/2026-09-05-fable-audit-round-m2a2.md`) = FAIL(MED 1 · LOW 4 · **구현 결함 0** · 시험 공백) · `D-20260903-04` §39(관측 2 = 66턴 · 39.3분 · $9.82).** RJ-1~4 → **수리 라운드 M2a-3(시험만 · 엔진 무접촉 · m26 에 ⓙⓚⓛⓜ 추가)** · RJ-5 → ⓦ 상신 병기. 열린 사후 확인 = ⓦ 1건(+ RJ-5 병기). Owner 재정 대기 0.
 **[좌석 규약 추기 18:5x · ROUTING §5 ⑽ 개정 L-054 · Owner 육성]** **자문(트리거 ⓐ 결정 직전 · ⓑ 같은 문제 2회 저항 · ⓒ 출하 직전)은 fable xhigh CLI 로 부르지 않는다 — `~/.claude/agents/bin/advice-bundle.sh --name <이름> --prompt <질문.md> <파일…>` 로 봉투(PROMPT.md · bundle.zip · ENVELOPE.md)를 만들어 Owner 에게 내고, 회신은 `REPLY.md` 원문 → 총괄 처분표.** 폴백(Owner 부재·긴급)만 fable xhigh CLI. **M9 감사(fable xhigh CLI)는 그대로.** 이 세션의 fable xhigh 호출은 전부 M9 감사였다(자문 호출 0). 다음 자문 후보 = 재감사 7 이 FAIL 이면 ⓑ 발동(같은 상신 2회째 FAIL) → 봉투.
-**지금 할 일 = 라운드 M2a-3.** 발주문 drafts `SPEC-round-m2a3.md`(시험 4묶음 · 차별 대조 = 감사 원문 ③ 표의 D7·D6 / D2·D2b / D1 / D3·D4·D5 변조가 현 스위트 초록 → 새 시험 붉음) → M1b astra high → sol-coder(worktree `round-m2a3`) → 재현(전체 두 모드 · 차별 대조 직접) → 병합(**리포 루트 cwd**) → 기록 → **좁은 재감사 7(RK · 축소 범위 · fable xhigh · 전체 plain 1모드)** → PASS → **PD-M2a 러너 무결성 종결 상신(T39 · `/decision-brief` · ⓦ + RJ-5 추인 포함)** → PD-M2b.
+**지금 할 일 = 라운드 M2a-3.** **[추기 18:5x] M1b astra high(M2a-3 v1) = REVISE 6(MM-1 HIGH = 임시 법 리포에 절차 문서 없어 통주 불가 · §40) → v2 → M1b 2차.** 발주문 drafts `SPEC-round-m2a3.md`(시험 4묶음 · 차별 대조 = 감사 원문 ③ 표의 D7·D6 / D2·D2b / D1 / D3·D4·D5 변조가 현 스위트 초록 → 새 시험 붉음) → M1b astra high → sol-coder(worktree `round-m2a3`) → 재현(전체 두 모드 · 차별 대조 직접) → 병합(**리포 루트 cwd**) → 기록 → **좁은 재감사 7(RK · 축소 범위 · fable xhigh · 전체 plain 1모드)** → PASS → **PD-M2a 러너 무결성 종결 상신(T39 · `/decision-brief` · ⓦ + RJ-5 추인 포함)** → PD-M2b.
 
 > [정정 2026-09-05 · 26차] 아래 25차 문단의 「지금 할 일 = 재감사 6」는 **끝났다**(FAIL · 시험 공백). 경위 보존용으로 남긴다.
 
