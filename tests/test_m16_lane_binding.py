@@ -715,41 +715,34 @@ def test_worktree_run_grows_the_main_repo_ledger(tmp_path) -> None:
     ★ `shadow_root=None` 을 **명시로** 넘긴다. 이 시험의 대상이 "지정이 없을 때의 판정"이기
     때문이며, 그럼에도 정적 관문(`test_test_suite_does_not_write_production_shadow_ledger` ④)의
     형식을 지킨다. 그 관문의 **목적**(생산 원장 무오염 — 재정 G6, 과거 1,178행)은 이 시험이
-    직접 반증한다: 기입 대상은 `tmp_path` 의 임시 주 작업 트리이고, 아래 ③이 생산 원장의
-    바이트가 변하지 않았음을 같은 실행 안에서 확인한다.
+    직접 반증한다: 보호 헬퍼 `production_ledger_untouched` 가 진입에서 대상을 결속하고 종료 시
+    생산 원장 지문을 대조한다.
     """
     main, worktree = make_main_and_worktree(tmp_path)
-    production = engine_paths.shadow_screening_ledger()
-    before = m2._ledger_fingerprint(production)
+    with m2.production_ledger_untouched(tmp_path, main, worktree):
+        written = read_stage.append_screening_ledger(
+            worktree,
+            run_id="example-xx1111111a1-worktree-probe",
+            memos=[
+                {"read_run": "read-a", "direction": "clear", "note": "합성 메모 A"},
+                {"read_run": "read-b", "direction": "concern", "note": "합성 메모 B"},
+            ],
+            final={"verdict": "go", "reason": "합성"},
+            shadow_root=None,
+        )
 
-    written = read_stage.append_screening_ledger(
-        worktree,
-        run_id="example-xx1111111a1-worktree-probe",
-        memos=[
-            {"read_run": "read-a", "direction": "clear", "note": "합성 메모 A"},
-            {"read_run": "read-b", "direction": "concern", "note": "합성 메모 B"},
-        ],
-        final={"verdict": "go", "reason": "합성"},
-        shadow_root=None,
-    )
+        # ① 주 작업 트리의 원장이 자랐다.
+        expected = os.path.join(main, "ledgers", "shadow", "screening.jsonl")
+        if written != expected:
+            pytest.fail(f"기입 자리 기대 {expected}, 실제 {written}")
+        rows = [json.loads(line) for line in read_text(expected).splitlines() if line.strip()]
+        if len(rows) != 1 or len(rows[0]["memos"]) != 2:
+            pytest.fail(f"주 리포 원장에 메모 2건짜리 1행이 없다: {rows}")
 
-    # ① 주 작업 트리의 원장이 자랐다.
-    expected = os.path.join(main, "ledgers", "shadow", "screening.jsonl")
-    if written != expected:
-        pytest.fail(f"기입 자리 기대 {expected}, 실제 {written}")
-    rows = [json.loads(line) for line in read_text(expected).splitlines() if line.strip()]
-    if len(rows) != 1 or len(rows[0]["memos"]) != 2:
-        pytest.fail(f"주 리포 원장에 메모 2건짜리 1행이 없다: {rows}")
-
-    # ② worktree 안에는 원장이 서지 않았다 — 통주 2 가 남긴 자리다.
-    orphan = os.path.join(worktree, "ledgers", "shadow", "screening.jsonl")
-    if os.path.exists(orphan):
-        pytest.fail(f"원장이 worktree 안에도 생겼다: {orphan}")
-
-    # ③ 생산 원장은 바이트 하나 변하지 않았다(재정 G6).
-    after = m2._ledger_fingerprint(production)
-    if after != before:
-        pytest.fail(f"생산 섀도 원장이 변했다: {before} → {after} ({production})")
+        # ② worktree 안에는 원장이 서지 않았다 — 통주 2 가 남긴 자리다.
+        orphan = os.path.join(worktree, "ledgers", "shadow", "screening.jsonl")
+        if os.path.exists(orphan):
+            pytest.fail(f"원장이 worktree 안에도 생겼다: {orphan}")
 
 
 def test_unlocatable_main_worktree_is_refused(tmp_path) -> None:

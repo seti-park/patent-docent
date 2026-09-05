@@ -385,21 +385,13 @@ def test_linked_worktree_rerun_uses_main_ledger_with_implicit_root(
     """ⓙ 실제 `shadow_root=None` 경로도 주 원장 행만으로 종결 재호출을 막는다."""
     main, worktree = m16.make_main_and_worktree(tmp_path)
     _supplement_reader_and_commit(worktree)
-    tmp_real = os.path.realpath(str(tmp_path))
-    for label, path in (("main", main), ("worktree", worktree)):
-        if os.path.commonpath((tmp_real, os.path.realpath(path))) != tmp_real:
-            pytest.fail(f"{label} 임시 트리가 tmp_path 밖에 있다: {path}")
     if m2._main_worktree_by_git(worktree) != main:
         pytest.fail(
             f"git 실측 주 트리 기대 {main}, 실제 {m2._main_worktree_by_git(worktree)}"
         )
 
-    production = engine_paths.shadow_screening_ledger()
     expected_ledger = os.path.join(main, "ledgers", "shadow", "screening.jsonl")
-    if expected_ledger == production:
-        pytest.fail(f"임시 원장과 생산 원장이 같은 경로다: {production}")
-    before_production = m2._ledger_fingerprint(production)
-    try:
+    with m2.production_ledger_untouched(tmp_path, main, worktree):
         root, lanes_root = _fresh_run_with_responses(tmp_path, repo=worktree)
         adapter = m2.ReplayLaneAdapter(lanes_root)
         opened_reader = set()
@@ -474,15 +466,6 @@ def test_linked_worktree_rerun_uses_main_ledger_with_implicit_root(
             pytest.fail(f"생산 경로 종결 재호출 문언 누락 {missing!r}: {message}")
         if _bytes(expected_ledger) != before_ledger or len(_read_ledger(expected_ledger)) != 1:
             pytest.fail(f"재호출이 주 원장을 바꿨다: {_read_ledger(expected_ledger)!r}")
-    finally:
-        after_production = m2._ledger_fingerprint(production)
-        if after_production != before_production:
-            pytest.fail(
-                f"생산 섀도 원장이 변했다: {before_production} → "
-                f"{after_production} ({production})"
-            )
-
-
 def test_other_run_ids_in_ledger_do_not_terminate_new_run(tmp_path) -> None:
     """ⓚ 접두가 같은 ID와 무관한 ID 행은 현재 런의 종결 근거가 아니다."""
     root, lanes_root = _fresh_run_with_responses(tmp_path)
@@ -600,26 +583,27 @@ def test_unlocatable_ledger_root_is_rejected_before_dispatch(tmp_path, monkeypat
         return original_dispatch(instance, requests)
 
     monkeypatch.setattr(m2.ReplayLaneAdapter, "dispatch", counted_dispatch)
-    try:
-        with pytest.raises(StageError) as excinfo:
-            read_stage.run(
-                run_root=root,
-                adapter=adapter,
-                rules=m2.RULES,
-                repo=detached,
-                shadow_root=None,
+    with m2.production_ledger_untouched(tmp_path, detached):
+        try:
+            with pytest.raises(StageError) as excinfo:
+                read_stage.run(
+                    run_root=root,
+                    adapter=adapter,
+                    rules=m2.RULES,
+                    repo=detached,
+                    shadow_root=None,
+                )
+        except engine_paths.ShadowLedgerRootError as exc:
+            pytest.fail(
+                f"원장 루트 거부가 가드에서 닫히지 않고 dispatch "
+                f"{dispatches['count']}회 뒤 append에서 누출됐다: {exc}"
             )
-    except engine_paths.ShadowLedgerRootError as exc:
-        pytest.fail(
-            f"원장 루트 거부가 가드에서 닫히지 않고 dispatch "
-            f"{dispatches['count']}회 뒤 append에서 누출됐다: {exc}"
-        )
-    message = str(excinfo.value)
-    for token in ("종결 판정 불가", "shadow_ledger", "원장 루트 판정 거부"):
-        if token not in message:
-            pytest.fail(f"원장 루트 거부 문언에 {token!r} 누락: {message}")
-    if dispatches["count"] != 0:
-        pytest.fail(f"원장 루트 거부 뒤 dispatch가 실행됐다: {dispatches!r}")
-    pointer = RunPaths(root, detached).shadow_pointer
-    if os.path.exists(pointer):
-        pytest.fail(f"가드가 거부 포인터를 남겼다: {pointer}")
+        message = str(excinfo.value)
+        for token in ("종결 판정 불가", "shadow_ledger", "원장 루트 판정 거부"):
+            if token not in message:
+                pytest.fail(f"원장 루트 거부 문언에 {token!r} 누락: {message}")
+        if dispatches["count"] != 0:
+            pytest.fail(f"원장 루트 거부 뒤 dispatch가 실행됐다: {dispatches!r}")
+        pointer = RunPaths(root, detached).shadow_pointer
+        if os.path.exists(pointer):
+            pytest.fail(f"가드가 거부 포인터를 남겼다: {pointer}")

@@ -31,6 +31,8 @@ import pytest
 import yaml
 from jsonschema import Draft202012Validator
 
+import ledger_guard
+
 REPO = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 if REPO not in sys.path:
     sys.path.insert(0, REPO)
@@ -71,6 +73,12 @@ from reader.lib import READ_CHECK_IDS, run_read_checks  # noqa: E402
 from reader.lib.report import CheckContext  # noqa: E402
 from reader.lib.rules import Rules  # noqa: E402
 from reader.lib.spec_io import load_schema  # noqa: E402
+from ledger_guard import (  # noqa: E402
+    _ledger_fingerprint,
+    _main_worktree_by_git,
+    direct_engine_ledger_calls,
+    production_ledger_untouched,
+)
 
 RULES = Rules.load()
 SCHEMA = load_schema()
@@ -1772,62 +1780,6 @@ def test_screening_memos_recorded_for_both_runs(tmp_path) -> None:
             pytest.fail(f"CP1 메모 절에 {needle} 이 없다")
 
 
-def _ledger_fingerprint(path: str):
-    """원장 파일의 상태 지문 — 미존재는 `None`, 존재하면 (바이트 수, sha256)."""
-    if not os.path.exists(path):
-        return None
-    with open(path, "rb") as handle:
-        blob = handle.read()
-    return len(blob), hashlib.sha256(blob).hexdigest()
-
-
-def _main_worktree_by_git(tree: str) -> str:
-    """`tree` 가 속한 **주 작업 트리** — git 에 직접 물어 구한다(`engine.gitpin` 을 거치지 않는다).
-
-    공용 git 디렉터리(`--git-common-dir`)의 부모가 주 작업 트리다. 주 트리에서는 `tree` 자신이고,
-    링크된 worktree 에서는 `.worktrees/<x>` 의 바깥이다. git 을 못 부르면 `tree` 를 돌려준다 —
-    그때는 엔진도 같은 폴백(`git-unavailable`)을 타므로 기대값이 어긋나지 않는다.
-    """
-    try:
-        proc = subprocess.run(
-            ["git", "-C", tree, "rev-parse", "--path-format=absolute", "--git-common-dir"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except OSError:
-        return os.path.realpath(tree)
-    if proc.returncode != 0:
-        return os.path.realpath(tree)
-    common = proc.stdout.strip()
-    if os.path.basename(common) != ".git":
-        return os.path.realpath(tree)
-    return os.path.realpath(os.path.dirname(common))
-
-
-def _direct_engine_ledger_calls() -> list[str]:
-    """`shadow_root` 없이 엔진의 원장 기입 경로를 부르는 테스트 코드 자리(파일:행)."""
-    guarded = {("read_stage", "run"), ("read_stage", "append_screening_ledger")}
-    offenders: list[str] = []
-    for module in sorted(glob.glob(os.path.join(REPO, "tests", "test_*.py"))):
-        tree = ast.parse(read_text(module))
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
-                continue
-            owner = node.func.value
-            if not isinstance(owner, ast.Name):
-                continue
-            if (owner.id, node.func.attr) not in guarded:
-                continue
-            if any(keyword.arg == "shadow_root" for keyword in node.keywords):
-                continue
-            offenders.append(
-                f"{os.path.relpath(module, REPO)}:{node.lineno} "
-                f"({owner.id}.{node.func.attr})"
-            )
-    return offenders
-
-
 def test_test_suite_does_not_write_production_shadow_ledger(tmp_path) -> None:
     """이 시험이 없으면 합성 픽스처의 메모가 생산 섀도 원장에 축적된다(재정 P-U4 · P-U2).
 
@@ -1872,12 +1824,282 @@ def test_test_suite_does_not_write_production_shadow_ledger(tmp_path) -> None:
     # ④ 정적 관문 — 어떤 테스트 모듈도 `shadow_root` 없이 엔진 기입 경로를 부르지 않는다.
     #    ②③ 은 이 시험이 부른 통주 하나만 보므로, 다음 사람이 다른 자리에 같은 구멍을 내는 것은
     #    이 검사만 막을 수 있다.
-    offenders = _direct_engine_ledger_calls()
+    offenders = direct_engine_ledger_calls()
     if offenders:
         pytest.fail(
-            "shadow_root 없이 엔진 원장 기입 경로를 부른다(테스트는 run_read_stage 를 쓴다): "
+            "shadow_root 없이 엔진 원장 기입 경로를 부르거나 "
+            "production_ledger_untouched 블록 밖에서 shadow_root=None 을 쓴다"
+            "(테스트는 run_read_stage 를 쓴다): "
             + ", ".join(offenders)
         )
+
+
+@pytest.mark.parametrize(
+    ("case", "source", "expected_count", "reason"),
+    [
+        (
+            "a",
+            "def _probe():\n    read_stage.run(run_root=x, adapter=None, rules=None, shadow_root=None)\n",
+            1,
+            "허용 목록 밖 (FunctionDef.body)",
+        ),
+        (
+            "b",
+            "def _probe():\n    with m2.production_ledger_untouched(tmp_path, root):\n"
+            "        with pytest.raises(StageError):\n"
+            "            read_stage.run(run_root=x, adapter=None, rules=None, shadow_root=None)\n",
+            0,
+            None,
+        ),
+        (
+            "c",
+            "def _probe():\n    read_stage.run(run_root=x, adapter=None, rules=None)\n",
+            1,
+            "shadow_root 없음",
+        ),
+        (
+            "d",
+            "def _probe():\n    read_stage.run(run_root=x, adapter=None, rules=None, shadow_root=some_path)\n",
+            0,
+            None,
+        ),
+        (
+            "e",
+            "def _probe():\n    with other_guard(tmp_path, root):\n"
+            "        read_stage.run(run_root=x, adapter=None, rules=None, shadow_root=None)\n",
+            1,
+            None,
+        ),
+        (
+            "f",
+            "def _probe():\n    with m2.production_ledger_untouched(tmp_path, root):\n"
+            "        def later():\n"
+            "            read_stage.run(run_root=x, adapter=None, rules=None, shadow_root=None)\n"
+            "    later()\n",
+            1,
+            "허용 목록 밖 (FunctionDef.body)",
+        ),
+        (
+            "g",
+            "def _probe():\n    with m2.production_ledger_untouched(tmp_path, "
+            "read_stage.run(run_root=x, adapter=None, rules=None, shadow_root=None)):\n"
+            "        pass\n",
+            1,
+            "헬퍼 인자 위치",
+        ),
+        (
+            "h",
+            "def _probe():\n    with m2.production_ledger_untouched(tmp_path, root):\n"
+            "        pending = (read_stage.run(run_root=x, adapter=None, rules=None, "
+            "shadow_root=None) for _ in (0,))\n",
+            1,
+            "허용 목록 밖 (GeneratorExp.elt)",
+        ),
+        (
+            "i",
+            "def _probe():\n    with m2.production_ledger_untouched(tmp_path, root):\n"
+            "        type Later = read_stage.run(run_root=x, adapter=None, rules=None, "
+            "shadow_root=None)\n",
+            1,
+            "허용 목록 밖 (TypeAlias.value)",
+        ),
+        (
+            "j",
+            "def _probe():\n    with m2.production_ledger_untouched(tmp_path, root):\n"
+            "        x: read_stage.run(run_root=x, adapter=None, rules=None, shadow_root=None)\n",
+            1,
+            "허용 목록 밖 (AnnAssign.annotation)",
+        ),
+        (
+            "k",
+            "def _probe():\n    with m2.production_ledger_untouched(tmp_path, root):\n"
+            "        x: object = read_stage.run(run_root=x, adapter=None, rules=None, "
+            "shadow_root=None)\n",
+            0,
+            None,
+        ),
+        (
+            "l",
+            "def _probe():\n    with m2.production_ledger_untouched(tmp_path, root):\n"
+            "        [read_stage.run(run_root=x, adapter=None, rules=None, shadow_root=None) "
+            "for _ in (0,)]\n",
+            1,
+            "허용 목록 밖 (ListComp.elt)",
+        ),
+        (
+            "o",
+            "read_stage.run(run_root=x, adapter=None, rules=None, shadow_root=None)\n",
+            1,
+            "production_ledger_untouched 블록 밖",
+        ),
+    ],
+    ids=lambda value: value if isinstance(value, str) and len(value) == 1 else None,
+)
+def test_direct_engine_ledger_calls_use_closed_allowlist(
+    tmp_path, case, source, expected_count, reason
+) -> None:
+    """`shadow_root=None` 은 즉시 평가 허용 목록을 지나 보호 블록 본문에 닿아야 한다."""
+    module = tmp_path / f"case_{case}.py"
+    module.write_text(source, encoding="utf-8")
+    offenders = direct_engine_ledger_calls([str(module)])
+    if len(offenders) != expected_count:
+        pytest.fail(f"{case} 관문 개수 기대 {expected_count}, 실제 {offenders!r}")
+    if reason is not None and (not offenders or reason not in offenders[0]):
+        pytest.fail(f"{case} 관문 사유에 {reason!r}가 없다: {offenders!r}")
+
+
+def _guard_test_repo(path) -> str:
+    return make_law_repo(os.fspath(path))
+
+
+def test_production_guard_rejects_tree_outside_tmp_path(tmp_path) -> None:
+    """(ⅰ) 보호 대상 트리 자체가 시험 임시 세계 밖이면 진입하지 않는다."""
+    with pytest.raises(pytest.fail.Exception, match="tmp_path 밖"):
+        with production_ledger_untouched(tmp_path, REPO):
+            pass
+
+
+def test_production_guard_reports_changed_production_bytes(
+    tmp_path, tmp_path_factory, monkeypatch
+) -> None:
+    """(ⅱ) 종료 지문은 생산 자리의 직접 바이트 변경을 보고한다."""
+    main = _guard_test_repo(tmp_path / "main")
+    outside = tmp_path_factory.mktemp("prod")
+    fake = outside / "ledgers" / "shadow" / "screening.jsonl"
+    fake.parent.mkdir(parents=True)
+    fake.write_bytes(b"")
+    monkeypatch.setattr(engine_paths, "shadow_screening_ledger", lambda *a, **k: str(fake))
+    with pytest.raises(pytest.fail.Exception, match="생산 섀도 원장이 변했다"):
+        with production_ledger_untouched(tmp_path, main):
+            with open(fake, "ab") as handle:
+                handle.write(b"x")
+
+
+def test_production_guard_rejects_empty_tree_set(tmp_path) -> None:
+    """(ⅲ) 빈 대상 집합으로 결속 검사를 공허하게 만들 수 없다."""
+    with pytest.raises(pytest.fail.Exception, match="트리"):
+        with production_ledger_untouched(tmp_path):
+            pass
+
+
+def test_production_guard_rejects_external_main_worktree(
+    tmp_path, tmp_path_factory
+) -> None:
+    """(ⅳ) tmp 안 worktree 가 tmp 밖 주 트리에 매달린 경우를 거부한다."""
+    main = _guard_test_repo(tmp_path_factory.mktemp("fakeprod") / "main")
+    worktree = tmp_path / "wt"
+    proc = subprocess.run(
+        ["git", "-C", main, "worktree", "add", "-q", str(worktree), "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        pytest.fail(f"음성 worktree 생성 실패(exit {proc.returncode}): {proc.stderr}")
+    with pytest.raises(pytest.fail.Exception, match="주 트리"):
+        with production_ledger_untouched(tmp_path, str(worktree)):
+            pass
+
+
+def test_production_guard_rejects_production_inside_tmp(
+    tmp_path, monkeypatch
+) -> None:
+    """(ⅴ) 생산 자리 자체가 tmp 안이면 기대 원장과 달라도 거부한다."""
+    main = _guard_test_repo(tmp_path / "main")
+    fake = tmp_path / "fakeprod" / "ledgers" / "shadow" / "screening.jsonl"
+    fake.parent.mkdir(parents=True)
+    fake.write_bytes(b"")
+    monkeypatch.setattr(engine_paths, "shadow_screening_ledger", lambda *a, **k: str(fake))
+    with pytest.raises(pytest.fail.Exception, match="생산 자리"):
+        with production_ledger_untouched(tmp_path, main):
+            pass
+
+
+def test_production_guard_rejects_symlinked_ledger_realpath(
+    tmp_path, tmp_path_factory
+) -> None:
+    """(ⅵ) 중간 디렉터리 symlink 로 tmp 밖에 이르는 기대 원장을 거부한다."""
+    main = _guard_test_repo(tmp_path / "main")
+    outside = tmp_path_factory.mktemp("outside")
+    os.symlink(str(outside), os.path.join(main, "ledgers"))
+    with pytest.raises(pytest.fail.Exception, match="원장 실경로"):
+        with production_ledger_untouched(tmp_path, main):
+            pass
+
+
+def test_production_guard_binds_implicit_resolution_to_declared_trees(tmp_path) -> None:
+    """(ⅶ) tmp 안이라도 선언하지 않은 다른 리포의 암묵 원장은 거부한다."""
+    main = _guard_test_repo(tmp_path / "main")
+    other = _guard_test_repo(tmp_path / "other")
+    with production_ledger_untouched(tmp_path, main):
+        with pytest.raises(pytest.fail.Exception, match="결속"):
+            read_stage.shadow_screening_ledger(other, None)
+
+
+def test_production_guard_preserves_body_exception_when_unchanged(tmp_path) -> None:
+    """(ⅷ) 생산 지문이 같으면 본문 예외 형을 그대로 보존한다."""
+    main = _guard_test_repo(tmp_path / "main")
+    with pytest.raises(ValueError, match="body"):
+        with production_ledger_untouched(tmp_path, main):
+            raise ValueError("body")
+
+
+def test_production_guard_prioritizes_changed_ledger_over_body_error(
+    tmp_path, tmp_path_factory, monkeypatch
+) -> None:
+    """(ⅸ) 생산 바이트가 바뀌면 지문 실패가 본문 예외보다 우선한다."""
+    main = _guard_test_repo(tmp_path / "main")
+    outside = tmp_path_factory.mktemp("prod")
+    fake = outside / "ledgers" / "shadow" / "screening.jsonl"
+    fake.parent.mkdir(parents=True)
+    fake.write_bytes(b"")
+    monkeypatch.setattr(engine_paths, "shadow_screening_ledger", lambda *a, **k: str(fake))
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        with production_ledger_untouched(tmp_path, main):
+            with open(fake, "ab") as handle:
+                handle.write(b"x")
+            raise ValueError("body")
+    if "생산 섀도 원장이 변했다" not in str(excinfo.value):
+        pytest.fail(f"지문 실패 문언이 없다: {excinfo.value}")
+    if not isinstance(excinfo.value.__context__, ValueError):
+        pytest.fail(f"본문 ValueError가 __context__에 없다: {excinfo.value.__context__!r}")
+
+
+def test_session_guard_rejects_production_append_before_write(
+    tmp_path_factory, monkeypatch
+) -> None:
+    """(m) 세션 감싸기는 명시 루트라도 가짜 생산 자리 기입 전에 거부한다."""
+    prod_dir = tmp_path_factory.mktemp("prod")
+    fake = prod_dir / "ledgers" / "shadow" / "screening.jsonl"
+    fake.parent.mkdir(parents=True)
+    fake.write_bytes(b"")
+    before = _ledger_fingerprint(str(fake))
+    monkeypatch.setattr(ledger_guard, "production_ledger", lambda: str(fake))
+    with pytest.raises(pytest.fail.Exception, match="시험 환경에서 생산 섀도 원장 기입 거부"):
+        read_stage.append_screening_ledger(
+            None,
+            run_id="probe",
+            memos=[{"k": 1}],
+            final=None,
+            shadow_root=str(prod_dir),
+        )
+    after = _ledger_fingerprint(str(fake))
+    if after != before:
+        pytest.fail(f"세션 거부 전에 가짜 생산 원장이 변했다: {before} → {after}")
+
+
+def test_session_guard_allows_isolated_append(tmp_path) -> None:
+    """(n) 생산 자리와 다른 명시 임시 원장은 정상적으로 한 행을 받는다."""
+    written = read_stage.append_screening_ledger(
+        None,
+        run_id="isolated-probe",
+        memos=[{"k": 1}],
+        final=None,
+        shadow_root=str(tmp_path),
+    )
+    rows = [line for line in read_text(written).splitlines() if line.strip()]
+    if len(rows) != 1:
+        pytest.fail(f"격리 원장 한 행 기대, 실제 {len(rows)}행: {written}")
 
 
 def test_screening_memo_is_withheld_from_synthesis_prompt(tmp_path) -> None:

@@ -2262,6 +2262,13 @@ def _write_shadow_pointer(
     중요하다 — `main-worktree-resolved` 는 "여기는 worktree 였고 러너가 주 트리로 옮겼다"를,
     `explicit` 은 "호출자가 지정했다"를 뜻한다. 사유 없이 경로만 적으면 그 경로가 옳은지를
     다음 사람이 처음부터 다시 조사해야 한다.
+
+    ★ `refused` 분기(`ShadowLedgerRootError`)는 **정상 `run()` 경로에서는 도달 불능**이다 — 진입
+    가드 `_run_is_terminated` 가 같은 `(paths.repo, shadow_root)` 로 원장 루트를 먼저 해석해 거부를
+    「종결 판정 불가」 `StageError` 로 닫으므로(재정 T39 ② · 재감사 6 RJ-5), 여기까지 오는 런의
+    루트 판정은 이미 성공한 판정의 반복이다. 이 진술은 **두 해석 사이에 파일시스템·git 상태가
+    유지된다는 조건** 아래에서만 성립한다. 분기를 남기는 이유는 다른 호출자와 런 도중 루트가
+    바뀌는 비정상 경우이며, 그때도 거부 사유는 오류 문언에 실린다.
     """
     payload = {
         "run_repo": paths.repo,
