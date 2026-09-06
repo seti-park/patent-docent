@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(76차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-07(77차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-07 77차 갱신 — M1b 29차 = REVISE 5(OA-1·2·4·5 HIGH · OA-3 MED · `docs/lessons/2026-09-07-astra-m1b-t40-measure-v29.md` · `D-20260905-02` §17 추기 36 · **심사 대상 ① 도출 완전성 충족(처음)** · 도출 누락 0 · 새 보증 요구 0 · 갈래 전부 ⑴ · NZ-1·2 closed · NZ-3~5 partially) → 설계 메모 **v32**(sha16 `4baa56cfaacb68fb` · v31 = `.v31.md`) · 구동기 **v11**(retire 런 폴더 보존·대조 · seal run_id) · 대조기 **v6**(결속 뒤 선판별) · 영수증 **v6**(run_id 결속 · evidence_files(run_id) · 목록 경로 경계) · 지표 **v31**(kind · 결속 블록 · calls basename) · 회귀표 **v11**(121 사례(L 13 · F 7 · C 89 · X 2 · S 10) FAIL 0(04:46 → 05:0x · EXIT=0)) · 다섯 스크립트 첫 줄 bytecode 쓰기 금지.** **지금 할 일 = Owner 채팅 회신 대기 = ① 30차(`OB-*`) 기동 여부 ② 상설 규약(도출 누락 0 · 새 보증 요구 0 · 갈래 ⑴ 만이면 총괄 기동 · 그 밖·같은 P/T 세 회차 연속이면 상신) 채택 여부**(추천 = A · 채택 · SPEC v30 = `pd-lanes/astra-m1b-t40v30/SPEC-m1b-t40-v30.md` 의 `__PIN__`·`__OWNER_DECISION__`·지문 자리를 채운 뒤 사본 재핀 · bundle 지문 재생성 · `launch.sh` · Monitor). 실측 절차(v32) = 런마다 `read` 완주 뒤 `seal-evidence <r>` · 지표기 `--receipts <evidence>/calls`(basename 규칙) · 결함 런 `retire <r> <사유>`(런 폴더는 `retired/…/run/` 에 보존 · exit 16 이면 새 ID 재정) 뒤 `source <r>` 부터. Owner 사후 확인 대상 = 없음. 살아 있는 배경 = 킵얼라이브 cron 만.
+
+> [정정 2026-09-07 · 77차] 76차의 「29차 판정 회수 → PASS 면 실측」은 REVISE 5 로 끝났다(→ v32 · Owner 상신).
 
 **★ 09-07 76차 갱신 — Owner 육성 `29차: A`(04:2x · 채팅) → M1b 29차(`OA-*` · 설계 v31 · 사본 `ed011a1` · `pd-lanes/astra-m1b-t40v29/`) 기동 04:21:43 · `D-20260905-02` §17 추기 35.** **지금 할 일 = 29차 판정 회수(Monitor · 약 25분) → 감수 원문 `docs/lessons/2026-09-07-astra-m1b-t40-measure-v29.md` 반입 + DISPOSITIONS + 추기 36 → PASS 면 실측 착수(67차 순서 + v31 절차: 런마다 `read` 완주 뒤 `t40_drive.py seal-evidence <r>` · 지표기 `--receipts evidence/calls --run <r> --sandbox <새 홈 fs 경로>` · IO 결함 런은 `retire <r> <사유>` 뒤 `source <r>` 부터 · exit 16 이면 새 ID 재정) · REVISE 면 갈래별 처분(P·T 위반·도출 누락 = v32 / 새 보증 요구 = Owner 범위 재정 / 방식 자체 재REVISE = Owner 상신).** Owner 재정 대기 = 없음. 살아 있는 배경 = Monitor 1(29차) · 킵얼라이브 cron.
 
