@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(54차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(55차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 55차 갱신 — M1b 17차 = REVISE 4(NO-1~4 · MED · v17 재작성의 오거부·ND-2 회귀 · `docs/lessons/2026-09-06-astra-m1b-t40-measure-v17.md` · `D-20260905-02` §17 추기 16).** 설계 메모 **v18**(drafts `T40-MEASURE-DESIGN.md` · v17 = `.v17.md`) + 지표 v18(상태 4종 complete/in-progress/terminated-failure/terminated-incomplete · 손상 exit 4 · 전 상태 공통 검사). **지금 할 일 = M1b 18차 도전 기동(사본 재핀 · 지적 `NP-*`) → PASS → 실측 착수(39차 순서).** 규약은 54차 이하 그대로.
+
+> [정정 2026-09-06 · 55차] 아래 54차 문단의 「지금 할 일 = M1b 17차 도전 기동」은 **끝났다**(REVISE 4 → v18). 경위 보존용으로 남긴다.
 
 **★ 09-06 54차 갱신 — M1b 16차 = REVISE 4(NN-1~4 · MED · NN-3 = v16 이 합법적 대기·실패 자료를 오거부 · `docs/lessons/2026-09-06-astra-m1b-t40-measure-v16.md` · `D-20260905-02` §17 추기 15).** 설계 메모 **v17**(drafts `T40-MEASURE-DESIGN.md` · v16 = `.v16.md`) + **지표 v17 = 런 상태 인식 재설계**(complete / awaiting / terminated-failure · 완전성 요건은 complete 만). **지금 할 일 = M1b 17차 도전 기동(사본 재핀 · 지적 `NO-*`) → PASS → 실측 착수(39차 순서).** 규약은 53차 이하 그대로.
 
