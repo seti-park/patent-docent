@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(75차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-07(76차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-07 76차 갱신 — Owner 육성 `29차: A`(04:2x · 채팅) → M1b 29차(`OA-*` · 설계 v31 · 사본 `ed011a1` · `pd-lanes/astra-m1b-t40v29/`) 기동 04:21:43 · `D-20260905-02` §17 추기 35.** **지금 할 일 = 29차 판정 회수(Monitor · 약 25분) → 감수 원문 `docs/lessons/2026-09-07-astra-m1b-t40-measure-v29.md` 반입 + DISPOSITIONS + 추기 36 → PASS 면 실측 착수(67차 순서 + v31 절차: 런마다 `read` 완주 뒤 `t40_drive.py seal-evidence <r>` · 지표기 `--receipts evidence/calls --run <r> --sandbox <새 홈 fs 경로>` · IO 결함 런은 `retire <r> <사유>` 뒤 `source <r>` 부터 · exit 16 이면 새 ID 재정) · REVISE 면 갈래별 처분(P·T 위반·도출 누락 = v32 / 새 보증 요구 = Owner 범위 재정 / 방식 자체 재REVISE = Owner 상신).** Owner 재정 대기 = 없음. 살아 있는 배경 = Monitor 1(29차) · 킵얼라이브 cron.
+
+> [정정 2026-09-07 · 76차] 75차의 「Owner 채팅 회신 대기 1건」은 닫혔다(`29차: A`).
 
 **★ 09-07 75차 갱신 — M1b 28차 = REVISE 5(NZ-1·2 HIGH · NZ-3~5 MED · `docs/lessons/2026-09-07-astra-m1b-t40-measure-v28.md` · `D-20260905-02` §17 추기 34 · 첫 연역 명세 심사 · **도출 누락 0 · 새 보증 요구 0 · 갈래 전부 ⑴** · MY~NY 102 closed) → 설계 메모 **v31**(sha16 `4d2fde278d953391` · v30 = `.v30.md`) · 구동기 **v10**(`retire` · `seal-evidence` · attempt) · 대조기 **v5**(T43 선판별 · disposition · 쓰기 자리) · 영수증 **v5**(VERSION 4 · attempt · attempts · MANIFEST) · 지표 **v30**(law_status · 적재 블록 · 접두 · prompt_path) · 회귀표 **v10**(113 사례(L 13 · F 7 · C 84 · X 2 · S 7) FAIL 0(04:07 → 04:19 · EXIT=0)).** 도전자 명기 「격리·처분 합성 재REVISE — Owner 상신 대상」. **지금 할 일 = Owner 채팅 회신 대기 1건 = 29차(`OA-*`) 기동 여부**(추천 = 기동 · SPEC v29 = `pd-lanes/astra-m1b-t40v29/SPEC-m1b-t40-v29.md` 의 `__PIN__`·`__OWNER_DECISION__` 을 채운 뒤 사본 재핀 · bundle 지문 재생성 · `launch.sh` · Monitor). 실측 절차 변경(v31) = 실측 직후 **`t40_drive.py seal-evidence <r>`**(봉인 · 결과 커밋에) · 결함 런은 **`t40_drive.py retire <r> <사유>`**(exit 16 이면 새 ID 재정) 뒤 `source <r>` 부터 · 지표기는 `--receipts` 디렉터리의 부모에서 `MANIFEST-sha256-<r>.txt`·`attempts-<r>.json` 을 읽는다. Owner 사후 확인 대상 = 없음(§8 ⓟ 는 문언상 제외로 재분류). 살아 있는 배경 = 킵얼라이브 cron 만.
 
