@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(60차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(61차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 61차 갱신 — 결제 뒤 재기동한 M1b 20차 = REVISE 6(NR-1~6 · HIGH 2 · `docs/lessons/2026-09-06-astra-m1b-t40-measure-v20.md` · `D-20260905-02` §17 추기 20).** 설계 메모 **v22** · 지표 v22(`--law-tree` 신설 · 요청 MD 재렌더 결속 · memo_count 대조) · 회귀표 v2(55 사례 PASS · L 행을 러너 실제 경로로). **지금 할 일 = M1b 21차 도전 기동(사본 재핀 · order v22 · 지적 `NS-*`) → PASS → 실측 착수.** 실측 시 기준 런 추출은 `t40_metrics.py runs/gdm-… --baseline --law-tree .worktrees/gdm-wo2026128750a1-agent-memory`(d4e6ca2) 로.
+
+> [정정 2026-09-06 · 61차] 60차의 「결제 통지 뒤 20차 재기동」은 끝났다(REVISE 6 → v22).
 
 **★ 09-06 60차 갱신 — 자문 회신 처분 완료(`D-20260905-02` §17 추기 19 · NOT-READY · A-01~A-05 전부 수용) → 설계 메모 v21 · 지표 v21 · 회귀표 `pd-lanes/t40-measure/t40_regress.py`(44 사례 PASS · `T40-REGRESS-TABLE.md`).** **지금 할 일 = Owner 결제 통지(T41 ① B) 뒤 M1b 20차 도전 기동**(사본 재핀 · pin = `git rev-parse HEAD` · SPEC v20 파일을 메모 v21·회귀표 기준으로 갱신 · 지적 `NR-*` · 감시 = STATUS EXIT= + FINAL 바이트) → PASS → 실측 착수(39차 순서). 회귀표는 판이 바뀔 때마다 전건 재실행(`--src <리포> --work <홈 fs 디렉터리>` · tmpfs 금지).
 
