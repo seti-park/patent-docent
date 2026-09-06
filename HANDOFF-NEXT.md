@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(66차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(67차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 67차 갱신 — ⓓ 집행 완료(D-02 §17 추기 26): 설계 메모 v26 · 구동기 v7(호출별 영수증 `evidence/calls/` · `PYTHONHASHSEED=0`) · 지표 v26(재조립 오라클 + 전/후 검사) · `t40_replay.py` v1 · `t40_receipts.py` v1 · 회귀표 v6(88 사례 PASS · 약 7분).** **지금 할 일 = M1b 25차 도전(지적 `NW-*`) → PASS → 실측 착수.** 실측 절차 변경 = `read` 는 **`PYTHONHASHSEED=0 t40_drive.py read <r>`** · 지표 추출은 `t40_metrics.py <run_dir> --first-early evidence/first-early-<r>.json --receipts evidence/calls --run <r> --sandbox <홈 fs dir>`(재조립이 그 안에서 돈다) · 기준 런은 63차 명령 그대로. 스크립트 = `pd-lanes/t40-measure/`(drive v7 · metrics v26 · replay v1 · receipts v1 · regress v6 · excerpts v4 · workflow v4 · envelope v1).
+
+> [정정 2026-09-06 · 67차] 66차의 「지금 할 일 = ⓓ 집행 ⑴~⑺」은 끝났다(25차 기동 직전).
 
 **★ 09-06 66차 갱신 — 자문 2회차 회신 처분(D-02 §17 추기 25 · B-01~B-06 전부 수용) + 재정 T42(`ruling-20260906-02-T42.md` · Owner 육성 `T42: ① ⓓ` · 브리핑 `07e7b94e-…`).** **지금 할 일 = ⓓ 집행 순서대로**: ⑴ 메모 v26 §5 검증 약속을 여섯 부류로 좁혀 적기(B-04) ⑵ 구동기 `t40_drive.py` v7 — `read` 호출마다 `evidence/calls/<run>-<n>.json` 영수증(호출 전 대기 좌표의 응답 지문 · 호출 뒤 E/full/게이트/lane-log/포인터 지문 · 예외 종류·위치 · 첫 관측 S) ⑶ 재조립 대조기 `pd-lanes/t40-measure/t40_replay.py` — 대상 런의 입력(원천·run.yaml·기록 응답 원시 바이트·봉투)과 영수증으로 빈 sandbox 에서 `read.run` 을 호출 단위로 재실행 · 산출물 대조(정규화 허용 목록 = produced_at·recorded_at·절대 경로 대응만 · PYTHONHASHSEED 고정 · sandbox 원장) ⑷ 회귀표 v6 — 18 부모 재조립 재현 + 65 변형 거부 + FR-4·FA-2 짝 ⑸ 지표 v26 — early_loop_check·tail_chain_check·check_gate·축/소견 재도출을 재조립 결과로 대체 · 입력 진위·핀·외부 증거·계수·N/A 유지 ⑺ 관문 → 커밋 → 사본 재핀 → bundle → SPEC v25(`NW-*` · 25번째) → 25차 기동. 기준 런 B 는 현재 경로 유지.
 
