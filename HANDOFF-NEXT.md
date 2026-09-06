@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(62차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(63차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 63차 갱신 — M1b 22차 = REVISE 5(NT-1~5 · MED 5 · `docs/lessons/2026-09-06-astra-m1b-t40-measure-v22.md` · `D-20260905-02` §17 추기 22).** 설계 메모 **v24** · 지표 v24(read.convergence 소견 재도출 · E/full 회차 등식 · 소비 사슬 · 양방향 법 핀 · **run_repo 와 법 트리 분리**) · **회귀표 v4 = 원천 + 빈 lanes 에서 러너를 실측 호출 단위로 반복 호출 · 대기 요청에만 공급 · 발주 기록·스냅샷은 호출 시점 수집**(75 사례 PASS · 약 3분 · `pd-lanes/t40-measure/t40_regress.py` · 픽스처는 홈 fs). **지금 할 일 = M1b 23차 도전(지적 `NU-*`) → PASS → 실측 착수.** 기준 런 추출 = `t40_metrics.py runs/gdm-wo2026128750a1-agent-memory --baseline --law-tree <ad4c6c3 트리>` — 트리는 `git archive ad4c6c3 engine reader contracts | tar -x -C <dir>` 사본으로 충분(v24 로 실행 재현 = complete · 163 · 56). 총괄 자기 발견: v23 까지 이 명령을 디스크에서 실행한 적이 없었다(원장 루트 오해석 exit 4 → v24 수정).
+
+> [정정 2026-09-06 · 63차] 62차의 「22차 도전 → PASS」는 REVISE 5 로 끝났다(→ v24). 62차 이하의 「지표 v23 · 회귀표 v3(61 사례)」는 낡은 판이다.
 
 **★ 09-06 62차 갱신 — M1b 21차 = REVISE 6(NS-1~6 · HIGH 1 · `docs/lessons/2026-09-06-astra-m1b-t40-measure-v21.md` · `D-20260905-02` §17 추기 21).** 설계 메모 **v23** · 지표 v23(판정서 내부 정합 · 회차 상한 · 포인터 필수 필드 · law-tree 내용 핀) · **회귀표 v3 = L 행을 실제 `read.run` 실행으로 생성**(61 사례 PASS · `pd-lanes/t40-measure/t40_regress.py` · 픽스처는 홈 fs · 회차당 ~10분). **지금 할 일 = M1b 22차 도전(지적 `NT-*`) → PASS → 실측 착수.** 기준 런 추출은 `--baseline --law-tree <t40-base 체크아웃(ad4c6c3)>` 로만(기준 런 자기 worktree d4e6ca2 는 엔진이 낡아 불가).
 
