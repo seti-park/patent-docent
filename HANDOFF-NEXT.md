@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(61차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(62차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 62차 갱신 — M1b 21차 = REVISE 6(NS-1~6 · HIGH 1 · `docs/lessons/2026-09-06-astra-m1b-t40-measure-v21.md` · `D-20260905-02` §17 추기 21).** 설계 메모 **v23** · 지표 v23(판정서 내부 정합 · 회차 상한 · 포인터 필수 필드 · law-tree 내용 핀) · **회귀표 v3 = L 행을 실제 `read.run` 실행으로 생성**(61 사례 PASS · `pd-lanes/t40-measure/t40_regress.py` · 픽스처는 홈 fs · 회차당 ~10분). **지금 할 일 = M1b 22차 도전(지적 `NT-*`) → PASS → 실측 착수.** 기준 런 추출은 `--baseline --law-tree <t40-base 체크아웃(ad4c6c3)>` 로만(기준 런 자기 worktree d4e6ca2 는 엔진이 낡아 불가).
+
+> [정정 2026-09-06 · 62차] 61차의 「21차 기동」은 끝났다(REVISE 6 → v23). 61차 문단의 `--law-tree .worktrees/gdm-…`(d4e6ca2) 문안은 **오류** — 그 트리의 엔진에는 종결 가드가 없다(NS-6). t40-base 체크아웃을 쓴다.
 
 **★ 09-06 61차 갱신 — 결제 뒤 재기동한 M1b 20차 = REVISE 6(NR-1~6 · HIGH 2 · `docs/lessons/2026-09-06-astra-m1b-t40-measure-v20.md` · `D-20260905-02` §17 추기 20).** 설계 메모 **v22** · 지표 v22(`--law-tree` 신설 · 요청 MD 재렌더 결속 · memo_count 대조) · 회귀표 v2(55 사례 PASS · L 행을 러너 실제 경로로). **지금 할 일 = M1b 21차 도전 기동(사본 재핀 · order v22 · 지적 `NS-*`) → PASS → 실측 착수.** 실측 시 기준 런 추출은 `t40_metrics.py runs/gdm-… --baseline --law-tree .worktrees/gdm-wo2026128750a1-agent-memory`(d4e6ca2) 로.
 
