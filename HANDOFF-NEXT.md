@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(58차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(59차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 59차 갱신 — 재정 T41 ① = B(크레딧 구매 · 좌석 유지 · `ruling-20260906-01-T41.md`).** Owner 질문 3건(경위·미해결·astra pro 자문)에 답하며 **자문 봉투 `~/projects/workspaces/advice/t40-metrics-statespace-20260906/`(ROUTING ⑽ ⓑ · 10차부터 충족됐던 트리거를 총괄이 미이행)** 를 발행. **지금 할 일 = ⑴ Owner 가 봉투를 ChatGPT 웹 astra pro 에 넣고 회신(REPLY.md)을 주면 처분 → 메모 v21 · 지표 v21 ⑵ Owner 결제 통지 뒤 20차 재기동(`astra-m1b-t40v20b/` · 같은 접두 `NR-*` · 메모 최신 판 · 감시 = STATUS EXIT= + FINAL 바이트) → PASS → 실측 착수.** 순서는 ⑴ 이 먼저 오면 ⑴→⑵, 결제가 먼저면 ⑵ 를 기다리지 않고 기동해도 되되 회신이 오면 다음 회차에 반입.
+
+> [정정 2026-09-06 · 59차] 58차의 「Owner 재정 대기 1건」은 ① 이 닫혔다. ② 는 총괄 원안(A) 집행.
 
 **★ 09-06 58차 갱신 — M1b 20차 기동(10:50 · SPEC v20 · `NR-*` · 사본 `b692b16`)이 Codex 계정 사용량 한도로 죽었다(FINAL 0 B · STATUS EXIT=1 · EV 「You've hit your usage limit … try again at Sep 12th, 2026 10:38 PM」 · 레인 `pd-lanes/astra-m1b-t40v20/`). 판정 없음 → 감수 원문 파일 없음 · 총괄 오류 누계 불변(134).** 한도는 계정 단위 → gpt-6-astra(M1b) · gpt-5.6-sol(M3 · M1b 폴백) 좌석 전부 09-12 22:38 까지 불가. **Owner 재정 대기 1건 = T41(좌석 한도 대응: 대기 / 크레딧 구매 / 임시 좌석 대체) — 결정 브리핑 발행(drafts `OWNER-BRIEF-T41-codex-quota.html` · URL 은 기억 `patent-docent-project`).** 재정 전까지 **착수 금지**(ROUTING A2 · PASS 전 실측 금지 · ⑽ 유비 「쿼터 시 자체 판단 진행 금지」). 좌석이 돌아오면 = **같은 SPEC v20 · 같은 사본 핀 `b692b16` 으로 20차 재기동**(새 레인 디렉터리 `astra-m1b-t40v20b/` · 감시는 `STATUS` `EXIT=` + `FINAL` 바이트 · LANE-RUNTIME 함정 O). 총괄 자기 오류(지적 밖): Monitor 가 호출자 `RUN_RC=` 만 보고 `EXIT=1` 을 놓쳤다 → 함정 O 로 성문화(agents 커밋).
 
