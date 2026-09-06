@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(77차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-07(78차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-07 78차 갱신 — Owner 육성 `30차: A / 규약: 채택`(08:3x · 채팅) → **재정 T44 = 상설 기동 규약**(`ruling-20260907-02-T44.md` · 게이트가 도출 누락 0 · 새 보증 요구 0 · 지적 전부 갈래 ⑴ 이면 총괄이 묻지 않고 다음 판 기동 · 갈래 ⑵·⑶ 또는 같은 P/T 세 회차 연속이면 상신) · M1b 30차(`OB-*` · 설계 v32 · 사본 `0990f64` · `pd-lanes/astra-m1b-t40v30/`) 기동 08:35:27 · `D-20260905-02` §17 추기 37.** **지금 할 일 = 30차 판정 회수(Monitor · 약 25분) → 감수 원문 `docs/lessons/2026-09-07-astra-m1b-t40-measure-v30.md` 반입 + DISPOSITIONS + 추기 38 → PASS 면 실측 착수(67차 순서 + v32 절차: 런마다 `read` 완주 뒤 `t40_drive.py seal-evidence <r>` · 지표기 `--receipts <evidence>/calls` · 결함 런 `retire <r> <사유>`(런 폴더는 `retired/…/run/` 보존 · exit 16 이면 새 ID 재정) 뒤 `source <r>` 부터) · REVISE 면 **T44 규약 판정**(조건 충족 → v33 → 31차(`OC-*`) 기동 · 미충족 → Owner 상신).** Owner 재정 대기 = 없음. 살아 있는 배경 = Monitor 1(30차) · 킵얼라이브 cron.
+
+> [정정 2026-09-07 · 78차] 77차의 「Owner 채팅 회신 대기 ①②」는 닫혔다(`30차: A / 규약: 채택` → T44).
 
 **★ 09-07 77차 갱신 — M1b 29차 = REVISE 5(OA-1·2·4·5 HIGH · OA-3 MED · `docs/lessons/2026-09-07-astra-m1b-t40-measure-v29.md` · `D-20260905-02` §17 추기 36 · **심사 대상 ① 도출 완전성 충족(처음)** · 도출 누락 0 · 새 보증 요구 0 · 갈래 전부 ⑴ · NZ-1·2 closed · NZ-3~5 partially) → 설계 메모 **v32**(sha16 `4baa56cfaacb68fb` · v31 = `.v31.md`) · 구동기 **v11**(retire 런 폴더 보존·대조 · seal run_id) · 대조기 **v6**(결속 뒤 선판별) · 영수증 **v6**(run_id 결속 · evidence_files(run_id) · 목록 경로 경계) · 지표 **v31**(kind · 결속 블록 · calls basename) · 회귀표 **v11**(121 사례(L 13 · F 7 · C 89 · X 2 · S 10) FAIL 0(04:46 → 05:0x · EXIT=0)) · 다섯 스크립트 첫 줄 bytecode 쓰기 금지.** **지금 할 일 = Owner 채팅 회신 대기 = ① 30차(`OB-*`) 기동 여부 ② 상설 규약(도출 누락 0 · 새 보증 요구 0 · 갈래 ⑴ 만이면 총괄 기동 · 그 밖·같은 P/T 세 회차 연속이면 상신) 채택 여부**(추천 = A · 채택 · SPEC v30 = `pd-lanes/astra-m1b-t40v30/SPEC-m1b-t40-v30.md` 의 `__PIN__`·`__OWNER_DECISION__`·지문 자리를 채운 뒤 사본 재핀 · bundle 지문 재생성 · `launch.sh` · Monitor). 실측 절차(v32) = 런마다 `read` 완주 뒤 `seal-evidence <r>` · 지표기 `--receipts <evidence>/calls`(basename 규칙) · 결함 런 `retire <r> <사유>`(런 폴더는 `retired/…/run/` 에 보존 · exit 16 이면 새 ID 재정) 뒤 `source <r>` 부터. Owner 사후 확인 대상 = 없음. 살아 있는 배경 = 킵얼라이브 cron 만.
 
