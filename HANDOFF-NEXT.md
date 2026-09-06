@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(67차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(68차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 68차 갱신 — M1b 25차 = REVISE 5(NW-1 BLOCKER · NW-2~5 HIGH · `docs/lessons/2026-09-06-astra-m1b-t40-measure-v25.md` · `D-20260905-02` §17 추기 27 · 「T42 이후 재조립 방식 자체의 첫 REVISE」 · 재상신 기준 2연속 미달).** 설계 메모 **v27** · 구동기 **v8**(공용 `run_engine` · 선등록표 `registry()` · 도면 20 디렉터리 `figures-normalized-20/`) · 지표 **v27**(선등록 대응 NW-3 · 봉투 권한 NW-4 · 결함 N/A NW-2) · `t40_replay.py` **v2**(sandbox = 주 작업 트리 공유 클론 + 핀 커밋 linked worktree · 역할 토큰 `<RUN_REPO>`·`<MAIN>` · IO 결함 = traceback 호출 사슬 자리 주입 재현(면제 없음) · 소유 표식 NW-5) · `t40_receipts.py` **v2**(법 HEAD·파일 지문·run.yaml·traceback 지문) · 회귀표 **v7**(101 사례 = L 20 · C 77 · X 2 · S 2 · 픽스처 = 실측 §2 구조). **총괄 자기 발견: `figures-normalized/` 의 `MAPPING.md` 때문에 현재 엔진의 `source <r>` 가 exit 1 — 구동기 상수를 `figures-normalized-20/` 로.** **지금 할 일 = M1b 26차 도전(지적 `NX-*`) → PASS → 실측 착수.** 실측 절차 = 67차와 같고 `--sandbox` 는 **원본과 겹치지 않는 홈 fs 새 경로**(대조기가 소유 표식 없는 기존 디렉터리를 지우지 않는다).
+
+> [정정 2026-09-06 · 68차] 67차의 「25차 도전 → PASS」는 REVISE 5 로 끝났다(→ v27). 67차의 「drive v7 · metrics v26 · replay v1 · receipts v1 · regress v6」는 낡은 판이다.
 
 **★ 09-06 67차 갱신 — ⓓ 집행 완료(D-02 §17 추기 26): 설계 메모 v26 · 구동기 v7(호출별 영수증 `evidence/calls/` · `PYTHONHASHSEED=0`) · 지표 v26(재조립 오라클 + 전/후 검사) · `t40_replay.py` v1 · `t40_receipts.py` v1 · 회귀표 v6(88 사례 PASS · 약 7분).** **지금 할 일 = M1b 25차 도전(지적 `NW-*`) → PASS → 실측 착수.** 실측 절차 변경 = `read` 는 **`PYTHONHASHSEED=0 t40_drive.py read <r>`** · 지표 추출은 `t40_metrics.py <run_dir> --first-early evidence/first-early-<r>.json --receipts evidence/calls --run <r> --sandbox <홈 fs dir>`(재조립이 그 안에서 돈다) · 기준 런은 63차 명령 그대로. 스크립트 = `pd-lanes/t40-measure/`(drive v7 · metrics v26 · replay v1 · receipts v1 · regress v6 · excerpts v4 · workflow v4 · envelope v1).
 
