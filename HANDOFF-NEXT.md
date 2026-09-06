@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-06(57차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-06(58차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-06 58차 갱신 — M1b 20차 기동(10:50 · SPEC v20 · `NR-*` · 사본 `b692b16`)이 Codex 계정 사용량 한도로 죽었다(FINAL 0 B · STATUS EXIT=1 · EV 「You've hit your usage limit … try again at Sep 12th, 2026 10:38 PM」 · 레인 `pd-lanes/astra-m1b-t40v20/`). 판정 없음 → 감수 원문 파일 없음 · 총괄 오류 누계 불변(134).** 한도는 계정 단위 → gpt-6-astra(M1b) · gpt-5.6-sol(M3 · M1b 폴백) 좌석 전부 09-12 22:38 까지 불가. **Owner 재정 대기 1건 = T41(좌석 한도 대응: 대기 / 크레딧 구매 / 임시 좌석 대체) — 결정 브리핑 발행(drafts `OWNER-BRIEF-T41-codex-quota.html` · URL 은 기억 `patent-docent-project`).** 재정 전까지 **착수 금지**(ROUTING A2 · PASS 전 실측 금지 · ⑽ 유비 「쿼터 시 자체 판단 진행 금지」). 좌석이 돌아오면 = **같은 SPEC v20 · 같은 사본 핀 `b692b16` 으로 20차 재기동**(새 레인 디렉터리 `astra-m1b-t40v20b/` · 감시는 `STATUS` `EXIT=` + `FINAL` 바이트 · LANE-RUNTIME 함정 O). 총괄 자기 오류(지적 밖): Monitor 가 호출자 `RUN_RC=` 만 보고 `EXIT=1` 을 놓쳤다 → 함정 O 로 성문화(agents 커밋).
+
+> [정정 2026-09-06 · 58차] 아래 57차 문단의 「지금 할 일 = M1b 20차 도전 기동」은 **기동했으나 한도로 무산**. 재정 T41 뒤 재기동.
 
 **★ 09-06 57차 갱신 — M1b 19차 = REVISE 3(NQ-1~3 · MED · 거부 행 오거부 · 종결 근거 셋 중 원장 누락 · violations↔findings 미대조 · `docs/lessons/2026-09-06-astra-m1b-t40-measure-v19.md` · `D-20260905-02` §17 추기 18).** 설계 메모 **v20**(drafts `T40-MEASURE-DESIGN.md` · v19 = `.v19.md`) + 지표 v20. **지금 할 일 = M1b 20차 도전 기동(사본 재핀 · pin = `git rev-parse HEAD` · 지적 `NR-*`) → PASS → 실측 착수(39차 순서).** 규약은 54차 이하 그대로.
 
