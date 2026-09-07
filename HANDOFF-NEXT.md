@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(97차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-07(98차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-07 98차 갱신 — 자문 5회차 회신 = astra pro 저작 **발주문**(불변식 I1~I10 · 상태기계 · PO 증명 의무 · fault injection · 7차 설계안은 가설 자료) → Owner 지시로 그대로 8차 발주(D-02 추기 58).** 레인 = `pd-lanes/astra-m3-t40v33-r8/`(SPEC = 총괄 머리(작업장 규율 · 법 변경 금지 · wip 커밋 허용 · `work/R8-PROGRESS.md`) + 회신 원문) · 작업장 `pd-author-t40v33`(출발 커밋 = `git log -1` · 산출 = `work/` + wip 커밋들). **장시간(13~22h 추정).** **지금 할 일 = Monitor(1h 씩 재무장) → 레인이 죽으면 `work/R8-PROGRESS.md`·마지막 wip 커밋 확인 → 같은 SPEC 에 「재기동 · 진행 표식에서 이어라」 머리 한 줄 붙여 재발주 → 완료 시 회수(`READY_FOR_INDEPENDENT_GATE`/`NOT_READY`) → 총괄 재검증(sites/검사기 · 독립 회귀 · §5′.10 · 정본 무접촉 · 법 불변 · SITE→PO 대응표) → 반입(`verify/intake-v38.sh` 파생 · 새 모듈 포함) → 커밋 → 재핀·bundle → SPEC v36(`OH-*` · 판정 방법 = PO Satisfied/Violated/Unexamined + 기존 ⓐⓑⓒ · 진행도 기준선 재정의는 총괄이 대응표로 정함 · 재정 T47) → 36차.** Owner 재정 대기 = 없음. 살아 있는 배경 = 8차 레인 + 킵얼라이브 cron.
+
+> [정정 2026-09-07 · 98차] 97차의 「Owner 수동 → REPLY → 처분」은 끝났다(회신 = 발주문 · 그대로 전달).
 
 **★ 09-07 97차 갱신 — 개편 설계안 회수(astra xhigh 7차 · D-02 추기 57) → 자문 5회차 봉투 발행 `advice/t40-oracle-closure-20260907/t40-refactor-design-20260907-1833/`(PROMPT `5c48f459c57d87e0` · zip `f72573f4d921ed7c`).** 설계안 원문 = `pd-author-t40v33/work/T40-REFACTOR-DESIGN.md`(`435db81af24f0cee` · 구현 규모 13~22h 추정) · 동봉은 어휘 치환 사본(NOTE-5). **지금 할 일 = Owner 수동: PROMPT.md 본문을 ChatGPT(astra pro)에 붙이고 bundle.zip 업로드 → 회신 원문을 REPLY.md 에 저장 → 총괄에 「t40-refactor-design 회신 왔어」 → 봉투 대조(MANIFEST 5) → 처분표(추기 58 · 수용/부분/기각/이연 + 사유) → 설계안 반영(8차 발주문에 처분 결과 명시) → **8차 = 구현 발주**(astra xhigh · 13~22h 추정 · 회귀 165 동치 + 새 S · `t40_sites.py` 본체 효과 0·단계 순서·통로 밖 진입 0) → 총괄 재검증 → 반입 → 36차(`OH-*` · 새 기준선).** Owner 재정 대기 = 없음(자문 회신 대기). 살아 있는 배경 = 킵얼라이브 cron 만.
 
