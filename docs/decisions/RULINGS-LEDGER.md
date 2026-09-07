@@ -189,3 +189,5 @@
 `docs/lessons/2026-09-01-sol-audit-halt-ordering.md`(지적 1) ·
 `docs/lessons/2026-09-02-sol-challenge-t26-design.md`(T26 ★1·★2·★3 의 계기 — 처분표 `D-20260902-02` §2) ·
 `docs/lessons/2026-09-02-opus-audit-round-a.md`(CP1 조기 합집합 · enum 결속 두 상신의 계기 — 처분표 `D-20260902-01` §5).
+
+| T46 | 2026-09-07 | astra v33 수용 방식(미해결 3행 닫고 반입) · 저작자 판단 28건 수용 · 31차 좌석 astra high 유지(같은 모델 감사 · Owner 인지) | `ruling-20260907-04-T46.md` | `T46: ① B / ② A / ③ A` |
