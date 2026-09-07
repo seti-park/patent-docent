@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(91차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-07(92차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-07 92차 갱신 — v36 반입 완료(D-02 추기 51).** 메모 v36 = drafts `T40-MEASURE-DESIGN.md`(`e9caa2a7e0e55800` · v35 = `.v35.md`) · 실행본 = `pd-lanes/t40-measure/`(drive v15 · metrics v35 · replay v10 · receipts v10 · resources v2 · sites v4 · regress v15 · 대장 66행 · 회귀표 v15 157 FAIL 0) · 저작 원문 = `pd-author-t40v33` 커밋 `0330615`. **지금 할 일 = 사본 재핀 → bundle → SPEC v34(`pd-lanes/astra-m1b-t40v34/SPEC-m1b-t40-v34.template.md`) → 34차 기동 → 판정 → 반입(lesson v34 · DISPOSITIONS · 추기 52 · HANDOFF 93) → PASS 면 실측 착수 · REVISE 면 진행도(12·12·9·?) 비교 → 9 이상이면 비감소 1회(35차까지 봄) · 감소면 T44 자동(astra xhigh 6차).** Owner 재정 대기 = 없음.
+
+> [정정 2026-09-07 · 92차] 91차의 「5차 발주 → 회수 → 반입」은 끝났다.
 
 **★ 09-07 91차 갱신 — M1b 33차 = REVISE 5(OE-1~5 · HIGH 1 · MED 4 · 전부 수용 · lesson `…-v33.md` · DISPOSITIONS 409 · D-02 추기 50) → 진행도 12→12→**9**(감소 · T45 ③ 상신 불성립) → T44 자동 기동 → v36 저작 = astra xhigh 5차.** 총괄 진단 = OE-3·OE-4 는 법(러너) 내부 동작 → 검수원은 밖에서 닫는다(호출 전 환경 선검증 · 호출 후 대체 경로 표식 검출 · 선판별 io_fault 무조건) · 법 변경 필요 항목은 `[총괄 확인]` → Owner. **지금 할 일 = 5차 발주(`pd-lanes/astra-m3-t40v33-r5/`) → 회수 → 재검증 → 반입(`verify/intake-v36.sh` 파생) → 커밋 → 재핀·bundle → SPEC v34(`OF-*` · 진행도 12·12·9 비교) → 34차 기동 → REVISE 면 진행도 비교(9 이상 두 회차 연속 = 상신).** Owner 재정 대기 = 없음.
 
