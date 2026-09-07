@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(96차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-07(97차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-07 97차 갱신 — 개편 설계안 회수(astra xhigh 7차 · D-02 추기 57) → 자문 5회차 봉투 발행 `advice/t40-oracle-closure-20260907/t40-refactor-design-20260907-1833/`(PROMPT `5c48f459c57d87e0` · zip `f72573f4d921ed7c`).** 설계안 원문 = `pd-author-t40v33/work/T40-REFACTOR-DESIGN.md`(`435db81af24f0cee` · 구현 규모 13~22h 추정) · 동봉은 어휘 치환 사본(NOTE-5). **지금 할 일 = Owner 수동: PROMPT.md 본문을 ChatGPT(astra pro)에 붙이고 bundle.zip 업로드 → 회신 원문을 REPLY.md 에 저장 → 총괄에 「t40-refactor-design 회신 왔어」 → 봉투 대조(MANIFEST 5) → 처분표(추기 58 · 수용/부분/기각/이연 + 사유) → 설계안 반영(8차 발주문에 처분 결과 명시) → **8차 = 구현 발주**(astra xhigh · 13~22h 추정 · 회귀 165 동치 + 새 S · `t40_sites.py` 본체 효과 0·단계 순서·통로 밖 진입 0) → 총괄 재검증 → 반입 → 36차(`OH-*` · 새 기준선).** Owner 재정 대기 = 없음(자문 회신 대기). 살아 있는 배경 = 킵얼라이브 cron 만.
+
+> [정정 2026-09-07 · 97차] 96차의 「⑴ 설계안 저작 → ⑶ 봉투 발행」은 끝났다.
 
 **★ 09-07 96차 갱신 — 재정 T47(Owner 육성 `T47: ① B / ② B` · `ruling-20260907-05-T47.md` · D-02 추기 56).** ① 구조 개편 · ② 설계안을 자문 5회차 뒤 구현. **지금 할 일 = ⑴ astra xhigh 7차 = 개편 설계안 저작(코드 변경 0 · `pd-lanes/astra-m3-t40v33-r7/SPEC-…-r7.md` · 산출 `pd-author-t40v33/work/T40-REFACTOR-DESIGN.md`) → ⑵ 총괄 검토 → ⑶ 자문 봉투 발행(`~/.claude/agents/bin/advice-bundle.sh` · `~/projects/workspaces/advice/t40-oracle-closure-20260907/` 아래 5회차 · 동봉 = 설계안 + SITUATION-5 + APPROACH-5(31~35차 형태 표) · 위험 어휘 grep 0) → Owner 수동 ChatGPT → REPLY.md → 처분(추기 57) → ⑷ 8차 구현 발주 → 재검증 → 반입 → 36차(`OH-*` · 새 기준선).** 코드 정본 v37(회귀 165 FAIL 0). Owner 재정 대기 = 없음(자문 봉투는 ⑶ 에서 Owner 수동).
 
