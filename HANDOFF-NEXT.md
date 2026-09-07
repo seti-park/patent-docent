@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(84차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-07(85차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-07 85차 갱신 — 재정 T46(Owner 육성 `T46: ① B / ② A / ③ A` · `ruling-20260907-04-T46.md` · D-02 추기 44) → astra xhigh 2차 발주 기동 11:13:34.** 레인 = `~/projects/workspaces/pd-lanes/astra-m3-t40v33-r2/`(SPEC `SPEC-m3-t40-author-v33-r2.md` = SITE-61~63 배선 · 회귀 C98·S17~S19 · 감시 `grep ^EXIT= STATUS`) · 작업장 `pd-author-t40v33`(1차 산출은 커밋 `d4d13a4` · 2차 출발 `514d364` · 2차 산출 = 작업 트리 `git diff`). **지금 할 일 = 2차 FINAL 회수 → 총괄 재검증(sites unreviewed=0 · 회귀 독립 재실행 · §5′.10 동일 · 정본 무접촉) → 반입(메모 → drafts `T40-MEASURE-DESIGN.md`(현 v32 → `.v32.md`) · 스크립트·`t40_sites.py`·`T40-SITES-LEDGER.json`·회귀표·`T40-SCRIPT-SHA256.txt` → `pd-lanes/t40-measure/` · 메모 안 `work/`·`ref/` 경로 치환 · 지문 재계산) → 기록 커밋(docs · lesson 아님) → 사본 재핀 + bundle 갱신 → SPEC v31(§9 v33 판 · `OC-*` · 「저작 astra xhigh · 감사 astra high 같은 모델 = T46 ③ Owner 인지」 명기 · 「이번 기동 = T45 ① 직접 효력」) → 31차 기동.** Owner 재정 대기 = 없음. 살아 있는 배경 = 2차 레인 + 킵얼라이브 cron.
+
+> [정정 2026-09-07 · 85차] 84차의 「Owner 회신 대기」는 끝났다(T46).
 
 **★ 09-07 84차 갱신 — astra xhigh v33 저작 회수·재검증 완료 → 결정 브리핑 T46 발행(`3fdf4d1c-…` · `D-20260905-02` §17 추기 43).** 산출 = `~/projects/workspaces/pd-author-t40v33/work/`(작업 트리 · 미커밋 · `git diff` 로 본다) · 대장 63행 · 미해결 3(SITE-61~63) · 회귀 132 FAIL 0(레인 + 총괄 독립 재실행 동일). **지금 할 일 = Owner 회신 `T46: ① _ / ② _ / ③ _` 대기 → ① B 면 astra xhigh 2차 발주(SITE-61~63 만 · 같은 작업장 · SPEC 파생) → 재검증 → 반입(메모 → drafts `T40-MEASURE-DESIGN.md`(v32 는 `.v32.md`) · 스크립트·대장·회귀표 → `pd-lanes/t40-measure/` · 상대 경로 치환 · 지문 재계산) → 기록 커밋(docs) → 사본 재핀 → SPEC v31(§9 v33 판 · `OC-*` · ③ 좌석 명기) → 31차.** 코드 정본은 아직 v32. 살아 있는 배경 = 킵얼라이브 cron 만.
 
