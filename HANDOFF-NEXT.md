@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-08(102차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-08(103차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-08 103차 갱신 — 10차 회수 READY → 재검증 → v40 반입(D-02 추기 63).** 메모 v40 = drafts(`bf2edc844529b790` · v39 = `.v39.md`) · 실행본 v40(`t40-measure/` · FI 70 · 회귀 182) · 저작 원문 커밋 `fa3befb`. **지금 할 일 = 재핀 → bundle → SPEC v38(`pd-lanes/astra-m1b-t40v38/SPEC-m1b-t40-v38.template.md`) → 38차 기동 → 판정 → 반입(lesson v38 · DISPOSITIONS · 추기 64 · HANDOFF 104) → PASS 면 실측 착수 절차 · REVISE 면 Violated 를 37차 6 과 비교(≥6 비감소 1회) · 「새 규칙 요구 있음」 = 상신.** Owner 재정 대기 = 없음.
+
+> [정정 2026-09-08 · 103차] 102차의 「10차 발주 → 회수 → 반입」은 끝났다.
 
 **★ 09-08 102차 갱신 — M1b 37차 = REVISE 3(OI-1~3 · MED · 전부 수용 · lesson `…-v37.md` · DISPOSITIONS 428 · D-02 추기 62) · 새 규칙 요구 없음 · **PO 10 → 6** · MY~OG closed 143/partially 0 → T44 자동 → v40 저작 = astra xhigh 10차.** **지금 할 일 = 10차 발주(`pd-lanes/astra-m3-t40v33-r10/` · OI-1~3 = Admit/Complete 구별 · 읽기 결과 선확정 · 정적 지배 검사) → 회수 → 재검증 → 반입(`verify/intake-v40.sh` · `r*-probes.py` 포함) → 커밋 → 재핀·bundle(`r*-probes.py` 포함) → SPEC v38(`OJ-*` · PO 진행도 36차 10 · 37차 6) → 38차 → REVISE 면 Violated ≥6 이면 비감소 1회.** Owner 재정 대기 = 없음.
 
