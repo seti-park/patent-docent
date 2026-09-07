@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(86차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-07(87차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-07 87차 갱신 — M1b 31차 = REVISE 5(OC-1~5 · HIGH 1 · MED 4 · 전부 수용 · lesson `…-v31.md` · DISPOSITIONS 399 · D-02 추기 46) → T44 자동 기동 조건 충족(도출 누락 0 · 새 보증 0 · 갈래 ⑴) → v34 저작 = astra xhigh 3차 발주.** 게이트 진행도 첫 기준선 `mismatch=12 unmet=12 unreviewed=0`(행 단위 · 32차와 비교 · 두 회차 연속 비감소면 상신). OB-1~4 전부 closed · 대장 누락 반례 0(지적 전부 기존 SITE 행의 집행 불일치). **지금 할 일 = 3차 발주(`pd-lanes/astra-m3-t40v33-r3/SPEC-…-r3.md` · OC-1~5 문안 · 회귀 신설 · 대장 갱신 · 판본 v34) → 회수 → 총괄 재검증(sites · 독립 회귀 · §5′.10 · 정본 무접촉) → 반입(`verify/intake.sh` 파생 · 경로 치환) → 커밋 → 사본 재핀 → bundle → SPEC v32(`OD-*` · 진행도 비교 의무) → 32차 기동(묻지 않음).** Owner 재정 대기 = 없음. 살아 있는 배경 = 킵얼라이브 cron(+ 3차 레인 기동 뒤).
+
+> [정정 2026-09-07 · 87차] 86차의 「31차 기동 → 판정」은 끝났다(REVISE 5).
 
 **★ 09-07 86차 갱신 — v33 반입 완료(D-02 추기 45).** 메모 v33 = drafts `T40-MEASURE-DESIGN.md`(`e39a03405f1cf8f7` · v32 = `.v32.md`) · 실행본 = `pd-lanes/t40-measure/`(drive v12 · metrics v32 · replay v7 · receipts v7 · regress v12 · **`t40_sites.py`** · **`T40-SITES-LEDGER.json`** 63행 · 회귀표 v12 137 FAIL 0 · `T40-SCRIPT-SHA256.txt`) · 저작 원문 = `~/projects/workspaces/pd-author-t40v33`(커밋 `3d34bf7` · 1차 `d4d13a4`) · 회귀 실행 = `bash regress-run.sh`(실행본 디렉터리 · 종료 코드 전달). **지금 할 일 = 사본 재핀(`pd-m1b-t40` → 이 커밋) → bundle 갱신(메모 v33 + `.v32.md` + 스크립트 10 + 대장 + 회귀표 + 지문 파일 + 판단 목록 + ruling T44~T46 + ADVICE-REPLY-4·QUESTION-4·SITUATION-4·APPROACH-4 · `BUNDLE-SHA256.txt` 재생성) → SPEC v31(`pd-lanes/astra-m1b-t40v31/SPEC-m1b-t40-v31.template.md` 의 `__PIN__`·`__MEMO_SHA__` 채움) → `launch.sh` → 31차 기동 → 판정 → 반입(lesson v31 · DISPOSITIONS · 추기 46 · HANDOFF 87) → PASS 면 실측 착수 · REVISE 면 T44 §3(자동 기동 조건 · 진행도 3수).** Owner 재정 대기 = 없음. 살아 있는 배경 = 킵얼라이브 cron 만.
 
