@@ -7,7 +7,7 @@
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
 
-**★ 09-08 103차 갱신 — 10차 회수 READY → 재검증 → v40 반입(D-02 추기 63).** 메모 v40 = drafts(`bf2edc844529b790` · v39 = `.v39.md`) · 실행본 v40(`t40-measure/` · FI 70 · 회귀 182) · 저작 원문 커밋 `fa3befb`. **지금 할 일 = 재핀 → bundle → SPEC v38(`pd-lanes/astra-m1b-t40v38/SPEC-m1b-t40-v38.template.md`) → 38차 기동 → 판정 → 반입(lesson v38 · DISPOSITIONS · 추기 64 · HANDOFF 104) → PASS 면 실측 착수 절차 · REVISE 면 Violated 를 37차 6 과 비교(≥6 비감소 1회) · 「새 규칙 요구 있음」 = 상신.** Owner 재정 대기 = 없음.
+**★ 09-08 103차 갱신 — 10차 회수 READY → 재검증 → v40 반입(D-02 추기 63).** 메모 v40 = drafts(`fb12cc8f1e61961c` · v39 = `.v39.md`) · 실행본 v40(`t40-measure/` · FI 70 · 회귀 182) · 저작 원문 커밋 `fa3befb`. **지금 할 일 = 재핀 → bundle → SPEC v38(`pd-lanes/astra-m1b-t40v38/SPEC-m1b-t40-v38.template.md`) → 38차 기동 → 판정 → 반입(lesson v38 · DISPOSITIONS · 추기 64 · HANDOFF 104) → PASS 면 실측 착수 절차 · REVISE 면 Violated 를 37차 6 과 비교(≥6 비감소 1회) · 「새 규칙 요구 있음」 = 상신.** Owner 재정 대기 = 없음.
 
 > [정정 2026-09-08 · 103차] 102차의 「10차 발주 → 회수 → 반입」은 끝났다.
 
