@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(85차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-07(86차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-07 86차 갱신 — v33 반입 완료(D-02 추기 45).** 메모 v33 = drafts `T40-MEASURE-DESIGN.md`(`e39a03405f1cf8f7` · v32 = `.v32.md`) · 실행본 = `pd-lanes/t40-measure/`(drive v12 · metrics v32 · replay v7 · receipts v7 · regress v12 · **`t40_sites.py`** · **`T40-SITES-LEDGER.json`** 63행 · 회귀표 v12 137 FAIL 0 · `T40-SCRIPT-SHA256.txt`) · 저작 원문 = `~/projects/workspaces/pd-author-t40v33`(커밋 `3d34bf7` · 1차 `d4d13a4`) · 회귀 실행 = `bash regress-run.sh`(실행본 디렉터리 · 종료 코드 전달). **지금 할 일 = 사본 재핀(`pd-m1b-t40` → 이 커밋) → bundle 갱신(메모 v33 + `.v32.md` + 스크립트 10 + 대장 + 회귀표 + 지문 파일 + 판단 목록 + ruling T44~T46 + ADVICE-REPLY-4·QUESTION-4·SITUATION-4·APPROACH-4 · `BUNDLE-SHA256.txt` 재생성) → SPEC v31(`pd-lanes/astra-m1b-t40v31/SPEC-m1b-t40-v31.template.md` 의 `__PIN__`·`__MEMO_SHA__` 채움) → `launch.sh` → 31차 기동 → 판정 → 반입(lesson v31 · DISPOSITIONS · 추기 46 · HANDOFF 87) → PASS 면 실측 착수 · REVISE 면 T44 §3(자동 기동 조건 · 진행도 3수).** Owner 재정 대기 = 없음. 살아 있는 배경 = 킵얼라이브 cron 만.
+
+> [정정 2026-09-07 · 86차] 85차의 「2차 FINAL 회수 → 반입」은 끝났다.
 
 **★ 09-07 85차 갱신 — 재정 T46(Owner 육성 `T46: ① B / ② A / ③ A` · `ruling-20260907-04-T46.md` · D-02 추기 44) → astra xhigh 2차 발주 기동 11:13:34.** 레인 = `~/projects/workspaces/pd-lanes/astra-m3-t40v33-r2/`(SPEC `SPEC-m3-t40-author-v33-r2.md` = SITE-61~63 배선 · 회귀 C98·S17~S19 · 감시 `grep ^EXIT= STATUS`) · 작업장 `pd-author-t40v33`(1차 산출은 커밋 `d4d13a4` · 2차 출발 `514d364` · 2차 산출 = 작업 트리 `git diff`). **지금 할 일 = 2차 FINAL 회수 → 총괄 재검증(sites unreviewed=0 · 회귀 독립 재실행 · §5′.10 동일 · 정본 무접촉) → 반입(메모 → drafts `T40-MEASURE-DESIGN.md`(현 v32 → `.v32.md`) · 스크립트·`t40_sites.py`·`T40-SITES-LEDGER.json`·회귀표·`T40-SCRIPT-SHA256.txt` → `pd-lanes/t40-measure/` · 메모 안 `work/`·`ref/` 경로 치환 · 지문 재계산) → 기록 커밋(docs · lesson 아님) → 사본 재핀 + bundle 갱신 → SPEC v31(§9 v33 판 · `OC-*` · 「저작 astra xhigh · 감사 astra high 같은 모델 = T46 ③ Owner 인지」 명기 · 「이번 기동 = T45 ① 직접 효력」) → 31차 기동.** Owner 재정 대기 = 없음. 살아 있는 배경 = 2차 레인 + 킵얼라이브 cron.
 
