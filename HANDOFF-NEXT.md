@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(92차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-07(93차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-07 93차 갱신 — M1b 34차 = REVISE 7(OF-1~7 · HIGH 2 · MED 5 · 전부 수용 · lesson `…-v34.md` · DISPOSITIONS 416 · D-02 추기 52) → 진행도 12→12→9→**10**(비감소 1회) → T44 자동 기동 → v37 저작 = astra xhigh 6차.** **★ 35차도 10 이상이면 T45 ③ 상신 = 결정 브리핑(선택지 = 제한된 다음 판 / 자리 축소·대장화 / 별도 탐색 단계 / 보류·중단 · 총괄 분석 첨부).** 총괄 진단 = 「진입점 × 의무」 격자 빈 칸(source·retire) → 6차 발주문에 격자 + 도달성 검사. **지금 할 일 = 6차 발주(`pd-lanes/astra-m3-t40v33-r6/`) → 회수 → 재검증 → 반입(`verify/intake-v37.sh` 파생) → 커밋 → 재핀·bundle → SPEC v35(`OG-*`) → 35차 기동 → 판정 → 비감소면 상신 브리핑 · 감소면 T44 자동.** Owner 재정 대기 = 없음.
+
+> [정정 2026-09-07 · 93차] 92차의 「34차 기동 → 판정」은 끝났다(REVISE 7 · 비감소 1회).
 
 **★ 09-07 92차 갱신 — v36 반입 완료(D-02 추기 51).** 메모 v36 = drafts `T40-MEASURE-DESIGN.md`(`e9caa2a7e0e55800` · v35 = `.v35.md`) · 실행본 = `pd-lanes/t40-measure/`(drive v15 · metrics v35 · replay v10 · receipts v10 · resources v2 · sites v4 · regress v15 · 대장 66행 · 회귀표 v15 157 FAIL 0) · 저작 원문 = `pd-author-t40v33` 커밋 `0330615`. **지금 할 일 = 사본 재핀 → bundle → SPEC v34(`pd-lanes/astra-m1b-t40v34/SPEC-m1b-t40-v34.template.md`) → 34차 기동 → 판정 → 반입(lesson v34 · DISPOSITIONS · 추기 52 · HANDOFF 93) → PASS 면 실측 착수 · REVISE 면 진행도(12·12·9·?) 비교 → 9 이상이면 비감소 1회(35차까지 봄) · 감소면 T44 자동(astra xhigh 6차).** Owner 재정 대기 = 없음.
 
