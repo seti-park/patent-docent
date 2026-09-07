@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(98차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-08(99차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-08 99차 갱신 — 8차(불변식 구현) 회수 `READY_FOR_INDEPENDENT_GATE` → 총괄 재검증 완료 → v38 반입(D-02 추기 59).** 메모 v38 = drafts(`3efce46680aad255` · v37 = `.v37.md`) · 실행본 = `pd-lanes/t40-measure/`(139 파일 · 새 모듈 `t40_flow.py`·`t40_consume.py`·`t40_structure.py` · PO 정본 `T40-PO-MATRIX.json` · SITE→PO · R8-REPORT/ARCHITECTURE · 회귀 v16 174 FAIL 0 · FI 29) · 저작 원문 = `pd-author-t40v33` 커밋 `19caf0f`. **지금 할 일 = 사본 재핀 → bundle(새 파일 포함) → SPEC v36(`pd-lanes/astra-m1b-t40v36/SPEC-m1b-t40-v36.template.md` 지문 채움) → **36차 기동**(`OH-*` · 판정 = PO 12 S/V/U + ⓐⓑⓒ + 「새 종류의 규칙 요구」 · 새 기준선 = PO) → 판정 → 반입(lesson v36 · DISPOSITIONS · 추기 60 · HANDOFF 100) → PASS 면 실측 착수 절차(HANDOFF 82차 ⑹ · 런마다 `read` → `seal-evidence` · 결함 런 `retire`) · REVISE 면 「새 종류의 규칙 요구: 있음」이면 상신 · 「없음」이면 T44 자동(PO Violated 를 닫는 astra xhigh 9차 · 진행도 = PO 3수).** Owner 재정 대기 = 없음.
+
+> [정정 2026-09-08 · 99차] 98차의 「8차 감시 → 회수 → 반입」은 끝났다.
 
 **★ 09-07 98차 갱신 — 자문 5회차 회신 = astra pro 저작 **발주문**(불변식 I1~I10 · 상태기계 · PO 증명 의무 · fault injection · 7차 설계안은 가설 자료) → Owner 지시로 그대로 8차 발주(D-02 추기 58).** 레인 = `pd-lanes/astra-m3-t40v33-r8/`(SPEC = 총괄 머리(작업장 규율 · 법 변경 금지 · wip 커밋 허용 · `work/R8-PROGRESS.md`) + 회신 원문) · 작업장 `pd-author-t40v33`(출발 커밋 = `git log -1` · 산출 = `work/` + wip 커밋들). **장시간(13~22h 추정).** **지금 할 일 = Monitor(1h 씩 재무장) → 레인이 죽으면 `work/R8-PROGRESS.md`·마지막 wip 커밋 확인 → 같은 SPEC 에 「재기동 · 진행 표식에서 이어라」 머리 한 줄 붙여 재발주 → 완료 시 회수(`READY_FOR_INDEPENDENT_GATE`/`NOT_READY`) → 총괄 재검증(sites/검사기 · 독립 회귀 · §5′.10 · 정본 무접촉 · 법 불변 · SITE→PO 대응표) → 반입(`verify/intake-v38.sh` 파생 · 새 모듈 포함) → 커밋 → 재핀·bundle → SPEC v36(`OH-*` · 판정 방법 = PO Satisfied/Violated/Unexamined + 기존 ⓐⓑⓒ · 진행도 기준선 재정의는 총괄이 대응표로 정함 · 재정 T47) → 36차.** Owner 재정 대기 = 없음. 살아 있는 배경 = 8차 레인 + 킵얼라이브 cron.
 
