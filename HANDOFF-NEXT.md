@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(93차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-07(94차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-07 94차 갱신 — v37 반입 완료(D-02 추기 53).** 메모 v37 = drafts `T40-MEASURE-DESIGN.md`(`2e1c2a7f6ddd4fe0` · v36 = `.v36.md`) · 실행본 = `pd-lanes/t40-measure/`(drive v16 · metrics v36 · replay v11 · receipts v11 · resources v3 · sites v5 · regress v16 · 대장 68행 + 격자 · 회귀표 v16 165 FAIL 0) · 저작 원문 = `pd-author-t40v33` 커밋 `160b487`. **지금 할 일 = 사본 재핀 → bundle → SPEC v35(`pd-lanes/astra-m1b-t40v35/SPEC-m1b-t40-v35.template.md` · `__MEMO_SHA__`·`__PIN__`) → **35차 기동(T45 ③ 문턱)** → 판정 → 반입(lesson v35 · DISPOSITIONS · 추기 54 · HANDOFF 95) → PASS 면 실측 착수 · REVISE 이고 진행도 ≥10 이면 **상신 결정 브리핑**(선택지 넷 + 총괄 분석: 31~35차 행 이동 표 · 결손 형태 변천 · 비용) · 감소면 T44 자동(astra xhigh 7차).** Owner 재정 대기 = 없음.
+
+> [정정 2026-09-07 · 94차] 93차의 「6차 발주 → 회수 → 반입」은 끝났다.
 
 **★ 09-07 93차 갱신 — M1b 34차 = REVISE 7(OF-1~7 · HIGH 2 · MED 5 · 전부 수용 · lesson `…-v34.md` · DISPOSITIONS 416 · D-02 추기 52) → 진행도 12→12→9→**10**(비감소 1회) → T44 자동 기동 → v37 저작 = astra xhigh 6차.** **★ 35차도 10 이상이면 T45 ③ 상신 = 결정 브리핑(선택지 = 제한된 다음 판 / 자리 축소·대장화 / 별도 탐색 단계 / 보류·중단 · 총괄 분석 첨부).** 총괄 진단 = 「진입점 × 의무」 격자 빈 칸(source·retire) → 6차 발주문에 격자 + 도달성 검사. **지금 할 일 = 6차 발주(`pd-lanes/astra-m3-t40v33-r6/`) → 회수 → 재검증 → 반입(`verify/intake-v37.sh` 파생) → 커밋 → 재핀·bundle → SPEC v35(`OG-*`) → 35차 기동 → 판정 → 비감소면 상신 브리핑 · 감소면 T44 자동.** Owner 재정 대기 = 없음.
 
