@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-08(100차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-08(101차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-08 101차 갱신 — 9차 회수 READY → 재검증 → v39 반입(D-02 추기 61).** 메모 v39 = drafts(`bf2edc844529b790` · v38 = `.v38.md`) · 실행본 v39(`t40-measure/` · FI 45 · 회귀 179) · 저작 원문 커밋 `de6abab`. **지금 할 일 = 재핀 → bundle → SPEC v37(`pd-lanes/astra-m1b-t40v37/SPEC-m1b-t40-v37.template.md`) → 37차 기동 → 판정 → 반입(lesson v37 · DISPOSITIONS · 추기 62 · HANDOFF 102) → PASS 면 실측 착수 · REVISE 면 PO Violated 를 36차 10 과 비교(≥10 이면 비감소 1회) · 「새 규칙 요구 있음」이면 상신.** Owner 재정 대기 = 없음.
+
+> [정정 2026-09-08 · 101차] 100차의 「9차 발주 → 회수 → 반입」은 끝났다.
 
 **★ 09-08 100차 갱신 — M1b 36차 = REVISE 4(OH-1~4 · 전부 수용 · lesson `…-v36.md` · DISPOSITIONS 425 · D-02 추기 60) · **새 종류의 규칙 요구 없음 · PO 기준선 2/10/0** → T44 자동 기동 → v39 저작 = astra xhigh 9차.** 게이트 소견 = 파일 효과 명시적 종료 · IO-clear 증표 끝까지 · profile 상태표 공동 집행(새 예외 분기 아님). **지금 할 일 = 9차 발주(`pd-lanes/astra-m3-t40v33-r9/` · OH-1~4 · 자문 5회차 원칙 유지 · wip 커밋 허용 · `R9-PROGRESS.md`) → 회수 → 재검증(sites·structure·독립 회귀·invariant_tests·§5′.10·법·정본) → 반입(`verify/intake-v39.sh` 파생) → 커밋 → 재핀·bundle → SPEC v37(`OI-*` · PO 진행도 비교 36차 2/10/0) → 37차 → REVISE 면 Violated 수 비교(두 회차 연속 비감소 = 상신) · 「새 규칙 요구 있음」 = 상신.** Owner 재정 대기 = 없음.
 
