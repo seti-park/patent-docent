@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-08(99차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-08(100차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-08 100차 갱신 — M1b 36차 = REVISE 4(OH-1~4 · 전부 수용 · lesson `…-v36.md` · DISPOSITIONS 425 · D-02 추기 60) · **새 종류의 규칙 요구 없음 · PO 기준선 2/10/0** → T44 자동 기동 → v39 저작 = astra xhigh 9차.** 게이트 소견 = 파일 효과 명시적 종료 · IO-clear 증표 끝까지 · profile 상태표 공동 집행(새 예외 분기 아님). **지금 할 일 = 9차 발주(`pd-lanes/astra-m3-t40v33-r9/` · OH-1~4 · 자문 5회차 원칙 유지 · wip 커밋 허용 · `R9-PROGRESS.md`) → 회수 → 재검증(sites·structure·독립 회귀·invariant_tests·§5′.10·법·정본) → 반입(`verify/intake-v39.sh` 파생) → 커밋 → 재핀·bundle → SPEC v37(`OI-*` · PO 진행도 비교 36차 2/10/0) → 37차 → REVISE 면 Violated 수 비교(두 회차 연속 비감소 = 상신) · 「새 규칙 요구 있음」 = 상신.** Owner 재정 대기 = 없음.
+
+> [정정 2026-09-08 · 100차] 99차의 「36차 기동 → 판정」은 끝났다(REVISE 4 · 새 규칙 요구 없음).
 
 **★ 09-08 99차 갱신 — 8차(불변식 구현) 회수 `READY_FOR_INDEPENDENT_GATE` → 총괄 재검증 완료 → v38 반입(D-02 추기 59).** 메모 v38 = drafts(`3efce46680aad255` · v37 = `.v37.md`) · 실행본 = `pd-lanes/t40-measure/`(139 파일 · 새 모듈 `t40_flow.py`·`t40_consume.py`·`t40_structure.py` · PO 정본 `T40-PO-MATRIX.json` · SITE→PO · R8-REPORT/ARCHITECTURE · 회귀 v16 174 FAIL 0 · FI 29) · 저작 원문 = `pd-author-t40v33` 커밋 `19caf0f`. **지금 할 일 = 사본 재핀 → bundle(새 파일 포함) → SPEC v36(`pd-lanes/astra-m1b-t40v36/SPEC-m1b-t40-v36.template.md` 지문 채움) → **36차 기동**(`OH-*` · 판정 = PO 12 S/V/U + ⓐⓑⓒ + 「새 종류의 규칙 요구」 · 새 기준선 = PO) → 판정 → 반입(lesson v36 · DISPOSITIONS · 추기 60 · HANDOFF 100) → PASS 면 실측 착수 절차(HANDOFF 82차 ⑹ · 런마다 `read` → `seal-evidence` · 결함 런 `retire`) · REVISE 면 「새 종류의 규칙 요구: 있음」이면 상신 · 「없음」이면 T44 자동(PO Violated 를 닫는 astra xhigh 9차 · 진행도 = PO 3수).** Owner 재정 대기 = 없음.
 
