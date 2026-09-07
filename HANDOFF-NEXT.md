@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-07(79차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-07(80차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-07 80차 갱신 — Owner 육성 `B`(자문 4회차) → 봉투 발행 `~/projects/workspaces/advice/t40-oracle-closure-20260907/t40-loop-closure-20260907-0914/`(PROMPT `c884d6a5` · zip `5ccdb14d` · 동봉 2 = `SITUATION-4.md` · `APPROACH-4.md` · 질문 Q1~Q6 = 수렴/발산 · 연역 명세의 빈 층(자리 열거) · 구조 선택지 ⓐ~ⓔ · 종결 규약 재설계 · T44 평가 · 반론 · 위험 어휘 0) · `D-20260905-02` §17 추기 39.** **지금 할 일 = Owner 가 PROMPT.md + bundle.zip 을 ChatGPT astra pro 에 넣고 회신을 그 디렉터리 `REPLY.md` 에 원문 저장 → 「t40-loop-closure 회신 왔어」 → 총괄이 봉투 대조(MANIFEST 2 · PROMPT sha) → 처분표(추기 40) → 회신이 가르는 길(ⓐ 총괄 v33 / ⓑ sol-coder 저작 / ⓒ 자유도 축소 v33 / ⓓ 실측 먼저 = PASS 재정)을 Owner 재정으로.** 코드 v32 · 30차 지적 OB-1~4 는 수정 문안 확정·미구현. Owner 재정 대기 = 회신 전달 1건. 살아 있는 배경 = 킵얼라이브 cron 만.
+
+> [정정 2026-09-07 · 80차] 79차의 「Owner 채팅 회신 대기 1건(A/B/C/D)」은 B 로 닫혔다.
 
 **★ 09-07 79차 갱신 — M1b 30차 = REVISE 4(OB-1·2·4 HIGH · OB-3 MED · `docs/lessons/2026-09-07-astra-m1b-t40-measure-v30.md` · `D-20260905-02` §17 추기 38 · 심사 대상 ① 충족 · 도출 누락 0 · 새 보증 요구 0 · 갈래 전부 ⑴ · closed 107 · partially 5) → **재정 T44 판정 = 「같은 P/T 세 회차 연속」 충족(T3·P5·P6·P7 넷) → 자동 기동 불가 · Owner 상신.** 잔여 4 = 독립 대조기의 MANIFEST·attempt 결속 누락(OB-1) · 소비기 dispatch 경로 미결속·목록 밖 후보 선읽기(OB-2) · 처분 분류 미전달 4 경계(OB-3) · sandbox 보호 집합에 evidence 루트·dispatch·retired 누락(OB-4). **지금 할 일 = Owner 채팅 회신 대기 1건 = 다음 단계(A 총괄 v33 → 31차 `OC-*` 추천 / B 자문 4회차 / C v33 을 M3 sol-coder 에 발주 / D 실측 먼저 = PASS 문장 변경 재정) → 재정대로**(A·C 면 v33 = 공용 `bind_receipts` · `--evidence-dispatch` 결속 · kind 전달·중첩 형태 검사 · 보호 집합 확장 · C93~C97 · S11~S13 → 회귀 전건 → 사본 재핀 → SPEC v31 → 기동). 코드는 아직 v32(28·29차 반영)다. Owner 사후 확인 대상 = 없음. 살아 있는 배경 = 킵얼라이브 cron 만.
 
