@@ -19,6 +19,10 @@
 
 **★ 문체 규율 추가(Owner 09-08 명시)** — **비유·수사로 직접 진술을 대체하지 않는다. 문자 그대로 쓸 말이 있으면 그것을 쓴다.** 수사는 읽는 비용을 올리고 글쓴이가 고르지 않은 함의를 끌고 온다. 이 갱신에서 추기 73·lesson 머리말의 해당 표현 다섯을 조건·기제가 드러나는 문장으로 바꿨다(감수 원문 절은 무수정). 기억 `direct-statement-over-metaphor`.
 
+**★ 살아 있는 배경 = 14차 저작 1개(23:18:55 기동).** 레인 `~/projects/workspaces/pd-lanes/astra-m3-t40v33-r14/` · `좌석 M3` gpt-6-astra xhigh · workspace-write · SPEC `db30cc604b628a74`(19,675 B · 위험 어휘 `sandbox 2` 로 13차 통과판 이하 · 신규 0) · 작업장 핀 `e44e70488cf3f38bb148897b616aedd111929ac3` **삼자 일치 확인**(SPEC·HEAD·마커) · PREFLIGHT 3검증 통과 · 예상 2~3시간(13차 = 2 h 38 m). 감시 = Monitor `bdqydd60i`(EXIT 과 프로세스 소멸 둘 다 잡는다). **회수 = STATUS 의 마지막 START 뒤 블록에서만 EXIT 확인**(함정 Q).
+
+**★ T49 ③ 의 막힌 심사 축 — 발주문은 써 뒀고 기동은 14차 회수 뒤로 미뤘다.** 발주문 `~/projects/workspaces/pd-lanes/fable-m9-blocked-axis/brief.md`(6,798 B · sha16 `ccfe98166a37323e`) · **좌석 M9 fable xhigh CLI**(`claude -p --model claude-fable-5-1 --effort xhigh` · 호출 꼴은 LANE-RUNTIME 「Fable 좌석 호출 경로」 · cwd = 심사 대상 사본 `pd-m1b-t40`). **미룬 이유 = 자원**: 기동 시점 `MemAvailable` 1.51 GB 이고 claude 세션 둘(PSS 592·492 MB)과 codex 저작이 이미 상주한다. 이 감사는 14차와 겹쳐도 결과가 안 바뀌지만, 메모리 압박으로 **codex 가 죽으면 회차를 통째로 날린다**(LANE-RUNTIME 함정 · 실측 2회 사망). **14차 회수 직후 codex 미가동 창에 띄운다.** 축을 41차 뒤로 좁힌 형태 = 「계산·기록은 됐는데 승인 판정에 도달하지 않는 값이 `OM-2` 말고 더 있는가」 — 41차가 이 부류의 첫 실물을 찾았으므로 그 형태의 전수 탐색이 남은 부분이다.
+
 > [정정 2026-09-08 · 114차] 113차의 「다음 = 41차 게이트 발주」와 「다음 손 = 재핀 + 번들 재생성 + 41차 SPEC」은 끝났다(REVISE 2 · PO 1). 재핀은 신설 `pd-lanes/verify/repin-gate.sh` 로, SPEC 지문 대조는 신설 `verify/check-spec-hashes.sh`(22항 전건 일치)로 했다.
 
 **★ 09-08 111차 갱신 — 자문 6회차 회신 도착 · 총괄 검증 완료 · 처분 = 수용 · 다음 = 13차 저작 발주(막는 재정 없음).** 보존 = `~/projects/workspaces/advice/t40-loop-structure-20260908/t40-macro-diagnosis-1702/`(`REPLY.md` · `AUTHOR_HANDOFF.md` · `PO_GATE_01_examples_FINAL.zip` + `reply/` 전개 · sha256 과 검증 실측은 **결정문 추기 70·70-부기·70-부기2**). 요지 = **물음 ⑴ 의 읽기가 틀렸다** — `PO-GATE-01` 은 「임의의 파이썬을 완전 판정하라」가 아니라 **한 방향(검사기 PASS ⇒ 기존 불변식 성립)** 이라 **만족 가능**하다. 보증 못 하는 조합은 **미리** 거부해도 되지만 **승인 뒤 사후 「미지원이었다」로 면책하는 것은 안 된다.** 「등록 안 된 것은 거부」는 유지하고 **「지원」의 기준을 바꾼다** — 등록·evaluator 존재가 아니라 **정상·오류 완료·효과 순서·후속 실행까지 모델링됐을 때만 지원**. 40차 게이트 자신의 답 ⑶ 과 같은 문장이다.
