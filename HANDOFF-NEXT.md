@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-08(103차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-08(104차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-08 104차 갱신 — 기동 전 지문 대조 전건 일치 · SPEC v38 정합 점검에서 낡은 판본 라벨·문턱 7곳 발견·수정(D-02 추기 64 · 발주자 오류 누계 234) → 38차 기동(START 09:26:44 · 판정 대기).** SPEC = `pd-lanes/astra-m1b-t40v38/SPEC-m1b-t40-v38.md`(`a2bf3d0bf28dd27a` · 18,528 B) · 핀 `9aae3b2` · bundle 218. **지금 할 일 = 판정 회수(`sol-audit.sh finish --log ~/projects/workspaces/pd-lanes/astra-m1b-t40v38`) → 반입(lesson `docs/lessons/2026-09-08-astra-m1b-t40-measure-v38.md` · DISPOSITIONS 등재 98·합 110 · D-02 추기 65 · HANDOFF 105) → 관문 7종 → 커밋 → PASS 면 실측 착수 절차(82차 ⑹) · REVISE 면 Violated 를 37차 6 과 비교(≥6 = 비감소 1회) · 「새 규칙 요구 있음」 또는 비감소 2회면 `/decision-brief` 상신.** Owner 재정 대기 = 없음. 살아 있는 배경 = 38차 레인 + 킵얼라이브 cron `9206eb45`.
+
+> [정정 2026-09-08 · 104차] 103차의 「재핀 → bundle → SPEC v38 → 38차 기동」은 끝났다(기동됨 · 판정 대기).
 
 **★ 09-08 103차 갱신 — 10차 회수 READY → 재검증 → v40 반입(D-02 추기 63).** 메모 v40 = drafts(`fb12cc8f1e61961c` · v39 = `.v39.md`) · 실행본 v40(`t40-measure/` · FI 70 · 회귀 182) · 저작 원문 커밋 `fa3befb`. **지금 할 일 = 재핀 → bundle → SPEC v38(`pd-lanes/astra-m1b-t40v38/SPEC-m1b-t40-v38.template.md`) → 38차 기동 → 판정 → 반입(lesson v38 · DISPOSITIONS · 추기 64 · HANDOFF 104) → PASS 면 실측 착수 절차 · REVISE 면 Violated 를 37차 6 과 비교(≥6 비감소 1회) · 「새 규칙 요구 있음」 = 상신.** Owner 재정 대기 = 없음.
 
