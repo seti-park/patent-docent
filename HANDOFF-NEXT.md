@@ -1,11 +1,13 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-12(142차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-12(143차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-12 143차 — Owner 「M4 앞으로는 Fable low로 부탁해.」 → 전역 격자 개정 **L-069**(agents `5f64819`·`27eab1b` · ROUTING §1′4·§3 M4·§4·§6 · HOOK · LANE-RUNTIME · EVIDENCE §6). **다음 M4 발주(20차 이후 저작)는 `claude -p --effort low`.** 지금 도는 19차(high · 19:16 기동)는 그대로 완주시킨다 — 그 usage·소요는 EVIDENCE §6 에 high 사료로 적고 low 의 근거로 쓰지 않는다. 138차 표의 M4 행을 고쳤다. 지금 할 일 = 변함없이 **19차 회수 대기**.**
 
 **★ 09-12 142차 — 재정 **`T54: ① A / ② B / ③ A`**(`ruling-20260912-01-T54.md` · 추기 101) → 자문 봉투 사료 · **19차 저작 기동**(`좌석 M4` claude-fable-5-1 high · 레인 `~/projects/workspaces/pd-lanes/fable-m4-t40v33-r19/` · SPEC `SPEC-m4-t40-evidence-form-r19.md` 21,646 B · 작업장 HEAD `da25f48` ref · 재핀 `M4-t40-evidence-form-r19-20260912`). **지금 할 일 = 회수를 기다린다**(18차 실측 1h45m · fable 은 첫 실측 · 진행은 `STATUS` 로만 · `claude -p` 는 완주 시에만 출력 · 세션 한도로 끊기면 `--resume $(cat SESSION)`). 회수 뒤 = 총괄 독립 재현(원본 승인 예/아니오 · 거짓 유도 exit 1 · 불변) → 반입 → **45차 게이트**(M1b fable max 3/3 · 판정문 필수 줄에 **「원본 승인: 예/아니오」** + 종결선 문장 「아니오이면 46차 없이 T55」). Owner 재정 대기 = **없음**. 살아 있는 배경 = **19차 저작 1개**.**
 
@@ -37,7 +39,7 @@
 |---|---|---|---|---|
 | 결정 보유·발주문·처분 | `좌석 M1a` = 대화창 `claude-fable-5-1` **high** · 깊은 턴은 `/effort xhigh` | 대화창 | 없음(Owner 가 정한다) | opus xhigh → fable high |
 | 설계 도전·게이트(44차 이후 전부) | `좌석 M1b` `claude-fable-5-1` **max** | `claude -p … --effort max` · 감사 allowlist · 작업 사본 cwd · **약정 ⒁ M1b 블록을 발주문에 삽입(없으면 발주 불가)** | fable **xhigh**(Owner 조절 재정 뒤 · 또는 한도 중단 2회) → fable 장애 시 `gpt-5.6-sol` xhigh | astra high(L-052 ⑩ 확정)는 **종료**. 44차 3판의 「Claude 좌석 임시 대체」는 임시가 아니라 **본좌석**이 됐다 |
-| 보완 저작(설계 메모 §·논증·검증 경로 — 불확실성 남음) | `좌석 M4` `claude-fable-5-1` **high** | `claude -p … --effort high` · cwd = 저작 작업장 · Write/Edit 허용 · git 리포 필수 | **없음** — fable 장애 시 정지·상신 | astra xhigh 저작(추기 42 · Owner 지시)은 v3 §6 「astra 저작 금지」로 **종료** |
+| 보완 저작(설계 메모 §·논증·검증 경로 — 불확실성 남음) | `좌석 M4` `claude-fable-5-1` **low**(**L-069 · 09-12 저녁 Owner 「M4 앞으로는 Fable low로」** · 19차는 그 전에 high 로 기동됨 · 사료) | `claude -p … --effort high` · cwd = 저작 작업장 · Write/Edit 허용 · git 리포 필수 | **없음** — fable 장애 시 정지·상신 | astra xhigh 저작(추기 42 · Owner 지시)은 v3 §6 「astra 저작 금지」로 **종료** |
 | 확정 스펙 저작(스펙이 결과를 결정하는 코드·표) | `좌석 M3` `claude-fable-5-1` **low** | `fable-coder` Agent 또는 CLI · cwd 안 쓰기 · 검증 명령 실출력 | `sol-coder`(sol high · fable 장애 시만) | sol high 본좌석 → 폴백으로 |
 | 적대 감사(막힌 축 감사 · 합본 감사) | `좌석 M9` `gpt-6-astra` **high** | `sol-audit.sh run --model gpt-6-astra --effort high` · read-only 기본 · 약정 ⒁ M9 블록 | fable **high**(astra 장애 시 · medium·low 불가) | fable xhigh 감사 · opus max 감사 → **없음** |
 | 자문(2회 저항 · 결정 직전 · 출하 직전) | 웹 astra pro **Owner 수동**(L-054 · `advice-bundle.sh` 봉투 → `REPLY.md`) | — | Owner 부재·긴급 시 fable **xhigh** CLI(같은 모델 · 독립성은 자료 단절만) | 유지(자문 채널의 값은 시행 뒤 재검 · L-067 잔여) |
