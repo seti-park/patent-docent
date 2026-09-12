@@ -1,11 +1,29 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-10(137차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-12(138차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-12 138차 — 좌석 규범이 바뀌었다. `~/.claude/agents/ROUTING.md` 가 v3(L-067 · 2026-09-12)이다. 이 프로젝트의 발주 좌석을 v3 로 재도출했다 — 아래 표가 지금부터의 규범이다. 137차 이전 항목에 적힌 좌석(`astra medium/high/xhigh` · `sol high/xhigh` · `fable xhigh 감사` · `opus max 감사`)은 v2.1 당시의 실측 기록이라 고쳐 쓰지 않는다 — 그 표기를 만나면 사료로 읽고 좌석은 이 표에서 잡는다.** 경위·근거 = **결정문 `D-20260905-02` §17 추기 96**.
+
+| 단계 | 좌석(v3) | 호출 | 폴백 | v2.1 에서 바뀐 것 |
+|---|---|---|---|---|
+| 결정 보유·발주문·처분 | `좌석 M1a` = 대화창 `claude-fable-5-1` **high** · 깊은 턴은 `/effort xhigh` | 대화창 | 없음(Owner 가 정한다) | opus xhigh → fable high |
+| 설계 도전·게이트(44차 이후 전부) | `좌석 M1b` `claude-fable-5-1` **max** | `claude -p … --effort max` · 감사 allowlist · 작업 사본 cwd · **약정 ⒁ M1b 블록을 발주문에 삽입(없으면 발주 불가)** | fable **xhigh**(Owner 조절 재정 뒤 · 또는 한도 중단 2회) → fable 장애 시 `gpt-5.6-sol` xhigh | astra high(L-052 ⑩ 확정)는 **종료**. 44차 3판의 「Claude 좌석 임시 대체」는 임시가 아니라 **본좌석**이 됐다 |
+| 보완 저작(설계 메모 §·논증·검증 경로 — 불확실성 남음) | `좌석 M4` `claude-fable-5-1` **high** | `claude -p … --effort high` · cwd = 저작 작업장 · Write/Edit 허용 · git 리포 필수 | **없음** — fable 장애 시 정지·상신 | astra xhigh 저작(추기 42 · Owner 지시)은 v3 §6 「astra 저작 금지」로 **종료** |
+| 확정 스펙 저작(스펙이 결과를 결정하는 코드·표) | `좌석 M3` `claude-fable-5-1` **low** | `fable-coder` Agent 또는 CLI · cwd 안 쓰기 · 검증 명령 실출력 | `sol-coder`(sol high · fable 장애 시만) | sol high 본좌석 → 폴백으로 |
+| 적대 감사(막힌 축 감사 · 합본 감사) | `좌석 M9` `gpt-6-astra` **high** | `sol-audit.sh run --model gpt-6-astra --effort high` · read-only 기본 · 약정 ⒁ M9 블록 | fable **high**(astra 장애 시 · medium·low 불가) | fable xhigh 감사 · opus max 감사 → **없음** |
+| 자문(2회 저항 · 결정 직전 · 출하 직전) | 웹 astra pro **Owner 수동**(L-054 · `advice-bundle.sh` 봉투 → `REPLY.md`) | — | Owner 부재·긴급 시 fable **xhigh** CLI(같은 모델 · 독립성은 자료 단절만) | 유지(자문 채널의 값은 시행 뒤 재검 · L-067 잔여) |
+| 검산·대량 적용 | `좌석 M5` `opus` **low** | Workflow `agent(prompt,{model:'opus',effort:'low'})` | — | sonnet 퇴출 |
+
+**v3 가 이 프로젝트에서 바꾸는 것 셋** — ⑴ **44차 3판 = 좌석 M1b fable max(본좌석)**. 137차의 「1회 한정 · Codex 복구 뒤 원좌석(astra high) 복귀」는 소멸했다. `launch.sh` 를 `--effort max` 로 고쳤고 발주문 머리에 약정 ⒁ M1b 블록(심사 **2/3** · 1/3 = ROUTING v3 심사 r1)을 넣었다. ⑵ **19차 이후 저작 = 좌석 M4 fable high**(astra xhigh 아님). 폴백이 없으므로 fable 장애 시 저작도 멈춘다. ⑶ **감사 폴백은 `claude-opus-5` 가 아니다** — 137차의 「남은 갈래 = opus xhigh 폴백(§3 M9)」은 v3 에 없다(opus xhigh 좌석 없음 · M9 폴백 = fable high). **sol 은 어디에도 본좌석이 없다**(M3 폴백 high · M1b 폴백 xhigh · 「쿼터 절약 목적의 선제 사용 금지」).
+
+**바뀌지 않는 것** — 재정 T40~T53 · PO 12 · 세 수 규칙 · 게이트 종결 규약(L-030) · ⑽ ⓑ 계수 상설 문장 · 위험 어휘 규율(발주자 오류 245 포함) · 고정 집합 98항 대조 · 리포 규율 · 「발주자 자기 감사는 증거가 아니다」 · 저작자≠발주자(L-030 — M1a 와 M4 가 같은 모델이어도 유지).
+
+**재개 첫 동작은 그대로다** — Fable 프로브 한 발 → 풀리면 `cd ~/projects/workspaces/pd-lanes/fable-m1b-t40v48c && setsid nohup bash launch.sh > launch.log 2>&1 < /dev/null & disown`. 다만 이제 `--effort max` 로 뜬다(v3 심사 r1 실측 38턴 · 16분 · $8.60). 회수 뒤 약정 관측(usage · 턴 수 · 지적 수 · 처분 분포 · 소요 · 도구 호출 수)을 추기에 적는다. **Owner 가 「xhigh 로」라 하면 그것은 v3 §5 ⒁ 의 조절 재정이며 `launch.sh` 한 줄이다.**
 
 **★ 09-10 136차 — 이 프로젝트는 **정지 중**이다. Codex 한도 복구 = **`2026-09-15 10:27`** · Fable 쿼터도 낮다. Owner 지시 = 「**일단 쉬고 있어. 리셋되면 다시 resume 할게**」. 킵얼라이브 cron 은 해제했다(재개 시 SessionStart 훅이 다시 건다). 살아 있는 배경 레인 = **없음**.**
 
@@ -18,6 +36,8 @@
 **★ Owner 재정이 났다(2026-09-10 · 「a, a」) = ① ⒜ Claude 좌석 임시 대체 · ② ⒜ 자문 8회차는 ① 결과 뒤.** 3판은 **준비 완료**다 — 레인 `~/projects/workspaces/pd-lanes/fable-m1b-t40v48c/`(발주문 `BRIEF-m1b-t40-v48c.md` 31,347 B · 위험 어휘 0 · `launch.sh`). **판정 전담**이다: 1·2판 관측을 전부 인라인했고 회귀·반례 재실행을 금지했으며 분량을 8,000~15,000 자로 명시했다. **그러나 `2026-09-10 10:1x` 프로브에서 Fable 한도도 소진 확인**(「You've reached your Fable limit」) — **Codex·Fable 두 풀이 동시에 비어 있다. 기동은 보류 중이다.** 실측·경위 = **결정문 추기 95**.
 
 **재개 첫 동작 = Fable 프로브 한 발 → 풀리면 그대로 기동.** `cd ~/projects/workspaces/pd-lanes/fable-m1b-t40v48c && setsid nohup bash launch.sh > launch.log 2>&1 < /dev/null & disown` · `claude -p` 는 완주 시에만 출력하므로 진행은 `STATUS` 로만 본다(4~11분 정상 · 30분 넘으면 의심). **남은 갈래 = `claude-opus-5` xhigh 폴백**(ROUTING §3 M9) — 총괄 판단은 **기다린다**(같은 모델이라 §5 ⑽ 로 독립성이 반만 남는다). Owner 가 「opus 로라도 지금」이라 하면 판정문에 그 한정을 명기하고 띄운다.
+
+> [정정 2026-09-12 · 138차] 위 문단의 좌석은 v2.1 이다. v3 에서 44차 3판은 **좌석 M1b fable max 본좌석**이고(임시 대체 아님) `claude-opus-5` xhigh 폴백은 **존재하지 않는다**(M1b 폴백 = fable xhigh → sol xhigh). 규범은 138차 표. 발주문은 약정 블록 삽입으로 **32,595 B · 213행**(위험 어휘 0 유지) · `launch.sh` 는 `--effort max`.
 
 **(집행 완료된 옛 항목) 재정 전 열려 있던 선택지** ① **44차를 어떻게 닫나** — ⒜ Claude 좌석 임시 대체(`fable xhigh` CLI)로 남은 판정만(**총괄 추천** · 남은 것이 판단뿐이고 Fable 은 별도 풀) ⒝ Sep 15 에 sol/astra 3판(규범 그대로 · 6일 정지) ⒞ 지금 것으로 `[가설]` 강등 출하(게이트 종결 규약 ⑶ · 자문 조건 ⒝ 판정은 못 나온다). ② **자문 8회차** — ⒜ ① 결과를 보고(**총괄 추천**) ⒝ 지금 봉투(웹 astra pro 는 Codex 와 무관해 지금도 가능). **★ 내가(M1a) 직접 판정하는 선택지는 없다 — ROUTING §5 「발주자 자기 감사는 증거가 아니다」.**
 
@@ -1164,7 +1184,7 @@ sol 의 논지를 끝까지 따른다. 코드 결함 의심이니 재정 T16 이
 | 재정을 내리거나 찾는다 | `docs/decisions/RULINGS-LEDGER.md`(§2 색인 · §3 미결) → `ruling-*.md` |
 | 감수 결과를 본다 | `docs/lessons/` **전문 보존**. 요약본을 만들지 마라 |
 | 무엇이 실물이고 무엇이 예정인지 | `docs/SPEC.md` §6.7 · `contracts/glossary.md` §2.2 |
-| 좌석(모델·effort)을 정한다 | `~/.claude/agents/ROUTING.md` — **여기서 정하지 않는다** |
+| 좌석(모델·effort)을 정한다 | `~/.claude/agents/ROUTING.md`(**v3 · 2026-09-12 · L-067**) — **여기서 정하지 않는다**. 이 리포에 적용한 도출은 §0 138차 표 |
 | 레인이 죽거나 산출이 빈다 | `~/.claude/agents/LANE-RUNTIME.md` |
 | 커밋 전 | 관문 **7종** plain·`-O` 전부 exit 0 (`CLAUDE.md` §6) — **[정정 2026-09-02 · 재정 T27]** 구 문언 「5종」. 여섯째 = `check_dispositions.py`(`852dcdd`). **[정정 2026-09-03 · 재정 T26]** 실패표 관문이 더해져 6→7 |
 | 감수 원문을 반입한다 | `docs/lessons/` 전문 + **총괄 머리말에 `지적 열거 = …`** + `DISPOSITIONS.md` §0 행·§1 처분 행 — 관문 여섯째가 양방향 차집합을 잰다. **열거가 원문을 빠짐없이 담았는가는 사람 몫**(원장 T27 ⒜ ①) |
