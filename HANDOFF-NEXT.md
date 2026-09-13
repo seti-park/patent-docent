@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(179차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(180차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 180차 — **도면 붙은 v2(2회차) L0 advance · stop-shape 첫 가동 · 반입 `875d7a9` · 결정 브리핑 T67 발행** `https://claude.ai/code/artifact/006f386e-aa42-4806-9704-cad5ae3cd53d`(추기 148): ① 사용권 재정 R11(crop-only 공개 게시 · 추천 A) · ② 다음 단계(A M6 L1·수정 루프·CP2 · B 종결 · C 새 런). 출하 후보 = `runs/gdm-wo2026128750a1-agent-memory-3/50-gate/v2/thread.stripped.md` + `30-figures/assets/`(9). **지금 할 일 = Owner `T67: ① _ / ② _` 대기 → 재정문 `ruling-20260913-12-T67.md` + 원장 행 → ① A 면 매니페스트 유지·run.yaml `figures.usage_rights_decision` 은 publish 런 때 · ② A 면 M3 발주문 ⑤(M6 · SPEC §1.10 L1 · §4.5 · 수정 루프 · `final-eyes-brief` · CP2 봉투 · `contracts/parameters.yaml#gate.l1.k`).** 살아 있는 배경 = 없음.**
+
+> [정정 2026-09-13 · 180차] 179차의 「재펜 회수 → gate → 반입 → T67」은 전부 됐다 — 재정 대기.
 
 **★ 09-13 179차 — **재정 T66 전건 A 등재 · 해소 규칙 구현(`d81d858`) · 런 -3 `figures` 완주(자산 9 · FIG-8·19 해소 기록) · v2 2회차 재펜 기동 21:13**(추기 147). **지금 할 일 = 재펜 회수(`pd-lanes/t65-figures/STATUS-compose-r2`) → `gate.sh`(gate-l0 · stop-shape 가동 · rounds/r1 보존) → 산출 반입 커밋(30-figures · 40-compose/v2 · 50-gate/v2) → 도면 시안 브리핑 T67(자산 9 미리보기 · v2 2회차 출하본 · L0 결과 · 사용권 재정 R11 = 공개 게시 여부).** 살아 있는 배경 = 재펜 1(Monitor).**
 
