@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(161차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(162차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 162차 — 재정 T61 A 「계속」 → `continue` 봉투 → step 3(접지 3 좌표 opus low 성공 · $4.00) 에서 **구동기 조립 결함**(응답 `lane_id` 에 레인 반향 「read-a」 · 발주자 오류 251)으로 엔진이 `LaneContractError` → **런 `-2` 예외 종결**(T38·T43 · 같은 ID 재호출 불가 · 생산 원장 행 1 추가 · 추기 129). 구동기 수리(`829f17b` · lane_id = 좌표 · 지문 반향 검사 · `rewrap`) · 시험 15. **런 `-3`(`gdm-wo2026128750a1-agent-memory-3` · worktree @ `eb88493` 전 main) `init` ok → step 1 기동 14:19:25**(분해 2 · fable low · 레인 `pd-lanes/read-run-3/` · STATUS-step-1). **지금 할 일 = step 1 회수 → 조기 수렴 판정서를 Owner 께(같은 꼴이면 채팅 한 줄 · T61 봉투는 런 -2 판정서에 결속돼 재사용 불가) → `continue` → step(접지) → step(통합) → CP1 → 판독본 + 8-b 브리핑.** 런 -2 는 보존(사료 · 영수증 6). 살아 있는 배경 = 런 -3 step 1 + `/tmp` 감시.**
+
+> [정정 2026-09-13 · 162차] 161차의 「런 -2 … Owner 「계속」 대기」는 재정(T61 A)이 왔고 그 런은 구동기 결함으로 종결됐다 — 런 -3 으로 이어진다.
 
 **★ 09-13 161차 — READ 부분 런 2 진행 중: `init` ok · step 1 실패(`--json-schema` 문자열 · 수리 `11a5f14`) · **step 2 = EXIT 11**(분해 2 좌표 fable low 완료 · 첫 실호출 검증 통과 · $3.31 · 6분 44초 · 조기 수렴 상신 축 element-set·tree-edges 0.714 미달 · 레인 자기 신고 10건 · 추기 125). **결정 브리핑 T61 「조기 수렴 뒤 계속」 `https://claude.ai/code/artifact/0d6697e6-6eed-4581-b21c-882c7b96c20c`(추기 126·127 · 갈림 실체 = 「wherein」 문언 경계 + 부착점 · 추천 `T61: ① A — 계속`) → 지금 할 일 = Owner 재정 T61 대기**(T17 · 회신 한 줄 → `--quote-file` 에 원문 저장 → `tools/drive_partial_read.py continue gdm-wo2026128750a1-agent-memory-2 --quote-file <f>` → `pd-lanes/read-run-2/step.sh`(STATUS-step-3 · 접지 ≤9 좌표 · opus low) → step(통합) → CP1(20) → `cp1` → 판독본 + §8-b(자기 신고 10+) Owner 께). 레인 좌표 = worktree `.worktrees/gdm-wo2026128750a1-agent-memory-2`(@ `bff8978`) · 영수증 `evidence/calls/` · 구동 로그 `pd-lanes/read-run-2/step-N.log`. **재정 전 `continue`·`step` 금지.** 살아 있는 배경 = `/tmp` 감시 Monitor 1.**
 
