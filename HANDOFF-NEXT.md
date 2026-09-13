@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(169차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(170차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 170차 — **M3 발주문 ① 기동**(추기 137): `design` 러너 + `blueprint.schema.json`(`blueprint/v0`) + `design.yaml` + 검사 7(진입 1 + 출구 6) + 구동기 `extend`·`design` + `extension-envelope/v0` 봉투 스키마. 좌석 fable low CLI · worktree `~/projects/workspaces/pd-m3-t64-design`(`round-t64-design` @ `a7effc6`) · 레인 `~/projects/workspaces/pd-lanes/fable-m3-t64-design/`(SPEC · launch.sh · STATUS START 17:11:18 · 회수 = STATUS `EXIT=` · FINAL · usage.json · SESSION). 재량 넷 = 어휘 고리(READ 어휘 불변) · 런 -3 은 `--repo 정본 --run-root <worktree>/runs/…` 모드(법 = 정본 HEAD · worktree 체크아웃 이동 금지) · 연장 봉투 별도 계약 라인 · 매니페스트 부재 시 동결본 `figures[].id` 해소. **지금 할 일 = 레인 회수 → 총괄 재현(`pytest tests` · 관문 7 plain·-O) → `main` 병합 커밋(`git add` 파일 명시) → `extend gdm-wo2026128750a1-agent-memory-3 --quote-file ~/projects/workspaces/pd-lanes/t64-run3/quote-T64.txt --until gate --ruling ruling-20260913-09-T64.md` → `design` → 블루프린트 열람 → 발주문 ②(펜 · SPEC §1.9·§3.2).** 살아 있는 배경 = M3 레인 1(Monitor `bui6ioxu7` · 1시간 · 예상 20~40분 · $8~13).**
+
+> [정정 2026-09-13 · 170차] 169차의 「발주문 ① 작성 → 기동」은 됐다 — 회수 대기.
 
 **★ 09-13 169차 — **재정 T64 「① A / ② A / ③ C (opus) / ④ A」 등재**(`ruling-20260913-09-T64.md` · 추기 136): 런 -3 연장 · 설계·펜·L0·strip 넷 제작 · **펜 = Opus 5 high/xhigh/max 3판(R10 그대로)** · 도면 보류. **지금 할 일 = M3 fable low 발주문 ①(설계 러너 + `contracts/schemas/blueprint.schema.json` + design 검사 5 · SPEC §1.7 정본 · 입력 = 런 -3 동결본 v1) 작성 → 기동 → 회수·재현·병합 → 발주문 ②(펜 · SPEC §1.9·§3.2 · 긍정형 프롬프트 · `PROMPT_NEGATION_RE` 린트) → ③(L0 `l0-format.yaml` 전 규칙 + strip §3.3 + round-trip) → 구동기 확장(`extend`·`design`·`compose`·`gate-l0`·`strip`) → 런 -3 연장 봉투(`partial_until: gate`) → 실행(설계 fable high 1 · 펜 opus 3) → 세 판 열람 브리핑.** 발주 규격 = M3 fable low CLI(`claude -p --model claude-fable-5-1 --effort low …` · worktree · `setsid nohup` · STATUS/FINAL 회수 · 5부 스펙 · 증명표). 살아 있는 배경 = 없음.**
 
