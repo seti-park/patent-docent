@@ -1432,7 +1432,7 @@ READ 실패표의 `condition`·`note`는 설명 산문이며 선택 코드가 �
 
 | 층 | 무엇이 사는가 | 최상위 키 |
 |---|---|---|
-| **공유 코어** | **사실면** — 서지·청구항·도면·항목·내력. 두 프로젝트가 **같은 의미로** 읽는 것 | `schema` · `reader_version` · `spec_version` · `status` · `run_id` · `patent` · `claims` · `figures` · `items` · `provenance` (10키) |
+| **공유 코어** | **사실면** — 서지·청구항·도면·항목·내력. 두 프로젝트가 **같은 의미로** 읽는 것 | `schema` · `reader_version` · `spec_version` · `status` · `run_id` · `patent` · `claims` · `figures` · `items` · `provenance` · `review_requests`(0.9.0 · 재정 T59 ①) (11키) |
 | **프로젝트 확장 블록** | **편집 판단** — 그 프로젝트에서만 뜻이 있는 것. 네임스페이스는 전부 **선택**이다(비어 있는 `extensions`가 정상값) | `extensions.<ns>` — 현재 `docent`(`drop_signal`)와 `historian`(미정) |
 
 **경계 원칙(문언 고정).** *"공유 필수 필드는 프로젝트 간 동일 의미 — 프로젝트 고유 판단은 확장 블록에만."*
