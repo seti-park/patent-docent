@@ -120,7 +120,7 @@
 | `numeric.unreviewed-use` | `engine/gate/l0/rules_numeric.py` | **거부권 없는 플래그**(veto: false · 재정 P-B). 출하본이 쓴 수치 키가 미참조 fact 에 속함 — 미참조 목록은 동결본에서 재계산(총괄 재량 ⓓ · `derivation.py#_numeric_inventory` 와 같은 규칙) |
 | `gate.l0-clean` | `engine/stages/gate.py` | `l0.json#defects[]` 가 비어 있지 않음 |
 | `gate.annotation-index` | `engine/annotation/index.py` · `engine/stages/gate.py` | 인덱스 문장 수 ≠ 초안 문장 수 · 인용 ID·narrative 가 초안과 다름 |
-| `gate.no-rewrite` | `engine/stages/gate.py` | 러너 자기 산출(L0)과 **L1 레인 산출**(재정 T67 ②)의 `fix_directive` 전건에 따옴표 속 5토큰 이상 EN 문장(SPEC §4.7 기제 3 · 탐지 범위의 한계도 그 절). 실패 = `halt`. 최종 심급 산출에 대한 같은 린트는 M6-b |
+| `gate.no-rewrite` | `engine/stages/gate.py` | 러너 자기 산출(L0)과 **L1 레인 산출**(재정 T67 ②)의 `fix_directive` 전건에 따옴표 속 5토큰 이상 EN 문장(SPEC §4.7 기제 3 · 탐지 범위의 한계도 그 절). 실패 = `halt`. 최종 심급 산출에도 같은 린트를 적용한다(T69 ⑦) |
 | `gate.l1-clean` | `engine/stages/gate.py` | `l1.json#defects[]`(k 표 병합 `engine/gate/l1/merge.py` — 과반 채택 · 미달 강등 · SPEC §4.5) 가 비어 있지 않음. flags 는 무관(재정 T67 ②) |
 | `gate.l1-lane-verified` | `engine/stages/gate.py` | k 응답의 `model` 이 opus-5 수용 집합(`read.yaml#model_identity`) 밖이거나 `effort` 가 `gate.yaml#layers.l1.lane.effort` 와 다름(총괄 재량 ⓑ 신설 id · T67 ②). 실패 = `halt`. 영수증 대조는 구동기 몫 |
 | `strip.roundtrip-forward` | `engine/annotation/strip.py` | `strip(annotated).stripped_md` 가 참조 구현(`_reference_strip` · 코드 공유 없음)과 바이트 다름 — strip 이 본문을 슬쩍 고침(SPEC §3.3 순방향 · id 는 총괄 재량 ⓔ) |
@@ -135,15 +135,29 @@
 | `probe.target-coverage` | `engine/stages/probe.py` | `score.json#per_target[]` 이 블루프린트 `transmission_targets[]` 를 빠짐없이·초과 없이 덮지 않음(§1.11 · §5.2) |
 | `probe.grader-separation` | `engine/stages/probe.py` | 채점 산출의 좌표가 `probe-grade/…` 가 아니거나 계기 좌표와 같거나 채점자 모델이 계기 라벨 수용 집합(`haiku-4.5`)에 듦(§5.3 · §5.5 E13). 실패 = `halt`. 모델 채점 대상 0 이면 `checked 0`(`empty-target`) |
 
+| `critique.input-digest` | `engine/stages/__init__.py` | 최신 동결본·블루프린트·후보 지문과 필수 입력 실재 (T69 ⑦) |
+| `critique.no-score` | `engine/stages/critique.py` | 메모에 점수·등급 패턴 부재 (T69 ⑦) |
+| `critique.probe-reflected` | `engine/stages/critique.py` | 메모가 `score.json`의 최약 표적 최소 1건을 명시적으로 언급 (T69 ⑦) |
+| `critique.no-history` | `engine/stages/critique.py` | 레인 입력 목록에 `revisions/`·`ledgers/metrics.jsonl`이 없음 (T69 ⑦) |
+| `critique.extreme-flagged` | `engine/stages/critique.py` | `advisory_measurements.extreme == true`이면 메모 최상단에 총 단어수 강조 표기 존재(재정 R5) (T69 ⑦) |
+| `critique.anchors-adjudicated-only` | `engine/stages/critique.py` | 소견 레인에 제공된 앵커 목록이 `state == "active"` **그리고** `adjudicated_in`이 채워진 항목뿐임(재감수 B-06, 재정 R12) (T69 ⑦) |
+| `ship.input-digest` | `engine/stages/__init__.py` | 최신 동결본·블루프린트·후보 지문과 필수 입력 실재 (T69 ⑦) |
+| `ship.approval-valid` | `engine/stages/ship.py` | `checkpoint2.md`가 `approval-envelope/v0` 통과, `decision: "approved"`, `selected_variant` 존재, `owner_quote` 존재, `target.digest` 일치(재정 R8) (T69 ⑦) |
+| `ship.byte-identical` | `engine/stages/ship.py` | `70-ship/thread.md`가 승인 변주의 `50-gate/<variant>/thread.stripped.md`와, `70-ship/thread.json`이 `50-gate/<variant>/thread.json`과 각각 **바이트 동일**. 불일치 = `halt`(감수 B3·B7 해소, 재감수 B-04) (T69 ⑦) |
+| `ship.image-resolve` | `engine/stages/ship.py` | `70-ship/images/`의 모든 파일이 `assets/`의 승인된 포인터에서 유래, 포스트당 도면 수가 시트의 `images_per_post_max` 이하 (T69 ⑦) |
+| `figures.publish-gate` | `engine/stages/ship.py` | (`ship`에서 재확인) 출하 이미지 전건의 `manifest.json` `publishable == true`. **`run_kind == "publish"`인 런은 여기에 더해** `run.yaml`의 `figures.usage_rights_decision`이 가리키는 재정 파일이 `docs/decisions/`에 실재해야 한다(§1.8 분기표, 재정 R11·N10, 재감수 B-05). `rehearsal` 런은 게시하지 않으므로 재정 ID 검사를 적용하지 않는다 (T69 ⑦) |
+| `ship.flags-adjudicated` | `engine/stages/ship.py` | 첨부된 모든 `flag.id`에 Owner 판정이 기록됨 (T69 ⑦) |
+| `ship.ledger-write` | `engine/stages/ship.py` | `tournament.jsonl`에 이번 선택이 1행 추가되고 스키마 검증 통과 (T69 ⑦) |
+| `gate.final-eyes-isolation` | `engine/gate/final_eyes.py` | ① final_eyes.inputs_read[] 의 경로 집합이 제공 파일 열거 집합과 정확히 일치(초과도 부족도 실패) 그리고 ② 최종 초안을 제외한 각 입력의 생성 시점이 수정 루프 개시 이전임(재정 N1) (T69 ⑦) |
+| `gate.final-eyes-scope` | `engine/gate/final_eyes.py` | final_eyes.veto_reason ∈ {null, "a", "b", "c"} — 거부 판정의 사유가 열거 3종 안에 있음(재정 R4) (T69 ⑦) |
+| `gate.final-eyes-lane-verified` | `engine/gate/final_eyes.py` | k 응답의 모델은 opus-5 수용 집합 · effort max · 새 세션 (T69 ⑦) |
+
 ### 2.2 계약에만 있고 아직 구현이 없는 것
 
 이 목록이 짧아지는 것이 로드맵의 진척이다. **여기 있는 id를 "검사가 있다"고 말하지 마라** — 그것이 M0.6 재감수가 과장 보고로 판정한 종류의 서술이다.
 
 | 검사 id | 소관 | 정본 서술 |
 |---|---|---|
-| `gate.final-eyes` · `gate.final-eyes-isolation` · `gate.final-eyes-scope` | M6-b | SPEC §1.10 — 최종 심급 자체와 그 격리·관할 검사. `gate.no-rewrite`(러너 자기 산출 = T64 ② · L1 레인 산출 = T67 ②)와 `gate.l1-clean`(T67 ②)은 §2.1 에 올라갔다. 남은 것은 최종 심급이 낸 `fix_directive` 에 대한 같은 린트와 최종 심급 자체다(계약 `gate.yaml#checks_before_exit` 에 `status: inactive` 로 있다) |
-| `critique.no-score` | M8 | `contracts/lexicon/score-lint.yaml` — `gate.no-score` 는 T69 ⑥(M4/M8-a)으로 §2.1 에 올라갔다(같은 린트 `engine/gate/l2/lint.py` 를 소견 전문에 거는 것이 남았다) |
-| `critique.anchors-adjudicated-only` | M8 | SPEC §1.12 — `design.anchors-adjudicated-only` 는 T64(M5-a)로 §2.1 에 올라갔다 |
 | ~~`probe.independence` · `probe.input-clean` · `probe.no-self-report` · `probe.target-coverage` · `probe.grader-separation`~~ | ~~M7~~ → M7-a(T69 ⑥) | **§2.1 로 올라갔다**(재정 2026-09-13 T69 ⑥ · `engine/stages/probe.py`). 남은 것은 계기 교정(SPEC §5.5 골든/변조 쌍 · 총괄 재량 ⓒ · 다음 배치)이며 그것은 검사 id 가 아니다. 구 문언(2026-08-19 누락 보수 경위)은 이 행의 이력이다: SPEC §1.11이 이 다섯을 선언하는데 이 사전의 어느 절에도 없었고, id 신설이 아니라 사전의 누락 보수로 §2.2 에 올랐었다 |
 | `feedback.window` · `feedback.row-consistency` · `feedback.corrects-resolve` | M10 | SPEC §1.15 |
 
@@ -246,7 +260,7 @@
 | `50-gate/<v>/final-eyes-brief.json` | `gate`(`run_l1` 첫 진입) | 최종 심급 발췌본(재정 N1 · SPEC §1.10) — 숫자 화이트리스트(4키) · k · 슬롯 매핑 · 재료 판 지문 · `generated_before_loop`. **루프 개시 전 1회 생성 · 불변** · 지문은 `verdict.json#final_eyes_brief_digest` 에 핀 · 재판정 보존(`rounds/`)에서 제자리에 남는다 · 바뀌면 `run_l1` 이 `halt` |
 | `50-gate/<v>/revisions/r<n>/` | `gate`(`engine/gate/loop.py`) | 국소 수정 라운드 n — `directives.json`(지시 = L0+L1 defects 전건 · 개시 판 지문 · 발췌본 핀) · `thread.annotated.md`(펜 결과 사본) · `locality.json`(재량 ⓒ 국소성 검사 행) · `round.json`(open/closed · outcome). 채택 결과는 회차 규약대로 `40-compose/<v>/thread.annotated.md` 가 현행본 |
 | `50-gate/<v>/escalation.json` | `gate`(`engine/gate/loop.py`) | (선택) 국소 수정 캡(`gate.yaml#loop.revision_cap`) 초과 상신 기록 — 남은 결함 · 라운드 · 지문. 실재 = `decision: escalate` |
-| `70-ship/checkpoint2.md` | 오케스트레이터(구동기 `approve-ship`) | CP2 승인 봉투(`approval-envelope/v0` · `ship_approval`) — `target` = `50-gate/<v>/thread.stripped.md` 지문 · `selected_variant` · `flags_adjudicated[]` · `numeric_whitelist_printed[]` 4키(`approved_in` null 은 이 파일명) · `manual_verification_ack[]`. 표면 선언 = `gate.yaml#checkpoint2`(총괄 재량 ⓓ — critique.yaml 이 생기면 그 `owner_checkpoint` 로). `70-ship/` 은 이때 처음 생긴다 |
+| `70-ship/checkpoint2.md` | 오케스트레이터(구동기 `approve-ship`) | CP2 승인 봉투(`approval-envelope/v0` · `ship_approval`) — `target` = `50-gate/<v>/thread.stripped.md` 지문 · `selected_variant` · `flags_adjudicated[]` · `numeric_whitelist_printed[]` 4키(`approved_in` null 은 이 파일명) · `manual_verification_ack[]`. 표면 선언 = `critique.yaml#owner_checkpoint`(T69 ⑦). `70-ship/` 은 이때 처음 생긴다 |
 | `50-gate/<v>/thread.stripped.md` | `gate` | 출하 후보 텍스트(strip §3.3 ①~⑤). 예행 종료선의 실물(`run-kinds.yaml#kinds.rehearsal.terminates_at_artifact`) · `ship` 은 복사만 |
 | `50-gate/<v>/thread.json` | `gate` | 구조화 출하 객체(`thread/v0`) — `frontmatter_raw` 정본 · `weighted_char_count` · `ship` 은 복사만(재감수 B-04) |
 | `50-gate/<v>/annotation-index.json` | `gate` | 주석 인덱스(`annotation-index/v0`) — 계기 국소화(D9)·L1 감사 표본이 소비. `text_raw` 가 역방향 round-trip 의 전제(재량 ⓕ) |
@@ -260,10 +274,15 @@
 | `60-probe/<v>/{quorum.json, grades.json, escalation.json}` | `probe` | (선택) 인스턴스 대장(좌표 · 시도 · 상태 — 재진입 안전) · 채점 원자료(결정론 + 모델) · 정족수 미달 상신(Owner 선택지 3 · 재정 P-6) |
 | `60-probe/<v>/lanes/` | `probe` | 레인 왕복 기록(`probe-q/<v>[/retry-1]/batch-0` · `probe/<v>[/retry-<k>]/batch-<i>` · `probe-grade/<v>/batch-0`) |
 
-**런 밖의 원장 하나**(위 표와 층이 다르므로 따로 적는다).
+| `65-critique/<v>/**` | `critique` | memo.md 또는 memo-missing.json · 검사 보고 · 레인 왕복 |
+| `70-ship/{thread.md,thread.json,images/,SHIP.md,ship-report.json}` | `ship` | 승인본 바이트 복사 · 이미지 매핑 · 게시 전제 3 표기 |
+
+**런 밖의 원장**(위 표와 층이 다르므로 따로 적는다).
 
 | 경로 | 기록 스테이지 | 정본 관계 |
 |---|---|---|
+| `ledgers/tournament.jsonl` | `ship` | 런 안 tournament-rows.jsonl 전 행 + Owner 선택 1행 이관 · 재진입 중복 없음 |
+| `ledgers/corrections.md` | `ship` | 런 안 corrections-rows.md 이관 · 런 id 절 |
 | `ledgers/shadow/screening.jsonl` | `read` | 맹검 스크리닝 메모의 **섀도 원장** — 런 디렉터리가 아니라 리포 루트에 누적된다. **재료 명세 계약면 밖**이며(재정 P-U4) 어떤 스키마 인스턴스에도 실리지 않는다. 한 행 = 메모 2건 + 최종 평가 + Owner 재정 |
 
 ---

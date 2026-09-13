@@ -85,6 +85,9 @@ from engine.gate import loop as loop_mod  # noqa: E402
 from engine.gate.l1 import plan as l1_plan  # noqa: E402
 from engine.gate.l2 import plan as l2_plan  # noqa: E402
 from engine.probe import LANE_GRADE, LANE_PROBE, LANE_QUESTIONS  # noqa: E402
+from engine.stages import critique as critique_stage, ship as ship_stage
+from engine.critique import plan as critique_plan
+from engine.gate import final_eyes as final_eyes_mod
 from engine.stages import probe as probe_stage  # noqa: E402
 from engine.paths import PathContractError, RunPaths, load_stage_contract, run_kinds_contract  # noqa: E402
 from engine.stages import StageError, freeze as freeze_stage  # noqa: E402
@@ -128,7 +131,7 @@ APPROVAL_NAME_RE = re.compile(r"^approval-v([1-9][0-9]*)\.md$")
 STDERR_TAIL_CHARS = 2000
 REVIEW_SECTION_LINES = 12
 COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal", "extend", "design", "figures", "compose", "gate-l0", "strip",
-            "gate-l1", "revise", "cp2", "approve-ship", "gate-l2", "revise-free", "probe")
+            "gate-l1", "revise", "cp2", "approve-ship", "gate-l2", "revise-free", "probe", "critique", "final-eyes", "ship")
 GATE_L1_REENTRY_CAP = 4          # 요청 k 건 → 호출 → 재진입 1 회면 족하다 · 여유 2
 REVISE_REENTRY_CAP = 8           # 펜 1 + L1 k 재진입
 GATE_L2_REENTRY_CAP = 3          # 요청 1 → 호출 → 재진입 1
@@ -144,8 +147,8 @@ LAW_DIRTY_EXEMPT_PREFIXES = ("runs/", "evidence/", ".worktrees/")
 #   `wrapper_schema(task, read_run)` 이 request.json 의 read_run 세그먼트로 어느 사전인지 정한다(gate-l1 → L1 사전 · 그 밖 → 이 사전).
 TASK_SCHEMAS = {**RESPONSE_SCHEMAS, **design_stage.RESPONSE_SCHEMAS, **compose_stage.RESPONSE_SCHEMAS}
 # 계기 계열(재정 T69 ⑥)은 응답 스키마가 질문지·입력에 따라 달라 상수가 아니다 — request.json 의 response_schema 를 그대로 품는다(아래 wrapper_schema).
-STAGE_SCHEMAS = {l1_plan.LANE_RUN: l1_plan.RESPONSE_SCHEMAS, l2_plan.LANE_RUN: l2_plan.RESPONSE_SCHEMAS}
-DYNAMIC_SCHEMA_RUNS = (LANE_QUESTIONS, LANE_PROBE, LANE_GRADE)
+STAGE_SCHEMAS = {l1_plan.LANE_RUN: l1_plan.RESPONSE_SCHEMAS, l2_plan.LANE_RUN: l2_plan.RESPONSE_SCHEMAS, critique_plan.LANE_RUN: critique_plan.RESPONSE_SCHEMAS}
+DYNAMIC_SCHEMA_RUNS = (LANE_QUESTIONS, LANE_PROBE, LANE_GRADE, final_eyes_mod.LANE_RUN)
 MANIFEST_BASENAME = "MANIFEST-sha256.txt"
 
 
@@ -549,6 +552,17 @@ def call_lane(ctx: Context, lanes_root: str, lane_id: str) -> CallOutcome:
         return CallOutcome(lane_id, True, "dry-run", None, None)
 
     previous = _previous_receipt(ctx, lane_id)
+    if read_run == final_eyes_mod.LANE_RUN and previous is not None and previous.get("request_md_sha256") != _sha256_bytes(stdin):
+        # 새 심급의 호출 예산은 새 입력 지문에 속한다. 이전 영수증은 지문별로 보존한다.
+        archive = os.path.join(ctx.calls_dir, "final-sessions", str(previous["request_md_sha256"]))
+        os.makedirs(archive, exist_ok=True)
+        for source in (_receipt_path(ctx, lane_id), _raw_path(ctx, lane_id)):
+            if os.path.isfile(source):
+                destination = os.path.join(archive, os.path.basename(source))
+                if os.path.exists(destination):
+                    raise DriverExit(EXIT_UNDECIDABLE, "이전 최종 심급 영수증 보존 자리 충돌")
+                os.replace(source, destination)
+        previous = None
     attempt = int(previous.get("attempt", 0)) + 1 if isinstance(previous, dict) else 1
     if attempt > CALL_CAP_PER_LANE:
         raise DriverExit(
@@ -1198,6 +1212,11 @@ def manifest_lines(ctx: Context) -> list[str]:
         for dirpath, _dirs, files in os.walk(paths.probe_root):
             for name in files:
                 add(os.path.join(dirpath, name))
+    critique_root = os.path.dirname(paths.critique_dir(compose_stage.registry.variant_ids(contract=load_stage_contract("compose", ctx.law))[0]))
+    if os.path.isdir(critique_root):
+        for dirpath, _dirs, files in os.walk(critique_root):
+            for name in files:
+                add(os.path.join(dirpath, name))
     if os.path.isdir(paths.ship_dir):
         for dirpath, _dirs, files in os.walk(paths.ship_dir):
             for name in files:
@@ -1705,9 +1724,18 @@ def cmd_cp2(ctx: Context, args: argparse.Namespace) -> int:
     ctx.out(f"--- numeric_whitelist {len(present['numeric_whitelist'])}건(전량) ---")
     for entry in present["numeric_whitelist"]:
         ctx.out("  " + json.dumps(entry, ensure_ascii=False))
-    ctx.out("--- 결번 표면(미구현 · 재정 T67 ② 범위 밖) ---")
-    for row in view["unimplemented"]:
-        ctx.out(f"  {row.get('path')}  소관 {row.get('owner')}")
+    ctx.out(present["thread_stripped"]["text"])
+    ctx.out(json.dumps(present["selection"], ensure_ascii=False, indent=2))
+    ctx.out(present["l2"])
+    ctx.out("score.json 요지: " + json.dumps({k: present["score"].get(k) for k in ("delivery_fidelity", "restatement")}, ensure_ascii=False))
+    ctx.out("| material_id | hit_rate | weakest_tweet |")
+    ctx.out("|---|---|---|")
+    for target in present["score"].get("per_target", []):
+        ctx.out(f"| {target['material_id']} | {target['hit_rate']} | {target.get('weakest_tweet')} |")
+    ctx.out(json.dumps(present["score"], ensure_ascii=False, indent=2))
+    ctx.out(present["memo"])
+    ctx.out(json.dumps(present["verdict"], ensure_ascii=False, indent=2))
+    ctx.out(view["question"])
     ctx.out("--- 봉투 초안(approve-ship --flags 의 JSON · verdict 를 채운다) ---")
     ctx.out(json.dumps(view["draft"], ensure_ascii=False, indent=2))
     return EXIT_OK
@@ -1853,6 +1881,86 @@ def cmd_probe(ctx: Context, args: argparse.Namespace) -> int:
     raise DriverExit(EXIT_CALL_CAP, f"probe 재진입 상한 {PROBE_REENTRY_CAP} 도달({variant})")
 
 
+def _verify_fresh_final_sessions(ctx, lane_ids):
+    receipts = []
+    for base, _, names in os.walk(ctx.calls_dir):
+        for name in names:
+            if name.endswith(".json") and not name.endswith(".raw.json"):
+                row = _load_json(os.path.join(base, name))
+                if row.get("session_id") and row.get("requested"):
+                    receipts.append(row)
+    current = [_previous_receipt(ctx, lane_id) for lane_id in lane_ids]
+    sessions = [r.get("session_id") if r else None for r in current]
+    def invalid(reason):
+        variant = lane_ids[0].split("/")[1]
+        path = ctx.paths().verdict_json(variant)
+        verdict = _load_json(path)
+        row = {"check_id": "gate.final-eyes-lane-verified", "ruleset": None, "ruleset_version": None,
+               "ruleset_size": None, "checked": len(lane_ids), "violations": 1, "status": "fail", "vacuous": "none"}
+        verdict["checks"] = [r for r in verdict["checks"] if r["check_id"] != row["check_id"]] + [row]
+        _write_bytes(path, _json_bytes(verdict))
+        raise DriverExit(EXIT_TERMINAL_FAIL, "gate.final-eyes-lane-verified: " + reason)
+    if not all(sessions) or len(set(sessions)) != len(sessions):
+        invalid("새 세션이 아니다")
+    for row in current:
+        if sum(r.get("session_id") == row["session_id"] for r in receipts) != 1:
+            invalid("다른 요청과 세션 공유")
+
+
+def _cmd_final_stage(ctx, args, stage):
+    variant = args.variant
+    if ctx.dry_run:
+        ctx.out(f"[dry-run] {stage} {ctx.run_id} --variant {variant}")
+        return EXIT_OK
+    dead = []
+    for _ in range(PROBE_REENTRY_CAP):
+        try:
+            outcome = (critique_stage.run(ctx.run_root, ctx.law, variant, dead=dead) if stage == "critique"
+                       else gate_stage.run_final_eyes(run_root=ctx.run_root, repo=ctx.law, variant=variant))
+        except StageEnvironmentError as exc:
+            raise DriverExit(EXIT_USAGE, str(exc)) from exc
+        except (StageError, LaneContractError) as exc:
+            raise DriverExit(EXIT_TERMINAL_FAIL, str(exc)) from exc
+        if outcome["status"] == "pending":
+            dead = _call_pending(ctx, outcome["lanes_root"], outcome["pending"])
+            if stage == "final-eyes" and not dead:
+                _verify_fresh_final_sessions(ctx, outcome["pending"])
+            if dead and stage != "critique":
+                raise DriverExit(EXIT_PENDING, "최종 심급 호출 실패: " + ", ".join(dead))
+            continue
+        if stage == "final-eyes" and outcome.get("final_eyes", {}).get("verdict") == "pass":
+            _verify_fresh_final_sessions(ctx, [f"final-eyes/{variant}/batch-{i}" for i in range(gate_stage.l1_k(ctx.law))])
+        ctx.out(json.dumps(outcome, ensure_ascii=False))
+        if outcome.get("decision") in ("revise", "escalate") or outcome["status"] == "escalate":
+            return EXIT_TERMINAL_FAIL
+        return EXIT_OK
+    raise DriverExit(EXIT_CALL_CAP, stage + " 재진입 상한")
+
+
+def cmd_critique(ctx, args):
+    return _cmd_final_stage(ctx, args, "critique")
+
+
+def cmd_final_eyes(ctx, args):
+    return _cmd_final_stage(ctx, args, "final-eyes")
+
+
+def cmd_ship(ctx, args):
+    if ctx.dry_run:
+        ctx.out(f"[dry-run] ship {ctx.run_id}")
+        return EXIT_OK
+    try:
+        outcome = ship_stage.run(ctx.run_root, ctx.law)
+        if outcome["status"] == "retry":
+            outcome = ship_stage.run(ctx.run_root, ctx.law)
+    except StageEnvironmentError as exc:
+        raise DriverExit(EXIT_USAGE, str(exc)) from exc
+    except StageError as exc:
+        raise DriverExit(EXIT_TERMINAL_FAIL, str(exc)) from exc
+    ctx.out(json.dumps(outcome, ensure_ascii=False))
+    return EXIT_OK
+
+
 def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
     lines = manifest_lines(ctx)
     target = os.path.join(ctx.evidence, MANIFEST_BASENAME)
@@ -1872,7 +1980,7 @@ def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="drive_partial_read.py",
-        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계·도면·펜·L0·L1·L2 게이트·수정 루프·자유 리비전·CP2·계기(T64·T65·T67·T69) — 재정 T60 집행. 명령 22 · 판단 없음.",
+        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계·도면·펜·L0·L1·L2 게이트·수정 루프·자유 리비전·CP2·계기(T64·T65·T67·T69) — 재정 T60 집행. 명령 25 · 판단 없음.",
     )
     parser.add_argument("--repo", help="정본 리포(기본 = 이 파일의 위치에서 추정)")
     parser.add_argument("--worktree-root", help="런 worktree 의 부모(기본 <repo>/.worktrees)")
@@ -1945,7 +2053,7 @@ def build_parser() -> argparse.ArgumentParser:
     revise = sub.add_parser("revise", help="국소 수정 라운드 1회(펜 회차 1 + L0 + L1 k · 캡 = gate.yaml#loop.revision_cap) — 재정 T67 ②")
     revise.add_argument("run_id")
     revise.add_argument("--variant", required=True, help="대상 변주(하나)")
-    cp2 = sub.add_parser("cp2", help="CP2 표면 조회 — 실재 표면 · 결번 표 · 봉투 초안 JSON(무변경)")
+    cp2 = sub.add_parser("cp2", help="CP2 전 표면 7종 · 숫자 화이트리스트 · 봉투 초안 JSON(무변경)")
     cp2.add_argument("run_id")
     cp2.add_argument("--variant", default="v2", help="대상 변주(기본 v2)")
     approve_ship = sub.add_parser("approve-ship", help="CP2 승인 봉투 70-ship/checkpoint2.md(approval-envelope/v0 · ship_approval)")
@@ -1967,6 +2075,12 @@ def build_parser() -> argparse.ArgumentParser:
     probe_cmd = sub.add_parser("probe", help="계기 1회 구동(질문 1 + haiku-4.5 × probe.n + 채점 1 · 순차 · 죽은 인스턴스만 재시도 · 정족수 5/5) — 재정 T69 ⑥")
     probe_cmd.add_argument("run_id")
     probe_cmd.add_argument("--variant", required=True, help="대상 변주(하나)")
+    for name in ("critique", "final-eyes"):
+        command = sub.add_parser(name, help="소견 또는 최종 심급 — 독립 레인 순차 호출")
+        command.add_argument("run_id")
+        command.add_argument("--variant", required=True)
+    shipping = sub.add_parser("ship", help="승인본 복사 · 이미지 · 출하 원장 · 게시물 패키지")
+    shipping.add_argument("run_id")
     return parser
 
 
@@ -1993,6 +2107,9 @@ _COMMANDS = {
     "gate-l2": cmd_gate_l2,
     "revise-free": cmd_revise_free,
     "probe": cmd_probe,
+    "critique": cmd_critique,
+    "final-eyes": cmd_final_eyes,
+    "ship": cmd_ship,
 }
 
 

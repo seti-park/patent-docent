@@ -147,7 +147,7 @@ def inactive_layers(contract: dict, *, l1_pending: bool = False, l2_pending: boo
         status = str(entry.get("status", ""))
         if status == "inactive":
             rows.append({"layer": layer, "reason": str(entry.get("reason", "")), "ruling": str(entry.get("ruling", ""))})
-        elif status == "active" and ((l1_pending and layer in L1_PENDING_LAYERS) or (l2_pending and layer in L2_PENDING_LAYERS)):
+        elif status == "active" and ((l1_pending and layer in L1_PENDING_LAYERS) or (l2_pending and layer in L2_PENDING_LAYERS) or (layer == "final_eyes" and l1_pending)):
             rows.append({"layer": layer, "reason": str(entry.get("pending_reason", "")) or "미실행", "ruling": str(entry.get("ruling", ""))})
     return block, rows
 
@@ -465,13 +465,18 @@ def run(*, run_root: str, repo: str | None = None, variants=None, strip_only: bo
         text = read_text(source)
         digest = sha256_bytes(text.encode("utf-8"))
         previous = _existing_digest(paths, variant)
-        if not strip_only and previous == digest:
-            verdict = load_json(paths.verdict_json(variant))
+        previous_verdict = load_json(paths.verdict_json(variant)) if previous is not None else {}
+        final_veto = (previous_verdict.get("final_eyes") or {}).get("verdict") == "veto"
+        from ..gate.loop import open_round
+        final_revision = final_veto and open_round(paths, variant) is not None
+        prior_l2 = read_text(paths.l2_md(variant)) if final_revision and os.path.isfile(paths.l2_md(variant)) else None
+        if not strip_only and previous == digest and not final_revision:
+            verdict = previous_verdict
             variants_out[variant] = {**_summary(verdict), "reentered": True, "paths": _paths_of(paths, variant)}
             rows_out[variant] = [entry_row]
             continue
         preserved = None
-        if not strip_only and previous is not None and previous != digest:
+        if not strip_only and previous is not None and (previous != digest or final_revision):
             preserved = _preserve_previous(paths, variant)
         outcome = judge_variant(text=text, variant=variant, run_id=run_id, spec_version=version, spec_digest=spec_digest,
                                 frozen=frozen, meta=meta, law=law, rules=rules, repo=repo, contract=contract,
@@ -487,6 +492,14 @@ def run(*, run_root: str, repo: str | None = None, variants=None, strip_only: bo
                                      "paths": _paths_of(paths, variant)}
             rows_out[variant] = list(outcome["rows"])
             continue
+        if final_revision:
+            # 최종 심급의 국소 재진입은 L2의 위상을 다시 열지 않는다.
+            outcome["verdict"]["l2"] = previous_verdict["l2"]
+            if "free_revision_used" in previous_verdict:
+                outcome["verdict"]["free_revision_used"] = previous_verdict["free_revision_used"]
+            if prior_l2 is not None:
+                write_text(paths.l2_md(variant), prior_l2)
+                outcome["verdict"]["inactive_layers"] = [r for r in outcome["verdict"]["inactive_layers"] if r["layer"] != "l2"]
         write_json(paths.l0_json(variant), outcome["l0"])
         write_json(paths.verdict_json(variant), outcome["verdict"])
         variants_out[variant] = {**_summary(outcome["verdict"]), "reentered": False, "paths": _paths_of(paths, variant),
@@ -573,7 +586,13 @@ def ensure_final_eyes_brief(paths: RunPaths, variant: str, *, meta: dict, verdic
     if int(verdict.get("revision_round", 0)) != 0:
         raise StageHaltError("[halt] 발췌본이 없는데 수정 라운드가 이미 시작되었다 — 루프 개시 전에 생성되어야 한다(재정 N1)")
     thread = load_json(paths.thread_json(variant))
-    write_json(path, build_final_eyes_brief(meta=meta, verdict=verdict, thread=thread, k=k))
+    brief = build_final_eyes_brief(meta=meta, verdict=verdict, thread=thread, k=k)
+    # 생성 시각은 파일의 생성 완료 시각이다. 새 발췌본에 한해 그 시각으로 mtime을 결속한다.
+    import datetime
+    brief["generated_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    write_json(path, brief)
+    stamp = datetime.datetime.fromisoformat(brief["generated_at"]).timestamp()
+    os.utime(path, (stamp, stamp))
     return sha256_file(path)
 
 
@@ -817,3 +836,8 @@ def run_l2(*, run_root: str, repo: str | None = None, variant: str, adapter=None
 __all__ = ["GATE_VERSION", "URL_RE", "build_final_eyes_brief", "decide", "ensure_final_eyes_brief", "inactive_layers",
            "judge_variant", "legislated", "no_rewrite_violations", "number_memos", "render_l2_md", "revision_cap", "run", "run_l1",
            "run_l2"]
+
+
+def run_final_eyes(*, run_root, repo=None, variant, adapter=None):
+    from ..gate.final_eyes import run
+    return run(run_root, repo, variant, adapter)

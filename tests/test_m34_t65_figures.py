@@ -295,7 +295,7 @@ def test_contract_loads_and_paths_declare_manifest_and_selection(law) -> None:
     if "20-design/**" not in contract["steps"][0]["must_not_read"] or "00-source/**" not in contract["steps"][1]["must_not_read"]:
         pytest.fail("prepare 의 20-design 금지 · select 의 00-source 금지가 없다")
     paths = RunPaths("/nonexistent/run", law)
-    if paths.STAGES != ("source", "read", "freeze", "design", "figures", "compose", "gate", "probe"):   # T69 ⑥ probe
+    if paths.STAGES != ("source", "read", "freeze", "design", "figures", "compose", "gate", "probe", "critique", "ship"):   # T69 ⑦
         pytest.fail(f"STAGES 에 figures 가 design 뒤에 없다: {paths.STAGES}")
     if not paths.figures_manifest_json.endswith("30-figures/assets/manifest.json") or not paths.figures_selection_json.endswith("30-figures/selection.json"):
         pytest.fail("manifest.json·selection.json 선언 경로가 다르다")
@@ -917,8 +917,8 @@ def _drive(law: str, run_root: str, evidence: str, *argv: str, executor=None, dr
 
 def test_driver_figures_and_compose_round_two(law, run_root, tmp_path, monkeypatch) -> None:
     evidence = os.path.join(str(tmp_path), "evidence")
-    if len(drv.COMMANDS) != 22 or drv.COMMANDS[11:15] != ("figures", "compose", "gate-l0", "strip"):
-        pytest.fail(f"명령 22 가 아니다: {drv.COMMANDS}")
+    if len(drv.COMMANDS) != 25 or drv.COMMANDS[11:15] != ("figures", "compose", "gate-l0", "strip"):
+        pytest.fail(f"명령 25 가 아니다: {drv.COMMANDS}")
     parser = drv.build_parser()
     listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
     if listed != drv.COMMANDS:

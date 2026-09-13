@@ -8,11 +8,8 @@
 #   국소 수정 루프 캡 3 `revisions/r<n>/` · `final-eyes-brief.json` 루프 개시 전 생성 · CP2 봉투는 오케스트레이터) ·
 #   재정 2026-09-13 T69 ⑥(M4/M8-a · **L2 자문 메모 가동** — fable-5.1 high 1회 · 점수 금지 린트 `gate.no-score` 가동 ·
 #   펜 자유 리비전 1회 `revisions/free-r1/` · 위상 봉쇄 D8).
-#   실물 = **L0 결정론 층(stop-shape 포함) · strip 산출 · L1 · 화행 플래그 · 수정 루프 · L2 메모 · 자유 리비전**이다. 최종 심급은 아래
-#   `layers` 주석 블록이 「미가동」으로 적으며, 러너는 그 사실을 verdict.json#inactive_layers[] 에 그대로 옮긴다 — 판정하지
-#   않은 층을 판정한 것처럼 적지 않는다(재정 N5 규율 · run-kinds.yaml#kinds.rehearsal.verdict_requirements.
-#   inactive_gates_enumerated). 매니페스트가 없는 런에서는 러너가 stop-shape 미가동 행을 동적으로 더하고, L1 이 아직
-#   돌지 않은 판정문(gate-l0 만 돈 시점)에는 l1·speech_act_flag 를 `pending_reason` 으로 동적으로 더한다.
+#   최종 심급은 T69 ⑦로 가동한다. L0 재실행·strip 대조는 러너, L1 재검은 opus-5 max 새 세션 k회다.
+#   inactive_layers는 계약 미가동과 런의 미실행 사실을 열거한다. CP2는 critique.owner_checkpoint가 선언한다.
 #
 # ★ 공통 규칙 — 런은 시작 시점 git 커밋에 결박된다(재정 P-U1). 계약·스키마·검증기·러너가
 #   함께 고정되므로, 런 도중 리포가 개정되어도 이 런의 법은 run.yaml#engine.commit 하나다.
@@ -26,7 +23,7 @@ lane:
   effort: null
   # L1 = Opus 5 high × k(parameters.yaml#gate.l1.k) — 가동(재정 T67 ② · 아래 layers.l1.lane 이 좌석 정본) ·
   # L2 = Fable high × 1 — 가동(재정 T69 ⑥ · layers.l2.lane 이 좌석 정본 · 어휘 gate-l2/<v>/batch-0 은 layers.l2.lane_id_vocabulary) ·
-  # gate.final-eyes = 신규 세션 Opus 5 max — SPEC §1.10 의 서술이며 이 라운드에는 없다(아래 layers).
+  # final-eyes = 신규 세션 Opus 5 max × k — layers.final_eyes.
   lane_id_vocabulary:
     form: "gate-l1/<variant>[/retry-<n>]/batch-<i>"       # i = 0..k-1 · k 요청의 바이트는 동일(독립 실행은 좌표로만 갈린다)
     pattern: "^(?P<read_run>[a-z0-9]+(?:-[a-z0-9]+)*)/(?P<task>[a-z0-9]+(?:-[a-z0-9]+)*)(?:/retry-(?P<retry>[1-9][0-9]*))?/batch-(?P<batch>0|[1-9][0-9]*)$"
@@ -85,9 +82,15 @@ layers:
     pending_reason: "화행 플래그 미실행 — L1 레인이 동반 수행한다(gate-l1 이 채운다)"
     note: "거부권 없음 · origin speech-act · predicate · votes 기록 · 다수결이어도 defect 승격 없음(재정 R7 · SPEC §4.4.2)"
   final_eyes:
-    status: inactive
-    reason: "재정 T64 ② — 첫 초안 범위 밖 · 소관 M6·M8"
-    ruling: "재정 2026-09-13 T64 ②"
+    status: active
+    ruling: "재정 2026-09-14 T69 ⑦"
+    lane: {kind: llm, model: opus-5, effort: max, k: parameters.yaml#gate.l1.k, session: fresh}
+    procedure: engine/gate/final-eyes-procedure.md
+    pending_reason: "최종 심급 미실행 — final-eyes가 채운다"
+    lane_id_vocabulary:
+      form: "final-eyes/<variant>/batch-<i>"
+      membership: {run: [final-eyes], task: [v1, v2, v3]}
+      enforced_by: engine/gate/final_eyes.py#FinalEyesLaneRequest
   format.stop-shape:
     status: active
     ruling: "재정 2026-09-13 T65 ③"
@@ -112,26 +115,6 @@ loop:
   locality_rule: >-
     라운드 결과에서 지시 좌표 밖 문장은 바이트 동일해야 한다(총괄 재량 ⓒ · finding rule annotation.schema ·
     메시지 「지시 밖 문장이 바뀌었다」 · 새 id 아님). 위반 = 그 라운드 실패(캡 계수) · 현행본은 직전 판으로 되돌린다.
-
-# CP2 표면(SPEC §1.13 · 총괄 재량 ⓓ). §1.13 은 CP2 를 critique 의 owner_checkpoint 에 붙이나 critique·probe·final-eyes 가
-# 미구현이라 그 표면 셋은 결번이고, 봉투 작성은 오케스트레이터(구동기 approve-ship · §1.2 C3)의 몫이다. 경로 선언은
-# engine/paths.py 가 이 블록에서 읽는다(70-ship/ 은 이때 처음 생긴다).
-checkpoint2:
-  tag: "[주석]"
-  id: ship_approval
-  confirm_file: 70-ship/checkpoint2.md
-  recorded_by: orchestrator
-  surfaces:
-    - "50-gate/<variant>/thread.stripped.md"
-    - 30-figures/selection.json
-    - "50-gate/<variant>/l1.json"           # flags[] — 화행 플래그 3종 포함 · 판정자 = Owner(D8·D3)
-    - "50-gate/<variant>/verdict.json"      # decision · checks fail · vacuous_pass · inactive_layers · l0 flags
-    - "50-gate/<variant>/l2.md"             # L2 자문 메모(재정 T69 ⑥ · 점수 없음 · 거부권 없음)
-    - "60-probe/<variant>/score.json"       # 계기 보고(재정 T69 ⑥ · probe.yaml 산출 · 판정 키 없음)
-    - run.yaml                              # numeric_whitelist[] 전량 인쇄
-  unimplemented_surfaces:                   # 결번 — 미구현 · 재정 T69 ⑥ 범위 밖(소견 · 최종 심급)
-    - {path: "65-critique/<variant>/memo.md", owner: M8}
-    - {path: "verdict.json#final_eyes", owner: M6-b}
 
 checks_on_entry:
   - id: gate.input-digest
@@ -231,12 +214,14 @@ checks_before_exit:
     criterion: >-
       ① final_eyes.inputs_read[] 의 경로 집합이 제공 파일 열거 집합과 정확히 일치(초과도 부족도 실패)
       그리고 ② 최종 초안을 제외한 각 입력의 생성 시점이 수정 루프 개시 이전임(재정 N1)
-    implemented_by: null
-    status: inactive                    # [주석] 최종 심급 미가동 — 재정 T64 ②
+    implemented_by: engine/gate/final_eyes.py
   - id: gate.final-eyes-scope
     criterion: "final_eyes.veto_reason ∈ {null, \"a\", \"b\", \"c\"} — 거부 판정의 사유가 열거 3종 안에 있음(재정 R4)"
-    implemented_by: null
-    status: inactive                    # [주석] 최종 심급 미가동 — 재정 T64 ②
+    implemented_by: engine/gate/final_eyes.py
+  - id: gate.final-eyes-lane-verified
+    criterion: "k 응답의 모델은 opus-5 수용 집합 · effort max · 새 세션"
+    implemented_by: engine/gate/final_eyes.py
+    note: "재정 T69 ⑦ · 총괄 재량 신설 id · 실패 halt"
   # strip 검사 4 — SPEC §3.3 「무손실 round-trip 검사 · 두 방향 모두 강제」 + 「출하 전 최종 안전망」.
   # §3.3 은 강제하되 검사 id 를 주지 않아 총괄이 붙였다(재량 ⓔ · glossary §2.1 등재).
   - id: strip.roundtrip-forward

@@ -42,3 +42,16 @@ env MEMORY_HOOKS=off CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000 claude -p --setting-so
 **실패 처분** — `is_error`·시간 초과 = 응답 미작성 · 영수증만 · `step` 은 10 으로 끝나고 다음 `step` 이 같은 좌표를 다시 부른다(회차 4 = 15). 응답 파일이 있는 좌표는 다시 부르지 않는다.
 
 **자리** — worktree `<repo>/.worktrees/<run_id>` · 런 `<worktree>/runs/<run_id>` · 영수증 `<worktree>/evidence` · 법 = worktree. `--run-root`/`--evidence-dir` 는 자리를 직접 지정한다(그때 법 = `--repo`). `--dry-run` 은 명령줄만 인쇄하고 아무것도 쓰지 않는다. `--executor stub` 은 `<evidence>/stub-responses/<lane>.json` 을 되돌리는 시험용이다.
+
+## T69 ⑦ · 소견부터 출하까지
+
+`critique <run> --variant v2`는 Fable high 소견 1회와 재시도 1회를 구동한다. 레인 장애는 결번으로 기록한다.
+`final-eyes <run> --variant v2`는 L0·round-trip 재실행 뒤 opus-5 max × parameters.yaml#gate.l1.k를 새 세션으로 순차 호출한다.
+최종 심급의 원천은 최종 초안 2파일·동결본·루프 전 발췌본뿐이다. 생성 경계나 핀이 다르면 halt한다.
+거부는 revise(캡 안)로 돌아가며 수정 후 probe·critique·final-eyes를 다시 거쳐 CP2를 재상신한다.
+`cp2`는 후보 전량·selection·flags·L2·score·소견 첫 20줄·최종 판정과 숫자 화이트리스트를 출력한다.
+`approve-ship` 봉투 뒤 `ship <run>`은 텍스트와 자산을 바이트 복사하고 리포 루트 원장에 이관한다.
+`seal`은 65-critique/**와 70-ship/**도 포함한다. partial은 앵커에 편입하지 않으며 게시 자체는 Owner가 한다.
+
+실행 전: 이 구현을 런의 법 트리에 반입하고 partial_until=ship 연장과 CP2 재승인을 마친다.
+최종 심급은 opus max k회 비용이 들며 구동기 호출 제한은 각 900초다. 실제 claude 호출은 구현 시험에 포함하지 않는다.

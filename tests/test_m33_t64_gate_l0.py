@@ -728,8 +728,8 @@ def test_driver_gate_l0_strip_and_seal(tmp_path) -> None:
     evidence = os.path.join(str(tmp_path), "evidence")
     lines: list[str] = []
     head = ["--repo", law, "--run-root", run_root, "--evidence-dir", evidence]
-    if len(drv.COMMANDS) != 22 or drv.COMMANDS[13:15] != ("gate-l0", "strip"):
-        pytest.fail(f"명령 22 가 아니다: {drv.COMMANDS}")
+    if len(drv.COMMANDS) != 25 or drv.COMMANDS[13:15] != ("gate-l0", "strip"):
+        pytest.fail(f"명령 25 가 아니다: {drv.COMMANDS}")
     code = drv.main([*head, "strip", GOLDEN_RUN_ID], out=lines.append)
     if code != 0 or not os.path.isfile(os.path.join(run_root, "50-gate", "v1", "thread.stripped.md")) \
             or os.path.isfile(os.path.join(run_root, "50-gate", "v1", "verdict.json")):
@@ -742,7 +742,7 @@ def test_driver_gate_l0_strip_and_seal(tmp_path) -> None:
     if code != 0 or not any(line.endswith("50-gate/v1/verdict.json") for line in manifest.splitlines()):
         pytest.fail(f"seal 에 50-gate/v1/verdict.json 이 없다: {manifest}")
     paths = RunPaths(run_root, law)
-    if paths.STAGES[-2:] != ("gate", "probe") or not paths.verdict_json("v1").endswith("50-gate/v1/verdict.json"):   # T69 ⑥ probe
+    if paths.STAGES[-4:-2] != ("gate", "probe") or not paths.verdict_json("v1").endswith("50-gate/v1/verdict.json"):   # T69 ⑥ probe
         pytest.fail("RunPaths 가 gate 경로를 계약에서 해소하지 못한다")
     # 종료선 앞이면 13
     early = make_run(os.path.join(str(tmp_path), "e"), partial_until="compose")

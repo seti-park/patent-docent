@@ -1,0 +1,86 @@
+# 정본 = SPEC §1.14 · 재정 T69 ⑦.
+schema: stage-contract/v0
+id: ship
+lane:
+  kind: tool
+  model: null
+  effort: null
+inputs:
+- 70-ship/checkpoint2.md
+- 50-gate/<variant>/thread.stripped.md
+- 50-gate/<variant>/thread.json
+- 50-gate/<variant>/annotation-index.json
+- 30-figures/assets/
+- 30-figures/selection.json
+outputs:
+- 70-ship/thread.md
+- 70-ship/thread.json
+- 70-ship/images/
+may_read:
+- 70-ship/checkpoint2.md
+- 50-gate/<variant>/thread.stripped.md
+- 50-gate/<variant>/thread.json
+- 50-gate/<variant>/annotation-index.json
+- 30-figures/assets/
+- 30-figures/selection.json
+- 50-gate/<variant>/**
+- 60-probe/<variant>/**
+- 65-critique/<variant>/**
+must_not_read:
+- 00-source/**
+checks_on_entry:
+- id: ship.input-digest
+  criterion: 최신 동결본·블루프린트·후보 지문과 필수 입력 실재
+  implemented_by: engine/stages/__init__.py
+  on_mismatch: environment-error
+checks_before_exit:
+- id: ship.approval-valid
+  criterion: '`checkpoint2.md`가 `approval-envelope/v0` 통과, `decision: "approved"`, `selected_variant` 존재, `owner_quote` 존재,
+    `target.digest` 일치(재정 R8)'
+  implemented_by: engine/stages/ship.py
+- id: ship.byte-identical
+  criterion: '`70-ship/thread.md`가 승인 변주의 `50-gate/<variant>/thread.stripped.md`와, `70-ship/thread.json`이 `50-gate/<variant>/thread.json`과
+    각각 **바이트 동일**. 불일치 = `halt`(감수 B3·B7 해소, 재감수 B-04)'
+  implemented_by: engine/stages/ship.py
+- id: ship.image-resolve
+  criterion: '`70-ship/images/`의 모든 파일이 `assets/`의 승인된 포인터에서 유래, 포스트당 도면 수가 시트의 `images_per_post_max` 이하'
+  implemented_by: engine/stages/ship.py
+- id: figures.publish-gate
+  criterion: (`ship`에서 재확인) 출하 이미지 전건의 `manifest.json` `publishable == true`. **`run_kind == "publish"`인 런은 여기에 더해** `run.yaml`의
+    `figures.usage_rights_decision`이 가리키는 재정 파일이 `docs/decisions/`에 실재해야 한다(§1.8 분기표, 재정 R11·N10, 재감수 B-05). `rehearsal` 런은
+    게시하지 않으므로 재정 ID 검사를 적용하지 않는다
+  implemented_by: engine/stages/ship.py
+- id: ship.flags-adjudicated
+  criterion: 첨부된 모든 `flag.id`에 Owner 판정이 기록됨
+  implemented_by: engine/stages/ship.py
+- id: ship.ledger-write
+  criterion: '`tournament.jsonl`에 이번 선택이 1행 추가되고 스키마 검증 통과'
+  implemented_by: engine/stages/ship.py
+failure:
+- condition: 승인 봉투 부재·무효(`target.digest` 불일치 포함)
+  action: halt
+  note: '`halt`'
+- condition: '`ship.byte-identical` 실패'
+  action: halt
+  note: '`halt` — 승인본과 다른 텍스트가 나가는 것은 D8 봉쇄의 무력화다'
+- condition: 도면 포인터 미해소
+  action: retry(1)
+  note: '`retry(1)` → `halt`'
+  then: halt
+- condition: '`figures.publish-gate` 실패'
+  action: halt
+  note: '`halt` — 사용권 재정 전 게시 차단(재정 R11)'
+- condition: 미판정 flag 존재
+  action: halt
+  note: '`halt` — CP2로 되돌아간다'
+- condition: Owner가 `rejected` 판정
+  action: halt
+  note: '`halt`(정상 종료) — 런은 열린 채 보관하고 지시(`directives[]`)에 따라 재상정한다'
+ledgers:
+- ledgers/tournament.jsonl
+- ledgers/anchors/
+- ledgers/corrections.md
+optional_outputs:
+- 70-ship/SHIP.md
+- 70-ship/ship-report.json
+usage_rights_decision: ruling-20260913-12-T67.md

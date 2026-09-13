@@ -141,9 +141,8 @@ def _declared_paths(contract: dict) -> list[str]:
         for entry in contract.get(key) or []:
             if isinstance(entry, str):
                 out.append(entry)
-    # `checkpoint2` = gate.yaml 의 CP2 주석 블록(재정 T67 ② · 총괄 재량 ⓓ). SPEC §1.13 은 CP2 를 critique 의
-    # owner_checkpoint 에 붙이나 그 계약이 아직 없어, 봉투 경로 선언을 gate.yaml 이 든다. 두 키를 같은 방식으로 읽는다.
-    for key in ("owner_checkpoint", "checkpoint2"):
+    # CP2 선언은 critique.owner_checkpoint 가 든다.
+    for key in ("owner_checkpoint",):
         checkpoint = contract.get(key) or {}
         confirm = checkpoint.get("confirm_file")
         if isinstance(confirm, str):
@@ -244,7 +243,7 @@ class RunPaths:
     어긋나는 순간을 조용히 넘기지 않기 위해서다.
     """
 
-    STAGES = ("source", "read", "freeze", "design", "figures", "compose", "gate", "probe")
+    STAGES = ("source", "read", "freeze", "design", "figures", "compose", "gate", "probe", "critique", "ship")
 
     def __init__(self, run_root: str, repo: str | None = None) -> None:
         self.run_root = os.path.abspath(run_root)
@@ -580,7 +579,7 @@ class RunPaths:
 
     def thread_json(self, variant: str) -> str:
         """`50-gate/<variant>/thread.json`(thread/v0) — 구조화 출하 객체(재감수 B-04 로 gate 산출)."""
-        return self._variant("thread.json", variant)
+        return self.absolute(self._declared_unique("thread.json", variant_slot=True).replace("<variant>", variant))
 
     def annotation_index_json(self, variant: str) -> str:
         """`50-gate/<variant>/annotation-index.json`(annotation-index/v0) — 계기 국소화(D9)가 소비한다."""
@@ -681,13 +680,35 @@ class RunPaths:
     @property
     def checkpoint2_md(self) -> str:
         """`70-ship/checkpoint2.md` — CP2 승인 봉투(`approval-envelope/v0` · `ship_approval`). 오케스트레이터가 쓴다(구동기 approve-ship).
-        선언 = `gate.yaml#checkpoint2.confirm_file`(critique.yaml 이 생기면 그 owner_checkpoint 로 옮긴다)."""
-        return self.path("checkpoint2.md")
+        선언 = `critique.yaml#owner_checkpoint.confirm_file`."""
+        return self.absolute(self.contracts["critique"]["owner_checkpoint"]["confirm_file"])
 
     @property
     def ship_dir(self) -> str:
         """`70-ship/` — CP2 봉투가 처음 만드는 자리."""
         return os.path.dirname(self.checkpoint2_md)
+
+    def critique_memo(self, variant: str) -> str:
+        return self._variant("memo.md", variant)
+
+    def critique_dir(self, variant: str) -> str:
+        return os.path.dirname(self.critique_memo(variant))
+
+    @property
+    def ship_thread_md(self) -> str:
+        return self.path("thread.md")
+
+    @property
+    def ship_thread_json(self) -> str:
+        return self.absolute(self._declared_unique("thread.json", variant_slot=False))
+
+    @property
+    def ship_images_dir(self) -> str:
+        return self.path("images")
+
+    @property
+    def ship_md(self) -> str:
+        return self.path("SHIP.md")
 
     # -- 생성 ---------------------------------------------------------------
 

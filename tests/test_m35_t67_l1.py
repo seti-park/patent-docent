@@ -703,8 +703,8 @@ def _drive(law: str, run_root: str, evidence: str, *argv: str, executor=None):
 
 def test_driver_gate_l1_cp2_approve_ship_and_seal(run_root, law, tmp_path) -> None:
     evidence = os.path.join(str(tmp_path), "evidence")
-    if len(drv.COMMANDS) != 22 or drv.COMMANDS[15:19] != ("gate-l1", "revise", "cp2", "approve-ship"):
-        pytest.fail(f"명령 22 가 아니다: {drv.COMMANDS}")
+    if len(drv.COMMANDS) != 25 or drv.COMMANDS[15:19] != ("gate-l1", "revise", "cp2", "approve-ship"):
+        pytest.fail(f"명령 25 가 아니다: {drv.COMMANDS}")
     parser = drv.build_parser()
     listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
     if listed != drv.COMMANDS:

@@ -3756,8 +3756,10 @@ patent-docent/
       figures.yaml           # ★현행 (M9-a · T65 ③) — prepare(크롭 전용 렌더)/select(포인터 사영) steps 둘·검사 6·실패표 5+1
       compose.yaml           # ★현행 (M5-b · T64) — 펜 변주 3(effort 사다리)·검사 4·린트·실패표 6+1
       gate.yaml              # ★현행 (M3/M4-a · T64 ② · M6-a · T67 ② · M4/M8-a · T69 ⑥) — L0 13 · strip 검사 4 · L1 좌석·규칙(layers.l1) · L2 좌석·어휘(layers.l2 · gate.no-score 가동) · 화행 플래그 · loop(캡 3 · free_revision 1) · checkpoint2 표면 · 미가동 층 명기(layers)
-      probe.yaml             # ★현행 (M7-a · T69 ⑥) — 계기 레인 3(probe-q · probe · probe-grade) · 채점 판별식(grading) · 입력 청정 정규식 · 검사 5 · 실패표 5+2   critique.yaml (M8)
-      ship.yaml              # (M10 예정)  feedback.yaml (M10)
+      probe.yaml             # ★현행 (M7-a · T69 ⑥) — 계기 레인 3(probe-q · probe · probe-grade) · 채점 판별식(grading) · 입력 청정 정규식 · 검사 5 · 실패표 5+2
+      critique.yaml          # ★현행 M8(T69 ⑦) — 소견 검사 5 · CP2 owner_checkpoint
+      ship.yaml              # ★현행 M10-a(T69 ⑦) — 복사 · 원장 · 게시물 패키지
+      feedback.yaml          # (M10 예정)
     schemas/                 # docent 전용 스키마 (JSON Schema draft 2020-12)
       approval-envelope.schema.json  # ★현행 (재정 R8, 재감수 M-03·B-07 + 재정 N9)
       metrics-row.schema.json        # ★현행 (재정 R12, 재감수 M-05)
@@ -4143,8 +4145,8 @@ effective_from: gate_version 1.3
 | `contracts/stages/compose.yaml` | 현행 | M5-b(T64) |
 | `contracts/stages/gate.yaml` | 현행 | M3/M4-a(T64) |
 | `contracts/stages/probe.yaml` | 현행 | M7-a(T69) |
-| `contracts/stages/critique.yaml` | 예정 | M8 |
-| `contracts/stages/ship.yaml` | 예정 | M10 |
+| `contracts/stages/critique.yaml` | 현행 | M8(T69 ⑦) · 소견 · CP2 |
+| `contracts/stages/ship.yaml` | 현행 | M10-a(T69 ⑦) · partial 게시물 패키지 |
 | `contracts/stages/feedback.yaml` | 예정 | M10 |
 | `contracts/schemas/annotation.schema.json` | 현행 | M3/M4-a(T64) |
 | `contracts/schemas/annotation-index.schema.json` | 현행 | M3/M4-a(T64) |

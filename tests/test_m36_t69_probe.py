@@ -276,8 +276,8 @@ def test_contracts_paths_and_haiku_label(law) -> None:
     if no_score.get("status") == "inactive" or no_score["implemented_by"] != "engine/gate/l2/lint.py":
         pytest.fail("gate.no-score 가 구현 표기가 아니다")
     paths = RunPaths("/nonexistent/run", law)
-    if paths.STAGES[-1] != "probe":
-        pytest.fail(f"STAGES 끝이 probe 가 아니다: {paths.STAGES}")
+    if paths.STAGES[-3] != "probe":
+        pytest.fail(f"STAGES의 probe 위치가 다르다: {paths.STAGES}")
     expected = {paths.l2_md("v2"): "50-gate/v2/l2.md", paths.questions_json: "60-probe/questions.json", paths.probe_report("v2", 3): "60-probe/v2/probe-3.json",
                 paths.score_json("v2"): "60-probe/v2/score.json", paths.probe_escalation_json("v2"): "60-probe/v2/escalation.json",
                 paths.gate_escalation_json("v2"): "50-gate/v2/escalation.json", paths.free_revision_dir("v2"): "50-gate/v2/revisions/free-r1"}
@@ -831,8 +831,8 @@ def _drive(law: str, run_root: str, evidence: str, *argv: str, executor=None):
 
 def test_driver_gate_l2_revise_free_probe_and_seal(run_root, law, tmp_path) -> None:
     evidence = os.path.join(str(tmp_path), "evidence")
-    if len(drv.COMMANDS) != 22 or drv.COMMANDS[-3:] != ("gate-l2", "revise-free", "probe"):
-        pytest.fail(f"명령 22 가 아니다: {drv.COMMANDS}")
+    if len(drv.COMMANDS) != 25 or drv.COMMANDS[-6:-3] != ("gate-l2", "revise-free", "probe"):
+        pytest.fail(f"명령 25 가 아니다: {drv.COMMANDS}")
     parser = drv.build_parser()
     listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
     if listed != drv.COMMANDS:

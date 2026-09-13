@@ -1,0 +1,90 @@
+# 정본 = SPEC §1.12 · 재정 T69 ⑦.
+schema: stage-contract/v0
+id: critique
+lane:
+  kind: llm
+  model: fable-5.1
+  effort: high
+  lane_id_vocabulary:
+    form: critique/<variant>[/retry-<n>]/batch-0
+    membership:
+      run:
+      - critique
+      task:
+      - v1
+      - v2
+      - v3
+    enforced_by: engine/critique/plan.py#CritiqueLaneRequest
+inputs:
+- 50-gate/<variant>/thread.stripped.md
+- 60-probe/<variant>/score.json
+- 20-design/blueprint.json
+- 15-frozen/material-spec.v<N>.json
+outputs:
+- 65-critique/<variant>/memo.md
+may_read:
+- 50-gate/<variant>/thread.stripped.md
+- 60-probe/<variant>/score.json
+- 20-design/blueprint.json
+- 15-frozen/material-spec.v<N>.json
+- ledgers/anchors/**
+- docs/CHARTER.md
+must_not_read:
+- 00-source/**
+- 50-gate/<variant>/revisions/**
+- 40-compose/<other-variant>/**
+- ledgers/metrics.jsonl
+- "ledgers/anchors/ 미재정 항목(provisional·proposed)과 fade 제안"
+checks_on_entry:
+- id: critique.input-digest
+  criterion: 최신 동결본·블루프린트·후보 지문과 필수 입력 실재
+  implemented_by: engine/stages/__init__.py
+  on_mismatch: environment-error
+checks_before_exit:
+- id: critique.no-score
+  criterion: 메모에 점수·등급 패턴 부재
+  implemented_by: engine/stages/critique.py
+- id: critique.probe-reflected
+  criterion: 메모가 `score.json`의 최약 표적 최소 1건을 명시적으로 언급
+  implemented_by: engine/stages/critique.py
+- id: critique.no-history
+  criterion: 레인 입력 목록에 `revisions/`·`ledgers/metrics.jsonl`이 없음
+  implemented_by: engine/stages/critique.py
+- id: critique.extreme-flagged
+  criterion: '`advisory_measurements.extreme == true`이면 메모 최상단에 총 단어수 강조 표기 존재(재정 R5)'
+  implemented_by: engine/stages/critique.py
+- id: critique.anchors-adjudicated-only
+  criterion: 소견 레인에 제공된 앵커 목록이 `state == "active"` **그리고** `adjudicated_in`이 채워진 항목뿐임(재감수 B-06, 재정 R12)
+  implemented_by: engine/stages/critique.py
+failure:
+- condition: '`critique.no-score` 실패'
+  action: retry(1)
+  note: '`retry(1)` → `halt`'
+  then: halt
+- condition: '`critique.probe-reflected` 실패'
+  action: retry(1)
+  note: '`retry(1)` — 계기 데이터 반영은 D9의 명시 요구'
+- condition: 레인 실패
+  action: retry(1)
+  note: '`retry(1)` → 소견 결번으로 CP2 진행(자문이므로 파이프라인을 막지 않는다)'
+procedure: engine/critique/procedure.md
+owner_checkpoint:
+  id: ship_approval
+  surfaces:
+    - <출하 후보 스레드 텍스트: 변주별 전량>
+    - 30-figures/selection.json          # 변주별 도면 배치
+    - 50-gate/<variant>/l1.json          # flags[] — 화행 플래그 3종 포함, 판정자 = Owner (D8·D3)
+    - 50-gate/<variant>/l2.md
+    - 60-probe/<variant>/score.json      # 전달 충실도 + 최약 지점(전량 보고)
+    - 65-critique/<variant>/memo.md      # 총 단어수 극단치 강조 표기 포함
+    - 50-gate/<variant>/verdict.json     # final_eyes(observations 포함) · legislated · vacuous_pass
+    - run.yaml numeric_whitelist[]       # 전량 인쇄 (게이트에 뚫은 구멍)
+  confirm_file: 70-ship/checkpoint2.md
+  question: >
+    ① 어느 변주를 출하하는가(또는 전량 보류인가).
+    ② 첨부된 화행 플래그를 수용 가능하다고 판정하는가.
+    ③ 도면 선택을 그대로 두는가, 바꾸는가.
+
+optional_outputs:
+- 65-critique/<variant>/memo-missing.json
+- 65-critique/<variant>/critique-report.json

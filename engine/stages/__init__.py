@@ -653,6 +653,26 @@ def _entry_probe_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) -
     row.extras["variant"] = variant
 
 
+def _entry_critique_input_digest(row, paths, entry, inputs):
+    _entry_probe_input_digest(row, paths, entry, inputs)
+    if row.findings:
+        return
+    path = paths.score_json(inputs["variant"])
+    if _require_file(row, entry["id"], path, "score.json"):
+        score = load_json(path)
+        _compare(row, entry["id"], "score.json#input_digest", str(score.get("input_digest")),
+                 sha256_file(paths.thread_stripped_md(inputs["variant"])), "계기가 현 출하 후보의 관측이 아니다")
+    row.checked += 1
+
+
+def _entry_ship_input_digest(row, paths, entry, inputs):
+    _entry_critique_input_digest(row, paths, entry, inputs)
+    for path in (paths.thread_json(inputs["variant"]), paths.figures_selection_json, paths.figures_manifest_json,
+                 paths.tournament_rows_jsonl, paths.figures_corrections_md):
+        _require_file(row, entry["id"], path, path)
+        row.checked += 1
+
+
 _ENTRY_CHECKS = {
     "read.input-digest": _entry_read_input_digest,
     "source.input-digest": _entry_source_input_digest,
@@ -662,6 +682,8 @@ _ENTRY_CHECKS = {
     "compose.input-digest": _entry_compose_input_digest,
     "gate.input-digest": _entry_gate_input_digest,
     "probe.input-digest": _entry_probe_input_digest,
+    "critique.input-digest": _entry_critique_input_digest,
+    "ship.input-digest": _entry_ship_input_digest,
 }
 
 
