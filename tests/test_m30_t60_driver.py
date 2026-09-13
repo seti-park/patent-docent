@@ -198,10 +198,12 @@ def test_lane_command_line_has_every_flag_in_order(tmp_path) -> None:
     drv.call_lane(ctx, lanes, request.lane_id)
     schema = os.path.join(ctx.schemas_dir, "read-a__decompose__batch-0.json")
     expected = ["claude", "-p", "--setting-sources", "project", "--disable-slash-commands", "--strict-mcp-config", "--model", "claude-fable-5-1", "--effort", "low",
-                "--output-format", "json", "--json-schema", schema, "--permission-mode", "dontAsk",
+                "--output-format", "json", "--json-schema", drv.wrapper_schema_json("decompose"), "--permission-mode", "dontAsk",
                 "--permission-prompts", "none", "--tools", ""]
-    if drv.lane_argv("claude-fable-5-1", "low", schema) != expected:
-        pytest.fail(f"플래그 전건·순서가 다르다: {drv.lane_argv('claude-fable-5-1', 'low', schema)}")
+    if drv.lane_argv("claude-fable-5-1", "low", drv.wrapper_schema_json("decompose")) != expected:
+        pytest.fail("플래그 전건·순서가 다르다")
+    if json.loads(drv.wrapper_schema_json("decompose"))["properties"]["payload"] != drv.wrapper_schema("decompose")["properties"]["payload"]:
+        pytest.fail("--json-schema 인자가 스키마 JSON 문자열이 아니다")
     if drv.api_id_for_label(REPO, "fable-5.1") != "claude-fable-5-1" or drv.api_id_for_label(REPO, "opus-5") != "claude-opus-5":
         pytest.fail("api-id 가 계약 aliases[0] 에서 오지 않는다")
     if not lines or "--model claude-fable-5-1 --effort low" not in lines[0] or '--tools ""' not in lines[0]:

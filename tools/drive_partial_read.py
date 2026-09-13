@@ -323,8 +323,13 @@ def api_id_for_label(law: str, label: str) -> str:
     )
 
 
-def lane_argv(api_id: str, effort: str, schema_path: str) -> list[str]:
-    """설계 §4 의 플래그 전건 · 순서 고정."""
+def wrapper_schema_json(task: str) -> str:
+    """`--json-schema` 인자 = 스키마 **JSON 문자열**(파일 경로가 아니다 — CLI 가 `is not valid JSON` 으로 거부 · 2026-09-13 step 1 실측). 파일은 영수증용으로 따로 남긴다."""
+    return json.dumps(wrapper_schema(task), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+
+
+def lane_argv(api_id: str, effort: str, schema_json: str) -> list[str]:
+    """설계 §4 의 플래그 전건 · 순서 고정. `schema_json` = 스키마 JSON 문자열(경로 아님)."""
     # `--bare` 는 키체인 읽기도 건너뛰어 구독 로그인이 풀린다(LANE-RUNTIME 함정 S · 2026-09-13 실측).
     # 대체 = 설정 원천을 project 로 한정 + 중립 cwd(`_LANE_CWD`) + 슬래시 명령·MCP 차단 —
     # 실측(system/init): 훅 0 · 플러그인 0 · MCP 0 · 스킬 0 · 자동 메모리 = 중립 cwd 의 빈 디렉터리.
@@ -342,7 +347,7 @@ def lane_argv(api_id: str, effort: str, schema_path: str) -> list[str]:
         "--output-format",
         "json",
         "--json-schema",
-        schema_path,
+        schema_json,
         "--permission-mode",
         "dontAsk",
         "--permission-prompts",
@@ -481,7 +486,7 @@ def call_lane(ctx: Context, lanes_root: str, lane_id: str) -> CallOutcome:
         )
 
     schema_path = os.path.join(ctx.schemas_dir, safe_lane_name(lane_id) + ".json")
-    argv = lane_argv(api_id, effort, schema_path)
+    argv = lane_argv(api_id, effort, wrapper_schema_json(task))
     if ctx.dry_run:
         ctx.out(f"[dry-run] {lane_id}: " + " ".join(_shell_quote(part) for part in argv))
         return CallOutcome(lane_id, True, "dry-run", None, None)

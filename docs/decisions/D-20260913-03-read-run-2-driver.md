@@ -38,7 +38,7 @@
 ```
 env MEMORY_HOOKS=off CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000 \
 claude -p --setting-sources project --disable-slash-commands --strict-mcp-config --model <api-id> --effort <effort> \
-  --output-format json --json-schema <wrapper-schema.json> \
+  --output-format json --json-schema <봉투 스키마 JSON 문자열> \
   --permission-mode dontAsk --permission-prompts none --tools "" \
   < <lane_dir>/request.md > <evidence>/calls/<lane_id>.raw.json
 ```
