@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(186차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(187차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 187차 — **재정 T69 「최종 게시 버전으로 파이프라인 마지막까지」 등재 · 연장 v2(`partial_until: ship`) · 발주문 ⑥(L2·자유 리비전·계기) 기동**(추기 156). **지금 할 일 = ⑥ 회수(`pd-lanes/fable-m3-t69-probe/STATUS`) → 재현·병합 → 발주문 ⑦ 작성·기동(소견 critique · 최종 심급 final-eyes · ship · CP2 재상신 표면) → 런 -3 v2 실행 순서 = `gate-l2` → `revise-free`(1회) → `probe` → (⑦ 뒤) `critique` → `final-eyes` → `cp2`(전 표면) → CP2 브리핑 T70 → `approve-ship` → `ship` → 게시본 패키지 `70-ship/{thread.md, thread.json, images/}` → Owner 수동 게시.** 살아 있는 배경 = ⑥ 레인 1(Monitor). 맥락 접두 86만 — `/compact` 권고.**
+
+> [정정 2026-09-13 · 187차] 186차의 「지금 할 일 = 없음」은 Owner 지시(T69)로 바뀌었다 — 잔여 스테이지 전부.
 
 **★ 09-13 186차 — **재정 T68 전건 추천대로 → CP2 봉투 작성·반입 — 런 -3 첫 도슨트 글(v2 · 도면 8 · L0·L1 통과)이 Owner 체크포인트 2 를 통과했다**(추기 155 · `ruling-20260913-13-T68.md` · 봉투 `runs/gdm-wo2026128750a1-agent-memory-3/70-ship/checkpoint2.md` · 출하 후보 `50-gate/v2/thread.stripped.md` · 자산 `30-figures/assets/`). **게시는 아니다**(partial 런 · ship M10 미구현 · 결번 4 = L2·계기·소견·최종 심급). 런 -3 총 $35.33 · M3 구현 5 발주 $83.32 · 시험 1082. **지금 할 일 = 없음 — 다음은 Owner 지시**(후보 = M6-b 최종 심급 / M8 L2·소견 / M7 계기 / M10 ship / 다른 특허 새 런 `partial_until: ship_approval`). 백로그 5(추기 155 끝). 살아 있는 배경 = 없음. 맥락 접두 83만 — `/compact` 권고.**
 
