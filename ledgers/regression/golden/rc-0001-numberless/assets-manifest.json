@@ -1,0 +1,26 @@
+{
+  "_note": "골든 스냅샷 — 도면 자산 매니페스트(30-figures/assets/manifest.json 의 자족 사본 · SPEC §1.8). 구 blueprint.json 의 figure_plan.assets 에서 옮겨 왔다(2026-09-13 · blueprint/v0 는 자산 매핑을 담지 않는다 · 재정 T64 ①). 가공 예시.",
+  "items": [
+    {
+      "figure": "fig-01",
+      "material_figure": "FIG-1",
+      "asset_path": "30-figures/assets/fig-01.png",
+      "edit_class": "crop-only",
+      "publishable": true
+    },
+    {
+      "figure": "fig-02",
+      "material_figure": "FIG-2",
+      "asset_path": "30-figures/assets/fig-02.png",
+      "edit_class": "crop-only",
+      "publishable": true
+    },
+    {
+      "figure": "fig-03",
+      "material_figure": "FIG-3",
+      "asset_path": "30-figures/assets/fig-03.png",
+      "edit_class": "crop-only",
+      "publishable": true
+    }
+  ]
+}

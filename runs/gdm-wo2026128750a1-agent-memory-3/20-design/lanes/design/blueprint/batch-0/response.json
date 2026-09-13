@@ -1,0 +1,309 @@
+{
+  "lane_id": "design/blueprint/batch-0",
+  "model": "claude-fable-5-1",
+  "effort": "high",
+  "input_digest": "91656a0f8896a7c8cc5b7f00529caeceb9122a67d2422702793f05dfdffa6b56",
+  "payload": {
+    "hook": {
+      "question_en": "When an AI agent says it \"remembers\" you, is that a real architecture or just a marketing word?",
+      "figure": "FIG-1",
+      "thesis_en": "This GDM Holding filing, with Demis Hassabis among the named inventors, claims a per-user datastore of curated memory objects that the model reads at every query, writes by itself, and erases when you ask.",
+      "rationale_kr": "투자자-팬의 불안은 「에이전트 기억」이 실체 있는 구조인지 구호인지다(D3). FIG-1 은 질의(104)→기억 모델(105)→데이터스토어(110)→메모리 데이터(114)→입력 구조(116)→모델(118)→응답(122)까지 한 장에 루프 전체를 그리고 독립항 CL-1(M1~M6) 다섯 단계가 그대로 이 도면에 접지된다(M52~M57·M117). 스레드 전체가 이 한 장의 부품을 하나씩 확대하는 구성이므로 최강 도면이다."
+    },
+    "slots": [
+      {
+        "n": 1,
+        "slot": "hook",
+        "exhibit": {
+          "material_ids": [
+            "M1",
+            "M2",
+            "M3",
+            "M4",
+            "M5",
+            "M6",
+            "M53",
+            "M117"
+          ],
+          "point_en": "The independent claim is a five-step loop: receive a query, pull memory data from a datastore built from this user's past interactions, feed query plus memory into a sequence model, generate an output, and answer. Memory is a separate box in the diagram, not a longer prompt."
+        },
+        "figures": [
+          "FIG-1"
+        ]
+      },
+      {
+        "n": 2,
+        "slot": "stop",
+        "exhibit": {
+          "material_ids": [
+            "M3",
+            "M17",
+            "M30",
+            "M54",
+            "M68",
+            "M81",
+            "M107",
+            "M118"
+          ],
+          "point_en": "What sits in that box is not a transcript. Each memory object is a container holding a memory value (a string, image, or audio) plus metadata such as a timestamp, the trigger that stored it, and a summary of the conversation it came from."
+        },
+        "figures": [
+          "FIG-2"
+        ]
+      },
+      {
+        "n": 3,
+        "slot": "stop",
+        "exhibit": {
+          "material_ids": [
+            "M13",
+            "M14",
+            "M15",
+            "M16",
+            "M19",
+            "M64",
+            "M65",
+            "M66",
+            "M67",
+            "M70",
+            "M112",
+            "M120",
+            "M121"
+          ],
+          "point_en": "Who decides what gets stored? A model does. Cached inputs are sent to the model system, which predicts whether anything is worth remembering, extracts that portion, and writes it as a memory object; an explicit \"remember this\" from the user is one trigger, and the write can happen offline rather than at query time."
+        },
+        "figures": [
+          "FIG-8",
+          "FIG-7"
+        ]
+      },
+      {
+        "n": 4,
+        "slot": "stop",
+        "exhibit": {
+          "material_ids": [
+            "M12",
+            "M24",
+            "M26",
+            "M27",
+            "M28",
+            "M63",
+            "M75",
+            "M77",
+            "M78",
+            "M79",
+            "M115",
+            "M119"
+          ],
+          "point_en": "At query time the agent does not reread everything. It scores stored objects by relevance to the query, using embedding distance such as cosine similarity, returns a top subset, and orders the values by timestamp so the model sees recency."
+        },
+        "figures": [
+          "FIG-3"
+        ]
+      },
+      {
+        "n": 5,
+        "slot": "stop",
+        "exhibit": {
+          "material_ids": [
+            "M36",
+            "M39",
+            "M40",
+            "M42",
+            "M43",
+            "M87",
+            "M90",
+            "M91",
+            "M93",
+            "M94",
+            "M109",
+            "M125"
+          ],
+          "point_en": "Memories can be corrected. New timestamped input is matched to a prior memory object and either replaces it or updates it, and aligned objects can be consolidated into one, so contradicting information refines a memory instead of noisily overwriting it."
+        },
+        "figures": [
+          "FIG-21"
+        ]
+      },
+      {
+        "n": 6,
+        "slot": "pivot",
+        "exhibit": {
+          "material_ids": [
+            "M20",
+            "M21",
+            "M22",
+            "M23",
+            "M71",
+            "M72",
+            "M73",
+            "M74",
+            "M110",
+            "M111",
+            "M122"
+          ],
+          "point_en": "The decisive detail: forgetting is claimed, not just remembering. \"Forget that\" deletes the specified information from the datastore, \"forget this after three months\" queues it for deletion after the interval, and expired objects are removed during maintenance cycles. The same chat that builds the memory is the control surface for erasing it."
+        },
+        "figures": [
+          "FIG-10"
+        ]
+      },
+      {
+        "n": 7,
+        "slot": "stop",
+        "exhibit": {
+          "material_ids": [
+            "M34",
+            "M35",
+            "M44",
+            "M85",
+            "M86",
+            "M113"
+          ],
+          "point_en": "What the memory is for: the model first generates a hidden analysis of the query against the memory data that is never shown on screen, and the final response can be an API call that makes the device perform an action, so recalled memory conditions what the agent does, not only what it says."
+        },
+        "figures": [
+          "FIG-1"
+        ]
+      },
+      {
+        "n": 8,
+        "slot": "landing",
+        "exhibit": {
+          "material_ids": [
+            "M116",
+            "M3",
+            "M12",
+            "M21",
+            "M40"
+          ],
+          "point_en": "No benchmark numbers are claimed, and the filing says so by omission. What is claimed is a structural difference: memory objects generated from your own interactions, retrieved by relevance, corrected over time, and erased on request. That is a described architecture, not a slogan."
+        },
+        "figures": [
+          "FIG-1"
+        ]
+      },
+      {
+        "n": 9,
+        "slot": "tail",
+        "exhibit": {
+          "material_ids": [
+            "M103",
+            "M104",
+            "M106"
+          ],
+          "point_en": "Pointer to the publication WO2026-128750A1 (priority 2024, published 2026) and an invitation to follow for the next patent walk-through."
+        },
+        "figures": []
+      }
+    ],
+    "transmission_targets": [
+      "M3",
+      "M16",
+      "M12",
+      "M21",
+      "M23",
+      "M40",
+      "M116"
+    ],
+    "new_terms": [
+      {
+        "term_en": "interaction memory datastore",
+        "tweet": 1,
+        "gloss_en": "A per-user store of memory objects built from prior conversations with the agent."
+      },
+      {
+        "term_en": "memory object",
+        "tweet": 2,
+        "gloss_en": "A container holding one or more memory values plus metadata such as a timestamp and the trigger that stored it."
+      },
+      {
+        "term_en": "memory update cycle",
+        "tweet": 3,
+        "gloss_en": "The pass in which cached inputs are sent to the model, which decides what to store and writes it."
+      },
+      {
+        "term_en": "recall cycle",
+        "tweet": 4,
+        "gloss_en": "The pass in which stored objects are scored for relevance to a query and a subset is condensed into memory data for the model."
+      },
+      {
+        "term_en": "expiration time",
+        "tweet": 6,
+        "gloss_en": "An optional time on a memory object after which it is deleted during maintenance."
+      }
+    ],
+    "figure_plan": [
+      {
+        "tweet": 1,
+        "figures": [
+          "FIG-1"
+        ],
+        "intent_kr": "전체 파이프라인 한 장 — 질의에서 응답까지의 루프 속에 기억 데이터스토어(110)가 별도 블록으로 들어 있음을 보인다. 독립항 다섯 단계가 이 도면에 그대로 접지된다."
+      },
+      {
+        "tweet": 2,
+        "figures": [
+          "FIG-2"
+        ],
+        "intent_kr": "데이터스토어 내부 — 메모리 객체(202-1)가 값(204-1)과 메타데이터(206-1)를 담는 컨테이너 구조임을 보인다. 「대화 기록이 아니라 구조화된 객체」의 시각적 근거."
+      },
+      {
+        "tweet": 3,
+        "figures": [
+          "FIG-8",
+          "FIG-7"
+        ],
+        "intent_kr": "FIG-8 = 기억 갱신 사이클(캐시 입력 802 → 갱신 804 → 쓰기 806)로 「모델이 저장 여부를 판단하고 쓴다」를 보인다. FIG-7 = 트리거(702)가 갱신 사이클을 먼저 열고 나중 질의가 회상 사이클을 여는 순서."
+      },
+      {
+        "tweet": 4,
+        "figures": [
+          "FIG-3"
+        ],
+        "intent_kr": "회상 사이클 예시 — 검색된 메모리 객체 셋(302·304·306)이 메모리 데이터(308)로 압축되는 모습. 「전부 다시 읽지 않고 관련 부분집합만」의 근거."
+      },
+      {
+        "tweet": 5,
+        "figures": [
+          "FIG-21"
+        ],
+        "intent_kr": "청구 방법 흐름도 — 교체·갱신·통합 단계는 부호 없는 방법 흐름도에 귀속되어 있으므로 이 도면을 지정한다. 정정이 방법 단계로 청구되었음을 보이는 자리."
+      },
+      {
+        "tweet": 6,
+        "figures": [
+          "FIG-10"
+        ],
+        "intent_kr": "기억 유지 사이클 — 새 입력 없이 갱신 요청(1002)만으로 모델이 갱신(804)을 내는 구조. 망각·만료가 별도 유지 사이클로 도는 결정적 물증(피벗)."
+      },
+      {
+        "tweet": 7,
+        "figures": [
+          "FIG-1"
+        ],
+        "intent_kr": "FIG-1 의 오른쪽 절반(출력 구조 120 → 응답 122 → 출력 인터페이스 124)을 다시 가리켜 「숨은 분석은 120 에 머물고 122 만 밖으로 나가며 그것이 API 호출일 수 있다」를 보인다."
+      },
+      {
+        "tweet": 8,
+        "figures": [
+          "FIG-1"
+        ],
+        "intent_kr": "첫 트윗의 도면으로 되돌아오는 북엔드 — 각 스톱에서 확대한 부품이 한 루프로 닫힘을 보이며 인용·스크린샷 표적이 되게 한다."
+      },
+      {
+        "tweet": 9,
+        "figures": [],
+        "intent_kr": "꼬리 — 도면 없음. 링크와 팔로우만."
+      }
+    ],
+    "numeric_whitelist": [
+      {
+        "pattern": "\\b[1-9]/[1-9]\\b",
+        "rationale": "Thread position marker n/N; the only number allowed that is not in the frozen material."
+      }
+    ],
+    "overflow_proposal": null,
+    "escalation": null
+  }
+}

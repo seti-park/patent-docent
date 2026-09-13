@@ -1,39 +1,148 @@
 {
-  "_schema_status": "블루프린트 계약 스키마(contracts/schemas/blueprint.schema.json)는 SPEC §8 M5 예정이다. 이 파일은 SPEC §1.7 '블루프린트가 선언해야 하는 것(계약 수준)'의 최소 형태이며, 스키마 확정 후 그 서식으로 갱신한다.",
-  "run_id": "example-xx0000000a1-cable-guide",
-  "variant": "v2",
-  "spec_version": 1,
-  "spec_digest": "sha256:722c204eed4bd0f2cc2dfe4623abb833d36f524e95b39b4f9a49632877d41592",
-  "hook": {
-    "investor_question": "Why does a machine that is sealed still fail from dirt that walks in on its own cables?",
-    "figure": "fig-01"
-  },
-  "slots": [
-    { "n": 1, "slot": "hook",    "exhibit": "the contaminated feedthrough as the reader already knows it", "figure": "fig-01" },
-    { "n": 2, "slot": "stop",    "exhibit": "housing and guide channel through the enclosure wall",        "figure": "fig-02" },
-    { "n": 3, "slot": "stop",    "exhibit": "wiper collar standing proud of the channel mouth",            "figure": "fig-03" },
-    { "n": 4, "slot": "pivot",   "exhibit": "the dependent claim naming the collar a consumable sleeve",   "figure": "fig-03" },
-    { "n": 5, "slot": "landing", "exhibit": "the trade the applicant is actually making",                  "figure": "fig-01" },
-    { "n": 6, "slot": "tail",    "exhibit": null,                                                          "figure": null }
+  "escalation": null,
+  "figure_plan": [
+    {
+      "figures": [
+        "FIG-1"
+      ],
+      "intent_kr": "크롭 도면 지정(골든 표본 · 가공 예시)",
+      "tweet": 1
+    },
+    {
+      "figures": [
+        "FIG-2"
+      ],
+      "intent_kr": "크롭 도면 지정(골든 표본 · 가공 예시)",
+      "tweet": 2
+    },
+    {
+      "figures": [
+        "FIG-3"
+      ],
+      "intent_kr": "크롭 도면 지정(골든 표본 · 가공 예시)",
+      "tweet": 3
+    },
+    {
+      "figures": [
+        "FIG-3"
+      ],
+      "intent_kr": "크롭 도면 지정(골든 표본 · 가공 예시)",
+      "tweet": 4
+    },
+    {
+      "figures": [
+        "FIG-1"
+      ],
+      "intent_kr": "크롭 도면 지정(골든 표본 · 가공 예시)",
+      "tweet": 5
+    },
+    {
+      "figures": [],
+      "intent_kr": "도면 없음(꼬리)",
+      "tweet": 6
+    }
   ],
-  "transmission_targets": ["M2", "M3", "M7"],
-  "new_terms": [],
-  "figure_plan": {
-    "by_tweet": [
-      { "n": 1, "figures": ["fig-01"] },
-      { "n": 2, "figures": ["fig-02"] },
-      { "n": 3, "figures": ["fig-03"] },
-      { "n": 4, "figures": ["fig-03"] },
-      { "n": 5, "figures": ["fig-01"] },
-      { "n": 6, "figures": [] }
-    ],
-    "assets": [
-      { "figure": "fig-01", "material_figure": "FIG-1", "asset_path": "30-figures/assets/fig-01.png", "edit_class": "crop-only", "publishable": true },
-      { "figure": "fig-02", "material_figure": "FIG-2", "asset_path": "30-figures/assets/fig-02.png", "edit_class": "crop-only", "publishable": true },
-      { "figure": "fig-03", "material_figure": "FIG-3", "asset_path": "30-figures/assets/fig-03.png", "edit_class": "crop-only", "publishable": true }
-    ],
-    "_assets_note": "edit_class 를 스냅샷 안에 함께 적는 이유 = format.stop-shape 의 편집 자산 판정이 런 폴더의 30-figures/assets/manifest.json 에 의존하는데, 자족 스냅샷(SPEC §6.5)은 런 폴더 프루닝 후에도 단독 재현되어야 하기 때문이다. 값 정의의 정본은 contracts/l0-format.yaml 의 stop_shape.edited_asset(counted_edit_classes)다."
+  "hook": {
+    "figure": "FIG-1",
+    "question_en": "Why does a machine that is sealed still fail from dirt that walks in on its own cables?",
+    "rationale_kr": "골든 표본(가공 예시 · rc-0001) — 투자자 질문에 재료 M7 의 함의로 답한다. 실재 특허가 아니다.",
+    "thesis_en": "The filing keeps the grit outside the wall by putting a replaceable wiper collar at the channel mouth."
   },
+  "lane": {
+    "effort": "high",
+    "lane_id": "design/blueprint/batch-0",
+    "model": "claude-fable-5-1"
+  },
+  "law_commit": "0000000000000000000000000000000000000000",
+  "new_terms": [],
   "numeric_whitelist": [],
-  "overflow_proposal": null
+  "overflow_proposal": null,
+  "run_id": "example-xx0000000a1-cable-guide",
+  "schema": "blueprint/v0",
+  "slots": [
+    {
+      "exhibit": {
+        "material_ids": [
+          "M7"
+        ],
+        "point_en": "the contaminated feedthrough as the reader already knows it"
+      },
+      "figures": [
+        "FIG-1"
+      ],
+      "n": 1,
+      "slot": "hook"
+    },
+    {
+      "exhibit": {
+        "material_ids": [
+          "M1",
+          "M2"
+        ],
+        "point_en": "housing and guide channel through the enclosure wall"
+      },
+      "figures": [
+        "FIG-2"
+      ],
+      "n": 2,
+      "slot": "stop"
+    },
+    {
+      "exhibit": {
+        "material_ids": [
+          "M2",
+          "M7"
+        ],
+        "point_en": "wiper collar standing proud of the channel mouth"
+      },
+      "figures": [
+        "FIG-3"
+      ],
+      "n": 3,
+      "slot": "stop"
+    },
+    {
+      "exhibit": {
+        "material_ids": [
+          "M3",
+          "M9"
+        ],
+        "point_en": "the dependent claim naming the collar a consumable sleeve"
+      },
+      "figures": [
+        "FIG-3"
+      ],
+      "n": 4,
+      "slot": "pivot"
+    },
+    {
+      "exhibit": {
+        "material_ids": [
+          "M8"
+        ],
+        "point_en": "the trade the applicant is actually making"
+      },
+      "figures": [
+        "FIG-1"
+      ],
+      "n": 5,
+      "slot": "landing"
+    },
+    {
+      "exhibit": {
+        "material_ids": [],
+        "point_en": "link and follow"
+      },
+      "figures": [],
+      "n": 6,
+      "slot": "tail"
+    }
+  ],
+  "spec_digest": "sha256:722c204eed4bd0f2cc2dfe4623abb833d36f524e95b39b4f9a49632877d41592",
+  "spec_version": 1,
+  "transmission_targets": [
+    "M2",
+    "M3",
+    "M7"
+  ]
 }

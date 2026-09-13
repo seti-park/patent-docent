@@ -3,7 +3,7 @@ run_id: gdm-wo2026128750a1-agent-memory-3
 created_at: '2026-09-13T05:19:24Z'
 status: active
 run_kind: partial
-partial_until: freeze
+partial_until: gate
 supersedes: null
 superseded_by: null
 patent:
@@ -39,8 +39,19 @@ engine:
   worktree: .worktrees/gdm-wo2026128750a1-agent-memory-3
   gate_version: ''
 reader_version: 0.9.0
-numeric_whitelist: []
+numeric_whitelist:
+- pattern: \b[1-9]/[1-9]\b
+  rationale: Thread position marker n/N; the only number allowed that is not in the
+    frozen material.
+  added_by: run-discretion
+  approved_in: null
 frozen:
 - spec_version: 1
   path: 15-frozen/material-spec.v1.json
   spec_digest: sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407
+extensions:
+- path: 15-frozen/extension-v1.md
+  from: freeze
+  to: gate
+  law_commit: 04b34339c9d8673142be6ad1ccda118f11085994
+  decided_at: '2026-09-13T08:40:51Z'

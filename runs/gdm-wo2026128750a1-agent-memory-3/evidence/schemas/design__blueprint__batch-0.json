@@ -1,0 +1,329 @@
+{
+  "properties": {
+    "effort": {
+      "type": "string"
+    },
+    "input_digest": {
+      "type": "string"
+    },
+    "lane_id": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "payload": {
+      "$comment": "설계 스테이지 산출 20-design/blueprint.json 의 계약. 근거 = 헌장 D6·D11 + SPEC §1.7 + 재정 2026-09-13 T64 ②. ★ 규율: (1) 러너가 기입하는 6키(schema·run_id·spec_version·spec_digest·lane·law_commit)와 레인이 채우는 나머지가 갈린다 — 레인 응답 payload 의 스키마는 이 파일에서 그 6키를 뺀 파생물이며 engine/stages/design.py#payload_schema 가 함수로 만든다(복사 금지). (2) 수치(tweet_count 6·12 · images_per_post_max 4)는 이 스키마에 없다 — 그것은 contracts/format-parameters.yaml 의 값이고 검사 design.slot-count·design.figure-budget 이 시트를 읽는다(단일 진원 · 재정 N-D11). 슬롯 enum 만 여기 두되 시험이 시트 slot_enum 과 상등을 대조한다. (3) escalation.reason == exhibit-overflow 이면 overflow_proposal 이 비-null 이어야 하고, escalation 이 null 이면 overflow_proposal 도 null 이다(allOf). (4) new_terms 는 설계→펜 작업 메모이며 어떤 게이트도 법으로 읽지 않는다(재정 N2). (5) numeric_whitelist 의 개수는 잠그지 않는다 — 절차 문서가 스레드 순번 n/N 하나만 제안하라고 지시한다(T64 재량). (6) overflow_proposal 의 값 select-strongest-12 의 -12 는 명명 시점의 역사적 표기이며 실효 상한은 언제나 시트의 tweet_count.max 다(SPEC §1.7).",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$comment": "결합 규칙 ① — escalation.reason == exhibit-overflow 이면 overflow_proposal 은 객체다.",
+          "if": {
+            "properties": {
+              "escalation": {
+                "properties": {
+                  "reason": {
+                    "const": "exhibit-overflow"
+                  }
+                },
+                "required": [
+                  "reason"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "escalation"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "overflow_proposal": {
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "type": "object"
+        },
+        {
+          "$comment": "결합 규칙 ② — escalation 이 null 이면 overflow_proposal 도 null 이다.",
+          "if": {
+            "properties": {
+              "escalation": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "escalation"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "overflow_proposal": {
+                "type": "null"
+              }
+            },
+            "type": "object"
+          },
+          "type": "object"
+        }
+      ],
+      "properties": {
+        "escalation": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "note_kr": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "reason": {
+                  "enum": [
+                    "hook-not-feasible",
+                    "exhibit-overflow"
+                  ]
+                }
+              },
+              "required": [
+                "reason",
+                "note_kr"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "figure_plan": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "figures": {
+                "items": {
+                  "pattern": "^FIG-[A-Za-z0-9-]+$",
+                  "type": "string"
+                },
+                "type": "array",
+                "uniqueItems": true
+              },
+              "intent_kr": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "tweet": {
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "tweet",
+              "figures",
+              "intent_kr"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "hook": {
+          "$comment": "투자자의 질문 형태 + T1 도면 지정(D3·D11 ③).",
+          "additionalProperties": false,
+          "properties": {
+            "figure": {
+              "pattern": "^FIG-[A-Za-z0-9-]+$",
+              "type": "string"
+            },
+            "question_en": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "rationale_kr": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "thesis_en": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "question_en",
+            "figure",
+            "thesis_en",
+            "rationale_kr"
+          ],
+          "type": "object"
+        },
+        "new_terms": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "gloss_en": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "term_en": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "tweet": {
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "term_en",
+              "tweet",
+              "gloss_en"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "numeric_whitelist": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "pattern": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "rationale": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "pattern",
+              "rationale"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "overflow_proposal": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "proposal": {
+                  "enum": [
+                    "select-strongest-12",
+                    "split-series"
+                  ]
+                },
+                "rationale_kr": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "proposal",
+                "rationale_kr"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "slots": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "exhibit": {
+                "additionalProperties": false,
+                "properties": {
+                  "material_ids": {
+                    "items": {
+                      "pattern": "^M[0-9]+$",
+                      "type": "string"
+                    },
+                    "type": "array",
+                    "uniqueItems": true
+                  },
+                  "point_en": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "material_ids",
+                  "point_en"
+                ],
+                "type": "object"
+              },
+              "figures": {
+                "items": {
+                  "pattern": "^FIG-[A-Za-z0-9-]+$",
+                  "type": "string"
+                },
+                "type": "array",
+                "uniqueItems": true
+              },
+              "n": {
+                "minimum": 1,
+                "type": "integer"
+              },
+              "slot": {
+                "$comment": "정본 = contracts/format-parameters.yaml#slot_enum. 시험이 상등을 대조한다.",
+                "enum": [
+                  "hook",
+                  "stop",
+                  "pivot",
+                  "landing",
+                  "tail"
+                ]
+              }
+            },
+            "required": [
+              "n",
+              "slot",
+              "exhibit",
+              "figures"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "transmission_targets": {
+          "$comment": "독자에게 도달해야 하는 재료 ID — 계기 질문의 유일한 파생원(D9).",
+          "items": {
+            "pattern": "^M[0-9]+$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "hook",
+        "slots",
+        "transmission_targets",
+        "new_terms",
+        "figure_plan",
+        "numeric_whitelist",
+        "overflow_proposal",
+        "escalation"
+      ],
+      "title": "lane-response/blueprint",
+      "type": "object"
+    }
+  },
+  "required": [
+    "lane_id",
+    "model",
+    "effort",
+    "input_digest",
+    "payload"
+  ],
+  "type": "object"
+}
