@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(181차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(182차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 182차 — **M3 발주문 ⑤(M6-a) 기동**(추기 150 · `a15d4a8`): L1 국소 대조 opus-5 high × k(`gate-l1/<v>/batch-<i>`) · 화행 플래그 3 · 수정 루프 캡 3(`revisions/r<n>/` · compose 회차 재사용 · 국소성 검사) · `final-eyes-brief.json`(루프 전 1회 · 핀) · CP2 봉투(`cp2`·`approve-ship` · critique·probe·final-eyes 결번 표기) · 골든 rc-0009(v2 2회차 실물) + 결함 표본 3. worktree `~/projects/workspaces/pd-m3-t67-l1`(`round-t67-l1`) · 레인 `pd-lanes/fable-m3-t67-l1/`. **지금 할 일 = ⑤ 회수 → 재현(pytest · 관문 7) → 병합 → 런 -3 v2 `gate-l1`(opus high × 3 · ~$3~5) → 결함 있으면 `revise`(라운드당 펜 1 + L0 + L1 3) → `cp2` → CP2 브리핑 T68(변주 = v2 고정 · 플래그 판정 · 도면 유지 · Owner 육성 → `approve-ship`).** 살아 있는 배경 = ⑤ 레인 1(Monitor). 맥락 접두 76만 — `/compact` 권고.**
+
+> [정정 2026-09-13 · 182차] 181차의 「⑤ 작성·기동」은 됐다 — 회수 대기.
 
 **★ 09-13 181차 — **재정 T67 「① A / ② A」 등재**(`ruling-20260913-12-T67.md` · 추기 149): crop-only 도면 공개 게시 **허용**(이 파일 = 사용권 재정 ID · 주석판·재조판 제외) · 다음 = **M6**. **지금 할 일 = M3 발주문 ⑤ 작성·기동**(`SPEC-m3-t67-l1.md` · L1 국소 대조 opus-5 high × k=3(§1.10·§4.5·`parameters.yaml#gate.l1.k`) · 화행 플래그 sa-01~03(`speech-acts.yaml` · 거부권 없음) · `[narrative]` 밀수 감사(§3.4) · 수정 루프 캡 3(`fix_directive` → compose 회차 규약으로 펜 국소 수정 · `50-gate/<v>/revisions/r<n>/`) · `final-eyes-brief.json`(루프 개시 전 · 다이제스트 핀) · CP2 봉투 초안(`approval-envelope/v0` `ship_approval` · §1.13) · `gate-report/v0` `l1` 블록 · 구동기 `gate-l1`·`revise`·`cp2`) → 런 -3 v2 에 실행 → CP2 브리핑 T68. 살아 있는 배경 = 없음. 맥락 접두 75만 — 발주문 ⑤ 전 `/compact` 권고.**
 
