@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(175차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(176차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 176차 — **M3 발주문 ④ 기동 20:08:32**(추기 143·144 · `ef35b2e`): figures.prepare(crop-only · Playwright 1.49.1 · `chromium-1148` 전체 빌드 `channel: chromium` · 2400×1350 스모크 통과) · figures.select(결정론 · 좌석 변경 상신) · stop-shape 가동 · `n/N` 토크나이저(rank 0) + golden rc-0008 · compose 2회차(`compose-r2/v2/batch-0` · `rounds/r1/` 보존) · 구동기 `figures`·`compose --variant --round`(명령 15). worktree `~/projects/workspaces/pd-m3-t65-figures`(`round-t65-figures` @ `ef35b2e`) · 레인 `pd-lanes/fable-m3-t65-figures/`. **지금 할 일 = ④ 회수 → 재현(pytest · 관문 7 · `PD_REAL_RENDER=1` 스모크) → 병합 → 런 -3 `figures`(`pd-lanes/t65-figures/figures.sh`) → `compose --variant v2 --round 2`(opus xhigh · `compose-r2.sh`) → `gate-l0`(`gate.sh`) → 도면 시안 브리핑 T66(사용권 재정 R11 + select 좌석 변경 + 복합 시트 처분 + rc-0008 과광화).** 살아 있는 배경 = ④ 레인 1(Monitor `b9l51k3y7`).**
+
+> [정정 2026-09-13 · 176차] 175차의 「④ 작성·기동」은 됐다 — 회수 대기.
 
 **★ 09-13 175차 — **재정 T65 「① A / ② 허용 / ③ A」 등재**(`ruling-20260913-10-T65.md` · 추기 142): 기준판 = **v2**(`runs/gdm-wo2026128750a1-agent-memory-3/50-gate/v2/thread.stripped.md`) · 꼬리 날짜 둘은 Owner 직접 확인으로 허용 · 다음 = **도면 자산층**. 자잘 확정 = `n/N` 토크나이저 신설 승인(값 공간 · 발주 ④ 에 동반 · 반례 golden) · figure-budget 조치 행 · opus max 900초 · §3.2 예시. **지금 할 일 = M3 발주문 ④ 작성·기동**(`SPEC-m3-t65-figures.md` · figures.prepare crop-only 1200×675 @2x HTML/CSS → 헤드리스 Chromium · `manifest.json` edit_class/publishable · figures.select → `selection.json` · `format.stop-shape` 가동 · l0-format `numeric.tokenizers` 순번 어형 + golden · compose 2회차(v2 만 · 도면 헤더 `fig-NN` · 문장 ≤2 · 직전 판 보존 자리 = 총괄 재량) · 구동기 `figures`·`compose --variant --round`) → 전제 = Chromium 설치(`npx playwright install chromium` · WSL2 의존 라이브러리 확인) · `fig-08-09.png` 복합 시트 처분 = 전장 프레이밍 + 표기 → 실행 → 도면 시안 브리핑(사용권 재정 R11 동반). 살아 있는 배경 = 없음.**
 
