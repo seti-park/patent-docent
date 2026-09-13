@@ -118,7 +118,31 @@ def payload_schema(file_schema: dict) -> dict:
     for key in RUNNER_KEYS:
         derived["properties"].pop(key, None)
     derived["required"] = [key for key in derived["required"] if key not in RUNNER_KEYS]
-    return derived
+    # ★ `$ref` 인라인(2026-09-13 런 -3 design 첫 호출 실측 · 발주자 오류 253). 이 스키마는 구동기
+    #   래퍼의 `properties.payload` 아래에 심기므로 `#/$defs/...` 참조가 래퍼 루트에서 해소되지
+    #   않고, CLI 가 `--json-schema is not a valid JSON Schema: can't resolve reference` 로 호출을
+    #   거부했다. 파생물은 자기완결이어야 한다 — 정의 본문을 참조 자리에 그대로 펴고 `$defs` 를 뺀다.
+    defs = derived.pop("$defs", {}) or {}
+    return _inline_refs(derived, defs)
+
+
+def _inline_refs(node, defs: dict):
+    """`{"$ref": "#/$defs/<name>"}` 를 정의 본문(사본)으로 바꾼다 — 재귀 · 다른 형태의 참조는 오류."""
+    if isinstance(node, dict):
+        ref = node.get("$ref")
+        if isinstance(ref, str):
+            prefix = "#/$defs/"
+            if not ref.startswith(prefix) or ref[len(prefix):] not in defs:
+                raise StageError(f"블루프린트 스키마의 참조를 인라인할 수 없다: {ref!r}")
+            body = copy.deepcopy(defs[ref[len(prefix):]])
+            rest = {key: value for key, value in node.items() if key != "$ref"}
+            merged = _inline_refs(body, defs)
+            merged.update(_inline_refs(rest, defs))
+            return merged
+        return {key: _inline_refs(value, defs) for key, value in node.items()}
+    if isinstance(node, list):
+        return [_inline_refs(value, defs) for value in node]
+    return node
 
 
 RESPONSE_SCHEMAS: dict[str, dict] = {LANE_TASK: payload_schema(load_blueprint_schema())}

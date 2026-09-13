@@ -234,17 +234,57 @@ def test_reject_fixtures_fail_at_declared_locus(name, locus) -> None:
 def test_payload_schema_is_file_schema_minus_runner_keys() -> None:
     file_schema = design_stage.load_blueprint_schema(REPO)
     payload = design_stage.RESPONSE_SCHEMAS["blueprint"]
-    expected_props = {k: v for k, v in file_schema["properties"].items() if k not in design_stage.RUNNER_KEYS}
+    defs = file_schema["$defs"]
+    expected_props = design_stage._inline_refs(
+        {k: v for k, v in file_schema["properties"].items() if k not in design_stage.RUNNER_KEYS}, defs
+    )
     if payload["properties"] != expected_props:
-        pytest.fail("payload 스키마 properties 가 파일 스키마 − 러너 6키가 아니다")
+        pytest.fail("payload 스키마 properties 가 파일 스키마 − 러너 6키(참조 인라인)가 아니다")
     if payload["required"] != [k for k in file_schema["required"] if k not in design_stage.RUNNER_KEYS]:
         pytest.fail("payload 스키마 required 가 파생물이 아니다")
-    if payload["allOf"] != file_schema["allOf"] or payload["$defs"] != file_schema["$defs"]:
-        pytest.fail("allOf·$defs 가 그대로 넘어오지 않았다")
+    if payload["allOf"] != design_stage._inline_refs(file_schema["allOf"], defs) or "$defs" in payload:
+        pytest.fail("allOf 가 파생되지 않았거나 $defs 가 남아 있다")
     if any(branch.get("type") != "object" for branch in payload["allOf"]):
         pytest.fail("allOf 가지에 type: object 가 없다(CLI strict 경고)")
-    if drv.wrapper_schema("blueprint")["properties"]["payload"] is not payload:
+    wrapper = drv.wrapper_schema("blueprint")
+    if wrapper["properties"]["payload"] is not payload:
         pytest.fail("구동기 wrapper_schema 가 design.RESPONSE_SCHEMAS 상수를 품지 않는다")
+
+
+def _refs_in(node) -> list[str]:
+    found: list[str] = []
+    if isinstance(node, dict):
+        if isinstance(node.get("$ref"), str):
+            found.append(node["$ref"])
+        for value in node.values():
+            found.extend(_refs_in(value))
+    elif isinstance(node, list):
+        for value in node:
+            found.extend(_refs_in(value))
+    return found
+
+
+def test_wrapper_schema_is_self_contained_and_resolves_inside_cli_wrapper() -> None:
+    """2026-09-13 런 -3 design 첫 호출 실측 — 래퍼 안의 `#/$defs/figure_id` 가 해소되지 않아 CLI 가
+    `--json-schema is not a valid JSON Schema: can't resolve reference` 로 호출을 거부했다(발주자 오류 253).
+    래퍼 전체에 `$ref` 가 없어야 하고, 래퍼 루트 기준으로 유효 payload 가 실제로 검증되어야 한다."""
+    wrapper = drv.wrapper_schema("blueprint")
+    refs = _refs_in(wrapper)
+    if refs:
+        pytest.fail(f"래퍼 스키마에 해소되지 않는 참조가 남아 있다: {refs}")
+    Draft202012Validator.check_schema(wrapper)
+    with open(os.path.join(REPO, "tests", "fixtures", "schema-enforcement", "accept", "blueprint.minimal.json"),
+              encoding="utf-8") as handle:
+        accepted = json.load(handle)
+    payload = {k: v for k, v in accepted.items() if k not in design_stage.RUNNER_KEYS}
+    envelope = {"lane_id": "design/blueprint/batch-0", "model": "claude-fable-5-1", "effort": "high",
+                "input_digest": "0" * 64, "payload": payload}
+    errors = list(Draft202012Validator(wrapper).iter_errors(envelope))
+    if errors:
+        pytest.fail(f"유효 payload 가 래퍼 루트 기준 검증에서 거부됐다: {errors[0].message}")
+    bad = dict(envelope, payload=dict(payload, hook=dict(payload["hook"], figure="fig-01")))
+    if not list(Draft202012Validator(wrapper).iter_errors(bad)):
+        pytest.fail("인라인된 figure_id 패턴이 무효 도면 ID 를 통과시켰다 — 참조 본문이 펴지지 않았다")
 
 
 # ---------------------------------------------------------------------------
