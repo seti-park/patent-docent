@@ -586,8 +586,8 @@
           ],
           "i": 2,
           "narrative": false,
-          "text": "Aligned objects can be consolidated into one, so a later contradiction refines the memory instead of noisily overwriting it.",
-          "text_raw": "Aligned objects can be consolidated into one, so a later contradiction refines the memory instead of noisily overwriting it."
+          "text": "Aligned objects can be consolidated into one; kept supporting interactions let a contradiction refine a memory, not overwrite it.",
+          "text_raw": "Aligned objects can be consolidated into one; kept supporting interactions let a contradiction refine a memory, not overwrite it."
         }
       ],
       "slot": "stop"
@@ -637,8 +637,8 @@
           ],
           "i": 1,
           "narrative": false,
-          "text": "The model first produces an analysis of your query against the memory data, and those predictions are never shown.",
-          "text_raw": "The model first produces an analysis of your query against the memory data, and those predictions are never shown."
+          "text": "The model first analyzes your query against the memory data, and that analysis may stay off the query's interface.",
+          "text_raw": "The model first analyzes your query against the memory data, and that analysis may stay off the query's interface."
         },
         {
           "citations": [

@@ -24,14 +24,14 @@ It compares a query embedding to memory value embeddings by a measure such as co
 
 ## T5 {slot: stop, fig: fig-21}
 Memories can be corrected: new timestamped input is matched to a prior memory object and either replaces it or updates it.[M39,M40,M42,M43,M90,M91,M93,M94]
-Aligned objects can be consolidated into one, so a later contradiction refines the memory instead of noisily overwriting it.[M36,M87,M109]
+Aligned objects can be consolidated into one; kept supporting interactions let a contradiction refine a memory, not overwrite it.[M36,M87,M109]
 
 ## T6 {slot: pivot, fig: fig-10}
 Forgetting is claimed: "forget that" deletes the specified information, and "forget this after three months" queues it for deletion.[M20,M21,M22,M23,M71,M72,M73]
 Objects past their expiration time are deleted during maintenance, and the same chat that builds the memory erases it.[M74,M110,M111,M122]
 
 ## T7 {slot: stop, fig: fig-01}
-The model first produces an analysis of your query against the memory data, and those predictions are never shown.[M34,M35,M85,M86]
+The model first analyzes your query against the memory data, and that analysis may stay off the query's interface.[M34,M35,M85,M86]
 The response that does appear can be an API call that makes a device act, so memory shapes what the agent does, not just what it says.[M44,M113]
 
 ## T8 {slot: landing, fig: fig-01}

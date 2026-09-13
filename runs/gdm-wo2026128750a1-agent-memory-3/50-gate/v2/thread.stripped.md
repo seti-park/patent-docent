@@ -11,12 +11,12 @@ At query time the agent does not reread everything; it ranks stored objects by r
 It compares a query embedding to memory value embeddings by a measure such as cosine similarity, keeps a top subset, and orders them by timestamp.
 
 Memories can be corrected: new timestamped input is matched to a prior memory object and either replaces it or updates it.
-Aligned objects can be consolidated into one, so a later contradiction refines the memory instead of noisily overwriting it.
+Aligned objects can be consolidated into one; kept supporting interactions let a contradiction refine a memory, not overwrite it.
 
 Forgetting is claimed: "forget that" deletes the specified information, and "forget this after three months" queues it for deletion.
 Objects past their expiration time are deleted during maintenance, and the same chat that builds the memory erases it.
 
-The model first produces an analysis of your query against the memory data, and those predictions are never shown.
+The model first analyzes your query against the memory data, and that analysis may stay off the query's interface.
 The response that does appear can be an API call that makes a device act, so memory shapes what the agent does, not just what it says.
 
 No performance numbers are given.

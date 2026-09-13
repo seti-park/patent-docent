@@ -1,0 +1,171 @@
+{
+  "properties": {
+    "effort": {
+      "type": "string"
+    },
+    "input_digest": {
+      "type": "string"
+    },
+    "lane_id": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": false,
+      "properties": {
+        "defects": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "expected": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "fix_directive": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "locus": {
+                "additionalProperties": false,
+                "properties": {
+                  "sentence": {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "tweet": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "tweet",
+                  "sentence"
+                ],
+                "type": "object"
+              },
+              "observed": {
+                "type": "string"
+              },
+              "rule": {
+                "enum": [
+                  "l1.citation-mismatch",
+                  "l1.narrative-smuggling"
+                ]
+              }
+            },
+            "required": [
+              "rule",
+              "locus",
+              "expected",
+              "observed",
+              "fix_directive"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "flags": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "locus": {
+                "additionalProperties": false,
+                "properties": {
+                  "sentence": {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "tweet": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "tweet",
+                  "sentence"
+                ],
+                "type": "object"
+              },
+              "note": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "rule": {
+                "enum": [
+                  "l1.advice-implicit"
+                ]
+              }
+            },
+            "required": [
+              "rule",
+              "locus",
+              "note"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "speech_acts": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "locus": {
+                "additionalProperties": false,
+                "properties": {
+                  "sentence": {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "tweet": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "tweet",
+                  "sentence"
+                ],
+                "type": "object"
+              },
+              "note": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "predicate": {
+                "enum": [
+                  "sa-01",
+                  "sa-02",
+                  "sa-03"
+                ]
+              }
+            },
+            "required": [
+              "predicate",
+              "locus",
+              "note"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "defects",
+        "flags",
+        "speech_acts"
+      ],
+      "title": "lane-response/gate-l1",
+      "type": "object"
+    }
+  },
+  "required": [
+    "lane_id",
+    "model",
+    "effort",
+    "input_digest",
+    "payload"
+  ],
+  "type": "object"
+}

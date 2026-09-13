@@ -106,8 +106,8 @@
       ],
       "n": 5,
       "slot": "stop",
-      "text": "Memories can be corrected: new timestamped input is matched to a prior memory object and either replaces it or updates it.\nAligned objects can be consolidated into one, so a later contradiction refines the memory instead of noisily overwriting it.",
-      "weighted_char_count": 247
+      "text": "Memories can be corrected: new timestamped input is matched to a prior memory object and either replaces it or updates it.\nAligned objects can be consolidated into one; kept supporting interactions let a contradiction refine a memory, not overwrite it.",
+      "weighted_char_count": 252
     },
     {
       "figures": [
@@ -124,7 +124,7 @@
       ],
       "n": 7,
       "slot": "stop",
-      "text": "The model first produces an analysis of your query against the memory data, and those predictions are never shown.\nThe response that does appear can be an API call that makes a device act, so memory shapes what the agent does, not just what it says.",
+      "text": "The model first analyzes your query against the memory data, and that analysis may stay off the query's interface.\nThe response that does appear can be an API call that makes a device act, so memory shapes what the agent does, not just what it says.",
       "weighted_char_count": 249
     },
     {

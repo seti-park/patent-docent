@@ -1,0 +1,32 @@
+{
+  "lane_id": "gate-l1/v2/batch-0",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "input_digest": "13e537cc8e618f9c18ce85d2b8b561a9b00d5fe2b984d8df5d8c16f9a0cc97b3",
+  "payload": {
+    "defects": [
+      {
+        "rule": "l1.citation-mismatch",
+        "locus": {
+          "tweet": 5,
+          "sentence": 2
+        },
+        "expected": "M36·M87 은 정렬(alignment)에 근거해 메모리 객체 부분집합을 하나로 통합한다는 한정만 담는다. 후속 모순 입력이 덮어쓰기 대신 정련으로 흡수되는 이유는 M109 가 별도로 들며, 그 기제는 통합이 아니라 메모리 값 곁에 지원 상호작용 기록을 남겨 두는 것이다(derived_from = M59·M69·M93).",
+        "observed": "문장이 통합을 원인으로, 후속 모순의 정련을 결과로 인과 접속(so)했다. 인용된 세 항목 어디에도 통합이 그 정련의 기제라는 진술이 없다 — 서로 다른 두 재료가 인과로 접합되었다.",
+        "fix_directive": "T5/S2 의 인과 접속을 끊어라 — 통합은 M36·M87 이 말하는 범위(정렬 기반 부분집합 병합)로, 정련은 M109 가 드는 기제(지원 기록 보존)로 각각 귀속시켜 다시 서술하라."
+      },
+      {
+        "rule": "l1.citation-mismatch",
+        "locus": {
+          "tweet": 7,
+          "sentence": 1
+        },
+        "expected": "M35 는 분석 내용 예측이 질의와 연관된 사용자 인터페이스에 노출되지 않는다는 종속항(CL-16) 한정이고, 그 조응 근거 M86 은 원시 출력이 사용자에게 표출되지 않을 수 있다는 가능 어형(may not be surfaced)으로만 말한다.",
+        "observed": "never shown — 인터페이스 범위 한정도 가능 어형도 없이 절대 부정으로 단정했다. 한 종속항 한정과 may 진술이 무조건·전면 부정으로 넓혀졌다.",
+        "fix_directive": "T7/S1 후단의 절대 부정을 M35 가 든 한정 범위(질의와 연관된 사용자 인터페이스에의 미노출)와 M86 의 가능 어형에 맞춰 좁혀 재서술하라 — 같은 트윗 앞 절의 M34·M85 서술은 손댈 필요가 없다."
+      }
+    ],
+    "flags": [],
+    "speech_acts": []
+  }
+}
