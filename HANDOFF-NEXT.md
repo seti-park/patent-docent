@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(183차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(184차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 184차 — **L1 결함 2(만장일치 · T5/S2 인과 접합 · T7/S1 절대 부정) → 수정 라운드 1 기동 22:35**(추기 153 · `revise.sh`). **지금 할 일 = 라운드 회수(`STATUS-revise` · 영수증 `compose-r3__v2` + `gate-l1__v2__retry-1__batch-*` 류) → decision 확인(advance 면 `cp2 $R --variant v2` → CP2 브리핑 T68 · revise 면 라운드 2·3 · escalate 면 상신) → 반입 커밋.** 살아 있는 배경 = revise 1(Monitor). 맥락 접두 80만 — `/compact` 권고.**
+
+> [정정 2026-09-13 · 184차] 183차의 「gate-l1 회수」는 됐다 — 결함 2 · 수정 라운드 중.
 
 **★ 09-13 183차 — **⑤ 병합(`85fcb41` · M6-a · 구현 누계 $83.32) → 런 -3 v2 `gate-l1` 기동 22:28**(추기 152): L1 opus high × 3 · 화행 플래그 · 수정 루프 · CP2 봉투 명령 실물. **지금 할 일 = `gate-l1` 회수(`pd-lanes/t65-figures/STATUS-gate-l1` · 영수증 `gate-l1__v2__batch-{0,1,2}`) → verdict `decision` 확인 → 결함이면 `revise`(스크립트는 `gate-l1.sh` 를 본떠 `revise $R --variant v2`) 최대 3 라운드 → `cp2 $R --variant v2`(표면 + 봉투 초안) → CP2 브리핑 T68(플래그 전건 판정 · 변주 v2 · 도면 유지 · 결번 4 명기) → Owner 육성 → `approve-ship` → 반입 → 다음(M6-b 최종 심급 · L2 · 계기는 별도 재정).** 살아 있는 배경 = gate-l1 1(Monitor). 맥락 접두 79만 — `/compact` 권고.**
 
