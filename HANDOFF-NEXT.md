@@ -7,7 +7,7 @@
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
 
-**★ 09-13 161차 — READ 부분 런 2 진행 중: `init` ok · step 1 실패(`--json-schema` 문자열 · 수리 `11a5f14`) · **step 2 = EXIT 11**(분해 2 좌표 fable low 완료 · 첫 실호출 검증 통과 · $3.31 · 6분 44초 · 조기 수렴 상신 축 element-set·tree-edges 0.714 미달 · 레인 자기 신고 10건 · 추기 125). **지금 할 일 = Owner 「계속」 여부 대기**(T17 · 회신 한 줄 → `--quote-file` 에 원문 저장 → `tools/drive_partial_read.py continue gdm-wo2026128750a1-agent-memory-2 --quote-file <f>` → `pd-lanes/read-run-2/step.sh`(STATUS-step-3 · 접지 ≤9 좌표 · opus low) → step(통합) → CP1(20) → `cp1` → 판독본 + §8-b(자기 신고 10+) Owner 께). 레인 좌표 = worktree `.worktrees/gdm-wo2026128750a1-agent-memory-2`(@ `bff8978`) · 영수증 `evidence/calls/` · 구동 로그 `pd-lanes/read-run-2/step-N.log`. **재정 전 `continue`·`step` 금지.** 살아 있는 배경 = `/tmp` 감시 Monitor 1.**
+**★ 09-13 161차 — READ 부분 런 2 진행 중: `init` ok · step 1 실패(`--json-schema` 문자열 · 수리 `11a5f14`) · **step 2 = EXIT 11**(분해 2 좌표 fable low 완료 · 첫 실호출 검증 통과 · $3.31 · 6분 44초 · 조기 수렴 상신 축 element-set·tree-edges 0.714 미달 · 레인 자기 신고 10건 · 추기 125). **결정 브리핑 T61 「조기 수렴 뒤 계속」 `https://claude.ai/code/artifact/0d6697e6-6eed-4581-b21c-882c7b96c20c`(추기 126·127 · 갈림 실체 = 「wherein」 문언 경계 + 부착점 · 추천 `T61: ① A — 계속`) → 지금 할 일 = Owner 재정 T61 대기**(T17 · 회신 한 줄 → `--quote-file` 에 원문 저장 → `tools/drive_partial_read.py continue gdm-wo2026128750a1-agent-memory-2 --quote-file <f>` → `pd-lanes/read-run-2/step.sh`(STATUS-step-3 · 접지 ≤9 좌표 · opus low) → step(통합) → CP1(20) → `cp1` → 판독본 + §8-b(자기 신고 10+) Owner 께). 레인 좌표 = worktree `.worktrees/gdm-wo2026128750a1-agent-memory-2`(@ `bff8978`) · 영수증 `evidence/calls/` · 구동 로그 `pd-lanes/read-run-2/step-N.log`. **재정 전 `continue`·`step` 금지.** 살아 있는 배경 = `/tmp` 감시 Monitor 1.**
 
 > [정정 2026-09-13 · 161차] 160차의 「실런 기동」은 됐고 조기 수렴 재정 대기로 바뀌었다(추기 123~125).
 
