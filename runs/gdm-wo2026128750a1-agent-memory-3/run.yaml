@@ -55,3 +55,17 @@ extensions:
   to: gate
   law_commit: 04b34339c9d8673142be6ad1ccda118f11085994
   decided_at: '2026-09-13T08:40:51Z'
+pens:
+- variant: v1
+  vendor: anthropic
+  model: opus-5
+  effort: high
+- variant: v2
+  vendor: anthropic
+  model: opus-5
+  effort: xhigh
+- variant: v3
+  vendor: anthropic
+  model: opus-5
+  effort: max
+comparison_axis: effort

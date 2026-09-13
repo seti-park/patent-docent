@@ -1,0 +1,60 @@
+{
+  "attempt": 1,
+  "duration_ms": 269932,
+  "ended_at": "2026-09-13T09:23:29Z",
+  "is_error": false,
+  "lane_id": "compose/v1/batch-0",
+  "lane_self_report": {
+    "effort": "high",
+    "lane_id": "compose/v1/batch-0",
+    "model": "opus-5"
+  },
+  "note": "",
+  "num_turns": 2,
+  "observed": {
+    "main_model": "claude-opus-5",
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "cacheCreationInputTokens": 0,
+        "cacheReadInputTokens": 0,
+        "canonicalModel": "claude-haiku-4-5",
+        "contextWindow": 200000,
+        "costBasis": "list",
+        "costUSD": 0.044829,
+        "inputTokens": 44694,
+        "maxOutputTokens": 32000,
+        "outputTokens": 27,
+        "provider": "firstParty",
+        "thinkingTokens": 0,
+        "webSearchRequests": 0
+      },
+      "claude-opus-5": {
+        "cacheCreationInputTokens": 66606,
+        "cacheReadInputTokens": 0,
+        "canonicalModel": "claude-opus-5",
+        "contextWindow": 1000000,
+        "costBasis": "list",
+        "costUSD": 1.253895,
+        "inputTokens": 2,
+        "maxOutputTokens": 64000,
+        "outputTokens": 23513,
+        "provider": "firstParty",
+        "thinkingTokens": 21382,
+        "webSearchRequests": 0
+      }
+    }
+  },
+  "request_md_sha256": "6620c8d91e9db350742d3de92caffce43c38b194780444db314f1dca0c09c8d3",
+  "requested": {
+    "api_id": "claude-opus-5",
+    "effort": "high",
+    "model": "opus-5"
+  },
+  "response_json_sha256": "0f9834f21739eca2bcff4a71a044323de77256b76110404cbe67ae727b700271",
+  "returncode": 0,
+  "session_id": "110cd5dc-34cc-4e37-a7bf-edaaedd5a20d",
+  "started_at": "2026-09-13T09:18:57Z",
+  "stderr_tail": "",
+  "timed_out": false,
+  "total_cost_usd": 1.298724
+}

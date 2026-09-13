@@ -1,0 +1,325 @@
+{
+  "comparison_axis": "effort",
+  "extras": {
+    "-:compose.prompt-lint": {
+      "defect_catalog": {
+        "ruleset_size": 0,
+        "vacuous": "empty-ruleset"
+      },
+      "lane_id": "compose/v3/batch-0"
+    },
+    "v1:compose.annotation-syntax": {
+      "variant": "v1"
+    },
+    "v1:compose.frontmatter": {
+      "variant": "v1"
+    },
+    "v1:compose.lane-verified": {
+      "effort_evidence": "requested-flag",
+      "observed": {
+        "effort": "high",
+        "model": "claude-opus-5"
+      },
+      "variant": "v1"
+    },
+    "v1:compose.spec-digest": {
+      "variant": "v1"
+    },
+    "v2:compose.annotation-syntax": {
+      "variant": "v2"
+    },
+    "v2:compose.frontmatter": {
+      "variant": "v2"
+    },
+    "v2:compose.lane-verified": {
+      "effort_evidence": "requested-flag",
+      "observed": {
+        "effort": "xhigh",
+        "model": "claude-opus-5"
+      },
+      "variant": "v2"
+    },
+    "v2:compose.spec-digest": {
+      "variant": "v2"
+    },
+    "v3:compose.annotation-syntax": {
+      "variant": "v3"
+    },
+    "v3:compose.frontmatter": {
+      "variant": "v3"
+    },
+    "v3:compose.lane-verified": {
+      "effort_evidence": "requested-flag",
+      "observed": {
+        "effort": "max",
+        "model": "claude-opus-5"
+      },
+      "variant": "v3"
+    },
+    "v3:compose.spec-digest": {
+      "variant": "v3"
+    }
+  },
+  "findings": [],
+  "lanes": {
+    "v1": {
+      "effort": "high",
+      "lane_id": "compose/v1/batch-0",
+      "mismatch": false,
+      "model": "claude-opus-5",
+      "response_digest": "0f9834f21739eca2bcff4a71a044323de77256b76110404cbe67ae727b700271"
+    },
+    "v2": {
+      "effort": "xhigh",
+      "lane_id": "compose/v2/batch-0",
+      "mismatch": false,
+      "model": "claude-opus-5",
+      "response_digest": "4020f6aae2b37ad8097c1a9ed9128e9965f4b3c68d2589be8fe8e0d6bf8b9038"
+    },
+    "v3": {
+      "effort": "max",
+      "lane_id": "compose/v3/batch-0",
+      "mismatch": false,
+      "model": "claude-opus-5",
+      "response_digest": "0217fd5ad96223521865e35933240d7d3bf70098662293c0cafe8ceb7a4af988"
+    }
+  },
+  "law_commit": "4594bef2cb0688ab3f6e97fd9ae949a6fa44ceff",
+  "pens": [
+    {
+      "effort": "high",
+      "model": "opus-5",
+      "variant": "v1",
+      "vendor": "anthropic"
+    },
+    {
+      "effort": "xhigh",
+      "model": "opus-5",
+      "variant": "v2",
+      "vendor": "anthropic"
+    },
+    {
+      "effort": "max",
+      "model": "opus-5",
+      "variant": "v3",
+      "vendor": "anthropic"
+    }
+  ],
+  "rows": [
+    {
+      "check_id": "compose.input-digest",
+      "checked": 5,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.prompt-lint",
+      "checked": 195,
+      "ruleset": "prompt-negation",
+      "ruleset_size": 1,
+      "ruleset_version": "SPEC-1.9",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.prompt-lint",
+      "checked": 195,
+      "ruleset": "speech-acts+defect-catalog",
+      "ruleset_size": 24,
+      "ruleset_version": "1.0+0",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.prompt-lint",
+      "checked": 195,
+      "ruleset": "prompt-negation",
+      "ruleset_size": 1,
+      "ruleset_version": "SPEC-1.9",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.prompt-lint",
+      "checked": 195,
+      "ruleset": "speech-acts+defect-catalog",
+      "ruleset_size": 24,
+      "ruleset_version": "1.0+0",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.prompt-lint",
+      "checked": 195,
+      "ruleset": "prompt-negation",
+      "ruleset_size": 1,
+      "ruleset_version": "SPEC-1.9",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.prompt-lint",
+      "checked": 195,
+      "ruleset": "speech-acts+defect-catalog",
+      "ruleset_size": 24,
+      "ruleset_version": "1.0+0",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.frontmatter",
+      "checked": 5,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.spec-digest",
+      "checked": 2,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.annotation-syntax",
+      "checked": 26,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.lane-verified",
+      "checked": 2,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.frontmatter",
+      "checked": 5,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.spec-digest",
+      "checked": 2,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.annotation-syntax",
+      "checked": 29,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.lane-verified",
+      "checked": 2,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.frontmatter",
+      "checked": 5,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.spec-digest",
+      "checked": 2,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.annotation-syntax",
+      "checked": 28,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "compose.lane-verified",
+      "checked": 2,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    }
+  ],
+  "stage": "compose",
+  "status": "ok",
+  "variants": {
+    "v1": {
+      "attempt": 0,
+      "digest": "sha256:65e3b3f66bd6f707255895c6e22fb0508b115681acebbccc2ff826744be5b3dd",
+      "lane_id": "compose/v1/batch-0",
+      "path": "/home/laptop/projects/patent-docent/.worktrees/gdm-wo2026128750a1-agent-memory-3/runs/gdm-wo2026128750a1-agent-memory-3/40-compose/v1/thread.annotated.md",
+      "status": "ok"
+    },
+    "v2": {
+      "attempt": 0,
+      "digest": "sha256:585c15f6f2a9eec13fd49321d02873c07daef84a3729c0af1ac52480262c99d5",
+      "lane_id": "compose/v2/batch-0",
+      "path": "/home/laptop/projects/patent-docent/.worktrees/gdm-wo2026128750a1-agent-memory-3/runs/gdm-wo2026128750a1-agent-memory-3/40-compose/v2/thread.annotated.md",
+      "status": "ok"
+    },
+    "v3": {
+      "attempt": 0,
+      "digest": "sha256:a7ef123354243fc509d1699b852f0d61e5351bcff0ad0ab0119e00ad1260787d",
+      "lane_id": "compose/v3/batch-0",
+      "path": "/home/laptop/projects/patent-docent/.worktrees/gdm-wo2026128750a1-agent-memory-3/runs/gdm-wo2026128750a1-agent-memory-3/40-compose/v3/thread.annotated.md",
+      "status": "ok"
+    }
+  }
+}

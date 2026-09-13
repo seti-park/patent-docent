@@ -1,0 +1,90 @@
+{
+  "properties": {
+    "effort": {
+      "type": "string"
+    },
+    "input_digest": {
+      "type": "string"
+    },
+    "lane_id": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "payload": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "thread_annotated_md": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "thread_annotated_md"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "material_defect": {
+              "additionalProperties": false,
+              "properties": {
+                "blocked_slots": {
+                  "items": {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "type": "array"
+                },
+                "defect_kind": {
+                  "enum": [
+                    "factual-error",
+                    "unresolvable-grounding",
+                    "missing-fact"
+                  ]
+                },
+                "evidence": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "material_ids": {
+                  "items": {
+                    "pattern": "^M[0-9]+$",
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                }
+              },
+              "required": [
+                "material_ids",
+                "defect_kind",
+                "evidence",
+                "blocked_slots"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "material_defect"
+          ],
+          "type": "object"
+        }
+      ],
+      "title": "lane-response/compose",
+      "type": "object"
+    }
+  },
+  "required": [
+    "lane_id",
+    "model",
+    "effort",
+    "input_digest",
+    "payload"
+  ],
+  "type": "object"
+}
