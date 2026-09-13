@@ -493,8 +493,45 @@ def test_continue_envelope_binds_verdict_and_unblocks_grounding(tmp_path) -> Non
         pytest.fail(f"게이트가 봉투로 진입하지 않았다: {gate}")
 
 
-def test_help_lists_eight_commands() -> None:
+def test_help_lists_nine_commands() -> None:
     parser = drv.build_parser()
     listed = parser._subparsers._group_actions[0].choices  # noqa: SLF001 - 명령 집합 대조
     if tuple(listed) != drv.COMMANDS:
         pytest.fail(f"명령 8 이 아니다: {tuple(listed)}")
+
+
+def _echo_stub(lane_id_echo: str, digest_echo: str):
+    class Echo:
+        calls: list = []
+        def __call__(self, argv, stdin, env, timeout):
+            self.calls.append(argv)
+            body = {"lane_id": lane_id_echo, "model": "fable-5.1", "effort": "low",
+                    "input_digest": digest_echo, "payload": {"items": []}}
+            out = {"result": json.dumps(body), "structured_output": body, "is_error": False,
+                   "modelUsage": {"claude-fable-5-1": {"outputTokens": 10}}, "num_turns": 1,
+                   "total_cost_usd": 0.1, "duration_ms": 5, "session_id": "s"}
+            return drv.ExecResult(0, json.dumps(out).encode(), b"", False, 5)
+    return Echo()
+
+
+def test_response_lane_id_comes_from_request_not_lane_echo(tmp_path) -> None:
+    """2026-09-13 step 3 실측 — 레인이 lane_id 칸에 'read-a' 만 적어도 응답 파일의 lane_id 는 좌표다."""
+    ctx, lanes, request, lines = single_lane(tmp_path)
+    ctx.executor = _echo_stub("read-a", request.input_digest)
+    outcome = drv.call_lane(ctx, lanes, request.lane_id)
+    if not outcome.ok:
+        pytest.fail(f"호출이 실패로 처리됐다: {outcome.message}")
+    with open(outcome.response_path, encoding="utf-8") as handle:
+        written = json.load(handle)
+    if written["lane_id"] != request.lane_id:
+        pytest.fail(f"응답 파일 lane_id 가 좌표가 아니다: {written['lane_id']}")
+    if receipt(ctx, request.lane_id)["lane_self_report"].get("lane_id") != "read-a":
+        pytest.fail("레인의 lane_id 반향이 영수증에 남지 않았다")
+
+
+def test_input_digest_echo_mismatch_writes_no_response(tmp_path) -> None:
+    ctx, lanes, request, lines = single_lane(tmp_path)
+    ctx.executor = _echo_stub(request.lane_id, "0" * 64)
+    outcome = drv.call_lane(ctx, lanes, request.lane_id)
+    if outcome.ok or (outcome.response_path and os.path.exists(outcome.response_path)):
+        pytest.fail("입력 지문 반향 불일치인데 응답 파일이 써졌다")

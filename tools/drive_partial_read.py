@@ -103,7 +103,7 @@ APPROVAL_SCHEMA_REL = freeze_stage.APPROVAL_SCHEMA
 APPROVAL_NAME_RE = re.compile(r"^approval-v([1-9][0-9]*)\.md$")
 STDERR_TAIL_CHARS = 2000
 REVIEW_SECTION_LINES = 12
-COMMANDS = ("init", "step", "lanes", "continue", "cp1", "approve", "freeze", "seal")
+COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal")
 MANIFEST_BASENAME = "MANIFEST-sha256.txt"
 
 
@@ -537,6 +537,7 @@ def call_lane(ctx: Context, lanes_root: str, lane_id: str) -> CallOutcome:
         "lane_self_report": {
             "model": self_report.get("model"),
             "effort": self_report.get("effort"),
+            "lane_id": self_report.get("lane_id"),
         },
         "is_error": is_error,
         "num_turns": parsed.get("num_turns"),
@@ -571,9 +572,17 @@ def call_lane(ctx: Context, lanes_root: str, lane_id: str) -> CallOutcome:
         _write_bytes(receipt_path, _json_bytes(receipt))
         raise DriverExit(EXIT_UNDECIDABLE, f"{lane_id}: {receipt['note']}")
 
+    expected_digest = str(request.get("input_digest", ""))
+    if str(structured.get("input_digest", "")) != expected_digest:
+        receipt["note"] = "입력 지문 반향 불일치 — 레인이 다른 요청서를 읽었거나 옮겨 적지 않았다 · 응답 미작성"
+        _write_bytes(receipt_path, _json_bytes(receipt))
+        return CallOutcome(lane_id, False, f"{lane_id}: {receipt['note']}", receipt_path)
+
     first_call = not _any_verified_call(ctx)
+    # `lane_id` 는 구동기가 아는 좌표다 — 레인의 반향은 영수증에만(2026-09-13 step 3 실측: opus low 레인이
+    # 'read-a' 만 적어 러너가 LaneContractError 로 거부). `input_digest` 는 P-12 시점 결속이라 레인 반향을 쓴다.
     response = {
-        "lane_id": structured["lane_id"],
+        "lane_id": lane_id,
         "model": main_model,
         "effort": effort,
         "input_digest": structured["input_digest"],
@@ -801,6 +810,57 @@ def _read_already_terminated(paths: RunPaths) -> tuple[bool, str]:
         if isinstance(convergence, dict) and convergence.get("phase") == "full":
             return True, "convergence.json#phase=full"
     return False, ""
+
+
+def cmd_rewrap(ctx: Context, args: argparse.Namespace) -> int:
+    """보존된 원시 출력(`.raw.json`)에서 응답 파일을 다시 조립한다 — 모델 호출 없음 · 결정론.
+
+    쓰는 경우 = 구동기 자신의 조립 결함으로 응답 파일이 잘못 써진 좌표(예: lane_id 칸). 레인 출력의
+    `payload`·`input_digest` 는 그대로, `lane_id` = 좌표, `model` = 원시 출력 `modelUsage` 주 키,
+    `effort` = request.json 값. 입력 지문 반향이 요청과 다르면 쓰지 않는다.
+    """
+    paths = ctx.paths()
+    lanes_root = paths.lanes_dir
+    lane_id = args.lane_id
+    try:
+        request_json = lane_file(lanes_root, lane_id, REQUEST_JSON)
+        response_json = lane_file(lanes_root, lane_id, RESPONSE_JSON)
+    except LaneContractError as exc:
+        raise DriverExit(EXIT_USAGE, f"좌표 어휘 위반: {exc}") from exc
+    raw_path = _raw_path(ctx, lane_id)
+    if not os.path.isfile(request_json) or not os.path.isfile(raw_path):
+        raise DriverExit(EXIT_USAGE, f"request.json 또는 원시 출력이 없다: {lane_id}")
+    request = _load_json(request_json)
+    with open(raw_path, "rb") as handle:
+        parsed = json.loads(handle.read().decode("utf-8"))
+    structured = _structured_output(parsed)
+    if not isinstance(structured, dict) or not all(k in structured for k in ("input_digest", "payload")):
+        raise DriverExit(EXIT_UNDECIDABLE, f"{lane_id}: 원시 출력에 input_digest·payload 가 없다")
+    if str(structured.get("input_digest", "")) != str(request.get("input_digest", "")):
+        raise DriverExit(EXIT_UNDECIDABLE, f"{lane_id}: 입력 지문 반향 불일치 — 다시 조립하지 않는다")
+    main_model = main_model_of(parsed.get("modelUsage"))
+    if main_model is None:
+        raise DriverExit(EXIT_UNDECIDABLE, f"{lane_id}: 원시 출력에 modelUsage 가 없다")
+    response = {
+        "lane_id": lane_id,
+        "model": main_model,
+        "effort": str(request.get("effort", "")),
+        "input_digest": structured["input_digest"],
+        "payload": structured["payload"],
+    }
+    blob = (json.dumps(response, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    if ctx.dry_run:
+        ctx.out(f"[dry-run] rewrap {lane_id}: {len(blob)} B · model={main_model}")
+        return EXIT_OK
+    _write_bytes(response_json, blob)
+    receipt_path = _receipt_path(ctx, lane_id)
+    receipt = _previous_receipt(ctx, lane_id) if os.path.isdir(ctx.calls_dir) else None
+    if isinstance(receipt, dict):
+        receipt["response_json_sha256"] = _sha256_bytes(blob)
+        receipt["rewrapped_at"] = _now_iso()
+        _write_bytes(receipt_path, _json_bytes(receipt))
+    ctx.out(f"rewrap {lane_id}: 응답 파일 재조립 · model={main_model}")
+    return EXIT_OK
 
 
 def cmd_lanes(ctx: Context, args: argparse.Namespace) -> int:
@@ -1102,6 +1162,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("step", help="read 스테이지 재진입 + 대기 좌표 순차 호출").add_argument("run_id")
     sub.add_parser("lanes", help="무변경 조회 — 좌표 상태 · 영수증 요약").add_argument("run_id")
+    rewrap = sub.add_parser("rewrap", help="원시 출력(.raw.json)에서 응답 파일 재조립 — 모델 호출 없음")
+    rewrap.add_argument("run_id")
+    rewrap.add_argument("lane_id")
 
     cont = sub.add_parser("continue", help="상신 축 미달에만 · convergence_continue 봉투")
     cont.add_argument("run_id")
@@ -1132,6 +1195,7 @@ _COMMANDS = {
     "init": cmd_init,
     "step": cmd_step,
     "lanes": cmd_lanes,
+    "rewrap": cmd_rewrap,
     "continue": cmd_continue,
     "cp1": cmd_cp1,
     "approve": cmd_approve,
