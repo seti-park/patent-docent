@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(158차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(159차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 159차 — 구동 설계 `docs/decisions/D-20260913-03-read-run-2-driver.md`(`da831d8` · READ **부분 런** `partial/freeze` · 런 ID `gdm-wo2026128750a1-agent-memory-2` · 명령 8 · CLI 레인 규격) → **구동기 M3 레인 기동**(추기 121 · worktree `~/projects/workspaces/pd-m3-t60-driver` · 레인 `pd-lanes/fable-m3-t60-driver/` · fable low). **지금 할 일 = 회수 대기** → 재현(새 시험 M30 · 전체 시험 · 관문 · `--dry-run`) → 병합 → Owner 에게 실런 기동 한 줄 알림 → `init` → `step` 반복(분해 2 → 접지 ≤9 → 통합 1) → CP1(exit 20) → 판독본 + §8-b 를 Owner 께 → `approve` → `freeze` → `seal` → 기록. Owner 재정 대기 = 없음. 살아 있는 배경 = 구동기 M3 레인 1 + `/tmp` 감시 Monitor 1.**
+
+> [정정 2026-09-13 · 159차] 158차의 「지금 할 일 = 구동 설계 문서」는 끝났다(추기 121).
 
 **★ 09-13 158차 — **T59 적용 병합**(`62ca08b` · 스키마 0.9.0 · 판독본 §8-b · 봉투 `review_adjudicated[]` · freeze 전건 덮기 · 924 통과 · 추기 120) · 공식 문서 조사 채택 5(`--bare` · `--json-schema` · `--permission-mode dontAsk` · 모델 검증 = init.model + modelUsage · effort 미노출). **지금 할 일 = 예행 런 2 구동 설계 문서** `docs/decisions/D-20260913-03-rehearsal-2-driver.md`(총괄 저작 · 재정 T60 = M1a 직접 · 전 레인 CLI · 결정론 파이썬 · T40 구동기 `~/projects/workspaces/pd-lanes/t40-measure/t40_drive.py` 골격 · 응답 파일 어댑터 `engine/lanes/file_adapter.py` · 새 run_id · rehearsal) → 구동기 M3 5부 스펙 → 예행 런 2(`WO2026-128750A1` · 스테이징 `~/projects/workspaces/docent-rehearsal-01-source/`) → CP1 판독본을 Owner 께. Owner 재정 대기 = 없음. 살아 있는 배경 = `/tmp` 감시 Monitor 1.**
 
