@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(180차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(181차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 181차 — **재정 T67 「① A / ② A」 등재**(`ruling-20260913-12-T67.md` · 추기 149): crop-only 도면 공개 게시 **허용**(이 파일 = 사용권 재정 ID · 주석판·재조판 제외) · 다음 = **M6**. **지금 할 일 = M3 발주문 ⑤ 작성·기동**(`SPEC-m3-t67-l1.md` · L1 국소 대조 opus-5 high × k=3(§1.10·§4.5·`parameters.yaml#gate.l1.k`) · 화행 플래그 sa-01~03(`speech-acts.yaml` · 거부권 없음) · `[narrative]` 밀수 감사(§3.4) · 수정 루프 캡 3(`fix_directive` → compose 회차 규약으로 펜 국소 수정 · `50-gate/<v>/revisions/r<n>/`) · `final-eyes-brief.json`(루프 개시 전 · 다이제스트 핀) · CP2 봉투 초안(`approval-envelope/v0` `ship_approval` · §1.13) · `gate-report/v0` `l1` 블록 · 구동기 `gate-l1`·`revise`·`cp2`) → 런 -3 v2 에 실행 → CP2 브리핑 T68. 살아 있는 배경 = 없음. 맥락 접두 75만 — 발주문 ⑤ 전 `/compact` 권고.**
+
+> [정정 2026-09-13 · 181차] 180차의 「T67 대기」는 끝났다(전건 A).
 
 **★ 09-13 180차 — **도면 붙은 v2(2회차) L0 advance · stop-shape 첫 가동 · 반입 `875d7a9` · 결정 브리핑 T67 발행** `https://claude.ai/code/artifact/006f386e-aa42-4806-9704-cad5ae3cd53d`(추기 148): ① 사용권 재정 R11(crop-only 공개 게시 · 추천 A) · ② 다음 단계(A M6 L1·수정 루프·CP2 · B 종결 · C 새 런). 출하 후보 = `runs/gdm-wo2026128750a1-agent-memory-3/50-gate/v2/thread.stripped.md` + `30-figures/assets/`(9). **지금 할 일 = Owner `T67: ① _ / ② _` 대기 → 재정문 `ruling-20260913-12-T67.md` + 원장 행 → ① A 면 매니페스트 유지·run.yaml `figures.usage_rights_decision` 은 publish 런 때 · ② A 면 M3 발주문 ⑤(M6 · SPEC §1.10 L1 · §4.5 · 수정 루프 · `final-eyes-brief` · CP2 봉투 · `contracts/parameters.yaml#gate.l1.k`).** 살아 있는 배경 = 없음.**
 
