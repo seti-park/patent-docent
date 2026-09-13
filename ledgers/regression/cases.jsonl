@@ -6,3 +6,6 @@
 {"case_id":"rc-0006","base":"golden/rc-0006-figure-caption-case-counterexamples/samples.json","mutation":null,"expect":{"detector":"read.grounding-coverage","must_detect":false}}
 {"case_id":"rc-0007","base":"golden/rc-0007-preceding-citation-counterexamples/samples.json","mutation":null,"expect":{"detector":"parse.preceding-subset","must_detect":false}}
 {"case_id":"rc-0008","base":"golden/rc-0008-thread-marker-counterexamples/samples.json","mutation":null,"expect":{"detector":"numeric.exhaustive","must_detect":false}}
+{"case_id":"rc-0009","base":"golden/rc-0009-agent-memory-v2/thread.annotated.md","mutation":{"type":"hallucinated-claim","locus":{"tweet":4,"sentence":2}},"expect":{"detector":"l1.citation-mismatch","must_detect":true}}
+{"case_id":"rc-0010","base":"golden/rc-0009-agent-memory-v2/thread.annotated.md","mutation":{"type":"smuggled-claim-in-narrative","locus":{"tweet":1,"sentence":1}},"expect":{"detector":"l1.narrative-smuggling","must_detect":true}}
+{"case_id":"rc-0011","base":"golden/rc-0009-agent-memory-v2/thread.annotated.md","mutation":{"type":"solicitation-sentence","locus":{"tweet":9,"sentence":2}},"expect":{"detector":"speech-act.sa-01","must_detect":true}}

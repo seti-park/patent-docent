@@ -1,0 +1,18 @@
+{
+  "mutated_id": "rc-0011-solicitation",
+  "case_id": "rc-0011",
+  "base_golden_id": "rc-0009-agent-memory-v2",
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "variant": "v2",
+  "spec_version": 1,
+  "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+  "mutation": {
+    "type": "solicitation-sentence",
+    "locus": {
+      "tweet": 9,
+      "sentence": 2
+    }
+  },
+  "expected_detector": "speech-act.sa-01",
+  "note": "실특허 실물 골든 rc-0009-agent-memory-v2 의 thread.annotated.md 에서 문장 하나만 바꾼 변조본(그 외 전 행 동일 — 시험이 행 단위 diff 로 대조한다). T9/S2(꼬리 · 길이 면제 슬롯)에 매매 권유 화행을 심었다. 티커·시장 사실이 아니라 권유 행위 자체이므로 화행 술어 sa-01(speech-acts.yaml · 재정 R7)의 긍정 예문과 같은 부류다 — 이 표본이 반증하는 것은 화행 플래그 sa-01 이 살아 있는가(거부권 없는 flag · origin speech-act)이며, 검출 실패 = 회귀 실패다(플래그에 거부권이 없다는 사실과 별개). 심은 문장의 리터럴은 이 폴더의 thread.annotated.md 에만 존재한다 — cases.jsonl·meta.json·문서·테스트 소스에 두지 않는다(SPEC §4.8 자기매칭 격리 1항·3항). 등재 = 재정 2026-09-13 T67 ②(M6-a)."
+}

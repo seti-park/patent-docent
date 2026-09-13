@@ -118,7 +118,9 @@
 | `numeric.unreviewed-use` | `engine/gate/l0/rules_numeric.py` | **거부권 없는 플래그**(veto: false · 재정 P-B). 출하본이 쓴 수치 키가 미참조 fact 에 속함 — 미참조 목록은 동결본에서 재계산(총괄 재량 ⓓ · `derivation.py#_numeric_inventory` 와 같은 규칙) |
 | `gate.l0-clean` | `engine/stages/gate.py` | `l0.json#defects[]` 가 비어 있지 않음 |
 | `gate.annotation-index` | `engine/annotation/index.py` · `engine/stages/gate.py` | 인덱스 문장 수 ≠ 초안 문장 수 · 인용 ID·narrative 가 초안과 다름 |
-| `gate.no-rewrite` | `engine/stages/gate.py` | 러너 자기 산출 `fix_directive` 에 따옴표 속 5토큰 이상 EN 문장(SPEC §4.7 기제 3 · 탐지 범위의 한계도 그 절). 레인 프롬프트 산출에 대한 같은 린트는 M6 |
+| `gate.no-rewrite` | `engine/stages/gate.py` | 러너 자기 산출(L0)과 **L1 레인 산출**(재정 T67 ②)의 `fix_directive` 전건에 따옴표 속 5토큰 이상 EN 문장(SPEC §4.7 기제 3 · 탐지 범위의 한계도 그 절). 실패 = `halt`. 최종 심급 산출에 대한 같은 린트는 M6-b |
+| `gate.l1-clean` | `engine/stages/gate.py` | `l1.json#defects[]`(k 표 병합 `engine/gate/l1/merge.py` — 과반 채택 · 미달 강등 · SPEC §4.5) 가 비어 있지 않음. flags 는 무관(재정 T67 ②) |
+| `gate.l1-lane-verified` | `engine/stages/gate.py` | k 응답의 `model` 이 opus-5 수용 집합(`read.yaml#model_identity`) 밖이거나 `effort` 가 `gate.yaml#layers.l1.lane.effort` 와 다름(총괄 재량 ⓑ 신설 id · T67 ②). 실패 = `halt`. 영수증 대조는 구동기 몫 |
 | `strip.roundtrip-forward` | `engine/annotation/strip.py` | `strip(annotated).stripped_md` 가 참조 구현(`_reference_strip` · 코드 공유 없음)과 바이트 다름 — strip 이 본문을 슬쩍 고침(SPEC §3.3 순방향 · id 는 총괄 재량 ⓔ) |
 | `strip.roundtrip-reverse` | `engine/annotation/reassemble.py` | `thread.json` + `annotation-index.json` 으로 재조립한 주석본이 원본과 바이트 다름 — 변환의 정보 손실(§3.3 역방향 · ⓔ) |
 | `strip.reassembly` | `engine/stages/gate.py` | `thread.json.tweets[].text` 를 이어붙인 것이 `thread.stripped.md` 와 바이트 다름 — 인간본·기계본 표류(§3.3 재조립 · ⓔ) |
@@ -130,7 +132,7 @@
 
 | 검사 id | 소관 | 정본 서술 |
 |---|---|---|
-| `gate.no-rewrite`(레인 산출 대상) · `gate.final-eyes` | M6 | SPEC §4.7·§1.10 — `gate.no-rewrite` 의 **러너 자기 산출** 린트는 T64 ②(M3/M4-a)로 §2.1 에 올라갔다. 남은 것은 레인(L1·최종 심급)이 낸 `fix_directive` 에 대한 같은 린트와 최종 심급 자체다. `gate.l1-clean` · `gate.final-eyes-isolation` · `gate.final-eyes-scope` 도 같은 자리(계약 `gate.yaml#checks_before_exit` 에 `status: inactive` 로 있다) |
+| `gate.final-eyes` · `gate.final-eyes-isolation` · `gate.final-eyes-scope` | M6-b | SPEC §1.10 — 최종 심급 자체와 그 격리·관할 검사. `gate.no-rewrite`(러너 자기 산출 = T64 ② · L1 레인 산출 = T67 ②)와 `gate.l1-clean`(T67 ②)은 §2.1 에 올라갔다. 남은 것은 최종 심급이 낸 `fix_directive` 에 대한 같은 린트와 최종 심급 자체다(계약 `gate.yaml#checks_before_exit` 에 `status: inactive` 로 있다) |
 | `gate.no-score` · `critique.no-score` | M4·M8 | `contracts/lexicon/score-lint.yaml` |
 | `critique.anchors-adjudicated-only` | M8 | SPEC §1.12 — `design.anchors-adjudicated-only` 는 T64(M5-a)로 §2.1 에 올라갔다 |
 | `probe.independence` · `probe.input-clean` · `probe.no-self-report` · `probe.target-coverage` · `probe.grader-separation` | M7 | SPEC §1.11 — **계기 5종.** ★ 2026-08-19 등재(누락 보수): SPEC §1.11이 이 다섯을 선언하는데 이 사전의 어느 절에도 없었다. 사전이 스스로 내건 갱신 규율("새 검사를 만들면 이 표에 등재한다")이 계기 계열에서만 지켜지지 않은 자리이며, 그 결과 §2.2 목록을 읽고 "M7에 무엇이 남았는가"를 세면 다섯이 빠졌다. **id 신설이 아니라 사전의 누락 보수다** — 이름은 SPEC이 이미 선언했고 여기 옮겨 적을 뿐이다. 정족수 판정 층(`engine/quorum.py`)은 구현되었으나 그것은 검사가 아니라 순수 함수이며 검사 id를 발행하지 않는다 |
@@ -224,7 +226,13 @@
 | `40-compose/compose-report.json` | `compose` | 판정 행 8키 배열(진입 1 + 린트 2×변주 + 검사 4×변주) · findings · `variants` 상태 · `pens` · `comparison_axis` · `lanes` · `law_commit` |
 | `40-compose/tournament-rows.jsonl` | `compose` | **런 안**의 토너먼트 행(append · 변주당 1행 · `outcome ∈ drafted\|missing\|material-defect` · `comparison_axis`·`taste_weight`). `ledgers/tournament.jsonl` 의 쓰기 소유자는 `ship` 뿐이므로(§1.17) 여기 쌓고 `ship` 이 옮긴다(총괄 재량 ⓐ · T64 집행 ②) |
 | `50-gate/<v>/l0.json` | `gate` | L0 판정 블록 `{pass, defects, flags, checks}` — `verdict.json#l0` 과 같은 객체를 따로 저장한 파일. **계약 라인 없음**(총괄 재량 ⓐ · T64 집행 ③) |
-| `50-gate/<v>/verdict.json` | `gate` | 판정문(`gate-report/v0`). L0 13 행 + `gate.input-digest` + strip 4 + `gate.l0-clean`·`gate.annotation-index`·`gate.no-rewrite` · `inactive_layers[]`(L1·L2·화행·최종 심급·`format.stop-shape`) · `decision` 은 가동 층만으로(총괄 재량 ⓑ) · `thread_digest` 로 재진입 판정 |
+| `50-gate/<v>/verdict.json` | `gate` | 판정문(`gate-report/v0`). L0 13 행 + `gate.input-digest` + strip 4 + `gate.l0-clean`·`gate.annotation-index`·`gate.no-rewrite` + (L1 뒤) `gate.l1-clean`·`gate.l1-lane-verified` · `l1` 블록(T67 ②) · `inactive_layers[]`(L2·최종 심급 · 매니페스트 없으면 `format.stop-shape` · L1 전이면 l1·화행 `pending_reason`) · `decision` 은 판정된 층만으로(총괄 재량 ⓑ) · `revision_round` · `final_eyes_brief_digest`(핀) · `thread_digest` 로 재진입 판정 |
+| `50-gate/<v>/l1.json` | `gate`(`run_l1`) | L1 판정 블록 `{pass, k, votes, defects, flags, disagreement_log}` — `verdict.json#l1` 과 같은 객체(재정 T67 ②). `votes[]` = 회차별 원 판정 · `disagreement_log[]` = 만장일치 아닌 항목 전부(재정 R9) |
+| `50-gate/<v>/lanes/` | `gate`(`run_l1`) | L1 레인 왕복 기록(`gate-l1/<v>/batch-<i>/{request.json,request.md,response.json}` · i = 0..k-1 · k 요청은 좌표만 다르다). 계약 미선언(`gate.yaml#lane.lane_id_vocabulary.root` 주석) · 재판정 시 `rounds/r<n>/lanes/` 로 함께 보존 |
+| `50-gate/<v>/final-eyes-brief.json` | `gate`(`run_l1` 첫 진입) | 최종 심급 발췌본(재정 N1 · SPEC §1.10) — 숫자 화이트리스트(4키) · k · 슬롯 매핑 · 재료 판 지문 · `generated_before_loop`. **루프 개시 전 1회 생성 · 불변** · 지문은 `verdict.json#final_eyes_brief_digest` 에 핀 · 재판정 보존(`rounds/`)에서 제자리에 남는다 · 바뀌면 `run_l1` 이 `halt` |
+| `50-gate/<v>/revisions/r<n>/` | `gate`(`engine/gate/loop.py`) | 국소 수정 라운드 n — `directives.json`(지시 = L0+L1 defects 전건 · 개시 판 지문 · 발췌본 핀) · `thread.annotated.md`(펜 결과 사본) · `locality.json`(재량 ⓒ 국소성 검사 행) · `round.json`(open/closed · outcome). 채택 결과는 회차 규약대로 `40-compose/<v>/thread.annotated.md` 가 현행본 |
+| `50-gate/<v>/escalation.json` | `gate`(`engine/gate/loop.py`) | (선택) 국소 수정 캡(`gate.yaml#loop.revision_cap`) 초과 상신 기록 — 남은 결함 · 라운드 · 지문. 실재 = `decision: escalate` |
+| `70-ship/checkpoint2.md` | 오케스트레이터(구동기 `approve-ship`) | CP2 승인 봉투(`approval-envelope/v0` · `ship_approval`) — `target` = `50-gate/<v>/thread.stripped.md` 지문 · `selected_variant` · `flags_adjudicated[]` · `numeric_whitelist_printed[]` 4키(`approved_in` null 은 이 파일명) · `manual_verification_ack[]`. 표면 선언 = `gate.yaml#checkpoint2`(총괄 재량 ⓓ — critique.yaml 이 생기면 그 `owner_checkpoint` 로). `70-ship/` 은 이때 처음 생긴다 |
 | `50-gate/<v>/thread.stripped.md` | `gate` | 출하 후보 텍스트(strip §3.3 ①~⑤). 예행 종료선의 실물(`run-kinds.yaml#kinds.rehearsal.terminates_at_artifact`) · `ship` 은 복사만 |
 | `50-gate/<v>/thread.json` | `gate` | 구조화 출하 객체(`thread/v0`) — `frontmatter_raw` 정본 · `weighted_char_count` · `ship` 은 복사만(재감수 B-04) |
 | `50-gate/<v>/annotation-index.json` | `gate` | 주석 인덱스(`annotation-index/v0`) — 계기 국소화(D9)·L1 감사 표본이 소비. `text_raw` 가 역방향 round-trip 의 전제(재량 ⓕ) |

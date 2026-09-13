@@ -3,11 +3,14 @@
 # 정본 서술 = docs/SPEC.md §1.10. 이 파일은 그 서술의 기계 판독본이며, 어긋나면 SPEC 이 이긴다.
 # 서식 = SPEC §1.2 고정 서식 + `schema` 키 + 서식 확장 3 `checks_on_entry`(재정 P-C).
 # 실물화 = 재정 2026-09-13 T64 ②(L0 규칙 13 + strip + round-trip · **미가동 명기**) · ④(도면 자산층 부재) ·
-#   재정 2026-09-13 T65 ③(도면 자산층 실물화 → `format.stop-shape` 가동 · 재판정 시 직전 산출 보존 `rounds/r<n>/`).
-#   실물 = **L0 결정론 층(stop-shape 포함)과 strip 산출**이다. L1 · L2 · 화행 플래그 · 최종 심급은 아래 `layers`
-#   주석 블록이 「미가동」으로 적으며, 러너는 그 사실을 verdict.json#inactive_layers[] 에 그대로 옮긴다 — 판정하지
+#   재정 2026-09-13 T65 ③(도면 자산층 실물화 → `format.stop-shape` 가동 · 재판정 시 직전 산출 보존 `rounds/r<n>/`) ·
+#   재정 2026-09-13 T67 ②(M6-a · **L1 국소 대조 가동** — opus-5 high × k 독립 실행 다수결 · 화행 플래그 3종 동반 ·
+#   국소 수정 루프 캡 3 `revisions/r<n>/` · `final-eyes-brief.json` 루프 개시 전 생성 · CP2 봉투는 오케스트레이터).
+#   실물 = **L0 결정론 층(stop-shape 포함) · strip 산출 · L1 · 화행 플래그 · 수정 루프**다. L2 · 최종 심급은 아래
+#   `layers` 주석 블록이 「미가동」으로 적으며, 러너는 그 사실을 verdict.json#inactive_layers[] 에 그대로 옮긴다 — 판정하지
 #   않은 층을 판정한 것처럼 적지 않는다(재정 N5 규율 · run-kinds.yaml#kinds.rehearsal.verdict_requirements.
-#   inactive_gates_enumerated). 매니페스트가 없는 런에서는 러너가 stop-shape 미가동 행을 동적으로 더한다.
+#   inactive_gates_enumerated). 매니페스트가 없는 런에서는 러너가 stop-shape 미가동 행을 동적으로 더하고, L1 이 아직
+#   돌지 않은 판정문(gate-l0 만 돈 시점)에는 l1·speech_act_flag 를 `pending_reason` 으로 동적으로 더한다.
 #
 # ★ 공통 규칙 — 런은 시작 시점 git 커밋에 결박된다(재정 P-U1). 계약·스키마·검증기·러너가
 #   함께 고정되므로, 런 도중 리포가 개정되어도 이 런의 법은 run.yaml#engine.commit 하나다.
@@ -19,8 +22,19 @@ lane:
   kind: tool                  # L0 = 도구 실행(결정론). 모델 호출 없음
   model: null
   effort: null
-  # L1 = Opus 5 high × k(parameters.yaml#gate.l1.k) · L2 = Fable · gate.final-eyes = 신규 세션 Opus 5 max —
-  # 전부 SPEC §1.10 의 서술이며 이 라운드에는 없다(아래 layers). 좌석이 생기면 여기 lane 이 llm 으로 바뀐다.
+  # L1 = Opus 5 high × k(parameters.yaml#gate.l1.k) — 가동(재정 T67 ② · 아래 layers.l1.lane 이 좌석 정본) ·
+  # L2 = Fable · gate.final-eyes = 신규 세션 Opus 5 max — SPEC §1.10 의 서술이며 이 라운드에는 없다(아래 layers).
+  lane_id_vocabulary:
+    form: "gate-l1/<variant>[/retry-<n>]/batch-<i>"       # i = 0..k-1 · k 요청의 바이트는 동일(독립 실행은 좌표로만 갈린다)
+    pattern: "^(?P<read_run>[a-z0-9]+(?:-[a-z0-9]+)*)/(?P<task>[a-z0-9]+(?:-[a-z0-9]+)*)(?:/retry-(?P<retry>[1-9][0-9]*))?/batch-(?P<batch>0|[1-9][0-9]*)$"
+    membership: {run: [gate-l1], task: [v1, v2, v3]}
+    enforced_by: engine/gate/l1/plan.py#GateL1LaneRequest
+    root: "50-gate/<variant>/lanes/"                      # 계약 미선언 하위 — 재판정 시 rounds/r<n>/lanes/ 로 함께 보존된다
+  lane_discipline:
+    - "게이트 레인은 read-only 다(C2) — 구동기는 --tools \"\" 로 부르고 응답은 payload 하나다. 판정 레코드는 러너가 쓴다."
+    - "k 요청은 바이트 동일하다. 독립 실행은 좌표(batch-<i>)로만 갈린다(SPEC §4.5 「동일 프롬프트·동일 입력으로 독립 실행 k회」)."
+    - "L1 레인의 model 이 opus-5 수용 집합에 들고 effort 가 high 인지 러너가 본다(gate.l1-lane-verified · 총괄 재량 ⓑ)."
+    - "fix_directive 는 지시문이다 — 러너가 gate.no-rewrite 를 레인 산출에도 건다(D8 · SPEC §4.7 기제 3)."
 
 # 층별 가동 상태 (계약 키 아님 · SPEC §1.2 「위 키 밖의 항목은 주석」 · 태그 [주석]).
 # 러너(engine/stages/gate.py)가 이 블록을 읽어 verdict.json#inactive_layers[] 를 만든다 — 목록을 코드가
@@ -31,17 +45,30 @@ layers:
     status: active
     note: "L0 결정론 — l0-format.yaml#rules[] 13 (format.stop-shape 는 아래 별도 행)"
   l1:
-    status: inactive
-    reason: "재정 T64 ② — 첫 초안 범위 밖 · 소관 M6·M8"
-    ruling: "재정 2026-09-13 T64 ②"
+    status: active
+    ruling: "재정 2026-09-13 T67 ②"
+    lane: {kind: llm, model: opus-5, effort: high, k: parameters.yaml#gate.l1.k}
+    procedure: engine/gate/l1/procedure.md
+    # 규칙 id 는 SPEC §4.2 의 문언이다. 코드는 여기서 읽는다(리터럴 금지) — veto 는 항목이 정한다(§1.10 정정).
+    rules:
+      - {id: l1.citation-mismatch, veto: true,  jurisdiction: "§4.1 #7 — 문장 ↔ 인용 재료 내용 합치"}
+      - {id: l1.narrative-smuggling, veto: true,  jurisdiction: "§4.1 #8 — [narrative] 신고에 기술 주장(§3.4)"}
+      - {id: l1.advice-implicit,   veto: false, jurisdiction: "§4.1 #10 — 암시적 투자 조언 · 표수 무관 flag(origin advisory-rule)"}
+    pending_reason: "L1 미실행 — gate-l0 만 돈 판정문 · gate-l1 이 채운다"
+    note: >-
+      k = parameters.yaml#gate.l1.k 독립 실행 · 동일성 (rule, locus) · 과반 → defect · 미달 → flag(minority-vote) ·
+      만장일치 아닌 항목 전부 disagreement_log[](SPEC §4.5). 요청 = engine/gate/l1/plan.py · 병합 = merge.py.
   l2:
     status: inactive
     reason: "재정 T64 ② — 첫 초안 범위 밖 · 소관 M6·M8"
     ruling: "재정 2026-09-13 T64 ②"
   speech_act_flag:
-    status: inactive
-    reason: "재정 T64 ② — 첫 초안 범위 밖 · 소관 M6·M8"
-    ruling: "재정 2026-09-13 T64 ②"
+    status: active
+    ruling: "재정 2026-09-13 T67 ②"
+    predicates: contracts/lexicon/speech-acts.yaml#predicates       # 술어 3종 · 분류 질문 원문을 요청서에 인라인
+    flag_rule: "speech-act.<predicate>"                               # flag.rule 의 형태(regression.expected_detector 와 같은 꼴)
+    pending_reason: "화행 플래그 미실행 — L1 레인이 동반 수행한다(gate-l1 이 채운다)"
+    note: "거부권 없음 · origin speech-act · predicate · votes 기록 · 다수결이어도 defect 승격 없음(재정 R7 · SPEC §4.4.2)"
   final_eyes:
     status: inactive
     reason: "재정 T64 ② — 첫 초안 범위 밖 · 소관 M6·M8"
@@ -54,6 +81,40 @@ layers:
       매니페스트 항목(asset_id)으로 해소해 edit_class 를 센다(engine/figures/asset_id_of). 매니페스트가 없는 런
       (T64 ④ 시절의 판)에서는 판정 행을 checked 0 · extras.inactive_reason 으로 내고 러너가 inactive_layers[] 에
       {layer: format.stop-shape, reason: 매니페스트 부재} 를 더한다 — 계약이 아니라 그 런의 사실을 적는 것이다.
+
+# 국소 수정 루프(SPEC §1.10 루프 위상 · D8). 값은 계약 주석이다 — parameters.yaml 의 조정 가능 4종 규율(adjustable_scope_note)을
+# 넘지 않기 위해 여기 둔다. 값 이동은 재정 사항이다(규율 11).
+loop:
+  tag: "[주석]"
+  revision_cap: 3
+  basis: "D8 · SPEC §4.3"
+  note: "parameters.yaml 의 조정 가능 4종 규율(adjustable_scope_note)을 넘지 않기 위해 계약 주석으로 둔다 — 값 이동은 재정 사항"
+  runner: engine/gate/loop.py
+  round_dir: "50-gate/<variant>/revisions/r<n>/"
+  escalation: "50-gate/<variant>/escalation.json"
+  locality_rule: >-
+    라운드 결과에서 지시 좌표 밖 문장은 바이트 동일해야 한다(총괄 재량 ⓒ · finding rule annotation.schema ·
+    메시지 「지시 밖 문장이 바뀌었다」 · 새 id 아님). 위반 = 그 라운드 실패(캡 계수) · 현행본은 직전 판으로 되돌린다.
+
+# CP2 표면(SPEC §1.13 · 총괄 재량 ⓓ). §1.13 은 CP2 를 critique 의 owner_checkpoint 에 붙이나 critique·probe·final-eyes 가
+# 미구현이라 그 표면 셋은 결번이고, 봉투 작성은 오케스트레이터(구동기 approve-ship · §1.2 C3)의 몫이다. 경로 선언은
+# engine/paths.py 가 이 블록에서 읽는다(70-ship/ 은 이때 처음 생긴다).
+checkpoint2:
+  tag: "[주석]"
+  id: ship_approval
+  confirm_file: 70-ship/checkpoint2.md
+  recorded_by: orchestrator
+  surfaces:
+    - "50-gate/<variant>/thread.stripped.md"
+    - 30-figures/selection.json
+    - "50-gate/<variant>/l1.json"           # flags[] — 화행 플래그 3종 포함 · 판정자 = Owner(D8·D3)
+    - "50-gate/<variant>/verdict.json"      # decision · checks fail · vacuous_pass · inactive_layers · l0 flags
+    - run.yaml                              # numeric_whitelist[] 전량 인쇄
+  unimplemented_surfaces:                   # 결번 — 미구현 · 재정 T67 ② 범위 밖
+    - {path: "50-gate/<variant>/l2.md", owner: M8}
+    - {path: "60-probe/<variant>/score.json", owner: M7}
+    - {path: "65-critique/<variant>/memo.md", owner: M8}
+    - {path: "verdict.json#final_eyes", owner: M6-b}
 
 checks_on_entry:
   - id: gate.input-digest
@@ -107,16 +168,17 @@ must_not_read:
 
 outputs:
   - "50-gate/<variant>/l0.json"
-  - "50-gate/<variant>/l1.json"           # 미가동(L1) — 이 라운드에는 생성되지 않는다
+  - "50-gate/<variant>/l1.json"           # L1 판정 블록(재정 T67 ②) — verdict.json#l1 과 같은 객체
   - "50-gate/<variant>/l2.md"             # 미가동(L2) — 이 라운드에는 생성되지 않는다
   - "50-gate/<variant>/verdict.json"
   - "50-gate/<variant>/annotation-index.json"
   - "50-gate/<variant>/thread.stripped.md"
   - "50-gate/<variant>/thread.json"       # 구조화 출하 객체 — 재감수 B-04 로 gate 산출로 승격
-  - "50-gate/<variant>/final-eyes-brief.json"   # 미가동(최종 심급) — 이 라운드에는 생성되지 않는다
+  - "50-gate/<variant>/final-eyes-brief.json"   # 최종 심급 발췌본 — L1 첫 진입(루프 개시 전)에 1회 생성 · 불변 · verdict.json#final_eyes_brief_digest 로 핀(재정 N1 · T67 ②)
 
 optional_outputs:
-  - "50-gate/<variant>/revisions/r<n>/"   # 국소 수정 루프(M6 미가동) — 이 라운드에는 생성되지 않는다
+  - "50-gate/<variant>/revisions/r<n>/"   # 국소 수정 라운드 — directives.json(지시) + thread.annotated.md(결과 사본) + round.json(재정 T67 ②)
+  - "50-gate/<variant>/escalation.json"   # 캡 초과 상신 기록(loop 산출)
   - "50-gate/<variant>/rounds/r<n>/"      # 재판정 보존(재정 T65 ③ · 총괄 재량 ⓔ) — 주석본 지문이 바뀌면 직전 산출을 여기로 옮긴 뒤 다시 판정한다
 
 # SPEC §1.10 「종료 전 검사」 7행 글자 그대로 + strip 검사 4(SPEC §3.3 · 총괄 재량 ⓔ 검사 id).
@@ -128,8 +190,11 @@ checks_before_exit:
     implemented_by: engine/stages/gate.py
   - id: gate.l1-clean
     criterion: "l1.json 의 defects[] 가 빈 배열 (flags[] 는 무관)"
-    implemented_by: null
-    status: inactive                    # [주석] L1 미가동 — 재정 T64 ②
+    implemented_by: engine/stages/gate.py
+  - id: gate.l1-lane-verified
+    criterion: "k 응답의 model 이 opus-5 수용 집합(read.yaml#model_identity)에 들고 effort == layers.l1.lane.effort"
+    implemented_by: engine/stages/gate.py
+    note: "총괄 재량 ⓑ 신설 id(compose.lane-verified 와 같은 격). 영수증 대조는 구동기 몫. 실패 = halt."
   - id: gate.no-score
     criterion: "l2.md·verdict.json 에 점수 필드·점수 패턴 부재(§4 의 린트)"
     implemented_by: null
@@ -137,7 +202,7 @@ checks_before_exit:
   - id: gate.no-rewrite
     criterion: "모든 fix_directive 가 대체 문장을 포함하지 않음(지시문 형식 린트)"
     implemented_by: engine/stages/gate.py
-    note: "러너가 자기 산출(fix_directive)에 적용한다 — 따옴표 속 5토큰 이상 EN 문장 부재(SPEC §4.7 기제 3)."
+    note: "러너 자기 산출(L0)과 L1 레인 산출의 fix_directive 전건 — 따옴표 속 5토큰 이상 EN 문장 부재(SPEC §4.7 기제 3). 실패 = halt."
   - id: gate.annotation-index
     criterion: "annotation-index.json 이 트윗→문장→인용 ID 전건을 담고, 초안 문장 수와 일치"
     implemented_by: engine/annotation/index.py
@@ -173,7 +238,7 @@ failure:
   - condition: "L0/L1 결함 발생"
     action: retry(3)
     then: escalate
-    note: "fix_directive 발행 → 국소 수정 라운드. 캡 3회. ★ 이 라운드에는 루프가 없다(M6 미가동) — 러너는 decision: revise 와 지시문을 기록할 뿐 돌리지 않는다"
+    note: "fix_directive 발행 → 국소 수정 라운드(engine/gate/loop.py · 구동기 revise). 캡 = loop.revision_cap"
   - condition: "국소 수정 캡 3회 초과(수렴 실패)"
     action: escalate
     note: "상류 결함 신호로 보고. 대개 재료 반려행(D8)"

@@ -36,6 +36,9 @@ T58 ②(좌석) · T59(봉투 `review_adjudicated[]`) · T64 ①②(연장 봉�
 (모델 호출 없음 · 렌더 환경 부재 = 2 · 0/13/14 — 재정 T65 ③) · `compose` 는 `engine/stages/compose.py#run` 을
 재진입(상한 8)하며 변주 좌표를 **순차** 호출하고, 호출 상한에 닿은 좌표는 결측으로 러너에 신고한다(0 · 10 · 13 · 14 · 15).
 `compose --variant v2 --round 2` 는 그 변주만 회차 2 로 다시 쓴다(좌표 `compose-r2/v2/batch-0` · T65 ③ 재량 ⓔ).
+`gate-l1` 은 `engine/stages/gate.py#run_l1` 을 변주별로 재진입하며 대기 좌표 k 건(`gate-l1/<v>/batch-0..k-1` · opus-5 high ·
+`--tools ""`)을 **순차** 호출한다(0 · 10 · 13 · 14 · 15 — 재정 T67 ②) · `revise` 는 `engine/gate/loop.py#revise` 한 라운드
+(펜 호출 1 + L0 + L1 k 호출 · 0 · 13) · `cp2` 는 CP2 표면 조회(0) · `approve-ship` 은 `70-ship/checkpoint2.md` 봉투(0 · 2).
 
 실행기는 주입 가능한 호출체다. 기본 = 실제 `claude` 서브프로세스. 시험은 스텁을 넣는다.
 이 모듈은 표준 라이브러리와 리포 모듈만 쓴다.
@@ -74,6 +77,9 @@ from engine.lanes.contract import (  # noqa: E402
 )
 from engine.lanes.file_adapter import FileLaneAdapter  # noqa: E402
 from engine.lanes.plan import RESPONSE_SCHEMAS  # noqa: E402
+from engine.gate import checkpoint2 as cp2_mod  # noqa: E402
+from engine.gate import loop as loop_mod  # noqa: E402
+from engine.gate.l1 import plan as l1_plan  # noqa: E402
 from engine.paths import PathContractError, RunPaths, load_stage_contract, run_kinds_contract  # noqa: E402
 from engine.stages import StageError, freeze as freeze_stage  # noqa: E402
 from engine.stages import compose as compose_stage  # noqa: E402
@@ -115,7 +121,10 @@ APPROVAL_SCHEMA_REL = freeze_stage.APPROVAL_SCHEMA
 APPROVAL_NAME_RE = re.compile(r"^approval-v([1-9][0-9]*)\.md$")
 STDERR_TAIL_CHARS = 2000
 REVIEW_SECTION_LINES = 12
-COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal", "extend", "design", "figures", "compose", "gate-l0", "strip")
+COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal", "extend", "design", "figures", "compose", "gate-l0", "strip",
+            "gate-l1", "revise", "cp2", "approve-ship")
+GATE_L1_REENTRY_CAP = 4          # 요청 k 건 → 호출 → 재진입 1 회면 족하다 · 여유 2
+REVISE_REENTRY_CAP = 8           # 펜 1 + L1 k 재진입
 DESIGN_REENTRY_CAP = 4
 COMPOSE_REENTRY_CAP = 8          # 변주 3 × 재시도 2 를 담는다(T64 ③ · 발주문 §3.6)
 EXTENSION_SCHEMA_REL = ("contracts", "schemas", "extension-envelope.schema.json")
@@ -123,7 +132,10 @@ EXTENSION_NAME_RE = re.compile(r"^extension-v([1-9][0-9]*)\.md$")
 # 법 트리 더러움 판정에서 제외하는 접두(런 작업장 · 영수증 · 결박 worktree — 결박 기제 자신의 생성물).
 LAW_DIRTY_EXEMPT_PREFIXES = ("runs/", "evidence/", ".worktrees/")
 # 작업 스키마 조회 사전 — plan.py(READ 4 작업) + design.py(설계 1 작업) + compose.py(변주 3 · 같은 스키마). 값은 각 모듈의 상수 그대로(복사 아님).
+# ★ 래퍼 사전 충돌(총괄 재량 ⓔ · T67 ②): gate-l1 도 task 로 변주 id(v1·v2·v3)를 쓴다 — 같은 키가 compose 와 겹치므로
+#   `wrapper_schema(task, read_run)` 이 request.json 의 read_run 세그먼트로 어느 사전인지 정한다(gate-l1 → L1 사전 · 그 밖 → 이 사전).
 TASK_SCHEMAS = {**RESPONSE_SCHEMAS, **design_stage.RESPONSE_SCHEMAS, **compose_stage.RESPONSE_SCHEMAS}
+STAGE_SCHEMAS = {l1_plan.LANE_RUN: l1_plan.RESPONSE_SCHEMAS}
 MANIFEST_BASENAME = "MANIFEST-sha256.txt"
 
 
@@ -343,9 +355,9 @@ def api_id_for_label(law: str, label: str) -> str:
     )
 
 
-def wrapper_schema_json(task: str) -> str:
+def wrapper_schema_json(task: str, read_run: str | None = None) -> str:
     """`--json-schema` 인자 = 스키마 **JSON 문자열**(파일 경로가 아니다 — CLI 가 `is not valid JSON` 으로 거부 · 2026-09-13 step 1 실측). 파일은 영수증용으로 따로 남긴다."""
-    return json.dumps(wrapper_schema(task), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+    return json.dumps(wrapper_schema(task, read_run), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
 
 
 def lane_argv(api_id: str, effort: str, schema_json: str) -> list[str]:
@@ -383,10 +395,17 @@ def lane_env() -> dict:
     return env
 
 
-def wrapper_schema(task: str) -> dict:
-    """응답 봉투 스키마 — `payload` 에 plan.py·design.py·compose.py 의 작업 스키마를 그대로 품는다(복사 아님)."""
-    if task not in TASK_SCHEMAS:
-        raise DriverExit(EXIT_USAGE, f"plan.py·design.py·compose.py 가 모르는 작업이다: {task!r}")
+def wrapper_schema(task: str, read_run: str | None = None) -> dict:
+    """응답 봉투 스키마 — `payload` 에 plan.py·design.py·compose.py·gate/l1/plan.py 의 작업 스키마를 그대로 품는다(복사 아님).
+
+    `read_run` = request.json 의 run 세그먼트(재량 ⓔ). `gate-l1` 이면 L1 사전, 그 밖(None 포함)은 기존 사전 — m30~m34 의
+    `wrapper_schema("v2")` 호출은 그대로 compose 스키마를 받는다.
+    """
+    table = STAGE_SCHEMAS.get(str(read_run or "").split("-r")[0] if read_run else "", TASK_SCHEMAS)
+    if read_run in STAGE_SCHEMAS:
+        table = STAGE_SCHEMAS[read_run]
+    if task not in table:
+        raise DriverExit(EXIT_USAGE, f"plan.py·design.py·compose.py·gate/l1/plan.py 가 모르는 작업이다: {task!r} (read_run={read_run!r})")
     return {
         "type": "object",
         "required": ["lane_id", "model", "effort", "input_digest", "payload"],
@@ -395,7 +414,7 @@ def wrapper_schema(task: str) -> dict:
             "model": {"type": "string"},
             "effort": {"type": "string"},
             "input_digest": {"type": "string"},
-            "payload": TASK_SCHEMAS[task],
+            "payload": table[task],
         },
     }
 
@@ -494,6 +513,7 @@ def call_lane(ctx: Context, lanes_root: str, lane_id: str) -> CallOutcome:
     task = str(request.get("task", ""))
     label = str(request.get("model", ""))
     effort = str(request.get("effort", ""))
+    read_run = str(request.get("read_run", "")) or None
     if not task or not label or not effort:
         raise DriverExit(EXIT_USAGE, f"request.json 에 task·model·effort 가 없다: {request_json}")
     api_id = api_id_for_label(ctx.law, label)
@@ -506,7 +526,7 @@ def call_lane(ctx: Context, lanes_root: str, lane_id: str) -> CallOutcome:
         )
 
     schema_path = os.path.join(ctx.schemas_dir, safe_lane_name(lane_id) + ".json")
-    argv = lane_argv(api_id, effort, wrapper_schema_json(task))
+    argv = lane_argv(api_id, effort, wrapper_schema_json(task, read_run))
     if ctx.dry_run:
         ctx.out(f"[dry-run] {lane_id}: " + " ".join(_shell_quote(part) for part in argv))
         return CallOutcome(lane_id, True, "dry-run", None, None)
@@ -520,7 +540,7 @@ def call_lane(ctx: Context, lanes_root: str, lane_id: str) -> CallOutcome:
         )
     if previous is not None:
         _rotate_receipt(ctx, lane_id, attempt - 1)
-    _write_bytes(schema_path, _json_bytes(wrapper_schema(task)))
+    _write_bytes(schema_path, _json_bytes(wrapper_schema(task, read_run)))
 
     started_at = _now_iso()
     env = lane_env()
@@ -886,6 +906,8 @@ def cmd_rewrap(ctx: Context, args: argparse.Namespace) -> int:
 def cmd_lanes(ctx: Context, args: argparse.Namespace) -> int:
     paths = ctx.paths()
     rows = lane_inventory(paths.lanes_dir) + lane_inventory(paths.design_lanes_dir) + lane_inventory(paths.compose_lanes_dir)
+    for variant in [pen["variant"] for pen in compose_stage.registry.pens(ctx.law)]:
+        rows.extend(lane_inventory(paths.gate_lanes_dir(variant)))
     if not rows:
         ctx.out("요청 좌표 없음")
     for row in rows:
@@ -1114,7 +1136,7 @@ def cmd_freeze(ctx: Context, args: argparse.Namespace) -> int:
 
 
 def manifest_lines(ctx: Context) -> list[str]:
-    """`evidence/**` 전건(MANIFEST 자신 제외) + `10-read/*.json` + `15-frozen/*` + `20-design/**` + `30-figures/**` + `40-compose/**` + `50-gate/**` 의 sha256 · 경로."""
+    """`evidence/**` 전건(MANIFEST 자신 제외) + `10-read/*.json` + `15-frozen/*` + `20-design/**` + `30-figures/**` + `40-compose/**` + `50-gate/**`(lanes·revisions 포함) + `70-ship/**` 의 sha256 · 경로."""
     paths = ctx.paths()
     entries: list[tuple[str, str]] = []
     base = ctx.worktree if os.path.commonpath([ctx.worktree, ctx.run_root]) == ctx.worktree else os.path.dirname(ctx.run_root)
@@ -1153,6 +1175,10 @@ def manifest_lines(ctx: Context) -> list[str]:
                 add(os.path.join(dirpath, name))
     if os.path.isdir(paths.gate_root):
         for dirpath, _dirs, files in os.walk(paths.gate_root):
+            for name in files:
+                add(os.path.join(dirpath, name))
+    if os.path.isdir(paths.ship_dir):
+        for dirpath, _dirs, files in os.walk(paths.ship_dir):
             for name in files:
                 add(os.path.join(dirpath, name))
     entries.sort(key=lambda pair: pair[1])
@@ -1524,6 +1550,183 @@ def cmd_strip(ctx: Context, args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+# ---------------------------------------------------------------------------
+# gate-l1 · revise · cp2 · approve-ship (재정 T67 ② · M6-a)
+# ---------------------------------------------------------------------------
+
+
+def _call_pending(ctx: Context, lanes_root: str, lane_ids: list[str]) -> list[str]:
+    """대기 좌표를 **순차** 호출한다. 반환 = 실패 좌표."""
+    failed: list[str] = []
+    for lane_id in lane_ids:
+        result = call_lane(ctx, lanes_root, lane_id)
+        ctx.out(f"  {lane_id}: {result.reason}")
+        if not result.ok:
+            failed.append(lane_id)
+    return failed
+
+
+def _l1_line(variant: str, state: dict) -> str:
+    l1 = state.get("l1_pass")
+    l1_text = "pass" if l1 is True else ("fail" if l1 is False else "미판정")
+    return (f"{variant}: l1 {l1_text} · defects {state.get('defects', 0)} · flags {state.get('flags', 0)} · "
+            f"disagreements {state.get('disagreements', 0)} · round {state.get('revision_round', 0)} · {state.get('decision')}")
+
+
+def cmd_gate_l1(ctx: Context, args: argparse.Namespace) -> int:
+    """gate 스테이지 L1 1회 구동 — 변주별 `run_l1` 재진입 + 대기 좌표 k 건 순차 호출(재정 T67 ②).
+
+    기본 대상 = `verdict.json` 이 있는 변주 전부. 종료 0 = 기록 완료(결함 유무 무관 · L0 결함으로 건너뛴 변주 포함) ·
+    10 = 호출 실패 좌표 남음 · 13 = halt·StageError · 14 = 판정 불능 · 15 = 호출 상한.
+    """
+    paths = ctx.paths()
+    _gate_precheck(ctx, paths)
+    all_variants = [pen["variant"] for pen in compose_stage.registry.pens(ctx.law)]
+    wanted = list(args.variant or []) or [v for v in all_variants if os.path.isfile(paths.verdict_json(v))]
+    if not wanted:
+        raise DriverExit(EXIT_TERMINAL_FAIL, "verdict.json 이 있는 변주가 없다 — `gate-l0` 먼저다")
+    if ctx.dry_run:
+        for variant in wanted:
+            pending = [row["lane_id"] for row in lane_inventory(paths.gate_lanes_dir(variant)) if not row["response"]]
+            ctx.out(f"[dry-run] gate.run_l1(run_root={ctx.run_root}, variant={variant}) — 대기 좌표 {len(pending)}")
+            for lane_id in pending:
+                call_lane(ctx, paths.gate_lanes_dir(variant), lane_id)
+        return EXIT_OK
+    for variant in wanted:
+        for _round in range(GATE_L1_REENTRY_CAP):
+            try:
+                outcome = gate_stage.run_l1(run_root=ctx.run_root, repo=ctx.law, variant=variant)
+            except OSError as exc:
+                raise DriverExit(EXIT_UNDECIDABLE, f"io_fault: gate-l1 {exc}") from exc
+            except StageError as exc:
+                raise DriverExit(EXIT_TERMINAL_FAIL, f"gate-l1 정지({variant}): {exc}") from exc
+            status = str(outcome.get("status"))
+            if status == "pending":
+                lane_ids = list(outcome.get("pending") or [])
+                ctx.out(f"{variant}: 대기 좌표 {len(lane_ids)}건(k={outcome.get('k')}): {', '.join(lane_ids)}")
+                failed = _call_pending(ctx, str(outcome.get("lanes_root")), lane_ids)
+                if failed:
+                    raise DriverExit(EXIT_PENDING, f"호출 실패 좌표 {len(failed)}건 — 다음 gate-l1 이 다시 대기로 낸다: {', '.join(failed)}")
+                continue
+            if status == "skipped-l0":
+                ctx.out(f"{variant}: L0 결함 — L1 을 돌리지 않는다(재량 ⓐ) · {outcome.get('decision')}")
+            elif status == "spec-mismatch":
+                ctx.out(f"{variant}: spec_digest 불일치 — escalate")
+            else:
+                ctx.out(_l1_line(variant, outcome) + (" · 재진입(동일 지문)" if outcome.get("reentered") else ""))
+            break
+        else:
+            raise DriverExit(EXIT_CALL_CAP, f"gate-l1 재진입 상한 {GATE_L1_REENTRY_CAP} 도달({variant})")
+    return EXIT_OK
+
+
+def cmd_revise(ctx: Context, args: argparse.Namespace) -> int:
+    """국소 수정 라운드 1회 — `loop.revise` 재진입(펜 좌표 1 → L0 → L1 좌표 k · 순차 호출). 종료 0 = 라운드 종결(판정 기록 · escalate 포함) · 13 = 정지."""
+    paths = ctx.paths()
+    _gate_precheck(ctx, paths)
+    variant = str(args.variant)
+    if ctx.dry_run:
+        ctx.out(f"[dry-run] loop.revise(run_root={ctx.run_root}, variant={variant}) — 열린 라운드 {loop_mod.open_round(paths, variant)}")
+        return EXIT_OK
+    for _round in range(REVISE_REENTRY_CAP):
+        try:
+            outcome = loop_mod.revise(run_root=ctx.run_root, repo=ctx.law, variant=variant)
+        except StageEnvironmentError as exc:
+            raise DriverExit(EXIT_USAGE, f"revise 환경: {exc}") from exc
+        except OSError as exc:
+            raise DriverExit(EXIT_UNDECIDABLE, f"io_fault: revise {exc}") from exc
+        except StageError as exc:
+            raise DriverExit(EXIT_TERMINAL_FAIL, f"revise 정지({variant}): {exc}") from exc
+        for row in outcome.get("rows") or []:
+            for finding in getattr(row, "findings", []) or []:
+                ctx.out(f"  {variant}: {row.check_id}/{finding.rule}@{finding.locus}: {finding.message}")
+        status = str(outcome.get("status"))
+        if status == "pending":
+            lane_ids = list(outcome.get("pending") or [])
+            ctx.out(f"{variant}: 라운드 {outcome.get('round')} · {outcome.get('phase')} · 대기 좌표 {len(lane_ids)}건: {', '.join(lane_ids)}")
+            failed = _call_pending(ctx, str(outcome.get("lanes_root")), lane_ids)
+            if failed:
+                raise DriverExit(EXIT_PENDING, f"호출 실패 좌표 {len(failed)}건 — 다음 revise 가 다시 대기로 낸다: {', '.join(failed)}")
+            continue
+        if status == loop_mod.OUTCOME_LOCALITY_FAILED:
+            ctx.out(f"{variant}: 라운드 {outcome.get('round')} 실패 — 지시 밖 문장이 바뀌었다 · 현행본 복원 · round {outcome.get('revision_round')} · {outcome.get('decision')}")
+            return EXIT_OK
+        if status in ("ok", "escalate"):
+            ctx.out(f"{variant}: 라운드 {outcome.get('round')} 종결 · l0 {'pass' if outcome.get('l0_pass') else 'fail'} · "
+                    f"l1 {outcome.get('l1_pass')} · defects {outcome.get('defects')} · round {outcome.get('revision_round')} · {outcome.get('decision')}"
+                    + (f" · escalation {outcome.get('escalation')}" if outcome.get("escalation") else ""))
+            return EXIT_OK
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"revise 판정 {status}: {outcome.get('reason_label')}")
+    raise DriverExit(EXIT_CALL_CAP, f"revise 재진입 상한 {REVISE_REENTRY_CAP} 도달")
+
+
+def cmd_cp2(ctx: Context, args: argparse.Namespace) -> int:
+    """CP2 표면 조회(무변경) — 실재 표면 · 결번 표 · 봉투 초안 JSON(`approve-ship --flags` 인자용)."""
+    paths = ctx.paths()
+    variant = str(args.variant or "v2")
+    try:
+        view = cp2_mod.surfaces(run_root=ctx.run_root, repo=ctx.law, variant=variant)
+    except StageError as exc:
+        raise DriverExit(EXIT_USAGE, f"cp2: {exc}") from exc
+    present = view["present"]
+    ctx.out(f"CP2 {view['checkpoint']} · variant {variant} · 봉투 = {view['confirm_file']} · decision {view['verdict_decision']}")
+    ctx.out(f"출하 후보: {present['thread_stripped']['path']} {present['thread_stripped']['digest']}")
+    ctx.out(f"도면 선택: {'슬롯 ' + str(len((present['selection'] or {}).get('slots') or [])) if present['selection'] else '(없음)'}")
+    verdict = present["verdict"]
+    ctx.out(f"판정 요지: l0 {verdict['l0_pass']} · l1 {verdict['l1_pass']} · round {verdict['revision_round']} · checks fail {verdict['checks_fail']} · "
+            f"vacuous {verdict['vacuous_pass']} · inactive {[row['layer'] for row in verdict['inactive_layers']]}")
+    ctx.out(f"--- 플래그 {len(present['flags'])}건(판정자 = Owner) ---")
+    for flag in present["flags"]:
+        locus = flag.get("locus") or {}
+        votes = flag.get("votes")
+        ctx.out(f"  {flag['id']}  {flag.get('rule')}  origin={flag.get('origin')}  T{locus.get('tweet')}/S{locus.get('sentence')}"
+                + (f"  votes={votes}" if votes else "") + f"  — {flag.get('note')}")
+    ctx.out(f"--- numeric_whitelist {len(present['numeric_whitelist'])}건(전량) ---")
+    for entry in present["numeric_whitelist"]:
+        ctx.out("  " + json.dumps(entry, ensure_ascii=False))
+    ctx.out("--- 결번 표면(미구현 · 재정 T67 ② 범위 밖) ---")
+    for row in view["unimplemented"]:
+        ctx.out(f"  {row.get('path')}  소관 {row.get('owner')}")
+    ctx.out("--- 봉투 초안(approve-ship --flags 의 JSON · verdict 를 채운다) ---")
+    ctx.out(json.dumps(view["draft"], ensure_ascii=False, indent=2))
+    return EXIT_OK
+
+
+def cmd_approve_ship(ctx: Context, args: argparse.Namespace) -> int:
+    """CP2 승인 봉투 `70-ship/checkpoint2.md`(approval-envelope/v0 · ship_approval). 스키마 위반 = 2 · 미판정 플래그 = 경고만."""
+    paths = ctx.paths()
+    variant = str(args.selected)
+    if not os.path.isfile(paths.verdict_json(variant)):
+        raise DriverExit(EXIT_USAGE, f"verdict.json 이 없다(CP2 전): {paths.verdict_json(variant)}")
+    quote = _read_quote(args.quote_file)
+    try:
+        with open(args.flags, encoding="utf-8") as handle:
+            flags = json.load(handle)
+    except (OSError, ValueError) as exc:
+        raise DriverExit(EXIT_USAGE, f"flags JSON 을 읽을 수 없다: {args.flags}: {exc}") from exc
+    if not isinstance(flags, list):
+        raise DriverExit(EXIT_USAGE, "flags 는 배열이어야 한다")
+    if args.decision == "rejected" and not (args.directive or []):
+        raise DriverExit(EXIT_USAGE, "rejected 봉투는 --directive 를 1건 이상 든다(M-03a)")
+    try:
+        envelope, warnings = cp2_mod.build_envelope(
+            run_root=ctx.run_root, repo=ctx.law, variant=variant, decision=args.decision, owner_quote=quote,
+            located_at=args.located_at, flags_adjudicated=flags, figure_overrides=list(args.figure_override or []),
+            directives=list(args.directive or []), decided_at=args.decided_at,
+        )
+    except StageError as exc:
+        raise DriverExit(EXIT_USAGE, f"approve-ship: {exc}") from exc
+    for line in warnings:
+        ctx.out(f"경고: {line}")
+    if ctx.dry_run:
+        ctx.out(f"[dry-run] CP2 봉투 → {paths.checkpoint2_md}")
+        return EXIT_OK
+    path = cp2_mod.write_envelope(run_root=ctx.run_root, repo=ctx.law, envelope=envelope,
+                                  title=f"# CP2 {args.decision} — ship_approval · {variant}(재정 T67 ②)")
+    ctx.out(f"CP2 봉투 작성: {path} (decision={args.decision} · flags_adjudicated {len(flags)}건 · 경고 {len(warnings)})")
+    return EXIT_OK
+
+
 def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
     lines = manifest_lines(ctx)
     target = os.path.join(ctx.evidence, MANIFEST_BASENAME)
@@ -1543,7 +1746,7 @@ def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="drive_partial_read.py",
-        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계·도면·펜·L0 게이트(T64·T65) — 재정 T60 집행. 명령 15 · 판단 없음.",
+        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계·도면·펜·L0·L1 게이트·수정 루프·CP2(T64·T65·T67) — 재정 T60 집행. 명령 19 · 판단 없음.",
     )
     parser.add_argument("--repo", help="정본 리포(기본 = 이 파일의 위치에서 추정)")
     parser.add_argument("--worktree-root", help="런 worktree 의 부모(기본 <repo>/.worktrees)")
@@ -1610,6 +1813,25 @@ def build_parser() -> argparse.ArgumentParser:
     strip_cmd = sub.add_parser("strip", help="파싱 오류 0 인 변주에 strip 산출 3종만(verdict 없이 · 열람 준비용) — SPEC §3.3")
     strip_cmd.add_argument("run_id")
     strip_cmd.add_argument("--variant", action="append", help="대상 변주(반복 가능)")
+    gate_l1 = sub.add_parser("gate-l1", help="gate 스테이지 L1 1회 구동(opus-5 high × k 순차 호출 · 다수결 · final-eyes-brief 핀) — 재정 T67 ②")
+    gate_l1.add_argument("run_id")
+    gate_l1.add_argument("--variant", action="append", help="대상 변주(반복 가능 · 기본 = verdict.json 이 있는 전 변주)")
+    revise = sub.add_parser("revise", help="국소 수정 라운드 1회(펜 회차 1 + L0 + L1 k · 캡 = gate.yaml#loop.revision_cap) — 재정 T67 ②")
+    revise.add_argument("run_id")
+    revise.add_argument("--variant", required=True, help="대상 변주(하나)")
+    cp2 = sub.add_parser("cp2", help="CP2 표면 조회 — 실재 표면 · 결번 표 · 봉투 초안 JSON(무변경)")
+    cp2.add_argument("run_id")
+    cp2.add_argument("--variant", default="v2", help="대상 변주(기본 v2)")
+    approve_ship = sub.add_parser("approve-ship", help="CP2 승인 봉투 70-ship/checkpoint2.md(approval-envelope/v0 · ship_approval)")
+    approve_ship.add_argument("run_id")
+    approve_ship.add_argument("--quote-file", required=True)
+    approve_ship.add_argument("--selected", required=True, help="출하 변주(selected_variant)")
+    approve_ship.add_argument("--flags", required=True, help="flags_adjudicated[] JSON 파일(cp2 초안을 채운 것)")
+    approve_ship.add_argument("--figure-override", action="append", help="도면 자산 id(반복 가능)")
+    approve_ship.add_argument("--decision", choices=("approved", "rejected"), default="approved")
+    approve_ship.add_argument("--directive", action="append", help="rejected 일 때 지시(반복 가능)")
+    approve_ship.add_argument("--located-at", default="세션 대화창 · CP2 응답")
+    approve_ship.add_argument("--decided-at", help="ISO-8601 UTC(기본 지금)")
     return parser
 
 
@@ -1629,6 +1851,10 @@ _COMMANDS = {
     "compose": cmd_compose,
     "gate-l0": cmd_gate_l0,
     "strip": cmd_strip,
+    "gate-l1": cmd_gate_l1,
+    "revise": cmd_revise,
+    "cp2": cmd_cp2,
+    "approve-ship": cmd_approve_ship,
 }
 
 

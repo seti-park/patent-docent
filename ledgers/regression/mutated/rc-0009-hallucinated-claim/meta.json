@@ -1,0 +1,18 @@
+{
+  "mutated_id": "rc-0009-hallucinated-claim",
+  "case_id": "rc-0009",
+  "base_golden_id": "rc-0009-agent-memory-v2",
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "variant": "v2",
+  "spec_version": 1,
+  "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+  "mutation": {
+    "type": "hallucinated-claim",
+    "locus": {
+      "tweet": 4,
+      "sentence": 2
+    }
+  },
+  "expected_detector": "l1.citation-mismatch",
+  "note": "실특허 실물 골든 rc-0009-agent-memory-v2 의 thread.annotated.md 에서 문장 하나만 바꾼 변조본(그 외 전 행 동일 — 시험이 행 단위 diff 로 대조한다). T4/S2 에 재료가 말하지 않는 기술 주장(임베딩이 기기 안에서만 계산되고 밖으로 나가지 않는다)을 심었다. 인용 태그는 원문 그대로라 citation.resolve(L0)는 통과하고, 수치가 없어 numeric.exhaustive 도 통과한다 — 이 표본이 반증하는 것은 L1 국소 대조(l1.citation-mismatch · SPEC §4.1 #7)가 살아 있는가이며 L0 는 이것을 잡지 못하는 것이 정상이다. 심은 문장의 리터럴은 이 폴더의 thread.annotated.md 에만 존재한다 — cases.jsonl·meta.json·문서·테스트 소스에 두지 않는다(SPEC §4.8 자기매칭 격리 1항·3항). 등재 = 재정 2026-09-13 T67 ②(M6-a)."
+}

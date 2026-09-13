@@ -3755,7 +3755,7 @@ patent-docent/
       design.yaml            # ★현행 (M5-a · T64) — 설계 레인·검사 6·실패표
       figures.yaml           # ★현행 (M9-a · T65 ③) — prepare(크롭 전용 렌더)/select(포인터 사영) steps 둘·검사 6·실패표 5+1
       compose.yaml           # ★현행 (M5-b · T64) — 펜 변주 3(effort 사다리)·검사 4·린트·실패표 6+1
-      gate.yaml              # ★현행 (M3/M4-a · T64 ②) — L0 13 · strip 검사 4 · 미가동 층 명기(layers)   probe.yaml (M7)     critique.yaml (M8)
+      gate.yaml              # ★현행 (M3/M4-a · T64 ② · M6-a · T67 ②) — L0 13 · strip 검사 4 · L1 좌석·규칙(layers.l1) · 화행 플래그 · loop(캡 3) · checkpoint2 표면 · 미가동 층 명기(layers)   probe.yaml (M7)     critique.yaml (M8)
       ship.yaml              # (M10 예정)  feedback.yaml (M10)
     schemas/                 # docent 전용 스키마 (JSON Schema draft 2020-12)
       approval-envelope.schema.json  # ★현행 (재정 R8, 재감수 M-03·B-07 + 재정 N9)
@@ -3789,13 +3789,14 @@ patent-docent/
     lib/                     # ★현행 (M1). 결정론 검사 유틸 — 검사 12종의 구현
                              #   + 전수 수치 수확기 harvest.py (M1.5, 재정 P-B — 검사가 아니라 생산)
   engine/                    # docent 전용 러너·게이트·strip·프로브
-    stages/                  # ★현행 (M1): source.py · read.py · freeze.py · ★현행 (M5-a): design.py · ★현행 (M5-b): compose.py · ★현행 (M3/M4-a): gate.py(L0 부분)
+    stages/                  # ★현행 (M1): source.py · read.py · freeze.py · ★현행 (M5-a): design.py · ★현행 (M5-b): compose.py(+ 국소 수정 지시 인라인 · T67 ②) · ★현행 (M3/M4-a): gate.py(L0 부분 · ★현행 M6-a · T67 ②: run_l1 · final-eyes-brief 핀)
     render/                  # ★현행 (M1): material_spec_md.py (CP1 KR 표면 렌더) · ★현행 (M5-a): blueprint_md.py
     lanes/                   # ★현행 (M1): 독해 LLM 레인 호출 구조
     procedure/               # ★현행 (M5-a): design.md — 설계 레인 절차 문서
     pens/                    # ★현행 (M5-b): registry.py(변주→펜 배정 · 계약에서 읽음) · prompt-template.md(긍정형 템플릿) · lint.py(compose.prompt-lint)
     annotation/              # ★현행 (M5-b): parse.py — §3.2 문법 파서(compose.annotation-syntax · L0 · strip 의 유일한 파서) · ★현행 (M3/M4-a): strip.py(§3.3 ①~⑤ + 참조 구현) · index.py(annotation-index · thread · annotation 직렬화) · reassemble.py(역방향 round-trip)
     gate/                    # ★현행 (M3/M4-a · T64 ②): l0/ — 로더(l0-format.yaml#rules[] · retired 거부 · veto 는 항목에서) · rules_{format,annotation,citation,numeric,run}.py · weighted_length.py(시트 weighted_length) · sentence_count.py(sentence_counting)
+                             #   ★현행 (M6-a · T67 ②): l1/ — plan.py(요청 k 건 · 어휘 gate-l1/<v>/batch-<i>) · merge.py(§4.5 다수결) · procedure.md(검증 심급 절차 · 금지 열거) · loop.py(국소 수정 라운드 · 캡 · revisions/r<n>/) · checkpoint2.py(CP2 표면·봉투). final_eyes.py 는 M6-b 예정
   studio/                    # 도면 렌더 (HTML/CSS/SVG + 헤드리스 Chromium)
     templates/
     tokens/

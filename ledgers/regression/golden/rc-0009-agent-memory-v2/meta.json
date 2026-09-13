@@ -1,0 +1,17 @@
+{
+  "golden_id": "rc-0009-agent-memory-v2",
+  "case_id": "rc-0009",
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "variant": "v2",
+  "compose_round": 2,
+  "spec_version": 1,
+  "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+  "source": {
+    "thread": "runs/gdm-wo2026128750a1-agent-memory-3/40-compose/v2/thread.annotated.md",
+    "frozen": "runs/gdm-wo2026128750a1-agent-memory-3/15-frozen/material-spec.v1.json",
+    "blueprint": "runs/gdm-wo2026128750a1-agent-memory-3/20-design/blueprint.json",
+    "copied_at": "2026-09-13",
+    "byte_identical": true
+  },
+  "note": "★ 실특허 실물 · 가공 아님. 런 -3(WO2026-128750A1 · GDM Holding · 동적 상호작용 메모리 데이터스토어)의 v2 2회차 확정 초안(opus-5 xhigh · 도면 헤더 · L0 advance 결함 0 · 재정 T65 ③)을 40-compose/v2/thread.annotated.md · 15-frozen/material-spec.v1.json · 20-design/blueprint.json 에서 **바이트 그대로 복사**한 자족 스냅샷이다(SPEC §6.5 — 이 폴더만으로 재현하며 런 폴더를 참조하지 않는다 · 시험이 바이트 동일을 대조한다). 이 골든은 L1 국소 대조 회귀(재정 2026-09-13 T67 ② · M6-a)의 **기준판**이다 — 변조본 rc-0009(hallucinated-claim) · rc-0010(smuggled-claim-in-narrative) · rc-0011(solicitation-sentence)이 이 스레드에서 한 문장씩 심는다(SPEC §4.8 mutation type enum). 이 파일에는 골든 자신의 cases.jsonl 행이 없다(발주문 §2 「cases.jsonl 3행」) — 반례 golden 행의 등재는 총괄 재량 사항으로 남긴다. 검출기가 LLM(opus-5 high × k)이라 결정론 시험은 「표본 실재 · 서식 · 좌표가 표본 안」까지이고 실검출은 총괄 실런이다. spec_digest 는 같은 폴더 material-spec.frozen.json 의 sha256 실측값이며 주석본 프런트매터의 spec_digest 와 같다(런 -3 동결본 그대로)."
+}

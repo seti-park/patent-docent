@@ -728,8 +728,8 @@ def test_driver_gate_l0_strip_and_seal(tmp_path) -> None:
     evidence = os.path.join(str(tmp_path), "evidence")
     lines: list[str] = []
     head = ["--repo", law, "--run-root", run_root, "--evidence-dir", evidence]
-    if len(drv.COMMANDS) != 15 or drv.COMMANDS[-2:] != ("gate-l0", "strip"):
-        pytest.fail(f"명령 15 가 아니다: {drv.COMMANDS}")
+    if len(drv.COMMANDS) != 19 or drv.COMMANDS[13:15] != ("gate-l0", "strip"):
+        pytest.fail(f"명령 19 가 아니다: {drv.COMMANDS}")
     code = drv.main([*head, "strip", GOLDEN_RUN_ID], out=lines.append)
     if code != 0 or not os.path.isfile(os.path.join(run_root, "50-gate", "v1", "thread.stripped.md")) \
             or os.path.isfile(os.path.join(run_root, "50-gate", "v1", "verdict.json")):

@@ -315,12 +315,36 @@ def figure_block(selection: dict, manifest: dict, sheet: dict) -> str:
     return "\n".join(lines)
 
 
+def directive_block(directives_doc: dict, thread_name: str) -> str:
+    """국소 수정 지시 표(재정 T67 ②) — 규약 절(린트 대상 · 긍정형) + 지시 표 절(데이터 · `lint.DATA_SUBSECTION_PREFIXES[1]`)."""
+    rows = directives_doc.get("directives") or []
+    lines = [
+        f"## 국소 수정 — 라운드 {directives_doc.get('round')}",
+        "",
+        f"이 판은 직전 판(「원천 조각」의 `{thread_name}` · 지문 `{directives_doc.get('thread_digest')}`)의 국소 수정이다. "
+        "아래 표의 좌표에 선 문장만 지시문대로 고쳐 쓴다. 다른 문장은 바이트 그대로 둔다. 태그·헤더·프런트매터 규약은 동일하다.",
+        "",
+        "## 국소 수정 지시 표 (50-gate/<v>/revisions/r<n>/directives.json)",
+        "",
+        "| id | layer | rule | locus | fix_directive |",
+        "|---|---|---|---|---|",
+    ]
+    for row in rows:
+        locus = row.get("locus") or {}
+        lines.append(f"| `{_cell(row.get('id'))}` | `{_cell(row.get('layer'))}` | `{_cell(row.get('rule'))}` "
+                     f"| T{locus.get('tweet')}/S{locus.get('sentence')} | {_cell(row.get('fix_directive'))} |")
+    if not rows:
+        lines.append("| (없음) | | | | |")
+    return "\n".join(lines)
+
+
 def build_instructions(*, run_id: str, pen: dict, spec_version: int, spec_digest: str, sheet: dict,
                        blueprint: dict, defects: list[dict] | None, selection: dict | None = None,
-                       manifest: dict | None = None) -> str:
+                       manifest: dict | None = None, directives: dict | None = None) -> str:
     """지시 블록. 세 변주에서 `variant`·`pen` 표지 줄만 다르다(시험이 대조한다).
 
     `selection`·`manifest` 가 있으면 도면 헤더 표(T65 ③)를, 없으면 T64 ④ 블록(전부 `none`)을 싣는다.
+    `directives` = `{doc, thread_name}` — 국소 수정 라운드의 지시 표(재정 T67 ②).
     """
     blocks = [
         "## 런 표지 — 프런트매터에 그대로 옮겨 적는다\n\n"
@@ -341,6 +365,8 @@ def build_instructions(*, run_id: str, pen: dict, spec_version: int, spec_digest
             "## 재정 T64 ④ — 이번 초안의 헤더 `fig` 는 전부 `none`\n\n"
             "도면은 다음 판에서 붙는다. 모든 트윗 헤더의 `fig` 값은 `none` 이다."
         )
+    if directives is not None:
+        blocks.append(directive_block(directives["doc"], directives["thread_name"]))
     retry = defect_block(defects)
     if retry:
         blocks.append(retry)
@@ -349,8 +375,13 @@ def build_instructions(*, run_id: str, pen: dict, spec_version: int, spec_digest
 
 def build_request(*, paths: RunPaths, repo: str, meta: dict, frozen_row: dict, frozen_text: str,
                   blueprint_text: str, blueprint: dict, pen: dict, attempt: int,
-                  defects: list[dict] | None, round_no: int = 1, figures: dict | None = None) -> ComposeLaneRequest:
-    """`figures` = `{selection, manifest, selection_text, manifest_text}`(실재할 때만 · 원천 조각으로 인라인)."""
+                  defects: list[dict] | None, round_no: int = 1, figures: dict | None = None,
+                  directives: dict | None = None) -> ComposeLaneRequest:
+    """`figures` = `{selection, manifest, selection_text, manifest_text}`(실재할 때만 · 원천 조각으로 인라인).
+
+    `directives` = `{path, doc, text}`(재정 T67 ② 국소 수정 라운드) — 지시 파일과 **직전 판 주석본**을 원천 조각으로 인라인하고
+    지시 블록에 지시 표를 싣는다(직전 판 = 현행 `40-compose/<v>/thread.annotated.md` · 회차 규약상 아직 옮기기 전이다).
+    """
     version = int(frozen_row["spec_version"])
     frozen_name = os.path.relpath(paths.frozen_spec(version), paths.run_root).replace(os.sep, "/")
     blueprint_name = os.path.relpath(paths.blueprint_json, paths.run_root).replace(os.sep, "/")
@@ -360,6 +391,12 @@ def build_request(*, paths: RunPaths, repo: str, meta: dict, frozen_row: dict, f
         selection, manifest = figures["selection"], figures["manifest"]
         slices[os.path.relpath(paths.figures_selection_json, paths.run_root).replace(os.sep, "/")] = figures["selection_text"]
         slices[os.path.relpath(paths.figures_manifest_json, paths.run_root).replace(os.sep, "/")] = figures["manifest_text"]
+    directive_arg = None
+    if directives:
+        thread_name = os.path.relpath(paths.thread_annotated(pen["variant"]), paths.run_root).replace(os.sep, "/")
+        slices[str(directives["path"])] = str(directives["text"])
+        slices[thread_name] = read_text(paths.thread_annotated(pen["variant"]))
+        directive_arg = {"doc": directives["doc"], "thread_name": thread_name}
     return ComposeLaneRequest(
         lane_id=lane_id_for(pen["variant"], attempt, round_no),
         read_run=lane_run_for(round_no),
@@ -370,7 +407,7 @@ def build_request(*, paths: RunPaths, repo: str, meta: dict, frozen_row: dict, f
         instructions=build_instructions(
             run_id=str(meta.get("run_id", "")), pen=pen, spec_version=version,
             spec_digest=str(frozen_row.get("spec_digest", "")), sheet=sheet_values(repo),
-            blueprint=blueprint, defects=defects, selection=selection, manifest=manifest,
+            blueprint=blueprint, defects=defects, selection=selection, manifest=manifest, directives=directive_arg,
         ),
         repo_root=repo,
         slices=slices,
@@ -643,14 +680,15 @@ def _load_figures(paths: RunPaths) -> dict | None:
 
 
 def run(*, run_root: str, repo: str | None = None, adapter=None, missing: dict | None = None, variants=None,
-        round_no: int = 1) -> dict:
+        round_no: int = 1, directives: dict | None = None) -> dict:
     """compose 스테이지 1회 진입.
 
     `missing` = 오케스트레이터가 신고한 결측 변주 `{variant: missing_reason}`(응답 파일 없이 호출 상한에
     닿은 좌표). 러너는 파일만 보므로 레인 사망을 스스로 알 수 없다 — 신고가 오면 토너먼트 결측 행을
     쓰고, 그 행이 있으면 이후 재진입에서도 결측으로 본다(상태의 자리 = `tournament-rows.jsonl`).
 
-    `variants` = 대상 변주(기본 = 계약 전 변주) · `round_no` = 회차(기본 1 · 2 이상은 `variants` 필수 — 재량 ⓔ).
+    `variants` = 대상 변주(기본 = 계약 전 변주) · `round_no` = 회차(기본 1 · 2 이상은 `variants` 필수 — 재량 ⓔ) ·
+    `directives` = 국소 수정 라운드의 지시(`{path, doc, text}` · 회차 2 이상 · 변주 1 · 재정 T67 ②).
 
     반환 = `{status: ok|pending|escalate|halt|reject-upstream, rows, pending, lanes_root, variants, reason_label}`.
     """
@@ -662,6 +700,8 @@ def run(*, run_root: str, repo: str | None = None, adapter=None, missing: dict |
     lane_run_for(round_no)                       # 회차 범위 검사
     if round_no >= 2 and not variants:
         raise StageError("회차 2 이상은 대상 변주를 명시한다(--variant) — 전 변주 재펜은 회차가 아니라 새 런이다")
+    if directives is not None and (round_no < 2 or len(list(variants or [])) != 1):
+        raise StageError("국소 수정 지시는 회차 2 이상 · 변주 하나에만 붙는다(재정 T67 ②)")
 
     # ① 진입
     _check_terminus(meta, repo, contract)
@@ -702,7 +742,7 @@ def run(*, run_root: str, repo: str | None = None, adapter=None, missing: dict |
     def request_for(pen: dict, attempt: int, defects: list[dict] | None) -> ComposeLaneRequest:
         return build_request(paths=paths, repo=repo, meta=meta, frozen_row=frozen_row, frozen_text=frozen_text,
                              blueprint_text=blueprint_text, blueprint=blueprint, pen=pen, attempt=attempt,
-                             defects=defects, round_no=round_no, figures=figures)
+                             defects=defects, round_no=round_no, figures=figures, directives=directives)
 
     lint_rows = _lint_entry(contract, [request_for(pen, 0, None) for pen in pens], repo)
     if any(row.status == "fail" for row in lint_rows):
@@ -807,7 +847,8 @@ def run(*, run_root: str, repo: str | None = None, adapter=None, missing: dict |
                     state["preserved_previous"] = _preserve_round(paths, variant, round_no)
                     write_text(path, drafts[variant])
                 rounds_out[variant] = round_no
-                tournament_rows.append({**base, "outcome": OUTCOME_REDRAFTED, "round": round_no, "reason": REDRAFT_REASON})
+                reason = REDRAFT_REASON if directives is None else f"local revision round {directives['doc'].get('round')} (T67 ②)"
+                tournament_rows.append({**base, "outcome": OUTCOME_REDRAFTED, "round": round_no, "reason": reason})
             else:
                 if not os.path.isfile(path):
                     write_text(path, drafts[variant])
@@ -864,6 +905,7 @@ __all__ = [
     "check_lane_verified",
     "check_spec_digest",
     "decide",
+    "directive_block",
     "figure_block",
     "lane_id_for",
     "lane_run_for",

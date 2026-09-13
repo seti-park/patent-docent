@@ -1,0 +1,18 @@
+{
+  "mutated_id": "rc-0010-smuggled-claim",
+  "case_id": "rc-0010",
+  "base_golden_id": "rc-0009-agent-memory-v2",
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "variant": "v2",
+  "spec_version": 1,
+  "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+  "mutation": {
+    "type": "smuggled-claim-in-narrative",
+    "locus": {
+      "tweet": 1,
+      "sentence": 1
+    }
+  },
+  "expected_detector": "l1.narrative-smuggling",
+  "note": "실특허 실물 골든 rc-0009-agent-memory-v2 의 thread.annotated.md 에서 문장 하나만 바꾼 변조본(그 외 전 행 동일 — 시험이 행 단위 diff 로 대조한다). T1/S1 의 서사 문장을 기술 주장(항목별 암호화)으로 바꾸고 태그는 [narrative] 로 두었다. L0 는 신고의 존재·형식만 보므로 통과한다(SPEC §3.4) — 이 표본이 반증하는 것은 [narrative] 감사(l1.narrative-smuggling · §4.1 #8)가 살아 있는가다. 심은 문장의 리터럴은 이 폴더의 thread.annotated.md 에만 존재한다 — cases.jsonl·meta.json·문서·테스트 소스에 두지 않는다(SPEC §4.8 자기매칭 격리 1항·3항). 등재 = 재정 2026-09-13 T67 ②(M6-a)."
+}

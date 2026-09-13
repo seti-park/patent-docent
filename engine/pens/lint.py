@@ -42,8 +42,10 @@ PREDICATE_LIST_FIELDS = ("positive_examples", "negative_examples")
 LINT_SECTION_PREFIXES = ("## 응답 계약", "## 이 요청의 지시", "## 절차")
 #: 린트 대상에서 **빼는** 절 제목 접두(데이터 절).
 DATA_SECTION_PREFIXES = ("## 원천 조각", "## 블루프린트 요약")
-#: 지시 블록 안의 데이터 절 제목(지시 블록은 `##` 절로 구성된다).
-DATA_SUBSECTION_PREFIX = "## 블루프린트 요약"
+#: 지시 블록 안의 데이터 절 제목(지시 블록은 `##` 절로 구성된다). 국소 수정 지시 표(재정 T67 ②)도 데이터다 —
+#: 게이트가 낸 fix_directive 는 원천 조각이지 펜 프롬프트 템플릿이 아니다.
+DATA_SUBSECTION_PREFIXES = ("## 블루프린트 요약", "## 국소 수정 지시 표")
+DATA_SUBSECTION_PREFIX = DATA_SUBSECTION_PREFIXES[0]
 
 
 def _normalize(text: str) -> str:
@@ -104,7 +106,7 @@ def lint_target(rendered: str) -> str:
                 section = "lint"
             elif section in ("lint", "sub-data"):
                 # 지시 블록 안의 하위 절 — 블루프린트 요약만 데이터, 나머지(런 표지·시트 값·재시도)는 대상.
-                section = "sub-data" if line.startswith(DATA_SUBSECTION_PREFIX) else "lint"
+                section = "sub-data" if line.startswith(DATA_SUBSECTION_PREFIXES) else "lint"
         if section == "lint":
             kept.append(line)
     return "\n".join(kept)
@@ -144,6 +146,7 @@ def lint_prompt(text: str, repo: str) -> list[Finding]:
 
 __all__ = [
     "CHECK_ID",
+    "DATA_SUBSECTION_PREFIXES",
     "PROMPT_NEGATION_RE",
     "RULESET_LEXICON",
     "RULESET_NEGATION",

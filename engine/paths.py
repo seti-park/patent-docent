@@ -38,6 +38,7 @@ LANES_DIRNAME = "lanes"
 LANE_LOG_BASENAME = "lane-log.json"
 SHADOW_POINTER_BASENAME = "shadow-ledger.json"
 ROUNDS_DIRNAME = "rounds"
+REVISIONS_DIRNAME = "revisions"
 RENDER_DIRNAME = ".render"
 
 # 섀도 원장의 리포 상대 자리(재정 P-U4). 루트가 어디인가는 아래 `shadow_ledger_root` 가 정한다.
@@ -140,13 +141,16 @@ def _declared_paths(contract: dict) -> list[str]:
         for entry in contract.get(key) or []:
             if isinstance(entry, str):
                 out.append(entry)
-    checkpoint = contract.get("owner_checkpoint") or {}
-    confirm = checkpoint.get("confirm_file")
-    if isinstance(confirm, str):
-        out.append(confirm)
-    for entry in checkpoint.get("surfaces") or []:
-        if isinstance(entry, str):
-            out.append(entry)
+    # `checkpoint2` = gate.yaml 의 CP2 주석 블록(재정 T67 ② · 총괄 재량 ⓓ). SPEC §1.13 은 CP2 를 critique 의
+    # owner_checkpoint 에 붙이나 그 계약이 아직 없어, 봉투 경로 선언을 gate.yaml 이 든다. 두 키를 같은 방식으로 읽는다.
+    for key in ("owner_checkpoint", "checkpoint2"):
+        checkpoint = contract.get(key) or {}
+        confirm = checkpoint.get("confirm_file")
+        if isinstance(confirm, str):
+            out.append(confirm)
+        for entry in checkpoint.get("surfaces") or []:
+            if isinstance(entry, str):
+                out.append(entry)
     # 단계 진입 게이트가 선언한 경로(재정 P-U3). `continue_envelope` 는 여기에만 선언되므로
     # 이 수집이 없으면 계약이 부른 파일을 러너가 해소하지 못한다 — 그때 코드가 경로를
     # 지어내는 유혹이 생기고, 그 유혹을 막는 것이 이 모듈의 존재 이유다.
@@ -437,8 +441,20 @@ class RunPaths:
 
     @property
     def design_escalation_json(self) -> str:
-        """설계 상신 기록(`optional_outputs`). 실재 = 상신 미처분 · 사람이 본다."""
-        return self.path("escalation.json")
+        """설계 상신 기록(`optional_outputs`). 실재 = 상신 미처분 · 사람이 본다.
+
+        basename 이 `50-gate/<variant>/escalation.json`(재정 T67 ② · 루프 캡 초과 상신)과 같아 basename 조회가 둘을
+        구별하지 못한다 — 변주 자리가 없는 선언을 고른다(`gate_escalation_json` 의 거울상).
+        """
+        return self.absolute(self._declared_unique("escalation.json", variant_slot=False))
+
+    def _declared_unique(self, basename: str, *, variant_slot: bool) -> str:
+        """같은 basename 이 변주 자리 유무로 둘 선언된 경우의 조회(escalation.json). 그 밖은 `declared()` 를 쓴다."""
+        hits = [entry for entry in self._declared
+                if entry.rstrip("/").rsplit("/", 1)[-1] == basename and (("<variant>" in entry) == variant_slot)]
+        if len(set(hits)) != 1:
+            raise PathContractError(f"{basename}(variant_slot={variant_slot}) 선언이 하나가 아니다: {hits}")
+        return hits[0]
 
     @property
     def anchors_provided_json(self) -> str:
@@ -566,10 +582,49 @@ class RunPaths:
         """`50-gate/<variant>/annotation-index.json`(annotation-index/v0) — 계기 국소화(D9)가 소비한다."""
         return self._variant("annotation-index.json", variant)
 
+    def l1_json(self, variant: str) -> str:
+        """`50-gate/<variant>/l1.json` — verdict.json#l1 과 같은 객체(재정 T67 ② · M6-a)."""
+        return self._variant("l1.json", variant)
+
+    def final_eyes_brief(self, variant: str) -> str:
+        """`50-gate/<variant>/final-eyes-brief.json` — 최종 심급 발췌본. 루프 개시 전 1회 생성 · 불변(재정 N1)."""
+        return self._variant("final-eyes-brief.json", variant)
+
+    def gate_escalation_json(self, variant: str) -> str:
+        """`50-gate/<variant>/escalation.json` — 국소 수정 캡 초과 상신 기록(`optional_outputs`).
+
+        basename 이 `20-design/escalation.json` 과 같아 `declared()` 의 basename 조회가 둘을 구별하지 못한다 — 여기서는
+        선언 목록에서 `50-gate/` 접두의 것을 고른다(계약이 선언한 경로만 쓴다는 규율은 그대로다).
+        """
+        return self.absolute(self._declared_unique("escalation.json", variant_slot=True).replace("<variant>", variant))
+
+    def gate_lanes_dir(self, variant: str) -> str:
+        """`50-gate/<variant>/lanes/` — L1 레인 왕복 보관소. 계약 미선언(`gate.yaml#lane.lane_id_vocabulary.root` 주석) —
+        `10-read/lanes/` 와 같은 성질의 러너 산출물이며 재판정 시 `rounds/r<n>/lanes/` 로 함께 보존된다."""
+        return os.path.join(self.gate_dir(variant), LANES_DIRNAME)
+
+    def revisions_dir(self, variant: str, round_no: int) -> str:
+        """`50-gate/<variant>/revisions/r<n>/` — 국소 수정 라운드(지시 + 결과 사본 · SPEC §1.10 「국소 수정 라운드의 파일 규율」).
+        `rounds/r<n>/`(재판정 보존)와 다른 자리다."""
+        return os.path.join(self.gate_dir(variant), REVISIONS_DIRNAME, f"r{int(round_no)}")
+
     @property
     def gate_root(self) -> str:
         """`50-gate/` — 변주 디렉터리들의 부모."""
         return os.path.dirname(self.gate_dir("v1"))
+
+    # -- 70-ship (CP2 봉투 · 재정 T67 ② 재량 ⓓ) -------------------------------
+
+    @property
+    def checkpoint2_md(self) -> str:
+        """`70-ship/checkpoint2.md` — CP2 승인 봉투(`approval-envelope/v0` · `ship_approval`). 오케스트레이터가 쓴다(구동기 approve-ship).
+        선언 = `gate.yaml#checkpoint2.confirm_file`(critique.yaml 이 생기면 그 owner_checkpoint 로 옮긴다)."""
+        return self.path("checkpoint2.md")
+
+    @property
+    def ship_dir(self) -> str:
+        """`70-ship/` — CP2 봉투가 처음 만드는 자리."""
+        return os.path.dirname(self.checkpoint2_md)
 
     # -- 생성 ---------------------------------------------------------------
 

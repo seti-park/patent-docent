@@ -630,7 +630,8 @@ def test_stop_shape_is_active_with_real_manifest(law, run_root) -> None:
     prepared(run_root, law)
     manifest = read_json(os.path.join(run_root, "30-figures", "assets", "manifest.json"))
     frozen = read_json(os.path.join(run_root, "15-frozen", "material-spec.v1.json"))
-    text = read(RUN3_V2_THREAD)          # 읽기만 · fig 전부 none
+    # 읽기만 · fig 전부 none 인 판 = 1회차(런 -3 v2 는 T65 ③ 회차 2 로 도면 헤더가 붙어 rounds/r1 에 보존됐다 — 875d7a9 뒤 낡은 경로 정정 · T67 ②)
+    text = read(os.path.join(os.path.dirname(RUN3_V2_THREAD), "rounds", "r1", "thread.annotated.md"))
     rule = {r.id: r for r in load_rules_from_law(L0Law.load(law))}["format.stop-shape"]
     res = rule.run(context_for(text, law, manifest, frozen))
     stops = [t.n for t in parse_mod.parse(text, slot_enum=SLOT_ENUM).tweets if t.slot in ("stop", "pivot")]
@@ -916,8 +917,8 @@ def _drive(law: str, run_root: str, evidence: str, *argv: str, executor=None, dr
 
 def test_driver_figures_and_compose_round_two(law, run_root, tmp_path, monkeypatch) -> None:
     evidence = os.path.join(str(tmp_path), "evidence")
-    if len(drv.COMMANDS) != 15 or drv.COMMANDS[-4:] != ("figures", "compose", "gate-l0", "strip"):
-        pytest.fail(f"명령 15 가 아니다: {drv.COMMANDS}")
+    if len(drv.COMMANDS) != 19 or drv.COMMANDS[11:15] != ("figures", "compose", "gate-l0", "strip"):
+        pytest.fail(f"명령 19 가 아니다: {drv.COMMANDS}")
     parser = drv.build_parser()
     listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
     if listed != drv.COMMANDS:
