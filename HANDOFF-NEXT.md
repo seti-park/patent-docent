@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(168차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(169차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 169차 — **재정 T64 「① A / ② A / ③ C (opus) / ④ A」 등재**(`ruling-20260913-09-T64.md` · 추기 136): 런 -3 연장 · 설계·펜·L0·strip 넷 제작 · **펜 = Opus 5 high/xhigh/max 3판(R10 그대로)** · 도면 보류. **지금 할 일 = M3 fable low 발주문 ①(설계 러너 + `contracts/schemas/blueprint.schema.json` + design 검사 5 · SPEC §1.7 정본 · 입력 = 런 -3 동결본 v1) 작성 → 기동 → 회수·재현·병합 → 발주문 ②(펜 · SPEC §1.9·§3.2 · 긍정형 프롬프트 · `PROMPT_NEGATION_RE` 린트) → ③(L0 `l0-format.yaml` 전 규칙 + strip §3.3 + round-trip) → 구동기 확장(`extend`·`design`·`compose`·`gate-l0`·`strip`) → 런 -3 연장 봉투(`partial_until: gate`) → 실행(설계 fable high 1 · 펜 opus 3) → 세 판 열람 브리핑.** 발주 규격 = M3 fable low CLI(`claude -p --model claude-fable-5-1 --effort low …` · worktree · `setsid nohup` · STATUS/FINAL 회수 · 5부 스펙 · 증명표). 살아 있는 배경 = 없음.**
+
+> [정정 2026-09-13 · 169차] 168차의 「T64 대기」는 끝났다(재정 도착 · ③ 은 추천과 달리 opus 사다리).
 
 **★ 09-13 168차 — **Owner 「C. 이 특허로 한번 도슨트 글까지 가보자」** → **결정 브리핑 T64 「첫 도슨트 초안까지」** `https://claude.ai/code/artifact/b906f805-5069-47f4-b2e0-0ecf5e8d1459`(추기 135): ① 런 -3 연장(추천) / 새 런 -4 · ② 설계·펜·L0·strip 넷 다(추천) · ③ 펜 fable 3판 low/high/max(추천 · R10 Opus 문언 정정) · ④ 글만 먼저(도면 보류 · stop-shape 미가동 명기). 실물 = 엔진 스테이지 셋(source·read·freeze)뿐 · design/compose/gate/strip 은 계약만. **지금 할 일 = Owner `T64:` 한 줄 대기 → 재정문 T64 → M3 fable low 레인 발주 순서 = ⑴ 설계 러너+blueprint 스키마 ⑵ 펜 러너+긍정형 프롬프트+린트 ⑶ L0 12규칙+strip+round-trip · 구동기 확장 · 런 -3 연장 봉투 → 실행(설계 fable high 1 · 펜 3) → 세 판 열람 브리핑.** 살아 있는 배경 = 없음.**
 
