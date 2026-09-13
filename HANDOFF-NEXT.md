@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(162차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(163차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 163차 — **런 `-3` step 1 = EXIT 20(CP1 대기 · 14:41:04 · 21분 · $18.19 · 호출 10)**: 조기 수렴 **전부 pass**(element-set·tree-edges 1.0 · 「계속」 봉투 불요) → 접지 3(opus low) → 통합(fable low)이 **결정론 검사 `value.harvest-parity` 에 걸려 재시도 1회**(도면 부호 50·53·60·63 을 수치로 실음 · 검사기가 되돌려 자기 수리) → `cp1` 판독본 **§8-b 요청 18건 · target 14종** → **결정 브리핑 T62 「CP1 판독 열넷」 발행** `https://claude.ai/code/artifact/13d4ff8b-5741-40f9-bbae-69d7c7ae83c8`(홈 사본 `patent-docent-session-drafts/OWNER-BRIEF-T62-cp1-20260913.html` · 추기 130). 총괄 실물 대조로 **M99 의 FIG-19 는 틀리고 FIG-18(메모리 52·명령 54)이 맞다** — 추천 = 12 confirmed + M99·M102 undecided(절차 수리 재정으로 상신 예정) · 대안 defect = 반려 재런. **지금 할 일 = Owner `T62:` 한 줄 대기 → 육성을 `--quote-file` 로 · 14 target 을 `--adjudicated` JSON 으로 → `approve gdm-wo2026128750a1-agent-memory-3 --quote-file <f> --adjudicated <json> --drop-decision go` → `freeze` → `seal` → 결과 커밋(worktree `runs/**` · `evidence/calls/` 10 영수증 · 원장 행은 이미 동반) · 추기 131.** 살아 있는 배경 = 없음(step Monitor 종료 · `/tmp` 감시 Monitor 는 Owner 가 정지). 런 -3 worktree `/home/laptop/projects/patent-docent/.worktrees/gdm-wo2026128750a1-agent-memory-3` @ `eb88493` · 레인 로그 `~/projects/workspaces/pd-lanes/read-run-3/`.**
+
+> [정정 2026-09-13 · 163차] 162차의 「step 1 회수 → 조기 수렴 판정서를 Owner 께」는 불요해졌다(조기 수렴 전부 pass · 상신 0) — 곧장 CP1 까지 갔다.
 
 **★ 09-13 162차 — 재정 T61 A 「계속」 → `continue` 봉투 → step 3(접지 3 좌표 opus low 성공 · $4.00) 에서 **구동기 조립 결함**(응답 `lane_id` 에 레인 반향 「read-a」 · 발주자 오류 251)으로 엔진이 `LaneContractError` → **런 `-2` 예외 종결**(T38·T43 · 같은 ID 재호출 불가 · 생산 원장 행 1 추가 · 추기 129). 구동기 수리(`829f17b` · lane_id = 좌표 · 지문 반향 검사 · `rewrap`) · 시험 15. **런 `-3`(`gdm-wo2026128750a1-agent-memory-3` · worktree @ `eb88493` 전 main) `init` ok → step 1 기동 14:19:25**(분해 2 · fable low · 레인 `pd-lanes/read-run-3/` · STATUS-step-1). **지금 할 일 = step 1 회수 → 조기 수렴 판정서를 Owner 께(같은 꼴이면 채팅 한 줄 · T61 봉투는 런 -2 판정서에 결속돼 재사용 불가) → `continue` → step(접지) → step(통합) → CP1 → 판독본 + 8-b 브리핑.** 런 -2 는 보존(사료 · 영수증 6). 살아 있는 배경 = 런 -3 step 1 + `/tmp` 감시.**
 
