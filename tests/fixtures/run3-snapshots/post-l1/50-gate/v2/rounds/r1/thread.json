@@ -1,0 +1,85 @@
+{
+  "frontmatter": {
+    "pen": {
+      "effort": "xhigh",
+      "model": "opus-5",
+      "vendor": "anthropic"
+    },
+    "run_id": "gdm-wo2026128750a1-agent-memory-3",
+    "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+    "spec_version": 1,
+    "variant": "v2"
+  },
+  "frontmatter_raw": "run_id: gdm-wo2026128750a1-agent-memory-3\nvariant: v2\npen: { vendor: anthropic, model: opus-5, effort: xhigh }\nspec_version: 1\nspec_digest: sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407\n",
+  "images": [],
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "schema": "thread/v0",
+  "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+  "spec_version": 1,
+  "tweets": [
+    {
+      "figures": [],
+      "n": 1,
+      "slot": "hook",
+      "text": "An AI agent says it \"remembers\" you — architecture, or a slogan?\nThe independent claim is a five-step loop: query in, memory data from a datastore of your past interactions, both into a sequence model, answer out.\nMemory is its own box, not a longer prompt.",
+      "weighted_char_count": 257
+    },
+    {
+      "figures": [],
+      "n": 2,
+      "slot": "stop",
+      "text": "So what sits in that box?\nNot a transcript.\nA memory object is a container: one or more memory values — a string, an image, audio — plus metadata such as a timestamp, the trigger that stored it, and a summary of the conversation it came from.",
+      "weighted_char_count": 242
+    },
+    {
+      "figures": [],
+      "n": 3,
+      "slot": "stop",
+      "text": "Who decides what gets stored?\nA model does.\nCached inputs go to the model, which predicts whether anything is worth remembering, extracts that portion, and writes it as a memory value.\nYour \"remember this\" is one trigger, and the write can run offline.",
+      "weighted_char_count": 252
+    },
+    {
+      "figures": [],
+      "n": 4,
+      "slot": "stop",
+      "text": "At query time the agent does not reread everything.\nA recall cycle scores stored objects for relevance to the query, using embedding distance such as cosine similarity, and returns a top subset.\nValues come ordered by timestamp, so the model sees recency.",
+      "weighted_char_count": 255
+    },
+    {
+      "figures": [],
+      "n": 5,
+      "slot": "stop",
+      "text": "Memories can be corrected.\nNew timestamped input is matched to a prior memory object and then either replaces it or updates it.\nAligned objects can be consolidated into one.\nSo contradicting information refines a memory instead of noisily overwriting it.",
+      "weighted_char_count": 254
+    },
+    {
+      "figures": [],
+      "n": 6,
+      "slot": "pivot",
+      "text": "Can it forget?\n\"Forget that\" deletes that information from the datastore.\n\"Forget this after three months\" queues it for deletion, and objects past their expiration time are cleared in a maintenance cycle.\nThe same chat that builds the memory erases it.",
+      "weighted_char_count": 253
+    },
+    {
+      "figures": [],
+      "n": 7,
+      "slot": "stop",
+      "text": "What is the memory for?\nThe model first generates an analysis of your query against the memory data, and that analysis is never shown on screen.\nThe response itself can be an API call, so memory shapes what the agent does, not only what it says.",
+      "weighted_char_count": 245
+    },
+    {
+      "figures": [],
+      "n": 8,
+      "slot": "landing",
+      "text": "There are no benchmark numbers in this filing.\nWhat it claims is structural: memory objects built from your own interactions, retrieved by relevance, corrected over time, and deleted when you say so.\nThat is an architecture on paper, not a slogan.",
+      "weighted_char_count": 247
+    },
+    {
+      "figures": [],
+      "n": 9,
+      "slot": "tail",
+      "text": "Published as WO2026-128750A1 on 2026-06-18, with a priority date of 2024-12-11.\nFollow along if you want the next patent walked through like this.",
+      "weighted_char_count": 146
+    }
+  ],
+  "variant": "v2"
+}

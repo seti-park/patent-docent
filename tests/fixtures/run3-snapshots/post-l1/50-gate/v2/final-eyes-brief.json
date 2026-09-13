@@ -1,0 +1,57 @@
+{
+  "generated_at": "2026-09-13T13:28:18Z",
+  "generated_before_loop": true,
+  "k": 3,
+  "kind": "final-eyes-brief",
+  "numeric_whitelist": [
+    {
+      "added_by": "run-discretion",
+      "approved_in": null,
+      "pattern": "\\b[1-9]/[1-9]\\b",
+      "rationale": "Thread position marker n/N; the only number allowed that is not in the frozen material."
+    }
+  ],
+  "revision_round_at_generation": 0,
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "slots": [
+    {
+      "n": 1,
+      "slot": "hook"
+    },
+    {
+      "n": 2,
+      "slot": "stop"
+    },
+    {
+      "n": 3,
+      "slot": "stop"
+    },
+    {
+      "n": 4,
+      "slot": "stop"
+    },
+    {
+      "n": 5,
+      "slot": "stop"
+    },
+    {
+      "n": 6,
+      "slot": "pivot"
+    },
+    {
+      "n": 7,
+      "slot": "stop"
+    },
+    {
+      "n": 8,
+      "slot": "landing"
+    },
+    {
+      "n": 9,
+      "slot": "tail"
+    }
+  ],
+  "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+  "spec_version": 1,
+  "variant": "v2"
+}

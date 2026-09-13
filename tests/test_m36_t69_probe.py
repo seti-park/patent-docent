@@ -41,6 +41,9 @@ from tools import drive_partial_read as drv  # noqa: E402
 
 RUN_ID = "gdm-wo2026128750a1-agent-memory-3"
 RUN3 = os.path.join(REPO, "runs", RUN_ID)
+# 런 -3 는 살아 있는 런이라 반입마다 상태가 앞으로 간다. 이 시험의 전제(L1 pass · advance · L2 미실행)는 `d428830` 상태의
+# 바이트 사본 `tests/fixtures/run3-snapshots/post-l1/` 에 고정한다(40-compose · 50-gate/v2 두 트리 · 나머지는 실물 그대로).
+SNAPSHOT = os.path.join(REPO, "tests", "fixtures", "run3-snapshots", "post-l1")
 VARIANT = "v2"
 SCHEMAS = os.path.join(REPO, "contracts", "schemas")
 LAW_TREES = ("contracts", "reader")
@@ -48,6 +51,7 @@ LAW_FILES = (("docs", "CHARTER.md"), ("engine", "procedure", "design.md"), ("eng
              ("engine", "gate", "l1", "procedure.md"), ("engine", "gate", "l2", "procedure.md"),
              ("engine", "probe", "procedure-questions.md"), ("engine", "probe", "procedure-probe.md"), ("engine", "probe", "procedure-grader.md"))
 COPIED_DIRS = ("15-frozen", "20-design", "30-figures", "40-compose", os.path.join("50-gate", VARIANT))
+SNAPSHOT_DIRS = ("40-compose", os.path.join("50-gate", VARIANT))
 FABLE = "claude-fable-5-1"
 OPUS = "claude-opus-5"
 HAIKU = "claude-haiku-4-5-20251001"
@@ -106,7 +110,7 @@ def make_law(destination: str) -> str:
 def make_run(root: str, *, partial_until: str = "ship") -> str:
     run_root = os.path.join(root, "runs", RUN_ID)
     for rel in COPIED_DIRS:
-        shutil.copytree(os.path.join(RUN3, rel), os.path.join(run_root, rel))
+        shutil.copytree(os.path.join(SNAPSHOT if rel in SNAPSHOT_DIRS else RUN3, rel), os.path.join(run_root, rel))
     frozen = os.path.join(run_root, "15-frozen", "material-spec.v1.json")
     os.chmod(frozen, 0o444)
     real = yaml.safe_load(read(os.path.join(RUN3, "run.yaml")))

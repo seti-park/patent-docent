@@ -39,6 +39,9 @@ from tools import drive_partial_read as drv  # noqa: E402
 
 RUN_ID = "gdm-wo2026128750a1-agent-memory-3"
 RUN3 = os.path.join(REPO, "runs", RUN_ID)
+# 런 -3 는 살아 있는 런이라 반입마다 상태가 앞으로 간다. 이 시험의 전제(L0 통과 · L1 미실행)는 `98ce4e7^`(= c42f1ff) 상태의
+# 바이트 사본 `tests/fixtures/run3-snapshots/pre-l1/` 에 고정한다(40-compose · 50-gate/v2 두 트리 · 나머지는 실물 그대로).
+SNAPSHOT = os.path.join(REPO, "tests", "fixtures", "run3-snapshots", "pre-l1")
 VARIANT = "v2"
 SCHEMAS = os.path.join(REPO, "contracts", "schemas")
 REGRESSION = os.path.join(REPO, "ledgers", "regression")
@@ -48,6 +51,11 @@ LAW_TREES = ("contracts", "reader")
 LAW_FILES = (("docs", "CHARTER.md"), ("engine", "procedure", "design.md"), ("engine", "pens", "prompt-template.md"),
              ("engine", "gate", "l1", "procedure.md"))
 COPIED_DIRS = ("15-frozen", "20-design", "30-figures", "40-compose", os.path.join("50-gate", VARIANT))
+SNAPSHOT_DIRS = ("40-compose", os.path.join("50-gate", VARIANT))
+
+
+def run3_source(rel: str) -> str:
+    return os.path.join(SNAPSHOT if rel in SNAPSHOT_DIRS else RUN3, rel)
 L1_MODEL = "claude-opus-5"
 
 
@@ -104,7 +112,7 @@ def make_run(root: str, *, variants=(VARIANT,), partial_until: str = "gate") -> 
     """런 -3 v2 2회차 실물을 tmp 로 복사(읽기만) + 합성 run.yaml. `variants` 에 v1 이 있으면 v2 사본에 L0 결함을 심는다."""
     run_root = os.path.join(root, "runs", RUN_ID)
     for rel in COPIED_DIRS:
-        shutil.copytree(os.path.join(RUN3, rel), os.path.join(run_root, rel))
+        shutil.copytree(run3_source(rel), os.path.join(run_root, rel))
     frozen = os.path.join(run_root, "15-frozen", "material-spec.v1.json")
     os.chmod(frozen, 0o444)
     real = yaml.safe_load(read(os.path.join(RUN3, "run.yaml")))
@@ -777,7 +785,7 @@ def test_driver_revise_one_round_with_stub(run_root, law, tmp_path) -> None:
 
 
 def test_regression_golden_is_byte_copy_of_run3_and_mutated_samples_are_registered() -> None:
-    pairs = (("thread.annotated.md", os.path.join(RUN3, "40-compose", VARIANT, "thread.annotated.md")),
+    pairs = (("thread.annotated.md", os.path.join(SNAPSHOT, "40-compose", VARIANT, "thread.annotated.md")),
              ("material-spec.frozen.json", os.path.join(RUN3, "15-frozen", "material-spec.v1.json")),
              ("blueprint.json", os.path.join(RUN3, "20-design", "blueprint.json")))
     for name, source in pairs:
@@ -794,7 +802,7 @@ def test_regression_golden_is_byte_copy_of_run3_and_mutated_samples_are_register
             if raw.strip():
                 row = json.loads(raw)
                 rows[row["case_id"]] = row
-    index = read_json(os.path.join(RUN3, "50-gate", VARIANT, "annotation-index.json"))
+    index = read_json(os.path.join(SNAPSHOT, "50-gate", VARIANT, "annotation-index.json"))
     sentence_counts = {t["n"]: len(t["sentences"]) for t in index["tweets"]}
     expected = {"rc-0009": ("hallucinated-claim", "l1.citation-mismatch"), "rc-0010": ("smuggled-claim-in-narrative", "l1.narrative-smuggling"),
                 "rc-0011": ("solicitation-sentence", "speech-act.sa-01")}

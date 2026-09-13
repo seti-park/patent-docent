@@ -1,0 +1,27 @@
+{
+  "directives": [
+    {
+      "fix_directive": "T5/S2 의 인과 접속을 끊어라 — 통합은 M36·M87 이 말하는 범위(정렬 기반 부분집합 병합)로, 정련은 M109 가 드는 기제(지원 기록 보존)로 각각 귀속시켜 다시 서술하라.",
+      "id": "d-l1-001",
+      "layer": "l1",
+      "locus": {
+        "sentence": 2,
+        "tweet": 5
+      },
+      "rule": "l1.citation-mismatch"
+    },
+    {
+      "fix_directive": "T7/S1 후단의 절대 부정을 M35 가 든 한정 범위(질의와 연관된 사용자 인터페이스에의 미노출)와 M86 의 가능 어형에 맞춰 좁혀 재서술하라 — 같은 트윗 앞 절의 M34·M85 서술은 손댈 필요가 없다.",
+      "id": "d-l1-002",
+      "layer": "l1",
+      "locus": {
+        "sentence": 1,
+        "tweet": 7
+      },
+      "rule": "l1.citation-mismatch"
+    }
+  ],
+  "final_eyes_brief_digest": "sha256:2fc300843299c85694e3fa2026a4e363e3b12696037970fd49670c383dfc2db8",
+  "round": 1,
+  "thread_digest": "sha256:065f6c5c59594de1d1dc4bfa869ad8ce72022e433fbc8cd9c586a0f06a2c5727"
+}
