@@ -77,10 +77,12 @@ lane:
         aliases: [claude-sonnet-5, "claude-sonnet-5[1m]", sonnet]
       - label: haiku-5
         aliases: [claude-haiku-5, haiku]
+      - label: haiku-4.5
+        aliases: [claude-haiku-4-5-20251001, haiku]     # 재정 2026-09-13 T69 재량 3 — 계기(probe) 좌석 · 이 환경의 Haiku
       - label: gpt-5.6-sol
         aliases: [gpt-5.6-sol, sol]
     open_question: >-
-      재정 T58 ② 로 `fable-5.1` 등재(2026-09-13) · 표의 나머지는 잠정 유지. 이 표는 통주 실측 1건을 보고 잡은 잠정이며, 어휘의 확정은 입법이다(D7).
+      재정 T58 ② 로 `fable-5.1` 등재(2026-09-13) · 재정 T69 재량 3 으로 `haiku-4.5` 등재(2026-09-13 · 계기 좌석 · 잠정 · 별칭 `haiku` 는 `haiku-5` 와 공유된다) · 표의 나머지는 잠정 유지. 이 표는 통주 실측 1건을 보고 잡은 잠정이며, 어휘의 확정은 입법이다(D7).
       미결 둘 — ① 별칭을 계약이 열거할 것인가 접두 규칙으로 둘 것인가(모델 판이 늘 때마다
       계약을 고쳐야 하는 비용 vs 접두 규칙이 다른 티어를 삼킬 위험) ② 티어 라벨과 API
       식별자 중 **무엇을 정본으로 기록할 것인가**. 지금은 라벨로 대조하고 식별자는 레인

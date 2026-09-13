@@ -16,7 +16,9 @@
 |---|---|---|
 | `material-spec/v0` | `reader/schemas/material-spec.schema.json` | **재료 명세 — 프로젝트 간 계약(D14).** 유일하게 리포 밖(historian)과 공유된다. **두 층으로 갈린다**(재정 P-2 ⓑ) — 공유 코어 10키(사실면: 서지·청구항·도면·항목·내력)와 프로젝트 확장 블록(`extensions.<ns>`, 편집 판단). 라인은 `v0` 그대로다(`0.x` 미동결이므로 승격 사건이 아니다) |
 | `reader-rules/v0` | `reader/reader-rules.yaml` | 독해층 규칙 — 청구항 인벤토리 파싱·종속 인용 어형·항목 생애주기·수치 문법·수렴 축 |
-| `stage-contract/v0` | `contracts/stages/*.yaml` | 스테이지 I/O 계약(서식 = `docs/SPEC.md` §1.2) |
+| `stage-contract/v0` | `contracts/stages/*.yaml` | 스테이지 I/O 계약(서식 = `docs/SPEC.md` §1.2). 실물 8(`source`·`read`·`freeze`·`design`·`figures`·`compose`·`gate`·`probe`) |
+| `probe-report/v0` | `contracts/schemas/probe-report.schema.json` | 계기 1대의 보고 `60-probe/<v>/probe-<i>.json`(재정 T69 ⑥ · M7-a · SPEC §5.2). `a_restatement[3]` + `b_answers[]`(`answer_kind` · `quoted_span`) · **점수·자기평가 필드 없음**(D9) |
+| `probe-score/v0` | `contracts/schemas/probe-score.schema.json` | 계기 집계 `60-probe/<v>/score.json`(재정 T69 ⑥ · SPEC §5.4). `delivery_fidelity` 비가중 평균 · `per_target[]`(`weakest_tweet` 2단 규칙 · `unrepresented`) · `restatement` · `invalidated_answers[]` · `loci[]` · **판정 키 없음**(§5.7) |
 | `convergence/v0` | `contracts/schemas/convergence.schema.json` | READ 결정론 검사 보고서 |
 | `approval-envelope/v0` | `contracts/schemas/approval-envelope.schema.json` | 체크포인트 승인 봉투 |
 | `verdict-check-row/v0` | `contracts/schemas/verdict-check-row.schema.json` | 게이트 판정 행 서식(재정 N5) |
@@ -125,6 +127,13 @@
 | `strip.roundtrip-reverse` | `engine/annotation/reassemble.py` | `thread.json` + `annotation-index.json` 으로 재조립한 주석본이 원본과 바이트 다름 — 변환의 정보 손실(§3.3 역방향 · ⓔ) |
 | `strip.reassembly` | `engine/stages/gate.py` | `thread.json.tweets[].text` 를 이어붙인 것이 `thread.stripped.md` 와 바이트 다름 — 인간본·기계본 표류(§3.3 재조립 · ⓔ) |
 | `strip.residual-tag` | `engine/stages/gate.py` | 출하본에 `\[(M\d+\|narrative)` 잔존(§3.3 안전망 · ⓔ) |
+| `gate.no-score` | `engine/gate/l2/lint.py` · `engine/stages/gate.py#run_l2` | L2 memo 객체의 `rule` slug·`text` 전문에 `contracts/lexicon/score-lint.yaml#patterns[]` 가 매칭됨(재정 N4 · T69 ⑥). 로드 시 등재 4요소·반례 통과를 검증하고, 대상은 `targets[]` allowlist 뿐(스레드 본문 제외). 행 `ruleset: score-lint` · version · size. 실패 = `halt`(D8·D15) |
+| `probe.input-digest` | `engine/stages/__init__.py` | 최신 동결본·블루프린트 부재·지문 불일치이거나 `50-gate/<v>/{thread.stripped.md, annotation-index.json, verdict.json}` 부재 · 인덱스 `spec_version` 이 최신과 다른 채로 계기가 시작됨(재정 T69 ⑥ · P-C) — 환경 오류 |
+| `probe.input-clean` | `engine/stages/probe.py` | 계기 입력(`thread.stripped.md`)에 `probe.yaml#input_clean_patterns`(주석 태그 · 슬롯 헤더 · 프런트매터 구분선) 중 하나가 잔존(§1.11). 실패 = `halt`(측정 무효) |
+| `probe.independence` | `engine/stages/probe.py` | n 보고의 좌표가 겹치거나 응답 지문이 같거나 보고 본문이 다른 계기의 id·좌표를 언급함(§1.11 · §5.2 독립 컨텍스트) |
+| `probe.no-self-report` | `engine/stages/probe.py` | 계기 보고가 `probe-report/v0`(additionalProperties false · 점수·자기평가 필드 부재) 밖(D9) |
+| `probe.target-coverage` | `engine/stages/probe.py` | `score.json#per_target[]` 이 블루프린트 `transmission_targets[]` 를 빠짐없이·초과 없이 덮지 않음(§1.11 · §5.2) |
+| `probe.grader-separation` | `engine/stages/probe.py` | 채점 산출의 좌표가 `probe-grade/…` 가 아니거나 계기 좌표와 같거나 채점자 모델이 계기 라벨 수용 집합(`haiku-4.5`)에 듦(§5.3 · §5.5 E13). 실패 = `halt`. 모델 채점 대상 0 이면 `checked 0`(`empty-target`) |
 
 ### 2.2 계약에만 있고 아직 구현이 없는 것
 
@@ -133,9 +142,9 @@
 | 검사 id | 소관 | 정본 서술 |
 |---|---|---|
 | `gate.final-eyes` · `gate.final-eyes-isolation` · `gate.final-eyes-scope` | M6-b | SPEC §1.10 — 최종 심급 자체와 그 격리·관할 검사. `gate.no-rewrite`(러너 자기 산출 = T64 ② · L1 레인 산출 = T67 ②)와 `gate.l1-clean`(T67 ②)은 §2.1 에 올라갔다. 남은 것은 최종 심급이 낸 `fix_directive` 에 대한 같은 린트와 최종 심급 자체다(계약 `gate.yaml#checks_before_exit` 에 `status: inactive` 로 있다) |
-| `gate.no-score` · `critique.no-score` | M4·M8 | `contracts/lexicon/score-lint.yaml` |
+| `critique.no-score` | M8 | `contracts/lexicon/score-lint.yaml` — `gate.no-score` 는 T69 ⑥(M4/M8-a)으로 §2.1 에 올라갔다(같은 린트 `engine/gate/l2/lint.py` 를 소견 전문에 거는 것이 남았다) |
 | `critique.anchors-adjudicated-only` | M8 | SPEC §1.12 — `design.anchors-adjudicated-only` 는 T64(M5-a)로 §2.1 에 올라갔다 |
-| `probe.independence` · `probe.input-clean` · `probe.no-self-report` · `probe.target-coverage` · `probe.grader-separation` | M7 | SPEC §1.11 — **계기 5종.** ★ 2026-08-19 등재(누락 보수): SPEC §1.11이 이 다섯을 선언하는데 이 사전의 어느 절에도 없었다. 사전이 스스로 내건 갱신 규율("새 검사를 만들면 이 표에 등재한다")이 계기 계열에서만 지켜지지 않은 자리이며, 그 결과 §2.2 목록을 읽고 "M7에 무엇이 남았는가"를 세면 다섯이 빠졌다. **id 신설이 아니라 사전의 누락 보수다** — 이름은 SPEC이 이미 선언했고 여기 옮겨 적을 뿐이다. 정족수 판정 층(`engine/quorum.py`)은 구현되었으나 그것은 검사가 아니라 순수 함수이며 검사 id를 발행하지 않는다 |
+| ~~`probe.independence` · `probe.input-clean` · `probe.no-self-report` · `probe.target-coverage` · `probe.grader-separation`~~ | ~~M7~~ → M7-a(T69 ⑥) | **§2.1 로 올라갔다**(재정 2026-09-13 T69 ⑥ · `engine/stages/probe.py`). 남은 것은 계기 교정(SPEC §5.5 골든/변조 쌍 · 총괄 재량 ⓒ · 다음 배치)이며 그것은 검사 id 가 아니다. 구 문언(2026-08-19 누락 보수 경위)은 이 행의 이력이다: SPEC §1.11이 이 다섯을 선언하는데 이 사전의 어느 절에도 없었고, id 신설이 아니라 사전의 누락 보수로 §2.2 에 올랐었다 |
 | `feedback.window` · `feedback.row-consistency` · `feedback.corrects-resolve` | M10 | SPEC §1.15 |
 
 ---
@@ -183,7 +192,12 @@
 | 런 종류 | `rehearsal` · `publish` | `run-kinds/v0` |
 | 도면 편집 등급 `edit_class` | `crop-only` · `self-authored` · `annotated-internal` · `recomposed-internal` (앞 둘 `publishable: true` · 뒤 둘 `false`) | `figures-manifest/v0` · SPEC §7.5(재정 R11). v1 실물은 `crop-only` 하나 |
 | 도면 선택 역할 `role` | `hero`(T1 첫 자산) · `exhibit`(나머지) | `figures-selection/v0` · SPEC §7.5 |
-| 토너먼트 결과 `outcome` | `drafted` · `missing` · `material-defect` · `redrafted`(회차 2 이상 · `round` 키 동반 · 재정 T65 ③ 재량 ⓔ) | `40-compose/tournament-rows.jsonl` |
+| 토너먼트 결과 `outcome` | `drafted` · `missing` · `material-defect` · `redrafted`(회차 2 이상 · `round` 키 동반 · 재정 T65 ③ 재량 ⓔ · 자유 리비전은 `reason` = `free revision after L2 memo (T69 ⑥ · D8)`) | `40-compose/tournament-rows.jsonl` |
+| 계기 답변 종류 `answer_kind` | `stated` · `not-stated`(1급 답변 — 전달 안 됨 ≠ 프로브가 틀림) | `probe-report/v0` · SPEC §5.2 |
+| 채점 등급 `grade` | `hit` · `partial` · `miss`(환산 1 · 0.5 · 0 · 정본 `probe.yaml#grading.scores`) | `probe.yaml#grading` · SPEC §5.3 |
+| 재서술 판정 `judgement` | `aligned` · `drifted` · `inverted`(프로브 A 축 · 도달률에 합산 안 함) | `probe.yaml#grading.restatement` · SPEC §5.3 |
+| 채점 방식 `method` | `deterministic`(`fact` · `component` · `figure_note`) · `model`(`grounding` · `implication` · `positioning`) | `probe.yaml#grading` · SPEC §5.3 |
+| L2 메모 관점 `rule` | `l2.<slug>`(열린 집합 · 기본 `l2.structure` · `l2.thesis-flow` · `l2.material-balance`) — 자문이지 판정이 아니다 | `gate.yaml#layers.l2.memo_rule_prefix` · `engine/gate/l2/procedure.md` |
 | 출처 태그 | `[물리]` · `[전승]` · `[가설]` | 재정 N-D11 (`format-parameters.yaml` · `reader-rules.yaml` 공용) |
 | 처분 어휘 | `해소` · `부분 해소` · `유보` | `docs/decisions/D-*.md` |
 
@@ -237,6 +251,14 @@
 | `50-gate/<v>/thread.json` | `gate` | 구조화 출하 객체(`thread/v0`) — `frontmatter_raw` 정본 · `weighted_char_count` · `ship` 은 복사만(재감수 B-04) |
 | `50-gate/<v>/annotation-index.json` | `gate` | 주석 인덱스(`annotation-index/v0`) — 계기 국소화(D9)·L1 감사 표본이 소비. `text_raw` 가 역방향 round-trip 의 전제(재량 ⓕ) |
 | `50-gate/<v>/rounds/r<n>/` | `gate` | 주석본 지문이 바뀌어 재판정할 때 **직전 판정 산출 전량**을 옮겨 둔 자리(재정 T65 ③ 재량 ⓔ — 「덮어씀」을 보존으로) |
+| `50-gate/<v>/l2.md` | `gate`(`run_l2`) | L2 자문 메모 렌더(재정 T69 ⑥ · KR 틀 · 값 그대로) — 정본은 `verdict.json#l2.memos[]`(id `m-l2-NNN` · 러너 부여). 점수 없음(`gate.no-score`) · 거부권 없음 · `lanes/gate-l2/<v>/batch-0/` 왕복 |
+| `50-gate/<v>/revisions/free-r1/` | `gate`(`engine/gate/loop.py#free_revision`) | 자유 리비전 1회(재정 T69 ⑥ · D8) — `memo.json`(L2 메모 = 데이터 · 개시 판 지문) · `thread.annotated.md`(결과 사본) · `round.json`. 재판정 뒤 `verdict.json#free_revision_used: true` · `revision_round` 불변 · 두 번째 `run_l2` = halt |
+| `60-probe/questions.json` | `probe`(`probe-q` 레인 · 첫 변주) | 표적 질문지(**런 단위** · `transmission_targets` 1:1 · 표적 밖 폐기 목록 · `question_set_digest`). 변주가 같은 질문지를 재사용한다(D10) |
+| `60-probe/<v>/probe-<i>.json` | `probe` | 계기 i 의 보고(`probe-report/v0` · 러너 기입 `probe_id`·`model`(관측)·지문 2·`produced_at`) |
+| `60-probe/<v>/score.json` | `probe` | 계기 집계(`probe-score/v0` · 판정 키 없음 · CP2 표면) |
+| `60-probe/<v>/probe-report.json` | `probe` | 판정 행 8키(진입 1 + 검사 5) + findings + lanes(질문 · 프로브 n · 채점자 · 정족수 판정) |
+| `60-probe/<v>/{quorum.json, grades.json, escalation.json}` | `probe` | (선택) 인스턴스 대장(좌표 · 시도 · 상태 — 재진입 안전) · 채점 원자료(결정론 + 모델) · 정족수 미달 상신(Owner 선택지 3 · 재정 P-6) |
+| `60-probe/<v>/lanes/` | `probe` | 레인 왕복 기록(`probe-q/<v>[/retry-1]/batch-0` · `probe/<v>[/retry-<k>]/batch-<i>` · `probe-grade/<v>/batch-0`) |
 
 **런 밖의 원장 하나**(위 표와 층이 다르므로 따로 적는다).
 

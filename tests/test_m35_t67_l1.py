@@ -220,7 +220,7 @@ def test_contract_activates_l1_and_paths_declare_new_outputs(law) -> None:
         pytest.fail("gate.yaml#layers.l1·speech_act_flag 가 active 가 아니다")
     if layers["l1"]["lane"] != {"kind": "llm", "model": "opus-5", "effort": "high", "k": "parameters.yaml#gate.l1.k"}:
         pytest.fail(f"L1 좌석이 다르다: {layers['l1']['lane']}")
-    if layers["l2"]["status"] != "inactive" or layers["final_eyes"]["status"] != "inactive":
+    if layers["l2"]["status"] != "active" or layers["final_eyes"]["status"] != "inactive":   # L2 는 T69 ⑥ 로 가동
         pytest.fail("L2·최종 심급은 미가동 그대로여야 한다(재정 T67 ② 범위 밖)")
     raw = yaml.safe_load(read(os.path.join(law, "contracts", "stages", "gate.yaml")))
     if gate_stage.revision_cap(contract) != raw["loop"]["revision_cap"] or not isinstance(raw["loop"]["revision_cap"], int):
@@ -624,7 +624,7 @@ def test_cp2_surfaces_draft_and_approve_ship_envelope(run_root, law, tmp_path) -
     flag_ids = [f["id"] for f in view["present"]["flags"]]
     if flag_ids != ["f-l0-001", "f-l0-002", "f-l1-003"] or view["present"]["flags"][2]["origin"] != "speech-act":
         pytest.fail(f"플래그 전건(L0 자문 2 + L1 화행 1)이 아니다: {flag_ids}")
-    if {row["path"] for row in view["unimplemented"]} != {"50-gate/<variant>/l2.md", "60-probe/<variant>/score.json", "65-critique/<variant>/memo.md", "verdict.json#final_eyes"}:
+    if {row["path"] for row in view["unimplemented"]} != {"65-critique/<variant>/memo.md", "verdict.json#final_eyes"}:   # T69 ⑥ — l2.md·score.json 은 실물
         pytest.fail(f"결번 표가 다르다: {view['unimplemented']}")
     draft = view["draft"]
     if [row["flag_id"] for row in draft["flags_adjudicated"]] != flag_ids or any(row["verdict"] for row in draft["flags_adjudicated"]):
@@ -695,8 +695,8 @@ def _drive(law: str, run_root: str, evidence: str, *argv: str, executor=None):
 
 def test_driver_gate_l1_cp2_approve_ship_and_seal(run_root, law, tmp_path) -> None:
     evidence = os.path.join(str(tmp_path), "evidence")
-    if len(drv.COMMANDS) != 19 or drv.COMMANDS[-4:] != ("gate-l1", "revise", "cp2", "approve-ship"):
-        pytest.fail(f"명령 19 가 아니다: {drv.COMMANDS}")
+    if len(drv.COMMANDS) != 22 or drv.COMMANDS[15:19] != ("gate-l1", "revise", "cp2", "approve-ship"):
+        pytest.fail(f"명령 22 가 아니다: {drv.COMMANDS}")
     parser = drv.build_parser()
     listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
     if listed != drv.COMMANDS:

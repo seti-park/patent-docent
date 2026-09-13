@@ -38,7 +38,10 @@ T58 ②(좌석) · T59(봉투 `review_adjudicated[]`) · T64 ①②(연장 봉�
 `compose --variant v2 --round 2` 는 그 변주만 회차 2 로 다시 쓴다(좌표 `compose-r2/v2/batch-0` · T65 ③ 재량 ⓔ).
 `gate-l1` 은 `engine/stages/gate.py#run_l1` 을 변주별로 재진입하며 대기 좌표 k 건(`gate-l1/<v>/batch-0..k-1` · opus-5 high ·
 `--tools ""`)을 **순차** 호출한다(0 · 10 · 13 · 14 · 15 — 재정 T67 ②) · `revise` 는 `engine/gate/loop.py#revise` 한 라운드
-(펜 호출 1 + L0 + L1 k 호출 · 0 · 13) · `cp2` 는 CP2 표면 조회(0) · `approve-ship` 은 `70-ship/checkpoint2.md` 봉투(0 · 2).
+(펜 호출 1 + L0 + L1 k 호출 · 0 · 13) · `cp2` 는 CP2 표면 조회(0) · `approve-ship` 은 `70-ship/checkpoint2.md` 봉투(0 · 2) ·
+`gate-l2` 는 `engine/stages/gate.py#run_l2`(fable-5.1 high 좌표 1 · 점수 금지 린트 · 0 · 10 · 13 — 재정 T69 ⑥) · `revise-free` 는
+`engine/gate/loop.py#free_revision`(펜 1 + L0 + L1 k · 위상 봉쇄 · 0 · 13) · `probe` 는 `engine/stages/probe.py#run`(질문 1 + 프로브 n + 채점 1 ·
+순차 · 호출 실패 좌표는 다음 재진입에 `dead` 로 신고 → 죽은 인스턴스만 retry 좌표 · 0 · 10 · 13 · 15).
 
 실행기는 주입 가능한 호출체다. 기본 = 실제 `claude` 서브프로세스. 시험은 스텁을 넣는다.
 이 모듈은 표준 라이브러리와 리포 모듈만 쓴다.
@@ -80,6 +83,9 @@ from engine.lanes.plan import RESPONSE_SCHEMAS  # noqa: E402
 from engine.gate import checkpoint2 as cp2_mod  # noqa: E402
 from engine.gate import loop as loop_mod  # noqa: E402
 from engine.gate.l1 import plan as l1_plan  # noqa: E402
+from engine.gate.l2 import plan as l2_plan  # noqa: E402
+from engine.probe import LANE_GRADE, LANE_PROBE, LANE_QUESTIONS  # noqa: E402
+from engine.stages import probe as probe_stage  # noqa: E402
 from engine.paths import PathContractError, RunPaths, load_stage_contract, run_kinds_contract  # noqa: E402
 from engine.stages import StageError, freeze as freeze_stage  # noqa: E402
 from engine.stages import compose as compose_stage  # noqa: E402
@@ -122,9 +128,11 @@ APPROVAL_NAME_RE = re.compile(r"^approval-v([1-9][0-9]*)\.md$")
 STDERR_TAIL_CHARS = 2000
 REVIEW_SECTION_LINES = 12
 COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal", "extend", "design", "figures", "compose", "gate-l0", "strip",
-            "gate-l1", "revise", "cp2", "approve-ship")
+            "gate-l1", "revise", "cp2", "approve-ship", "gate-l2", "revise-free", "probe")
 GATE_L1_REENTRY_CAP = 4          # 요청 k 건 → 호출 → 재진입 1 회면 족하다 · 여유 2
 REVISE_REENTRY_CAP = 8           # 펜 1 + L1 k 재진입
+GATE_L2_REENTRY_CAP = 3          # 요청 1 → 호출 → 재진입 1
+PROBE_REENTRY_CAP = 12           # 질문 1(+재시도 1) + 프로브 n(+죽은 대 재시도) + 채점 1
 DESIGN_REENTRY_CAP = 4
 COMPOSE_REENTRY_CAP = 8          # 변주 3 × 재시도 2 를 담는다(T64 ③ · 발주문 §3.6)
 EXTENSION_SCHEMA_REL = ("contracts", "schemas", "extension-envelope.schema.json")
@@ -135,7 +143,9 @@ LAW_DIRTY_EXEMPT_PREFIXES = ("runs/", "evidence/", ".worktrees/")
 # ★ 래퍼 사전 충돌(총괄 재량 ⓔ · T67 ②): gate-l1 도 task 로 변주 id(v1·v2·v3)를 쓴다 — 같은 키가 compose 와 겹치므로
 #   `wrapper_schema(task, read_run)` 이 request.json 의 read_run 세그먼트로 어느 사전인지 정한다(gate-l1 → L1 사전 · 그 밖 → 이 사전).
 TASK_SCHEMAS = {**RESPONSE_SCHEMAS, **design_stage.RESPONSE_SCHEMAS, **compose_stage.RESPONSE_SCHEMAS}
-STAGE_SCHEMAS = {l1_plan.LANE_RUN: l1_plan.RESPONSE_SCHEMAS}
+# 계기 계열(재정 T69 ⑥)은 응답 스키마가 질문지·입력에 따라 달라 상수가 아니다 — request.json 의 response_schema 를 그대로 품는다(아래 wrapper_schema).
+STAGE_SCHEMAS = {l1_plan.LANE_RUN: l1_plan.RESPONSE_SCHEMAS, l2_plan.LANE_RUN: l2_plan.RESPONSE_SCHEMAS}
+DYNAMIC_SCHEMA_RUNS = (LANE_QUESTIONS, LANE_PROBE, LANE_GRADE)
 MANIFEST_BASENAME = "MANIFEST-sha256.txt"
 
 
@@ -355,9 +365,9 @@ def api_id_for_label(law: str, label: str) -> str:
     )
 
 
-def wrapper_schema_json(task: str, read_run: str | None = None) -> str:
+def wrapper_schema_json(task: str, read_run: str | None = None, payload_schema: dict | None = None) -> str:
     """`--json-schema` 인자 = 스키마 **JSON 문자열**(파일 경로가 아니다 — CLI 가 `is not valid JSON` 으로 거부 · 2026-09-13 step 1 실측). 파일은 영수증용으로 따로 남긴다."""
-    return json.dumps(wrapper_schema(task, read_run), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+    return json.dumps(wrapper_schema(task, read_run, payload_schema), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
 
 
 def lane_argv(api_id: str, effort: str, schema_json: str) -> list[str]:
@@ -395,17 +405,23 @@ def lane_env() -> dict:
     return env
 
 
-def wrapper_schema(task: str, read_run: str | None = None) -> dict:
-    """응답 봉투 스키마 — `payload` 에 plan.py·design.py·compose.py·gate/l1/plan.py 의 작업 스키마를 그대로 품는다(복사 아님).
+def wrapper_schema(task: str, read_run: str | None = None, payload_schema: dict | None = None) -> dict:
+    """응답 봉투 스키마 — `payload` 에 plan.py·design.py·compose.py·gate/l1/plan.py·gate/l2/plan.py 의 작업 스키마를 그대로 품는다(복사 아님).
 
-    `read_run` = request.json 의 run 세그먼트(재량 ⓔ). `gate-l1` 이면 L1 사전, 그 밖(None 포함)은 기존 사전 — m30~m34 의
-    `wrapper_schema("v2")` 호출은 그대로 compose 스키마를 받는다.
+    `read_run` = request.json 의 run 세그먼트(재량 ⓔ). `gate-l1`·`gate-l2` 이면 그 사전, 그 밖(None 포함)은 기존 사전 — m30~m34 의
+    `wrapper_schema("v2")` 호출은 그대로 compose 스키마를 받는다. 계기 계열(`probe-q`·`probe`·`probe-grade` · 재정 T69 ⑥)은 스키마가
+    질문지·입력의 함수라 상수 사전이 없다 — 호출자가 request.json 의 `response_schema` 를 `payload_schema` 로 넘긴다.
     """
-    table = STAGE_SCHEMAS.get(str(read_run or "").split("-r")[0] if read_run else "", TASK_SCHEMAS)
-    if read_run in STAGE_SCHEMAS:
-        table = STAGE_SCHEMAS[read_run]
+    if read_run in DYNAMIC_SCHEMA_RUNS:
+        if not isinstance(payload_schema, dict) or not payload_schema:
+            raise DriverExit(EXIT_USAGE, f"{read_run} 좌표는 request.json 의 response_schema 가 필요하다(task={task!r})")
+        table = {task: payload_schema}
+    else:
+        table = STAGE_SCHEMAS.get(str(read_run or "").split("-r")[0] if read_run else "", TASK_SCHEMAS)
+        if read_run in STAGE_SCHEMAS:
+            table = STAGE_SCHEMAS[read_run]
     if task not in table:
-        raise DriverExit(EXIT_USAGE, f"plan.py·design.py·compose.py·gate/l1/plan.py 가 모르는 작업이다: {task!r} (read_run={read_run!r})")
+        raise DriverExit(EXIT_USAGE, f"plan.py·design.py·compose.py·gate/l1·l2/plan.py 가 모르는 작업이다: {task!r} (read_run={read_run!r})")
     return {
         "type": "object",
         "required": ["lane_id", "model", "effort", "input_digest", "payload"],
@@ -526,7 +542,8 @@ def call_lane(ctx: Context, lanes_root: str, lane_id: str) -> CallOutcome:
         )
 
     schema_path = os.path.join(ctx.schemas_dir, safe_lane_name(lane_id) + ".json")
-    argv = lane_argv(api_id, effort, wrapper_schema_json(task, read_run))
+    payload_schema = request.get("response_schema") if isinstance(request.get("response_schema"), dict) else None
+    argv = lane_argv(api_id, effort, wrapper_schema_json(task, read_run, payload_schema))
     if ctx.dry_run:
         ctx.out(f"[dry-run] {lane_id}: " + " ".join(_shell_quote(part) for part in argv))
         return CallOutcome(lane_id, True, "dry-run", None, None)
@@ -540,7 +557,7 @@ def call_lane(ctx: Context, lanes_root: str, lane_id: str) -> CallOutcome:
         )
     if previous is not None:
         _rotate_receipt(ctx, lane_id, attempt - 1)
-    _write_bytes(schema_path, _json_bytes(wrapper_schema(task, read_run)))
+    _write_bytes(schema_path, _json_bytes(wrapper_schema(task, read_run, payload_schema)))
 
     started_at = _now_iso()
     env = lane_env()
@@ -1136,7 +1153,7 @@ def cmd_freeze(ctx: Context, args: argparse.Namespace) -> int:
 
 
 def manifest_lines(ctx: Context) -> list[str]:
-    """`evidence/**` 전건(MANIFEST 자신 제외) + `10-read/*.json` + `15-frozen/*` + `20-design/**` + `30-figures/**` + `40-compose/**` + `50-gate/**`(lanes·revisions 포함) + `70-ship/**` 의 sha256 · 경로."""
+    """`evidence/**` 전건(MANIFEST 자신 제외) + `10-read/*.json` + `15-frozen/*` + `20-design/**` + `30-figures/**` + `40-compose/**` + `50-gate/**`(lanes·revisions 포함) + `60-probe/**` + `70-ship/**` 의 sha256 · 경로."""
     paths = ctx.paths()
     entries: list[tuple[str, str]] = []
     base = ctx.worktree if os.path.commonpath([ctx.worktree, ctx.run_root]) == ctx.worktree else os.path.dirname(ctx.run_root)
@@ -1175,6 +1192,10 @@ def manifest_lines(ctx: Context) -> list[str]:
                 add(os.path.join(dirpath, name))
     if os.path.isdir(paths.gate_root):
         for dirpath, _dirs, files in os.walk(paths.gate_root):
+            for name in files:
+                add(os.path.join(dirpath, name))
+    if os.path.isdir(paths.probe_root):
+        for dirpath, _dirs, files in os.walk(paths.probe_root):
             for name in files:
                 add(os.path.join(dirpath, name))
     if os.path.isdir(paths.ship_dir):
@@ -1727,6 +1748,111 @@ def cmd_approve_ship(ctx: Context, args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+# ---------------------------------------------------------------------------
+# gate-l2 · revise-free · probe (재정 T69 ⑥ · M4/M8-a · M7-a)
+# ---------------------------------------------------------------------------
+
+
+def cmd_gate_l2(ctx: Context, args: argparse.Namespace) -> int:
+    """gate 스테이지 L2 1회 구동 — `run_l2` 재진입(상한 3) + 대기 좌표 1 호출(fable-5.1 high · `--tools ""`). 종료 0 · 10 · 13."""
+    paths = ctx.paths()
+    _gate_precheck(ctx, paths)
+    variant = str(args.variant)
+    if ctx.dry_run:
+        pending = [row["lane_id"] for row in lane_inventory(paths.gate_lanes_dir(variant)) if not row["response"] and row["lane_id"].startswith("gate-l2/")]
+        ctx.out(f"[dry-run] gate.run_l2(run_root={ctx.run_root}, variant={variant}) — 대기 좌표 {len(pending)}")
+        for lane_id in pending:
+            call_lane(ctx, paths.gate_lanes_dir(variant), lane_id)
+        return EXIT_OK
+    for _round in range(GATE_L2_REENTRY_CAP):
+        try:
+            outcome = gate_stage.run_l2(run_root=ctx.run_root, repo=ctx.law, variant=variant)
+        except OSError as exc:
+            raise DriverExit(EXIT_UNDECIDABLE, f"io_fault: gate-l2 {exc}") from exc
+        except StageError as exc:
+            raise DriverExit(EXIT_TERMINAL_FAIL, f"gate-l2 정지({variant}): {exc}") from exc
+        status = str(outcome.get("status"))
+        if status == "pending":
+            lane_ids = list(outcome.get("pending") or [])
+            ctx.out(f"{variant}: 대기 좌표 {len(lane_ids)}건: {', '.join(lane_ids)}")
+            failed = _call_pending(ctx, str(outcome.get("lanes_root")), lane_ids)
+            if failed:
+                raise DriverExit(EXIT_PENDING, f"호출 실패 좌표 {len(failed)}건 — 다음 gate-l2 가 다시 대기로 낸다: {', '.join(failed)}")
+            continue
+        ctx.out(f"{variant}: l2 memos {outcome.get('memos')} · {outcome.get('decision')} · free_revision_used {outcome.get('free_revision_used')}"
+                + (" · 재진입" if outcome.get("reentered") else ""))
+        return EXIT_OK
+    raise DriverExit(EXIT_CALL_CAP, f"gate-l2 재진입 상한 {GATE_L2_REENTRY_CAP} 도달({variant})")
+
+
+def cmd_revise_free(ctx: Context, args: argparse.Namespace) -> int:
+    """자유 리비전 1회 — `loop.free_revision` 재진입(펜 좌표 1 → L0 → L1 좌표 k · 순차 호출 · 위상 봉쇄). 종료 0 · 13."""
+    paths = ctx.paths()
+    _gate_precheck(ctx, paths)
+    variant = str(args.variant)
+    if ctx.dry_run:
+        ctx.out(f"[dry-run] loop.free_revision(run_root={ctx.run_root}, variant={variant})")
+        return EXIT_OK
+    for _round in range(REVISE_REENTRY_CAP):
+        try:
+            outcome = loop_mod.free_revision(run_root=ctx.run_root, repo=ctx.law, variant=variant)
+        except StageEnvironmentError as exc:
+            raise DriverExit(EXIT_USAGE, f"revise-free 환경: {exc}") from exc
+        except OSError as exc:
+            raise DriverExit(EXIT_UNDECIDABLE, f"io_fault: revise-free {exc}") from exc
+        except StageError as exc:
+            raise DriverExit(EXIT_TERMINAL_FAIL, f"revise-free 정지({variant}): {exc}") from exc
+        status = str(outcome.get("status"))
+        if status == "pending":
+            lane_ids = list(outcome.get("pending") or [])
+            ctx.out(f"{variant}: free-r1 · {outcome.get('phase')} · 대기 좌표 {len(lane_ids)}건: {', '.join(lane_ids)}")
+            failed = _call_pending(ctx, str(outcome.get("lanes_root")), lane_ids)
+            if failed:
+                raise DriverExit(EXIT_PENDING, f"호출 실패 좌표 {len(failed)}건 — 다음 revise-free 가 다시 대기로 낸다: {', '.join(failed)}")
+            continue
+        if status in ("ok", "escalate"):
+            ctx.out(f"{variant}: free-r1 종결({outcome.get('outcome')}) · l0 {'pass' if outcome.get('l0_pass') else 'fail'} · l1 {outcome.get('l1_pass')} · "
+                    f"defects {outcome.get('defects')} · round {outcome.get('revision_round')} · {outcome.get('decision')} · free_revision_used true"
+                    + (f" · escalation {outcome.get('escalation')}" if outcome.get("escalation") else ""))
+            return EXIT_OK
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"revise-free 판정 {status}: {outcome.get('reason_label')}")
+    raise DriverExit(EXIT_CALL_CAP, f"revise-free 재진입 상한 {REVISE_REENTRY_CAP} 도달")
+
+
+def cmd_probe(ctx: Context, args: argparse.Namespace) -> int:
+    """계기 1회 구동 — `probe.run` 재진입(상한 12) + 대기 좌표 순차 호출(질문 1 · 프로브 n · 채점 1). 호출 실패 좌표는 다음 재진입에
+    `dead` 로 신고한다(죽은 인스턴스만 retry 좌표 · 상한 소진 = escalate · 재정 P-6). 종료 0 · 10 · 13 · 15."""
+    paths = ctx.paths()
+    variant = str(args.variant)
+    if ctx.dry_run:
+        ctx.out(f"[dry-run] probe.run(run_root={ctx.run_root}, variant={variant})")
+        return EXIT_OK
+    dead: list[str] = []
+    for _round in range(PROBE_REENTRY_CAP):
+        try:
+            outcome = probe_stage.run(run_root=ctx.run_root, repo=ctx.law, variant=variant, dead=dead)
+        except StageEnvironmentError as exc:
+            raise DriverExit(EXIT_USAGE, f"probe 환경: {exc}") from exc
+        except OSError as exc:
+            raise DriverExit(EXIT_UNDECIDABLE, f"io_fault: probe {exc}") from exc
+        except StageError as exc:
+            raise DriverExit(EXIT_TERMINAL_FAIL, f"probe 정지({variant}): {exc}") from exc
+        status = str(outcome.get("status"))
+        if status == "pending":
+            lane_ids = list(outcome.get("pending") or [])
+            ctx.out(f"{variant}: {outcome.get('phase')} · 대기 좌표 {len(lane_ids)}건: {', '.join(lane_ids)}")
+            dead = _call_pending(ctx, str(outcome.get("lanes_root")), lane_ids)
+            if dead:
+                ctx.out(f"{variant}: 호출 실패 {len(dead)}건 — 다음 재진입에 죽은 인스턴스로 신고한다: {', '.join(dead)}")
+            continue
+        if status == "escalate":
+            raise DriverExit(EXIT_TERMINAL_FAIL, f"probe 상신({variant}) · {outcome.get('phase')}: {outcome.get('escalation')}")
+        ctx.out(f"{variant}: probe {status} · delivery_fidelity {outcome.get('delivery_fidelity')} · targets {outcome.get('per_target')} · "
+                f"invalidated {outcome.get('invalidated')} · restatement {outcome.get('restatement')} · failed_checks {outcome.get('failed_checks')}")
+        return EXIT_OK
+    raise DriverExit(EXIT_CALL_CAP, f"probe 재진입 상한 {PROBE_REENTRY_CAP} 도달({variant})")
+
+
 def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
     lines = manifest_lines(ctx)
     target = os.path.join(ctx.evidence, MANIFEST_BASENAME)
@@ -1746,7 +1872,7 @@ def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="drive_partial_read.py",
-        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계·도면·펜·L0·L1 게이트·수정 루프·CP2(T64·T65·T67) — 재정 T60 집행. 명령 19 · 판단 없음.",
+        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계·도면·펜·L0·L1·L2 게이트·수정 루프·자유 리비전·CP2·계기(T64·T65·T67·T69) — 재정 T60 집행. 명령 22 · 판단 없음.",
     )
     parser.add_argument("--repo", help="정본 리포(기본 = 이 파일의 위치에서 추정)")
     parser.add_argument("--worktree-root", help="런 worktree 의 부모(기본 <repo>/.worktrees)")
@@ -1832,6 +1958,15 @@ def build_parser() -> argparse.ArgumentParser:
     approve_ship.add_argument("--directive", action="append", help="rejected 일 때 지시(반복 가능)")
     approve_ship.add_argument("--located-at", default="세션 대화창 · CP2 응답")
     approve_ship.add_argument("--decided-at", help="ISO-8601 UTC(기본 지금)")
+    gate_l2 = sub.add_parser("gate-l2", help="gate 스테이지 L2 1회 구동(fable-5.1 high × 1 · 점수 금지 린트 gate.no-score · 거부권 없음) — 재정 T69 ⑥")
+    gate_l2.add_argument("run_id")
+    gate_l2.add_argument("--variant", required=True, help="대상 변주(하나)")
+    revise_free = sub.add_parser("revise-free", help="L2 메모 1회에 대한 펜 자유 리비전 1회(펜 1 + L0 + L1 k · 위상 봉쇄 · D8) — 재정 T69 ⑥")
+    revise_free.add_argument("run_id")
+    revise_free.add_argument("--variant", required=True, help="대상 변주(하나)")
+    probe_cmd = sub.add_parser("probe", help="계기 1회 구동(질문 1 + haiku-4.5 × probe.n + 채점 1 · 순차 · 죽은 인스턴스만 재시도 · 정족수 5/5) — 재정 T69 ⑥")
+    probe_cmd.add_argument("run_id")
+    probe_cmd.add_argument("--variant", required=True, help="대상 변주(하나)")
     return parser
 
 
@@ -1855,6 +1990,9 @@ _COMMANDS = {
     "revise": cmd_revise,
     "cp2": cmd_cp2,
     "approve-ship": cmd_approve_ship,
+    "gate-l2": cmd_gate_l2,
+    "revise-free": cmd_revise_free,
+    "probe": cmd_probe,
 }
 
 

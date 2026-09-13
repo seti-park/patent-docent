@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patent-docent.local/contracts/schemas/probe-report.schema.json",
+  "title": "probe-report/v0",
+  "$comment": "계기 1대의 보고 `60-probe/<variant>/probe-<i>.json`(SPEC §5.2 프로브 출력 서식 전 필드). ★ 규율: (1) 최상위·답변 전부 additionalProperties false — **점수 필드도 자기평가 필드도 없다**(D9 원리 1 · 계기는 자기 성적을 산출하지 않는다 · probe.no-self-report 의 기계 집행). (2) 계기가 내는 것은 a_restatement[3](프로브 A)·b_answers[](프로브 B)뿐이며 probe_id·model·input_digest·question_set_digest·produced_at 은 러너가 기입한다. (3) answer_kind 는 stated|not-stated 2값 — not-stated 는 1급 답변이다(전달 안 됨 ≠ 프로브가 틀림). stated 면 answer·quoted_span 이 문자열이고 not-stated 면 둘 다 null(if/then). quoted_span 이 스레드의 부분문자열인가는 스키마 밖이며 러너의 결정론 검사가 무효 처리한다(§5.2). 신설 = 재정 2026-09-13 T69 ⑥(M7-a · 0.x 미동결).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "probe_id", "model", "input_digest", "question_set_digest", "a_restatement", "b_answers", "produced_at"],
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "answer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question_id", "target_material_id", "answer_kind", "answer", "quoted_span"],
+      "properties": {
+        "question_id": { "type": "string", "pattern": "^Q[1-9][0-9]*$" },
+        "target_material_id": { "type": "string", "pattern": "^M[0-9]+$" },
+        "answer_kind": { "enum": ["stated", "not-stated"] },
+        "answer": { "type": ["string", "null"] },
+        "quoted_span": { "type": ["string", "null"] }
+      },
+      "if": { "properties": { "answer_kind": { "const": "stated" } } },
+      "then": { "properties": { "answer": { "type": "string", "minLength": 1 }, "quoted_span": { "type": "string", "minLength": 1 } } },
+      "else": { "properties": { "answer": { "type": "null" }, "quoted_span": { "type": "null" } } }
+    }
+  },
+  "properties": {
+    "schema": { "const": "probe-report/v0" },
+    "probe_id": { "type": "string", "pattern": "^p[0-9]+$" },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vendor", "model", "effort"],
+      "properties": {
+        "vendor": { "type": "string", "minLength": 1 },
+        "model": { "type": "string", "minLength": 1 },
+        "effort": { "type": "string", "minLength": 1 }
+      }
+    },
+    "input_digest": { "$ref": "#/$defs/digest" },
+    "question_set_digest": { "$ref": "#/$defs/digest" },
+    "a_restatement": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "string", "minLength": 1 } },
+    "b_answers": { "type": "array", "items": { "$ref": "#/$defs/answer" } },
+    "produced_at": { "type": "string", "minLength": 1 }
+  }
+}

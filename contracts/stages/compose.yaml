@@ -61,6 +61,7 @@ inputs:
   - "15-frozen/material-spec.v<N>.json"
   - 20-design/blueprint.json
   # note(재정 T67 ②): 국소 수정 라운드의 회차 요청은 `50-gate/<v>/revisions/r<n>/directives.json`(자기 변주의 현 라운드 지시 — must_not_read 의 예외)을 원천 조각으로 인라인한다. 러너 인자 `directives`.
+  # note(재정 T69 ⑥): 자유 리비전 회차는 `50-gate/<v>/revisions/free-r1/memo.json`(자기 변주의 L2 메모 = 데이터 · must_not_read 의 예외)을 원천 조각으로 인라인한다. 러너 인자 `memo` · 지시 블록은 긍정형 · 메모 표는 데이터 절(「## L2 메모 표」).
   - 30-figures/selection.json           # SPEC §1.9 원문(재정 T65 ③ 복귀). 진입 검사가 실재할 때 지문·판 정합을 보고,
   - 30-figures/assets/manifest.json     # 회차 2 이상(figures_required)에서는 부재도 환경 오류다. 1회차 부재 = T64 ④ 판(정상 · 헤더 전부 none)
 

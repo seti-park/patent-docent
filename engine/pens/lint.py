@@ -44,7 +44,8 @@ LINT_SECTION_PREFIXES = ("## 응답 계약", "## 이 요청의 지시", "## 절�
 DATA_SECTION_PREFIXES = ("## 원천 조각", "## 블루프린트 요약")
 #: 지시 블록 안의 데이터 절 제목(지시 블록은 `##` 절로 구성된다). 국소 수정 지시 표(재정 T67 ②)도 데이터다 —
 #: 게이트가 낸 fix_directive 는 원천 조각이지 펜 프롬프트 템플릿이 아니다.
-DATA_SUBSECTION_PREFIXES = ("## 블루프린트 요약", "## 국소 수정 지시 표")
+#: 자유 리비전의 L2 메모 표(재정 T69 ⑥)도 데이터다 — 자문 심급이 쓴 관찰이지 펜 프롬프트 템플릿이 아니다.
+DATA_SUBSECTION_PREFIXES = ("## 블루프린트 요약", "## 국소 수정 지시 표", "## L2 메모 표")
 DATA_SUBSECTION_PREFIX = DATA_SUBSECTION_PREFIXES[0]
 
 

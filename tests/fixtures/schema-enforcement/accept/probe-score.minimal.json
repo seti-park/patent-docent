@@ -1,0 +1,65 @@
+{
+  "schema": "probe-score/v0",
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "variant": "v2",
+  "probe_n": 5,
+  "input_digest": "sha256:2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+  "question_set_digest": "sha256:2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+  "delivery_fidelity": 0.5,
+  "per_target": [
+    {
+      "material_id": "M3",
+      "kind": "component",
+      "method": "deterministic",
+      "hit_rate": 1.0,
+      "weakest_tweet": 8,
+      "unrepresented": false,
+      "answers": {
+        "hit": 5,
+        "partial": 0,
+        "miss": 0,
+        "not_stated": 0,
+        "invalidated": 0
+      }
+    },
+    {
+      "material_id": "M116",
+      "kind": "positioning",
+      "method": "model",
+      "hit_rate": 0.0,
+      "weakest_tweet": null,
+      "unrepresented": true,
+      "answers": {
+        "hit": 0,
+        "partial": 0,
+        "miss": 5,
+        "not_stated": 5,
+        "invalidated": 0
+      }
+    }
+  ],
+  "restatement": {
+    "aligned": 4,
+    "drifted": 1,
+    "inverted": 0
+  },
+  "invalidated_answers": [
+    {
+      "probe_id": "p2",
+      "question_id": "Q1",
+      "reason": "quoted_span-not-substring"
+    }
+  ],
+  "loci": [
+    {
+      "locus": {
+        "tweet": null,
+        "material_id": "M116"
+      },
+      "issue": "not-stated",
+      "count": 5,
+      "n": 5
+    }
+  ],
+  "notes": "계기 5 대 · 질문 2."
+}

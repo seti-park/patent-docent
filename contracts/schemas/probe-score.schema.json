@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patent-docent.local/contracts/schemas/probe-score.schema.json",
+  "title": "probe-score/v0",
+  "$comment": "계기 집계 `60-probe/<variant>/score.json`(SPEC §5.4 구조). ★ 규율: (1) additionalProperties false 이고 **decision·pass·verdict·gate_* 키가 없다** — 계기는 거부권이 없다(§5.7 기계 집행 · D7·D9·D15). (2) delivery_fidelity 는 per_target[].hit_rate 의 비가중 평균(v0 · 가중 도입 안 함). (3) hit_rate 는 hit=1·partial=0.5·miss=0 의 평균이며 무효 답변(quoted_span 비부분문자열)은 분모에서 빠진다 — 유효 답변이 0 이면 null(측정 없음을 0 으로 위장하지 않는다). (4) weakest_tweet 은 annotation-index 역참조 2단 규칙(문장 수 최소 → 트윗 번호 큼)의 산출이며 사람도 모델도 고르지 않는다. unrepresented 면 weakest_tweet 은 null(if/then). (5) restatement 3값 합 = 프로브 대수(러너가 본다). (6) loci[] = instrument_reporting 규율(재정 R9 · 임계 필터 없이 전량 · {locus, issue, count, n}). (7) notes 는 서술 필드이며 score-lint 의 대상이다(§4.6 대상 4). 신설 = 재정 2026-09-13 T69 ⑥(M7-a · 0.x 미동결).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "variant", "probe_n", "input_digest", "question_set_digest", "delivery_fidelity", "per_target", "restatement", "invalidated_answers", "loci", "notes"],
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["material_id", "kind", "method", "hit_rate", "weakest_tweet", "unrepresented", "answers"],
+      "properties": {
+        "material_id": { "type": "string", "pattern": "^M[0-9]+$" },
+        "kind": { "enum": ["component", "grounding", "fact", "implication", "positioning", "figure_note"] },
+        "method": { "enum": ["deterministic", "model"] },
+        "hit_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "weakest_tweet": { "type": ["integer", "null"], "minimum": 1 },
+        "unrepresented": { "type": "boolean" },
+        "answers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["hit", "partial", "miss", "not_stated", "invalidated"],
+          "properties": {
+            "hit": { "type": "integer", "minimum": 0 },
+            "partial": { "type": "integer", "minimum": 0 },
+            "miss": { "type": "integer", "minimum": 0 },
+            "not_stated": { "type": "integer", "minimum": 0 },
+            "invalidated": { "type": "integer", "minimum": 0 }
+          }
+        }
+      },
+      "if": { "properties": { "unrepresented": { "const": true } } },
+      "then": { "properties": { "weakest_tweet": { "type": "null" } } }
+    }
+  },
+  "properties": {
+    "schema": { "const": "probe-score/v0" },
+    "run_id": { "type": "string", "pattern": "^[a-z0-9]+-[a-z0-9]+-[a-z0-9-]+$" },
+    "variant": { "type": "string", "pattern": "^v[1-9][0-9]*$" },
+    "probe_n": { "type": "integer", "minimum": 1 },
+    "input_digest": { "$ref": "#/$defs/digest" },
+    "question_set_digest": { "$ref": "#/$defs/digest" },
+    "delivery_fidelity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "per_target": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/target" } },
+    "restatement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["aligned", "drifted", "inverted"],
+      "properties": {
+        "aligned": { "type": "integer", "minimum": 0 },
+        "drifted": { "type": "integer", "minimum": 0 },
+        "inverted": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "invalidated_answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["probe_id", "question_id", "reason"],
+        "properties": {
+          "probe_id": { "type": "string", "pattern": "^p[0-9]+$" },
+          "question_id": { "type": "string", "pattern": "^Q[1-9][0-9]*$" },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "loci": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["locus", "issue", "count", "n"],
+        "properties": {
+          "locus": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["tweet", "material_id"],
+            "properties": {
+              "tweet": { "type": ["integer", "null"], "minimum": 1 },
+              "material_id": { "type": "string", "pattern": "^M[0-9]+$" }
+            }
+          },
+          "issue": { "enum": ["miss", "partial", "not-stated", "invalidated", "unrepresented"] },
+          "count": { "type": "integer", "minimum": 1 },
+          "n": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "notes": { "type": "string" }
+  }
+}

@@ -222,7 +222,7 @@ def test_contract_loads_and_paths_declare_variant_slot(law) -> None:
     if [pen["effort"] for pen in registry.pens(law)] != ["high", "xhigh", "max"] or registry.comparison_axis(law) != "effort":
         pytest.fail("펜 배정이 R10 사다리가 아니다")
     paths = RunPaths("/nonexistent/run", law)
-    if "compose" not in paths.STAGES or paths.STAGES.index("compose") != len(paths.STAGES) - 2:
+    if "compose" not in paths.STAGES or paths.STAGES.index("compose") != paths.STAGES.index("gate") - 1:   # T69 ⑥ 로 probe 가 gate 뒤에 붙었다
         pytest.fail(f"STAGES 에 compose 가 없거나 자리가 다르다(gate 가 뒤에 온다 — T64 집행 ③): {paths.STAGES}")
     if "<variant>" not in paths.declared("thread.annotated.md"):
         pytest.fail("thread.annotated.md 선언에 <variant> 자리가 없다")
@@ -764,8 +764,8 @@ def test_help_lists_fourteen_commands_with_compose_before_gate() -> None:
     """명령 12 → 14(T64 집행 ③ · gate-l0 · strip 이 compose 뒤에 온다)."""
     parser = drv.build_parser()
     listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
-    if listed != drv.COMMANDS or len(listed) != 19 or listed[12:15] != ("compose", "gate-l0", "strip"):
-        pytest.fail(f"명령 19 가 아니다: {listed}")
+    if listed != drv.COMMANDS or len(listed) != 22 or listed[12:15] != ("compose", "gate-l0", "strip"):
+        pytest.fail(f"명령 22 가 아니다: {listed}")
     wrapper = drv.wrapper_schema("v2")
     if wrapper["properties"]["payload"] is not compose_stage.RESPONSE_SCHEMAS["v2"] or compose_stage.RESPONSE_SCHEMAS["v1"] is not compose_stage.RESPONSE_SCHEMAS["v3"]:
         pytest.fail("구동기 래퍼가 compose.RESPONSE_SCHEMAS 상수를 품지 않거나 세 변주의 스키마가 다른 객체다")

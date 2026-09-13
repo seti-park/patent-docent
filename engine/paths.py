@@ -244,7 +244,7 @@ class RunPaths:
     어긋나는 순간을 조용히 넘기지 않기 위해서다.
     """
 
-    STAGES = ("source", "read", "freeze", "design", "figures", "compose", "gate")
+    STAGES = ("source", "read", "freeze", "design", "figures", "compose", "gate", "probe")
 
     def __init__(self, run_root: str, repo: str | None = None) -> None:
         self.run_root = os.path.abspath(run_root)
@@ -448,12 +448,16 @@ class RunPaths:
         """
         return self.absolute(self._declared_unique("escalation.json", variant_slot=False))
 
-    def _declared_unique(self, basename: str, *, variant_slot: bool) -> str:
-        """같은 basename 이 변주 자리 유무로 둘 선언된 경우의 조회(escalation.json). 그 밖은 `declared()` 를 쓴다."""
+    def _declared_unique(self, basename: str, *, variant_slot: bool, prefix: str | None = None) -> str:
+        """같은 basename 이 여러 자리에 선언된 경우의 조회(escalation.json — 20-design · 50-gate · 60-probe). 그 밖은 `declared()` 를 쓴다.
+
+        `prefix` = 런 상대 경로의 접두(예 `50-gate/`) — 변주 자리 유무만으로 갈리지 않는 선언(gate · probe)을 가른다(재정 T69 ⑥).
+        """
         hits = [entry for entry in self._declared
-                if entry.rstrip("/").rsplit("/", 1)[-1] == basename and (("<variant>" in entry) == variant_slot)]
+                if entry.rstrip("/").rsplit("/", 1)[-1] == basename and (("<variant>" in entry) == variant_slot)
+                and (prefix is None or entry.startswith(prefix))]
         if len(set(hits)) != 1:
-            raise PathContractError(f"{basename}(variant_slot={variant_slot}) 선언이 하나가 아니다: {hits}")
+            raise PathContractError(f"{basename}(variant_slot={variant_slot}, prefix={prefix}) 선언이 하나가 아니다: {hits}")
         return hits[0]
 
     @property
@@ -596,7 +600,19 @@ class RunPaths:
         basename 이 `20-design/escalation.json` 과 같아 `declared()` 의 basename 조회가 둘을 구별하지 못한다 — 여기서는
         선언 목록에서 `50-gate/` 접두의 것을 고른다(계약이 선언한 경로만 쓴다는 규율은 그대로다).
         """
-        return self.absolute(self._declared_unique("escalation.json", variant_slot=True).replace("<variant>", variant))
+        return self.absolute(self._declared_unique("escalation.json", variant_slot=True, prefix="50-gate/").replace("<variant>", variant))
+
+    def l2_md(self, variant: str) -> str:
+        """`50-gate/<variant>/l2.md` — L2 자문 메모 렌더(재정 T69 ⑥ · verdict.json#l2.memos 와 같은 값 · 점수 없음)."""
+        return self._variant("l2.md", variant)
+
+    def free_revision_dir(self, variant: str) -> str:
+        """`50-gate/<variant>/revisions/free-r1/` — L2 메모 1회에 대한 펜 자유 리비전 1회의 자리(재정 T69 ⑥ · D8 위상 봉쇄).
+        이름은 `gate.yaml#loop.free_revision_dir` 이 든다."""
+        declared = str((self.contracts["gate"].get("loop") or {}).get("free_revision_dir") or "")
+        if "<variant>" not in declared:
+            raise PathContractError("gate.yaml#loop.free_revision_dir 이 없거나 <variant> 자리가 없다")
+        return self.absolute(declared.replace("<variant>", variant))
 
     def gate_lanes_dir(self, variant: str) -> str:
         """`50-gate/<variant>/lanes/` — L1 레인 왕복 보관소. 계약 미선언(`gate.yaml#lane.lane_id_vocabulary.root` 주석) —
@@ -612,6 +628,53 @@ class RunPaths:
     def gate_root(self) -> str:
         """`50-gate/` — 변주 디렉터리들의 부모."""
         return os.path.dirname(self.gate_dir("v1"))
+
+    # -- 60-probe (계기 · 재정 T69 ⑥ · M7-a) -----------------------------------
+
+    @property
+    def questions_json(self) -> str:
+        """`60-probe/questions.json` — 표적 질문지(런 단위 · 변주 디렉터리 밖 · SPEC §5.2)."""
+        return self.path("questions.json")
+
+    def score_json(self, variant: str) -> str:
+        """`60-probe/<variant>/score.json`(probe-score/v0) — 판정 키 없음(§5.7)."""
+        return self._variant("score.json", variant)
+
+    def probe_dir(self, variant: str) -> str:
+        """`60-probe/<variant>/` — 변주별 계기 산출 자리."""
+        return os.path.dirname(self.score_json(variant))
+
+    @property
+    def probe_root(self) -> str:
+        """`60-probe/` — 질문지와 변주 디렉터리들의 부모."""
+        return os.path.dirname(self.questions_json)
+
+    def probe_report(self, variant: str, index: int) -> str:
+        """`60-probe/<variant>/probe-<i>.json`(probe-report/v0) — 계기 i 의 보고."""
+        declared = self.declared("probe-<i>.json")
+        if "<variant>" not in declared or "<i>" not in declared:
+            raise PathContractError(f"계약의 probe-<i>.json 선언에 <variant>·<i> 자리가 없다: {declared}")
+        return self.absolute(declared.replace("<variant>", variant).replace("<i>", str(int(index))))
+
+    def probe_check_report(self, variant: str) -> str:
+        """`60-probe/<variant>/probe-report.json` — 판정 행 8키 + findings + lanes(러너 산출)."""
+        return self._variant("probe-report.json", variant)
+
+    def probe_escalation_json(self, variant: str) -> str:
+        """`60-probe/<variant>/escalation.json` — 정족수 미달 상신(`optional_outputs` · 재정 P-6)."""
+        return self.absolute(self._declared_unique("escalation.json", variant_slot=True, prefix="60-probe/").replace("<variant>", variant))
+
+    def probe_quorum_json(self, variant: str) -> str:
+        """`60-probe/<variant>/quorum.json` — 인스턴스 대장(좌표 · 시도 · 상태)."""
+        return self._variant("quorum.json", variant)
+
+    def probe_grades_json(self, variant: str) -> str:
+        """`60-probe/<variant>/grades.json` — 채점 원자료(결정론 + 모델)."""
+        return self._variant("grades.json", variant)
+
+    def probe_lanes_dir(self, variant: str) -> str:
+        """`60-probe/<variant>/lanes/` — 계기 · 질문 생성 · 채점 레인 왕복 보관소(계약 `lane_id_vocabulary.root`)."""
+        return os.path.join(self.probe_dir(variant), LANES_DIRNAME)
 
     # -- 70-ship (CP2 봉투 · 재정 T67 ② 재량 ⓓ) -------------------------------
 
@@ -652,3 +715,8 @@ class RunPaths:
     def ensure_gate_dirs(self, variants=()) -> None:
         for variant in variants:
             os.makedirs(self.gate_dir(variant), exist_ok=True)
+
+    def ensure_probe_dirs(self, variants=()) -> None:
+        os.makedirs(self.probe_root, exist_ok=True)
+        for variant in variants:
+            os.makedirs(self.probe_lanes_dir(variant), exist_ok=True)

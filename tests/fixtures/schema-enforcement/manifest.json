@@ -559,6 +559,76 @@
       "expect": "reject",
       "series": "T65 asset 값이 자산 id 가 아님",
       "basis": "accept/figures-selection.minimal.json 에서 asset 만 FIG-1(재료 도면 id)로 바꾼 판. 선택 포인터는 자산 id(fig-NN)이지 재료 도면 id 가 아니다 — 둘의 대응은 매니페스트가 든다."
+    },
+    {
+      "file": "accept/probe-report.minimal.json",
+      "schema": "contracts/schemas/probe-report.schema.json",
+      "expect": "accept",
+      "series": "T69 ⑥ 계기 보고 유효 대응쌍",
+      "basis": "SPEC §5.2 프로브 출력 서식 전 필드 — stated 답변(answer·quoted_span 문자열)과 not-stated 답변(둘 다 null)을 하나씩 담은 정상 형태. 아래 reject 4판은 전부 여기서 한 곳만 바꾼 판이다."
+    },
+    {
+      "file": "reject/probe-report.score-field.json",
+      "schema": "contracts/schemas/probe-report.schema.json",
+      "expect": "reject",
+      "series": "T69 ⑥ 점수 필드",
+      "basis": "accept/probe-report.minimal.json 에 최상위 score 만 더한 판. 프로브는 자기 성적을 산출하지 않는다(D9 · additionalProperties false)."
+    },
+    {
+      "file": "reject/probe-report.self-report-field.json",
+      "schema": "contracts/schemas/probe-report.schema.json",
+      "expect": "reject",
+      "series": "T69 ⑥ 자기평가 필드",
+      "basis": "accept/probe-report.minimal.json 에 self_assessment 만 더한 판. 자기보고 금지(D9 원리 1 · probe.no-self-report)."
+    },
+    {
+      "file": "reject/probe-report.stated-without-span.json",
+      "schema": "contracts/schemas/probe-report.schema.json",
+      "expect": "reject",
+      "series": "T69 ⑥ quoted_span 누락",
+      "basis": "accept/probe-report.minimal.json 의 Q1(stated) 의 quoted_span 만 null 로 바꾼 판. stated 는 근거 인용이 필수다(§5.2 답변 규약 · if/then)."
+    },
+    {
+      "file": "reject/probe-report.two-sentence-restatement.json",
+      "schema": "contracts/schemas/probe-report.schema.json",
+      "expect": "reject",
+      "series": "T69 ⑥ 재서술 3 미만",
+      "basis": "accept/probe-report.minimal.json 의 a_restatement 를 두 문장으로 줄인 판. 프로브 A 는 정확히 세 문장이다(§5.2)."
+    },
+    {
+      "file": "accept/probe-score.minimal.json",
+      "schema": "contracts/schemas/probe-score.schema.json",
+      "expect": "accept",
+      "series": "T69 ⑥ 계기 집계 유효 대응쌍",
+      "basis": "SPEC §5.4 구조 — 결정론 표적 1 + 모델 표적 1(unrepresented · weakest_tweet null) · restatement · invalidated_answers · loci · notes. 판정 키가 없다."
+    },
+    {
+      "file": "reject/probe-score.decision-key.json",
+      "schema": "contracts/schemas/probe-score.schema.json",
+      "expect": "reject",
+      "series": "T69 ⑥ decision 키",
+      "basis": "accept/probe-score.minimal.json 에 decision 만 더한 판. 계기는 거부권이 없다(§5.7 기계 집행)."
+    },
+    {
+      "file": "reject/probe-score.pass-key.json",
+      "schema": "contracts/schemas/probe-score.schema.json",
+      "expect": "reject",
+      "series": "T69 ⑥ pass 키",
+      "basis": "accept/probe-score.minimal.json 에 pass 만 더한 판(§5.7)."
+    },
+    {
+      "file": "reject/probe-score.verdict-key.json",
+      "schema": "contracts/schemas/probe-score.schema.json",
+      "expect": "reject",
+      "series": "T69 ⑥ verdict 키",
+      "basis": "accept/probe-score.minimal.json 에 verdict 만 더한 판(§5.7)."
+    },
+    {
+      "file": "reject/probe-score.unrepresented-with-tweet.json",
+      "schema": "contracts/schemas/probe-score.schema.json",
+      "expect": "reject",
+      "series": "T69 ⑥ unrepresented 인데 weakest_tweet",
+      "basis": "accept/probe-score.minimal.json 의 M116(unrepresented true)에 weakest_tweet 3 을 넣은 판. 인용 문장이 없으면 최약 트윗도 없다(§5.4 4항 · if/then)."
     }
   ]
 }

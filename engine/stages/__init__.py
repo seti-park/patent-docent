@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""스테이지 러너 7종(`source` · `read` · `freeze` · `design` · `figures` · `compose` · `gate`)과 그들이 공유하는 최소 도구.
+"""스테이지 러너 8종(`source` · `read` · `freeze` · `design` · `figures` · `compose` · `gate` · `probe`)과 그들이 공유하는 최소 도구.
 
 여기 있는 함수는 전부 **결정론**이며 판단하지 않는다. 판단은 레인(LLM)과 Owner 의 몫이고,
 러너는 계약이 정한 자리에 계약이 정한 형태로 산출물을 놓고 검사 결과를 그대로 보고한다.
@@ -622,6 +622,37 @@ def _resolve_raw_path(figure_id: str, report_by_number: dict, paths) -> str | No
     return candidate if os.path.isfile(paths.absolute(candidate)) else None
 
 
+def _entry_probe_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) -> None:
+    """`probe.input-digest` — 동결본·블루프린트(compose 진입 검사와 같은 대조) + 변주의 게이트 산출 3종 실재(재정 T69 ⑥ · P-C).
+
+    `inputs["variant"]` = 대상 변주. `thread.stripped.md`(계기 입력) · `annotation-index.json`(국소화) · `verdict.json`(전제 확인)
+    이 없으면 잴 것이 없으므로 환경 오류다. 인덱스의 `spec_version` 이 최신 동결본과 다르면 국소화가 다른 재료 판 위에
+    선 것이다. `decision == advance` 는 환경이 아니라 **품질 사실**이므로 여기서 보지 않는다(러너가 `StageError` 로 본다).
+    """
+    _entry_compose_input_digest(row, paths, entry, inputs)
+    if row.findings:
+        return
+    check_id = str(entry.get("id"))
+    variant = str(inputs.get("variant", ""))
+    if not variant:
+        row.add(check_id, "variant", "(미지정)", "변주 id", "계기는 변주 하나 위에서 돈다 — 대상 변주가 없다")
+        return
+    version = int(inputs.get("spec_version"))
+    ok = True
+    for path, label in ((paths.thread_stripped_md(variant), f"50-gate/{variant}/thread.stripped.md"),
+                        (paths.annotation_index_json(variant), f"50-gate/{variant}/annotation-index.json"),
+                        (paths.verdict_json(variant), f"50-gate/{variant}/verdict.json")):
+        ok = _require_file(row, check_id, path, label) and ok
+        row.checked += 1
+    if not ok:
+        return
+    index = load_json(paths.annotation_index_json(variant))
+    row.checked += 1
+    _compare(row, check_id, f"50-gate/{variant}/annotation-index.json#spec_version", str(index.get("spec_version")), str(version),
+             "주석 인덱스가 선 재료 판이 최신 동결본과 다르다 — 국소화가 다른 재료 위에 선다(재정 N11)")
+    row.extras["variant"] = variant
+
+
 _ENTRY_CHECKS = {
     "read.input-digest": _entry_read_input_digest,
     "source.input-digest": _entry_source_input_digest,
@@ -630,6 +661,7 @@ _ENTRY_CHECKS = {
     "figures.input-digest": _entry_figures_input_digest,
     "compose.input-digest": _entry_compose_input_digest,
     "gate.input-digest": _entry_gate_input_digest,
+    "probe.input-digest": _entry_probe_input_digest,
 }
 
 

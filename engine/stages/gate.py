@@ -58,6 +58,8 @@ from .design import latest_frozen, terminus_index
 from ..annotation.index import annotation_dict, build_index, build_thread
 from ..gate.l1 import merge as l1_merge
 from ..gate.l1 import plan as l1_plan
+from ..gate.l2 import lint as l2_lint
+from ..gate.l2 import plan as l2_plan
 from ..lanes.contract import LanePending
 from ..lanes.file_adapter import FileLaneAdapter
 from ..annotation.parse import parse as parse_annotation
@@ -74,8 +76,12 @@ STAGE_ID = "gate"
 GATE_VERSION = "0.1.0"
 LAYER_L0 = "l0"
 LAYER_L1 = "l1"
+LAYER_L2 = "l2"
 #: L1 이 아직 돌지 않은 판정문에 동적으로 적는 층(계약 `layers.<layer>.pending_reason` 이 문언을 든다).
 L1_PENDING_LAYERS = ("l1", "speech_act_flag")
+#: L2 가 아직 돌지 않은 판정문에 동적으로 적는 층(재정 T69 ⑥) — `run_l2` 가 지운다.
+L2_PENDING_LAYERS = ("l2",)
+MEMO_ID_FORMAT = "m-l2-{:03d}"
 #: 재판정 보존(`rounds/r<n>/`)에서 **제자리에 두는** 것 — 루프 개시 전 동결물(발췌본)과 보존·라운드 디렉터리 자신.
 PRESERVE_KEEP = ("final-eyes-brief.json", ROUNDS_DIRNAME, REVISIONS_DIRNAME)
 BRIEF_KIND = "final-eyes-brief"
@@ -93,6 +99,7 @@ CHECK_L1_CLEAN = "gate.l1-clean"
 CHECK_L1_LANE_VERIFIED = "gate.l1-lane-verified"
 CHECK_INDEX = "gate.annotation-index"
 CHECK_NO_REWRITE = "gate.no-rewrite"
+CHECK_NO_SCORE = l2_lint.CHECK_ID
 CHECK_FORWARD = "strip.roundtrip-forward"
 CHECK_REVERSE = "strip.roundtrip-reverse"
 CHECK_REASSEMBLY = "strip.reassembly"
@@ -128,11 +135,11 @@ def _check_terminus(meta: dict, repo: str, contract: dict) -> None:
         )
 
 
-def inactive_layers(contract: dict, *, l1_pending: bool = False) -> tuple[dict, list[dict]]:
+def inactive_layers(contract: dict, *, l1_pending: bool = False, l2_pending: bool = False) -> tuple[dict, list[dict]]:
     """계약 `layers` 블록 → (블록 사본, `inactive_layers[]` 배열). 목록을 코드가 들지 않는다.
 
     `l1_pending` = L1 이 아직 돌지 않은 판정문(gate-l0 만 돈 시점) — 가동 층이라도 판정하지 않았으므로 계약의
-    `pending_reason` 으로 적는다(재정 N5 · T67 ②). `run_l1` 이 그 행을 지운다.
+    `pending_reason` 으로 적는다(재정 N5 · T67 ②). `run_l1` 이 그 행을 지운다. `l2_pending` 은 같은 격이며 `run_l2` 가 지운다(T69 ⑥).
     """
     block = {key: value for key, value in (contract.get("layers") or {}).items() if isinstance(value, dict)}
     rows: list[dict] = []
@@ -140,7 +147,7 @@ def inactive_layers(contract: dict, *, l1_pending: bool = False) -> tuple[dict, 
         status = str(entry.get("status", ""))
         if status == "inactive":
             rows.append({"layer": layer, "reason": str(entry.get("reason", "")), "ruling": str(entry.get("ruling", ""))})
-        elif l1_pending and layer in L1_PENDING_LAYERS and status == "active":
+        elif status == "active" and ((l1_pending and layer in L1_PENDING_LAYERS) or (l2_pending and layer in L2_PENDING_LAYERS)):
             rows.append({"layer": layer, "reason": str(entry.get("pending_reason", "")) or "미실행", "ruling": str(entry.get("ruling", ""))})
     return block, rows
 
@@ -259,7 +266,7 @@ def judge_variant(*, text: str, variant: str, run_id: str, spec_version: int, sp
 
     `entry_row` = 러너의 진입 검사 행(`gate.input-digest`) — verdict.json#checks[] 의 첫 행으로 싣는다.
     """
-    layers_block, inactive = inactive_layers(contract, l1_pending=True)
+    layers_block, inactive = inactive_layers(contract, l1_pending=True, l2_pending=True)
     if manifest is None and not any(row.get("layer") == R_STOP_SHAPE for row in inactive):
         # 계약은 가동으로 적었으나 이 런에는 자산층이 없다 — 판정 못 한 층을 그대로 적는다(재정 N5 · T65 ③).
         inactive = [*inactive, {"layer": R_STOP_SHAPE, "reason": MANIFEST_ABSENT_REASON, "ruling": "재정 2026-09-13 T65 ③"}]
@@ -589,7 +596,7 @@ def _replace_rows(rows: list[dict], fresh: list[CheckRow]) -> list[dict]:
 
 def _halt_rows(verdict: dict) -> list[str]:
     return [row["check_id"] for row in verdict.get("checks") or []
-            if row["check_id"] in (CHECK_NO_REWRITE, CHECK_L1_LANE_VERIFIED) and row["status"] == "fail"]
+            if row["check_id"] in (CHECK_NO_REWRITE, CHECK_L1_LANE_VERIFIED, CHECK_NO_SCORE) and row["status"] == "fail"]
 
 
 def _l1_summary(verdict: dict, **extra) -> dict:
@@ -687,9 +694,126 @@ def _paths_of(paths: RunPaths, variant: str) -> dict:
         "l0": paths.l0_json(variant), "verdict": paths.verdict_json(variant),
         "stripped": paths.thread_stripped_md(variant), "thread": paths.thread_json(variant),
         "index": paths.annotation_index_json(variant), "l1": paths.l1_json(variant),
-        "final_eyes_brief": paths.final_eyes_brief(variant),
+        "final_eyes_brief": paths.final_eyes_brief(variant), "l2": paths.l2_md(variant),
     }
 
 
+# ---------------------------------------------------------------------------
+# L2 자문 메모 (재정 2026-09-13 T69 ⑥ · M4/M8-a · SPEC §1.10 판단 경로 · §4.6)
+# ---------------------------------------------------------------------------
+
+
+def number_memos(memos: list[dict]) -> list[dict]:
+    """레인 payload `memos[]` → §4.2 memo 레코드(id `m-l2-NNN` 연번 · layer l2 · 전 속성 string 또는 locus)."""
+    out: list[dict] = []
+    for index, memo in enumerate(memos, start=1):
+        locus = memo.get("locus") or {}
+        out.append({"id": MEMO_ID_FORMAT.format(index), "layer": LAYER_L2, "rule": str(memo.get("rule", "")),
+                    "locus": {"tweet": locus.get("tweet"), "sentence": locus.get("sentence")}, "text": str(memo.get("text", ""))})
+    return out
+
+
+def _cell(value) -> str:
+    return str("" if value is None else value).replace("|", "\\|").replace("\n", " ")
+
+
+def render_l2_md(*, verdict: dict, memos: list[dict], lane: dict, free_revision_used: bool = False) -> str:
+    """`50-gate/<v>/l2.md` — KR 틀 · 값 그대로 · 점수 없음. verdict.json#l2.memos 와 같은 값의 렌더(정본은 verdict)."""
+    lines = [
+        f"# L2 자문 메모 — `{verdict.get('run_id')}` / `{verdict.get('variant')}`",
+        "",
+        "| 항목 | 값 |",
+        "|---|---|",
+        f"| thread_digest | `{verdict.get('thread_digest')}` |",
+        f"| spec_version | `{verdict.get('spec_version')}` |",
+        f"| decision (L2 는 바꾸지 않는다) | `{verdict.get('decision')}` |",
+        f"| lane | `{lane.get('lane_id')}` · model `{lane.get('model')}` · effort `{lane.get('effort')}` |",
+        f"| memos | {len(memos)} |",
+        f"| free_revision_used | `{str(bool(free_revision_used)).lower()}` |",
+        "",
+        "거부권 없음 · 점수 없음(SPEC §4.6 · D8·D15) · 메모 1회 → 펜 자유 리비전 1회 → 위상 봉쇄.",
+        "",
+        "| id | rule | locus | text |",
+        "|---|---|---|---|",
+    ]
+    for memo in memos:
+        locus = memo.get("locus") or {}
+        tweet, sentence = locus.get("tweet"), locus.get("sentence")
+        where = "전역" if tweet is None else (f"T{tweet}" if sentence is None else f"T{tweet}/S{sentence}")
+        lines.append(f"| `{memo['id']}` | `{_cell(memo['rule'])}` | {where} | {_cell(memo['text'])} |")
+    if not memos:
+        lines.append("| (없음) | | | |")
+    return "\n".join(lines) + "\n"
+
+
+def _l2_summary(verdict: dict, **extra) -> dict:
+    return {"decision": verdict["decision"], "memos": len((verdict.get("l2") or {}).get("memos") or []),
+            "free_revision_used": bool(verdict.get("free_revision_used", False)), "thread_digest": verdict["thread_digest"], **extra}
+
+
+def run_l2(*, run_root: str, repo: str | None = None, variant: str, adapter=None) -> dict:
+    """L2 자문 메모 1회 진입(변주 1건). 반환 = `{status: ok|pending|reentered, memos, decision, ...}` — 린트 실패는 기록 뒤 `StageHaltError`.
+
+    전제 = `verdict.json#decision == advance`(L0·L1 pass) · 그 `thread_digest` == 현 주석본. L2 는 판정을 바꾸지 않는다(거부권 없음).
+    위상 봉쇄(D8) — `free_revision_used` 가 true 인 판정문에서는 다시 돌지 않는다(`StageHaltError`). 메모가 이미 기록된 판정문
+    (`l2.md` 실재)은 재진입이다.
+    """
+    repo = repo or repo_root()
+    paths = RunPaths(run_root, repo)
+    contract = paths.contracts[STAGE_ID]
+    meta = load_yaml(paths.run_yaml)
+    _check_terminus(meta, repo, contract)
+    verdict_path = paths.verdict_json(variant)
+    if not os.path.isfile(verdict_path):
+        raise StageError(f"verdict.json 이 없다 — gate-l0 · gate-l1 이 먼저다: {verdict_path}")
+    verdict = load_json(verdict_path)
+    text = read_text(paths.thread_annotated(variant))
+    if str(verdict.get("thread_digest")) != sha256_bytes(text.encode("utf-8")):
+        raise StageError("verdict.json 의 thread_digest 가 현 주석본과 다르다 — gate-l0 · gate-l1 을 다시 돌린다")
+    if verdict.get("free_revision_used") is True:
+        raise StageHaltError("[halt] 위상 봉쇄 · D8 — L2 메모 1회 → 펜 자유 리비전 1회가 이미 소비되었다. 리비전 결과에 L2 를 다시 돌리지 않는다(SPEC §4.6)")
+    if verdict.get("decision") != DECISION_ADVANCE:
+        raise StageError(f"decision 이 advance 가 아니다({verdict.get('decision')}) — L2 는 L0·L1 을 통과한 판정문에만 돈다")
+    config = l2_plan.l2_config(repo, contract)
+    law = l2_lint.load_patterns(repo)
+    l2_path = paths.l2_md(variant)
+    if os.path.isfile(l2_path):
+        halted = _halt_rows(verdict)
+        if halted:
+            raise StageHaltError(f"[halt] L2 검사 실패가 기록되어 있다({', '.join(halted)}) — 절차 문서 수정 후 재개(D8·D15)")
+        return {"status": "reentered", **_l2_summary(verdict, reentered=True), "paths": _paths_of(paths, variant)}
+
+    frozen_row = latest_frozen(meta)
+    request = l2_plan.build_request(paths=paths, repo=repo, meta=meta, frozen_row=frozen_row, variant=variant, thread_text=text, config=config)
+    adapter = adapter or FileLaneAdapter(paths.gate_lanes_dir(variant), repo)
+    try:
+        response = adapter.dispatch([request])[0]
+    except LanePending as pending:
+        return {"status": "pending", "pending": list(pending.pending), "lanes_root": pending.request_dir,
+                **_l2_summary(verdict), "paths": _paths_of(paths, variant)}
+
+    memos = number_memos(list(response.payload.get("memos") or []))
+    row = l2_lint.lint_memos(memos, law)
+    lane = {"lane_id": response.lane_id, "model": response.model, "effort": response.effort,
+            "response_digest": response.response_digest, "mismatch": response.mismatches(request)}
+    row.extras["lane"] = lane
+    legislated_now = legislated(repo)
+    if legislated_now.get("score_lint_version") != str(law["version"]) or legislated_now.get("score_lint_patterns") != len(law["patterns"]):
+        raise StageError("score-lint 날인(legislated)이 로드한 패턴 파일과 다르다 — 두 벌이 갈렸다")
+    verdict["l2"] = {"memos": memos}
+    verdict["checks"] = _replace_rows(verdict["checks"], [row])
+    verdict["vacuous_pass"] = [r["check_id"] for r in verdict["checks"] if r["vacuous"] != "none"]
+    verdict["inactive_layers"] = [r for r in verdict["inactive_layers"] if r.get("layer") not in L2_PENDING_LAYERS]
+    verdict["legislated"] = legislated_now
+    write_json(verdict_path, verdict)
+    write_text(l2_path, render_l2_md(verdict=verdict, memos=memos, lane=lane))
+    if row.status == "fail":
+        entry = failure_entry(contract, "gate.no-score 실패")
+        first = row.findings[0]
+        raise StageHaltError(f"[{entry.get('action')}] gate.no-score 실패 — {first.rule}@{first.locus}: {first.found!r}. {entry.get('note')}")
+    return {"status": "ok", **_l2_summary(verdict), "lane": lane, "paths": _paths_of(paths, variant)}
+
+
 __all__ = ["GATE_VERSION", "URL_RE", "build_final_eyes_brief", "decide", "ensure_final_eyes_brief", "inactive_layers",
-           "judge_variant", "legislated", "no_rewrite_violations", "revision_cap", "run", "run_l1"]
+           "judge_variant", "legislated", "no_rewrite_violations", "number_memos", "render_l2_md", "revision_cap", "run", "run_l1",
+           "run_l2"]

@@ -5,8 +5,10 @@
 # 실물화 = 재정 2026-09-13 T64 ②(L0 규칙 13 + strip + round-trip · **미가동 명기**) · ④(도면 자산층 부재) ·
 #   재정 2026-09-13 T65 ③(도면 자산층 실물화 → `format.stop-shape` 가동 · 재판정 시 직전 산출 보존 `rounds/r<n>/`) ·
 #   재정 2026-09-13 T67 ②(M6-a · **L1 국소 대조 가동** — opus-5 high × k 독립 실행 다수결 · 화행 플래그 3종 동반 ·
-#   국소 수정 루프 캡 3 `revisions/r<n>/` · `final-eyes-brief.json` 루프 개시 전 생성 · CP2 봉투는 오케스트레이터).
-#   실물 = **L0 결정론 층(stop-shape 포함) · strip 산출 · L1 · 화행 플래그 · 수정 루프**다. L2 · 최종 심급은 아래
+#   국소 수정 루프 캡 3 `revisions/r<n>/` · `final-eyes-brief.json` 루프 개시 전 생성 · CP2 봉투는 오케스트레이터) ·
+#   재정 2026-09-13 T69 ⑥(M4/M8-a · **L2 자문 메모 가동** — fable-5.1 high 1회 · 점수 금지 린트 `gate.no-score` 가동 ·
+#   펜 자유 리비전 1회 `revisions/free-r1/` · 위상 봉쇄 D8).
+#   실물 = **L0 결정론 층(stop-shape 포함) · strip 산출 · L1 · 화행 플래그 · 수정 루프 · L2 메모 · 자유 리비전**이다. 최종 심급은 아래
 #   `layers` 주석 블록이 「미가동」으로 적으며, 러너는 그 사실을 verdict.json#inactive_layers[] 에 그대로 옮긴다 — 판정하지
 #   않은 층을 판정한 것처럼 적지 않는다(재정 N5 규율 · run-kinds.yaml#kinds.rehearsal.verdict_requirements.
 #   inactive_gates_enumerated). 매니페스트가 없는 런에서는 러너가 stop-shape 미가동 행을 동적으로 더하고, L1 이 아직
@@ -23,7 +25,8 @@ lane:
   model: null
   effort: null
   # L1 = Opus 5 high × k(parameters.yaml#gate.l1.k) — 가동(재정 T67 ② · 아래 layers.l1.lane 이 좌석 정본) ·
-  # L2 = Fable · gate.final-eyes = 신규 세션 Opus 5 max — SPEC §1.10 의 서술이며 이 라운드에는 없다(아래 layers).
+  # L2 = Fable high × 1 — 가동(재정 T69 ⑥ · layers.l2.lane 이 좌석 정본 · 어휘 gate-l2/<v>/batch-0 은 layers.l2.lane_id_vocabulary) ·
+  # gate.final-eyes = 신규 세션 Opus 5 max — SPEC §1.10 의 서술이며 이 라운드에는 없다(아래 layers).
   lane_id_vocabulary:
     form: "gate-l1/<variant>[/retry-<n>]/batch-<i>"       # i = 0..k-1 · k 요청의 바이트는 동일(독립 실행은 좌표로만 갈린다)
     pattern: "^(?P<read_run>[a-z0-9]+(?:-[a-z0-9]+)*)/(?P<task>[a-z0-9]+(?:-[a-z0-9]+)*)(?:/retry-(?P<retry>[1-9][0-9]*))?/batch-(?P<batch>0|[1-9][0-9]*)$"
@@ -59,9 +62,21 @@ layers:
       k = parameters.yaml#gate.l1.k 독립 실행 · 동일성 (rule, locus) · 과반 → defect · 미달 → flag(minority-vote) ·
       만장일치 아닌 항목 전부 disagreement_log[](SPEC §4.5). 요청 = engine/gate/l1/plan.py · 병합 = merge.py.
   l2:
-    status: inactive
-    reason: "재정 T64 ② — 첫 초안 범위 밖 · 소관 M6·M8"
-    ruling: "재정 2026-09-13 T64 ②"
+    status: active
+    ruling: "재정 2026-09-13 T69 ⑥"
+    lane: {kind: llm, model: fable-5.1, effort: high}
+    procedure: engine/gate/l2/procedure.md
+    lane_id_vocabulary:
+      form: "gate-l2/<variant>/batch-0"                    # 1회 · 재요청 없음(위상 봉쇄 · D8)
+      membership: {run: [gate-l2], task: [v1, v2, v3]}
+      enforced_by: engine/gate/l2/plan.py#GateL2LaneRequest
+      root: "50-gate/<variant>/lanes/"
+    memo_rule_prefix: "l2."                                 # memo.rule 의 형태 = l2.<slug>
+    pending_reason: "L2 미실행 — gate-l2 가 채운다(전제 = decision advance)"
+    note: >-
+      전역 판단 · 거부권 없음 · 점수 없음(SPEC §4.6 세 겹 — 스키마 폐쇄 · 숫자 필드 부재 · 린트 gate.no-score ·
+      정본 = contracts/lexicon/score-lint.yaml). 메모 1회 → 펜 자유 리비전 1회(loop.free_revision) → 위상 봉쇄.
+      리비전 결과에 L2 를 다시 돌리지 않는다(run_l2 재호출 = halt). decision 은 L2 로 바뀌지 않는다(§4.3).
   speech_act_flag:
     status: active
     ruling: "재정 2026-09-13 T67 ②"
@@ -87,6 +102,8 @@ layers:
 loop:
   tag: "[주석]"
   revision_cap: 3
+  free_revision: 1                        # L2 메모 1회 → 펜 자유 리비전 1회 → 위상 봉쇄(재정 T69 ⑥ · SPEC §1.10 판단 경로 · D8)
+  free_revision_dir: "50-gate/<variant>/revisions/free-r1/"   # memo.json(메모 = 데이터) + thread.annotated.md(결과 사본) + round.json
   basis: "D8 · SPEC §4.3"
   note: "parameters.yaml 의 조정 가능 4종 규율(adjustable_scope_note)을 넘지 않기 위해 계약 주석으로 둔다 — 값 이동은 재정 사항"
   runner: engine/gate/loop.py
@@ -109,10 +126,10 @@ checkpoint2:
     - 30-figures/selection.json
     - "50-gate/<variant>/l1.json"           # flags[] — 화행 플래그 3종 포함 · 판정자 = Owner(D8·D3)
     - "50-gate/<variant>/verdict.json"      # decision · checks fail · vacuous_pass · inactive_layers · l0 flags
+    - "50-gate/<variant>/l2.md"             # L2 자문 메모(재정 T69 ⑥ · 점수 없음 · 거부권 없음)
+    - "60-probe/<variant>/score.json"       # 계기 보고(재정 T69 ⑥ · probe.yaml 산출 · 판정 키 없음)
     - run.yaml                              # numeric_whitelist[] 전량 인쇄
-  unimplemented_surfaces:                   # 결번 — 미구현 · 재정 T67 ② 범위 밖
-    - {path: "50-gate/<variant>/l2.md", owner: M8}
-    - {path: "60-probe/<variant>/score.json", owner: M7}
+  unimplemented_surfaces:                   # 결번 — 미구현 · 재정 T69 ⑥ 범위 밖(소견 · 최종 심급)
     - {path: "65-critique/<variant>/memo.md", owner: M8}
     - {path: "verdict.json#final_eyes", owner: M6-b}
 
@@ -169,7 +186,7 @@ must_not_read:
 outputs:
   - "50-gate/<variant>/l0.json"
   - "50-gate/<variant>/l1.json"           # L1 판정 블록(재정 T67 ②) — verdict.json#l1 과 같은 객체
-  - "50-gate/<variant>/l2.md"             # 미가동(L2) — 이 라운드에는 생성되지 않는다
+  - "50-gate/<variant>/l2.md"             # L2 자문 메모 렌더(재정 T69 ⑥ · verdict.json#l2.memos 와 같은 값 · KR 틀 · 린트 대상)
   - "50-gate/<variant>/verdict.json"
   - "50-gate/<variant>/annotation-index.json"
   - "50-gate/<variant>/thread.stripped.md"
@@ -178,6 +195,7 @@ outputs:
 
 optional_outputs:
   - "50-gate/<variant>/revisions/r<n>/"   # 국소 수정 라운드 — directives.json(지시) + thread.annotated.md(결과 사본) + round.json(재정 T67 ②)
+  - "50-gate/<variant>/revisions/free-r1/"   # 자유 리비전(재정 T69 ⑥) — memo.json(L2 메모 = 데이터) + thread.annotated.md(결과 사본) + round.json
   - "50-gate/<variant>/escalation.json"   # 캡 초과 상신 기록(loop 산출)
   - "50-gate/<variant>/rounds/r<n>/"      # 재판정 보존(재정 T65 ③ · 총괄 재량 ⓔ) — 주석본 지문이 바뀌면 직전 산출을 여기로 옮긴 뒤 다시 판정한다
 
@@ -197,8 +215,11 @@ checks_before_exit:
     note: "총괄 재량 ⓑ 신설 id(compose.lane-verified 와 같은 격). 영수증 대조는 구동기 몫. 실패 = halt."
   - id: gate.no-score
     criterion: "l2.md·verdict.json 에 점수 필드·점수 패턴 부재(§4 의 린트)"
-    implemented_by: null
-    status: inactive                    # [주석] L2 미가동(메모 0) · 린트 미구현(소관 M4·M8 — glossary §2.2)
+    implemented_by: engine/gate/l2/lint.py
+    note: >-
+      대상 = memo 객체의 rule slug + text 전문(verdict.json#l2.memos[] · l2.md 는 같은 값의 렌더). 패턴 = score-lint.yaml#patterns[]
+      전건(등재 4요소가 빠진 항목은 로드 거부) · 반례 counter_examples[] 는 통과해야 한다. 행 = ruleset score-lint · version · size.
+      실패 = halt(D8·D15 · 재정 T69 ⑥). 스캔 대상은 targets[] allowlist 뿐 — 스레드 본문은 보지 않는다(재정 N4).
   - id: gate.no-rewrite
     criterion: "모든 fix_directive 가 대체 문장을 포함하지 않음(지시문 형식 린트)"
     implemented_by: engine/stages/gate.py

@@ -1,0 +1,197 @@
+# 스테이지 I/O 계약 — `probe`
+#
+# 정본 서술 = docs/SPEC.md §1.11(표 · 분리 · 검사 5 · 실패표) · §5.1~§5.5·§5.7(프로브 A/B · 질문 파생 · 답변 규약 ·
+# 채점 분리 판별식 · 국소화 2단 규칙 · score.json 구조 · 권한). 이 파일은 그 서술의 기계 판독본이며, 어긋나면 SPEC 이 이긴다.
+# 서식 = SPEC §1.2 고정 서식 + `schema` 키 + 서식 확장 3 `checks_on_entry`(재정 P-C).
+# 실물화 = 재정 2026-09-13 T69 ⑥(M7-a · **계기 가동** — 질문 생성 1 → Haiku × n 독립 프로브 → 채점 분리(결정론 3 kind +
+#   모델 채점 3 kind · opus-5 low 1회) → 국소화(annotation-index 역참조 · 2단 규칙) → score.json(판정 키 없음)).
+#   재량 3(T69) = 계기 모델 라벨 `haiku-4.5`(read.yaml#lane.model_identity.labels) · 채점자 = 결정론 + opus-5 low ·
+#   총괄 재량 ⓑ = 질문 생성 레인 좌석 opus-5 low(계약 문언 없음) · ⓒ = 교정(§5.5 골든/변조 쌍)은 범위 밖.
+#
+# ★ 공통 규칙 — 런은 시작 시점 git 커밋에 결박된다(재정 P-U1).
+
+schema: stage-contract/v0
+id: probe
+
+lane:
+  kind: llm
+  model: haiku-4.5            # 계기 = Haiku × n(정본 n = parameters.yaml#adjustable.probe.n) · 라벨 = read.yaml#model_identity(재정 T69 재량 3)
+  effort: low
+  # 레인 3종 — 질문 생성 · 계기 · 채점자. 셋은 좌석이 다르고 요청서에 실리는 것이 다르다(§5.3 채점 분리가 계약이다).
+  sub_lanes:
+    - id: probe-q                                 # 질문 생성기(런 단위 · 변주 첫 호출이 만들고 뒤 변주는 재사용 · §5.2)
+      vendor: anthropic
+      model: opus-5
+      effort: low
+      procedure: engine/probe/procedure-questions.md
+      reads: "동결본 전문 + transmission_targets 목록 (스레드 없음)"
+      note: "총괄 재량 ⓑ — 계약에 좌석 문언이 없어 opus-5 low(펜·프로브와 다른 계열)"
+    - id: probe                                   # 계기 n 대 · 동일 요청 바이트 · 좌표만 다름
+      vendor: anthropic
+      model: haiku-4.5
+      effort: low
+      procedure: engine/probe/procedure-probe.md
+      reads: "50-gate/<variant>/thread.stripped.md + 60-probe/questions.json 만"
+    - id: probe-grade                             # 채점자(모델 채점 kind 3 + 재서술 축 · 1회 묶음 · 총괄 재량 ⓐ)
+      vendor: anthropic
+      model: opus-5
+      effort: low
+      procedure: engine/probe/procedure-grader.md
+      reads: "표적별 프로브 답변 묶음 + 그 동결 항목의 EN 값 + 블루프린트 hook.thesis_en (스레드 없음)"
+  lane_id_vocabulary:
+    form: "probe-q/<variant>[/retry-<n>]/batch-0 · probe/<variant>[/retry-<n>]/batch-<i> · probe-grade/<variant>[/retry-<n>]/batch-0"
+    pattern: "^(?P<read_run>[a-z0-9]+(?:-[a-z0-9]+)*)/(?P<task>[a-z0-9]+(?:-[a-z0-9]+)*)(?:/retry-(?P<retry>[1-9][0-9]*))?/batch-(?P<batch>0|[1-9][0-9]*)$"
+    membership: {run: [probe-q, probe, probe-grade], task: [v1, v2, v3]}
+    enforced_by: engine/probe/__init__.py#ProbeLaneRequest
+    root: "60-probe/<variant>/lanes/"
+    note: "probe/<v>/batch-<i> 의 i = 0..n-1 · 죽은 인스턴스만 retry-<k>/batch-<i> 로 재요청(살아있는 응답은 보존 · 재정 P-6)"
+  lane_discipline:
+    - "계기 요청서에는 스레드 텍스트와 질문지만 실린다 — 재료 · 블루프린트 · 주석층 · 판정 · 원천은 물리적으로 싣지 않는다(§5.2 입력 격리 · must_not_read 집행)."
+    - "n 요청은 바이트 동일하다. 독립 실행은 좌표(batch-<i>)로만 갈린다(probe.independence)."
+    - "채점자 요청서에는 스레드가 실리지 않는다(§5.3). 결정론 판정 항목은 채점자 입력에서 제외된다(우선순위 불변식)."
+    - "계기 · 채점자 · 질문 생성기의 실호출 모델은 응답 파일에 관측값으로 남고, 계기 ≠ 채점자 좌표·라벨을 러너가 본다(probe.grader-separation)."
+    - "레인은 read-only 다 — 구동기는 --tools \"\" 로 부르고 응답은 payload 하나다. 보고 파일은 러너가 쓴다."
+
+# 채점 분리 판별식(SPEC §5.3 표 · 고정) — kind 별 채점 방식과 환산값. 코드는 여기서 읽는다(리터럴 금지).
+grading:
+  tag: "[주석]"
+  deterministic:                                  # 정답이 문자열로 존재하는 kind(D7) — reader/lib/normalize.py 공용
+    - {kind: fact, compare: "value_normalized + unit (match_key)"}
+    - {kind: component, compare: "text_verbatim 정규화 문자열 포함 여부"}
+    - {kind: figure_note, compare: "numerals[] 집합 일치"}
+  model:                                          # 서술 kind — 채점 레인(probe-grade) · 결정론 판정 항목은 입력에서 제외(우선순위 불변식)
+    - {kind: grounding, compare: "spec_refs[].quote 요지"}
+    - {kind: implication, compare: "statement_en 등가성"}
+    - {kind: positioning, compare: "background_problem / delta"}
+  grades: [hit, partial, miss]
+  scores: {hit: 1, partial: 0.5, miss: 0}
+  restatement: [aligned, drifted, inverted]       # 프로브 A 축 — 도달률에 합산하지 않는다(§5.3)
+  normalization: "NFKC → 소문자 → 연속 공백 1 → 문장부호 제거(수치의 소수점·하이픈 보존) → 수치 십진 표준형(reader.lib.normalize) → 단위 별칭"
+
+# probe.input-clean 의 정규식(SPEC §1.11 · §5.2 입력 격리) — 출하 후보 텍스트에 부재해야 하는 세 어형. 러너는 여기서 읽는다.
+input_clean_patterns:
+  - '\[(M\d+|narrative)'                          # 주석 태그
+  - '^## T\d+'                                     # 슬롯 헤더
+  - '^---$'                                         # 프런트매터 구분선
+
+# 정족수(재정 P-6) · 재시도 상한 · Owner 선택지의 정본 = contracts/parameters.yaml#instrument_quorum(값을 여기 두지 않는다).
+quorum:
+  tag: "[주석]"
+  rule_source: contracts/parameters.yaml#instrument_quorum
+  n_source: contracts/parameters.yaml#adjustable.probe.n
+  escalation: "60-probe/<variant>/escalation.json"
+  state: "60-probe/<variant>/quorum.json"
+
+checks_on_entry:
+  - id: probe.input-digest
+    criterion: >-
+      최신 동결본 실재 · sha256 == run.yaml#frozen[-1].spec_digest · 20-design/blueprint.json 실재 · 같은 spec_digest ·
+      50-gate/<variant>/{thread.stripped.md, annotation-index.json, verdict.json} 실재 · 인덱스 spec_version == 최신
+    implemented_by: engine/stages/__init__.py
+    on_mismatch: environment-error
+    note: "불일치는 품질 결함이 아니라 환경 오류다(재정 P-C). decision == advance 의 전제는 러너가 본다(품질 사실이지 환경이 아니다)."
+
+# SPEC §1.11 표 글자 그대로.
+inputs:
+  - "50-gate/<variant>/thread.stripped.md"        # 계기 입력 — 주석 제거본
+  - 20-design/blueprint.json                      # transmission_targets[] (질문 생성 · 채점자 · 국소화)
+  - "15-frozen/material-spec.v<N>.json"           # 채점자 전용
+  - "50-gate/<variant>/annotation-index.json"     # 국소화 전용
+  - contracts/parameters.yaml
+  - run.yaml
+
+may_read:
+  # 계기 = 스레드 텍스트만 / 채점자 = 동결본 + 프로브 응답 + annotation-index.json
+  - "50-gate/<variant>/thread.stripped.md"
+  - 60-probe/questions.json
+  - "15-frozen/material-spec.v<N>.json"
+  - 20-design/blueprint.json
+  - "50-gate/<variant>/annotation-index.json"
+  - "50-gate/<variant>/verdict.json"              # 러너 전제(decision) 확인용 — 레인에는 실리지 않는다
+  - contracts/parameters.yaml
+  - run.yaml
+
+must_not_read:
+  # 계기
+  - "15-frozen/**"                                # (계기) 재료를 보면 측정이 붕괴한다(§5.2)
+  - "20-design/**"                                # (계기)
+  - "00-source/**"                                # (계기)
+  - "40-compose/**"                               # (계기 · 주석층 포함)
+  - "60-probe/<variant>/probe-<other-i>.json"     # (계기) 다른 계기의 응답
+  # 채점자
+  - "50-gate/<variant>/l1.json"                   # (채점자) 게이트 판정 오염 방지
+  - "50-gate/<variant>/l2.md"                     # (채점자)
+  # 양쪽 공통
+  - ledgers/metrics.jsonl                         # 재정 R12 — 지표는 계기에 도달하지 않는다
+
+outputs:
+  - 60-probe/questions.json                       # 표적 질문지(런 단위 · §5.2 · 변주 디렉터리 밖)
+  - "60-probe/<variant>/probe-<i>.json"           # probe-report/v0 · i = 0..n-1
+  - "60-probe/<variant>/score.json"               # probe-score/v0 · 판정 키 없음
+  - "60-probe/<variant>/probe-report.json"        # 판정 행 8키(진입 1 + 검사 5) + findings + lanes
+
+optional_outputs:
+  - "60-probe/<variant>/escalation.json"          # 정족수 미달 상신(Owner 선택지 3 = parameters.yaml 문언 · 재정 P-6)
+  - "60-probe/<variant>/quorum.json"              # 인스턴스 대장(좌표 · 시도 · 상태) — 재진입 안전의 자리
+  - "60-probe/<variant>/grades.json"              # 채점 원자료(결정론 + 모델) — score.json 의 근거
+
+# SPEC §1.11 「종료 전 검사」 5행 글자 그대로.
+checks_before_exit:
+  - id: probe.independence
+    criterion: "각 probe-<i>.json 이 서로 다른 세션에서 생성되었고 상호 참조가 없음"
+    implemented_by: engine/stages/probe.py
+    note: "n 응답의 좌표(lane_id)가 전부 다르고 응답 지문이 서로 다르며, 어느 응답도 다른 probe_id 를 언급하지 않는다."
+  - id: probe.input-clean
+    criterion: "계기에 투입된 텍스트에 주석 태그·프런트매터·슬롯 헤더가 없음(정규식 부재 확인)"
+    implemented_by: engine/stages/probe.py
+    note: "정규식 3 — 태그 \\[(M\\d+|narrative) · 슬롯 헤더 ^## T\\d+ · 프런트매터 구분선 ^---$. 위반 = halt(측정 무효)."
+  - id: probe.no-self-report
+    criterion: "프로브 응답 스키마에 자기평가 필드가 없음(D9)"
+    implemented_by: engine/stages/probe.py
+    note: "contracts/schemas/probe-report.schema.json 이 additionalProperties false · 점수·자기평가 필드 부재. 러너가 응답 n 건을 그 스키마로 검증한다."
+  - id: probe.target-coverage
+    criterion: "score.json 의 per_target[] 이 블루프린트 transmission_targets[] 전건을 덮음"
+    implemented_by: engine/stages/probe.py
+  - id: probe.grader-separation
+    criterion: "채점 산출의 생성 레인 id 가 계기 레인 id 와 다름"
+    implemented_by: engine/stages/probe.py
+    note: "채점 좌표(probe-grade/…) ≠ 계기 좌표(probe/…) · 채점자 모델 라벨 ≠ 계기 라벨(펜·프로브와 다른 계열 · §5.5 E13). 위반 = halt."
+
+report_format: contracts/schemas/verdict-check-row.schema.json
+
+# 조치 어휘 = SPEC §1.2 C6. 5행 = SPEC §1.11 실패표 글자 그대로 + 1행(종료선) + 1행(질문지 부족).
+failure:
+  - condition: "probe.input-clean 실패(주석 유출)"
+    action: halt
+    note: "측정 무효"
+  - condition: "계기 일부 응답 실패"
+    action: retry(2)
+    then: escalate
+    note: >-
+      죽은 인스턴스만 재시도한다(살아있는 응답은 재실행으로 갈아치우지 않는다). 상한(parameters.yaml#instrument_quorum.dead_instance_retry.max_attempts)
+      내 복구에 실패하면 기계 강등 없이 escalate — Owner 선택지 = 대기 / 결측 진행 / 부분 인정(뒤 둘은 육성 봉투). 정족수 = probe.n 전원(재정 P-6).
+      retry(2) 의 2 는 그 상한의 사본이며 정본은 parameters.yaml 이다.
+  - condition: "probe.grader-separation 실패"
+    action: halt
+    note: "채점 산출이 계기 좌표에서 나왔다 — 자기 채점(D9 위반)"
+  - condition: "delivery_fidelity 가 낮게 나옴"
+    action: escalate
+    note: "실패가 아니다. 계기는 거부권이 없다(D7·D9). 결과는 CP2 에 첨부되고 판정은 Owner 가 한다 — 조치 어휘로는 Owner 판정이므로 escalate 로 적는다(러너는 이 행을 발동하지 않는다)."
+  - condition: "판별력 교정에서 golden ≈ 변조"
+    action: escalate
+    note: "프로브 재설계 신호(D9). 교정은 범위 밖(총괄 재량 ⓒ · 다음 배치) — 이 라운드에 발동 경로가 없다."
+  - condition: "질문지 표적 부족(표적 밖 폐기 후 1:1 미충족)"
+    action: retry(1)
+    then: escalate
+    note: "probe-q/<v>/retry-1/batch-0 로 1회 재요청 · 그래도 부족하면 escalate(질문 생성 실패는 스레드의 실패가 아니다 · §5.2)"
+  - condition: "partial_until 종료선이 probe 앞(run-kinds.yaml#kinds.partial.terminates_at_enum 순서)"
+    action: halt
+    note: "종료선 초과 실행 차단(T40 ③ G-12 의 부분 집행)"
+
+# 계기의 권한(SPEC §5.7). score.json 에 decision·pass·verdict·gate_* 키가 없다(스키마 additionalProperties false) ·
+# 계기 결과는 compose 재리비전을 트리거하지 못한다 · 최종 심급 입력에서 차단된다(생성 시점 기준 · 재정 N1).
+authority:
+  tag: "[주석]"
+  veto: false
+  triggers_revision: false
+  schema_guard: contracts/schemas/probe-score.schema.json

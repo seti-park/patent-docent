@@ -1,0 +1,32 @@
+{
+  "schema": "probe-report/v0",
+  "probe_id": "p0",
+  "model": {
+    "vendor": "anthropic",
+    "model": "claude-haiku-4-5-20251001",
+    "effort": "low"
+  },
+  "input_digest": "sha256:2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+  "question_set_digest": "sha256:2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+  "a_restatement": [
+    "The filing claims a per-user memory datastore.",
+    "The model reads it at every query."
+  ],
+  "b_answers": [
+    {
+      "question_id": "Q1",
+      "target_material_id": "M3",
+      "answer_kind": "stated",
+      "answer": "Objects built from past interactions.",
+      "quoted_span": "objects built from your past interactions"
+    },
+    {
+      "question_id": "Q2",
+      "target_material_id": "M116",
+      "answer_kind": "not-stated",
+      "answer": null,
+      "quoted_span": null
+    }
+  ],
+  "produced_at": "2026-09-13T00:00:00Z"
+}

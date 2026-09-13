@@ -3755,7 +3755,8 @@ patent-docent/
       design.yaml            # ★현행 (M5-a · T64) — 설계 레인·검사 6·실패표
       figures.yaml           # ★현행 (M9-a · T65 ③) — prepare(크롭 전용 렌더)/select(포인터 사영) steps 둘·검사 6·실패표 5+1
       compose.yaml           # ★현행 (M5-b · T64) — 펜 변주 3(effort 사다리)·검사 4·린트·실패표 6+1
-      gate.yaml              # ★현행 (M3/M4-a · T64 ② · M6-a · T67 ②) — L0 13 · strip 검사 4 · L1 좌석·규칙(layers.l1) · 화행 플래그 · loop(캡 3) · checkpoint2 표면 · 미가동 층 명기(layers)   probe.yaml (M7)     critique.yaml (M8)
+      gate.yaml              # ★현행 (M3/M4-a · T64 ② · M6-a · T67 ② · M4/M8-a · T69 ⑥) — L0 13 · strip 검사 4 · L1 좌석·규칙(layers.l1) · L2 좌석·어휘(layers.l2 · gate.no-score 가동) · 화행 플래그 · loop(캡 3 · free_revision 1) · checkpoint2 표면 · 미가동 층 명기(layers)
+      probe.yaml             # ★현행 (M7-a · T69 ⑥) — 계기 레인 3(probe-q · probe · probe-grade) · 채점 판별식(grading) · 입력 청정 정규식 · 검사 5 · 실패표 5+2   critique.yaml (M8)
       ship.yaml              # (M10 예정)  feedback.yaml (M10)
     schemas/                 # docent 전용 스키마 (JSON Schema draft 2020-12)
       approval-envelope.schema.json  # ★현행 (재정 R8, 재감수 M-03·B-07 + 재정 N9)
@@ -3769,8 +3770,8 @@ patent-docent/
       gate-report.schema.json        # ★현행 (M3/M4-a · T64 ②). 판정문 gate-report/v0
       figures-manifest.schema.json   # ★현행 (M9-a · T65 ③). 도면 자산 매니페스트 figures-manifest/v0
       figures-selection.schema.json  # ★현행 (M9-a · T65 ③). 출하 도면 선택(포인터만) figures-selection/v0
-      probe-report.schema.json       # (M7 예정)
-      probe-score.schema.json        # (M7 예정)
+      probe-report.schema.json       # ★현행 (M7-a · T69 ⑥). 계기 보고 probe-report/v0 — 점수·자기평가 필드 없음
+      probe-score.schema.json        # ★현행 (M7-a · T69 ⑥). 계기 집계 probe-score/v0 — 판정 키 없음(§5.7)
       convergence.schema.json        # ★현행 (M1). READ 검사 보고서 — 판정 행 배열(재정 N5)
       run.schema.json                # (M12 예정)
     lexicon/
@@ -3789,14 +3790,16 @@ patent-docent/
     lib/                     # ★현행 (M1). 결정론 검사 유틸 — 검사 12종의 구현
                              #   + 전수 수치 수확기 harvest.py (M1.5, 재정 P-B — 검사가 아니라 생산)
   engine/                    # docent 전용 러너·게이트·strip·프로브
-    stages/                  # ★현행 (M1): source.py · read.py · freeze.py · ★현행 (M5-a): design.py · ★현행 (M5-b): compose.py(+ 국소 수정 지시 인라인 · T67 ②) · ★현행 (M3/M4-a): gate.py(L0 부분 · ★현행 M6-a · T67 ②: run_l1 · final-eyes-brief 핀)
+    stages/                  # ★현행 (M1): source.py · read.py · freeze.py · ★현행 (M5-a): design.py · ★현행 (M5-b): compose.py(+ 국소 수정 지시 인라인 · T67 ② · + L2 메모 표 인라인 · T69 ⑥) · ★현행 (M3/M4-a): gate.py(L0 부분 · ★현행 M6-a · T67 ②: run_l1 · final-eyes-brief 핀 · ★현행 M4/M8-a · T69 ⑥: run_l2 · l2.md) · ★현행 (M7-a · T69 ⑥): probe.py(계기 러너 · 검사 5 · 정족수)
     render/                  # ★현행 (M1): material_spec_md.py (CP1 KR 표면 렌더) · ★현행 (M5-a): blueprint_md.py
     lanes/                   # ★현행 (M1): 독해 LLM 레인 호출 구조
     procedure/               # ★현행 (M5-a): design.md — 설계 레인 절차 문서
     pens/                    # ★현행 (M5-b): registry.py(변주→펜 배정 · 계약에서 읽음) · prompt-template.md(긍정형 템플릿) · lint.py(compose.prompt-lint)
     annotation/              # ★현행 (M5-b): parse.py — §3.2 문법 파서(compose.annotation-syntax · L0 · strip 의 유일한 파서) · ★현행 (M3/M4-a): strip.py(§3.3 ①~⑤ + 참조 구현) · index.py(annotation-index · thread · annotation 직렬화) · reassemble.py(역방향 round-trip)
     gate/                    # ★현행 (M3/M4-a · T64 ②): l0/ — 로더(l0-format.yaml#rules[] · retired 거부 · veto 는 항목에서) · rules_{format,annotation,citation,numeric,run}.py · weighted_length.py(시트 weighted_length) · sentence_count.py(sentence_counting)
-                             #   ★현행 (M6-a · T67 ②): l1/ — plan.py(요청 k 건 · 어휘 gate-l1/<v>/batch-<i>) · merge.py(§4.5 다수결) · procedure.md(검증 심급 절차 · 금지 열거) · loop.py(국소 수정 라운드 · 캡 · revisions/r<n>/) · checkpoint2.py(CP2 표면·봉투). final_eyes.py 는 M6-b 예정
+                             #   ★현행 (M6-a · T67 ②): l1/ — plan.py(요청 k 건 · 어휘 gate-l1/<v>/batch-<i>) · merge.py(§4.5 다수결) · procedure.md(검증 심급 절차 · 금지 열거) · loop.py(국소 수정 라운드 · 캡 · revisions/r<n>/ · ★ T69 ⑥: free_revision · revisions/free-r1/) · checkpoint2.py(CP2 표면·봉투). final_eyes.py 는 M6-b 예정
+                             #   ★현행 (M4/M8-a · T69 ⑥): l2/ — plan.py(요청 1 · 어휘 gate-l2/<v>/batch-0) · lint.py(gate.no-score · score-lint.yaml 로드 · 4요소·반례 검증) · procedure.md(자문 절차 · 점수 표기 없음)
+    probe/                   # ★현행 (M7-a · T69 ⑥): __init__.py(ProbeLaneRequest · 계약 로드) · questions.py(질문 생성 · 1:1 검증) · run_probes.py(요청 n 동일 바이트 · 무효 답변) · grade.py(채점 분리 · normalize 공용) · localize.py(2단 규칙 · score) · procedure-{questions,probe,grader}.md
   studio/                    # 도면 렌더 (HTML/CSS/SVG + 헤드리스 Chromium)
     templates/
     tokens/
@@ -4139,7 +4142,7 @@ effective_from: gate_version 1.3
 | `contracts/stages/figures.yaml` | 현행 | M9-a(T65) |
 | `contracts/stages/compose.yaml` | 현행 | M5-b(T64) |
 | `contracts/stages/gate.yaml` | 현행 | M3/M4-a(T64) |
-| `contracts/stages/probe.yaml` | 예정 | M7 |
+| `contracts/stages/probe.yaml` | 현행 | M7-a(T69) |
 | `contracts/stages/critique.yaml` | 예정 | M8 |
 | `contracts/stages/ship.yaml` | 예정 | M10 |
 | `contracts/stages/feedback.yaml` | 예정 | M10 |
@@ -4151,14 +4154,14 @@ effective_from: gate_version 1.3
 | `contracts/schemas/gate-report.schema.json` | 현행 | M3/M4-a(T64) |
 | `contracts/schemas/figures-manifest.schema.json` | 현행 | M9-a(T65) |
 | `contracts/schemas/figures-selection.schema.json` | 현행 | M9-a(T65) |
-| `contracts/schemas/probe-report.schema.json` | 예정 | M7 |
-| `contracts/schemas/probe-score.schema.json` | 예정 | M7 |
+| `contracts/schemas/probe-report.schema.json` | 현행 | M7-a(T69) |
+| `contracts/schemas/probe-score.schema.json` | 현행 | M7-a(T69) |
 | `contracts/schemas/run.schema.json` | 예정 | M12 |
 | `contracts/invariants.md` | 예정 | M4 |
 
 글로브(`*`)를 포함한 행은 존재 검사에서 제외하고 부모 디렉터리만 확인한다. **M1에서 `contracts/stages/*.yaml` 글로브 행은 스테이지별 실경로 행으로 분해되었다** — 세 스테이지(`source`·`read`·`freeze`)가 실물이 되면서 글로브 하나로는 "만든 것"과 "만들 것"을 구별할 수 없게 되었기 때문이다. K2는 `현행` 행의 실재와 `예정` 행의 부재를 각각 대조하므로, 분해하지 않으면 나머지 여덟 스테이지가 이미 존재한다는 잘못된 인상이 표에 남는다.
 
-`현행` 파일이 선언하는 계약 라인은 `material-spec/v0` · `l0-format/v0` · `parameters/v0` · `speech-acts/v1` · `defect-catalog/v0` · `approval-envelope/v0` · `metrics-row/v0` · `format-parameters/v0` · `run-kinds/v0` · `score-lint/v1` · `verdict-check-row/v0` · `reader-rules/v0` · `stage-contract/v0` · `convergence/v0` **열넷**이다(M0.5의 7종 + M0.6의 4종 + **M1의 3종**). K3가 문서의 언급과 파일의 선언(`title` 또는 `properties.schema.const`, YAML은 최상위 `schema`)을 **양방향**으로 대조하므로, 파일에만 있는 계약도 문서에만 있는 계약도 결함으로 잡힌다. T64(M5-a)가 `blueprint/v0` · `extension-envelope/v0` 둘을 더해 열여섯이 되었고, T64 ②(M3/M4-a · L0 게이트)가 `thread/v0` · `annotation-index/v0` · `annotation/v0` · `gate-report/v0` 넷을 더해 스물이 되었고, T65 ③(M9-a · 도면 자산층 crop-only)이 `figures-manifest/v0` · `figures-selection/v0` 둘을 더해 **스물둘**이다.
+`현행` 파일이 선언하는 계약 라인은 `material-spec/v0` · `l0-format/v0` · `parameters/v0` · `speech-acts/v1` · `defect-catalog/v0` · `approval-envelope/v0` · `metrics-row/v0` · `format-parameters/v0` · `run-kinds/v0` · `score-lint/v1` · `verdict-check-row/v0` · `reader-rules/v0` · `stage-contract/v0` · `convergence/v0` **열넷**이다(M0.5의 7종 + M0.6의 4종 + **M1의 3종**). K3가 문서의 언급과 파일의 선언(`title` 또는 `properties.schema.const`, YAML은 최상위 `schema`)을 **양방향**으로 대조하므로, 파일에만 있는 계약도 문서에만 있는 계약도 결함으로 잡힌다. T64(M5-a)가 `blueprint/v0` · `extension-envelope/v0` 둘을 더해 열여섯이 되었고, T64 ②(M3/M4-a · L0 게이트)가 `thread/v0` · `annotation-index/v0` · `annotation/v0` · `gate-report/v0` 넷을 더해 스물이 되었고, T65 ③(M9-a · 도면 자산층 crop-only)이 `figures-manifest/v0` · `figures-selection/v0` 둘을 더해 스물둘이 되었고, T69 ⑥(M7-a · 계기)이 `probe-report/v0` · `probe-score/v0` 둘을 더해 **스물넷**이다. `probe.yaml` 은 `stage-contract/v0` 라인을 공유하므로 라인 수를 늘리지 않는다(**계약 파일은 셋이 늘어 스물다섯 행**이 `현행`이다).
 
 M1이 신설한 계약 3종의 자리는 §6.2의 배치 예시 표가 판별과 함께 싣는다.
 
