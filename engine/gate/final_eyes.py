@@ -54,20 +54,29 @@ def input_records(paths, files):
     return [{"path": os.path.relpath(p, paths.run_root), "digest": sha256_file(p)} for p in files]
 
 
-def isolation_row(paths, files, inputs_read, brief):
+def isolation_row(paths, files, inputs_read, brief, frozen_row=None):
+    """N1 = 루프 전/후를 **생성 시점·출처**로 기계 판별한다(SPEC §1.10).
+
+    시점의 관측은 파일시스템 mtime 이 아니라 **런이 스스로 기록한 사실**이다 — mtime 은 반입·체크아웃·사본
+    생성으로 바뀌므로 「생성 시각」의 대리가 되지 못한다(발주자 오류 256 · 같은 동결본이 작업본마다 다른 값을
+    낸다). 따라서 두 축으로 닫는다: ⓐ 발췌본은 스스로 루프 개시 전 산출임을 기록한다
+    (`generated_before_loop` · `revision_round_at_generation`) ⓑ 동결본은 `run.yaml#frozen[]` 등재
+    지문과 같아야 한다 — 루프가 만든 파일을 그 자리에 놓으면 여기서 걸린다."""
     row = CheckRow(check_id="gate.final-eyes-isolation", checked=len(files))
     expected = input_records(paths, files)
     if len(inputs_read) != len(expected) or {r["path"]: r["digest"] for r in inputs_read} != {r["path"]: r["digest"] for r in expected}:
         row.add(row.check_id, "final_eyes.inputs_read", str(inputs_read), str(expected), "제공 파일 집합 또는 지문 불일치")
     try:
-        boundary = datetime.fromisoformat(brief["generated_at"].replace("Z", "+00:00")).timestamp()
+        datetime.fromisoformat(brief["generated_at"].replace("Z", "+00:00"))
     except (ValueError, KeyError, TypeError) as exc:
         raise StageHaltError("gate.final-eyes-isolation: 생성 시각이 없다") from exc
-    for path in files[2:]:
-        if os.stat(path).st_mtime > boundary:
-            row.add(row.check_id, os.path.relpath(path, paths.run_root), str(os.stat(path).st_mtime), str(boundary), "발췌본 생성 이후 입력")
     if brief.get("generated_before_loop") is not True or brief.get("revision_round_at_generation") != 0:
         row.add(row.check_id, "final-eyes-brief.json", "루프 이후", "루프 개시 전", "발췌본 출처 위반")
+    if frozen_row is not None:
+        frozen_path = next((p for p in files if os.path.basename(p) == os.path.basename(frozen_row["path"])), None)
+        if frozen_path is None or sha256_file(frozen_path) != frozen_row["spec_digest"]:
+            row.add(row.check_id, frozen_row["path"], sha256_file(frozen_path) if frozen_path else "부재",
+                    frozen_row["spec_digest"], "동결본이 run.yaml 등재 지문과 다르다 — 루프 전 동결물이 아니다")
     return row
 
 
@@ -120,7 +129,7 @@ def run(run_root, repo=None, variant=None, adapter=None):
     previous = verdict.get("final_eyes") or {}
     if previous.get("verdict") and scope_row(previous).status == "fail":
         raise StageHaltError("gate.final-eyes-scope 실패")
-    isolation = isolation_row(paths, files, previous.get("inputs_read") if previous.get("verdict") else records, brief)
+    isolation = isolation_row(paths, files, previous.get("inputs_read") if previous.get("verdict") else records, brief, frozen_row)
     if isolation.status == "fail":
         verdict["checks"] = gate_stage._replace_rows(verdict["checks"], [isolation])
         write_json(paths.verdict_json(variant), verdict)
@@ -201,7 +210,7 @@ def run(run_root, repo=None, variant=None, adapter=None):
                             if (d["rule"], d["locus"]["tweet"], d["locus"]["sentence"]) in minority)
         reason = "b" if merged["defects"] else None
     # 응답을 기다리는 사이 입력이 바뀌면 판정하지 않는다.
-    isolation = isolation_row(paths, files, records, brief)
+    isolation = isolation_row(paths, files, records, brief, frozen_row)
     if isolation.status == "fail":
         raise StageHaltError("gate.final-eyes-isolation: 실행 중 입력 변경")
     block = {"verdict": "veto" if reason else "pass", "veto_reason": reason,

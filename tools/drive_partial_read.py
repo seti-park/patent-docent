@@ -552,15 +552,18 @@ def call_lane(ctx: Context, lanes_root: str, lane_id: str) -> CallOutcome:
         return CallOutcome(lane_id, True, "dry-run", None, None)
 
     previous = _previous_receipt(ctx, lane_id)
-    if read_run == final_eyes_mod.LANE_RUN and previous is not None and previous.get("request_md_sha256") != _sha256_bytes(stdin):
-        # 새 심급의 호출 예산은 새 입력 지문에 속한다. 이전 영수증은 지문별로 보존한다.
-        archive = os.path.join(ctx.calls_dir, "final-sessions", str(previous["request_md_sha256"]))
+    if previous is not None and previous.get("request_md_sha256") != _sha256_bytes(stdin):
+        # 호출 상한의 뜻은 「**같은 요청**을 세 번 넘게 던지지 않는다」이다(죽은 대 대응). 좌표 이름은
+        # 판정 회차를 넘어 재사용되므로 — 수정 라운드·자유 리비전이 `gate-l1/<v>/batch-<i>` 를 다시 쓴다 —
+        # 좌표로만 세면 상한 3 이 라운드 2 를 넘기지 못한다(실런 01:06 exit 15). 요청서가 바뀌면 다른
+        # 판정이므로 예산을 새로 준다. 이전 영수증은 지문별로 보존한다(덮어쓰지 않는다).
+        archive = os.path.join(ctx.calls_dir, "sessions", str(previous["request_md_sha256"]))
         os.makedirs(archive, exist_ok=True)
         for source in (_receipt_path(ctx, lane_id), _raw_path(ctx, lane_id)):
             if os.path.isfile(source):
                 destination = os.path.join(archive, os.path.basename(source))
                 if os.path.exists(destination):
-                    raise DriverExit(EXIT_UNDECIDABLE, "이전 최종 심급 영수증 보존 자리 충돌")
+                    raise DriverExit(EXIT_UNDECIDABLE, "이전 회차 영수증 보존 자리 충돌")
                 os.replace(source, destination)
         previous = None
     attempt = int(previous.get("attempt", 0)) + 1 if isinstance(previous, dict) else 1

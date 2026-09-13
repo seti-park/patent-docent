@@ -228,8 +228,8 @@ def test_contract_activates_l1_and_paths_declare_new_outputs(law) -> None:
         pytest.fail("gate.yaml#layers.l1·speech_act_flag 가 active 가 아니다")
     if layers["l1"]["lane"] != {"kind": "llm", "model": "opus-5", "effort": "high", "k": "parameters.yaml#gate.l1.k"}:
         pytest.fail(f"L1 좌석이 다르다: {layers['l1']['lane']}")
-    if layers["l2"]["status"] != "active" or layers["final_eyes"]["status"] != "inactive":   # L2 는 T69 ⑥ 로 가동
-        pytest.fail("L2·최종 심급은 미가동 그대로여야 한다(재정 T67 ② 범위 밖)")
+    if layers["l2"]["status"] != "active" or layers["final_eyes"]["status"] != "active":   # L2 = T69 ⑥ · 최종 심급 = T69 ⑦
+        pytest.fail("L2·최종 심급이 가동 표기가 아니다")
     raw = yaml.safe_load(read(os.path.join(law, "contracts", "stages", "gate.yaml")))
     if gate_stage.revision_cap(contract) != raw["loop"]["revision_cap"] or not isinstance(raw["loop"]["revision_cap"], int):
         pytest.fail("revision_cap 이 파일에서 오지 않는다")
@@ -619,6 +619,38 @@ def test_revise_cap_escalates_after_three_rounds(run_root, law) -> None:
 # ---------------------------------------------------------------------------
 
 
+def synthesize_downstream(run_root: str, law: str, variant: str = VARIANT) -> None:
+    """CP2 는 T69 ⑦ 부터 L2·계기·소견·최종 심급을 전제한다. 이 모듈은 ⑤(L1·수정 루프·봉투) 시험이므로
+    그 네 층은 **최소 합성**으로만 세운다 — 각 층의 본시험은 m36(L2·계기)·m37(소견·최종 심급·출하)이다."""
+    from engine.gate import final_eyes as fe_mod
+    from engine.stages import write_text as _write_text
+
+    paths = RunPaths(run_root, law)
+    stripped = paths.thread_stripped_md(variant)
+    digest = sha256_file(stripped)
+    targets = read_json(paths.blueprint_json)["transmission_targets"]
+    write_json(paths.score_json(variant), {
+        "input_digest": digest, "delivery_fidelity": 0.5,
+        "per_target": [{"material_id": t, "hit_rate": 0.5, "weakest_tweet": 1} for t in targets],
+        "restatement": {"aligned": len(targets)},
+    })
+    _write_text(paths.l2_md(variant), "# L2 자문 메모\n구조의 흐름을 확인했다.\n")
+    memo_path = paths.critique_memo(variant)
+    _write_text(memo_path, "# 소견\n훅은 조응하고 착지는 안도감으로 닫힌다.\n")
+    write_json(os.path.join(paths.critique_dir(variant), "critique-report.json"), {
+        "status": "ok", "candidate_digest": digest, "memo_digest": sha256_file(memo_path),
+    })
+    meta = yaml.safe_load(read(paths.run_yaml))
+    version = int(meta["frozen"][-1]["spec_version"])
+    verdict = read_json(paths.verdict_json(variant))
+    verdict["inactive_layers"] = []
+    verdict["final_eyes"] = {
+        "verdict": "pass", "veto_reason": None, "observations": [],
+        "inputs_read": fe_mod.input_records(paths, fe_mod.provided_files(paths, variant, version)),
+    }
+    write_json(paths.verdict_json(variant), verdict)
+
+
 def _advanced_with_flags(run_root: str, law: str) -> dict:
     l1_to_pending(run_root, law)
     sa = {"predicate": "sa-02", "locus": {"tweet": 8, "sentence": 3}, "note": "전망"}
@@ -628,12 +660,13 @@ def _advanced_with_flags(run_root: str, law: str) -> dict:
 
 def test_cp2_surfaces_draft_and_approve_ship_envelope(run_root, law, tmp_path) -> None:
     _advanced_with_flags(run_root, law)
+    synthesize_downstream(run_root, law)
     view = cp2_mod.surfaces(run_root=run_root, repo=law, variant=VARIANT)
     flag_ids = [f["id"] for f in view["present"]["flags"]]
     if flag_ids != ["f-l0-001", "f-l0-002", "f-l1-003"] or view["present"]["flags"][2]["origin"] != "speech-act":
         pytest.fail(f"플래그 전건(L0 자문 2 + L1 화행 1)이 아니다: {flag_ids}")
-    if {row["path"] for row in view["unimplemented"]} != {"65-critique/<variant>/memo.md", "verdict.json#final_eyes"}:   # T69 ⑥ — l2.md·score.json 은 실물
-        pytest.fail(f"결번 표가 다르다: {view['unimplemented']}")
+    if view.get("unimplemented"):   # T69 ⑦ — 표면 7 전건 실물(결번 표 자체가 사라졌다)
+        pytest.fail(f"결번 표가 비어 있지 않다: {view.get('unimplemented')}")
     draft = view["draft"]
     if [row["flag_id"] for row in draft["flags_adjudicated"]] != flag_ids or any(row["verdict"] for row in draft["flags_adjudicated"]):
         pytest.fail("봉투 초안의 flags_adjudicated 가 전 flag id · verdict 비움이 아니다")
@@ -728,6 +761,7 @@ def test_driver_gate_l1_cp2_approve_ship_and_seal(run_root, law, tmp_path) -> No
     code, lines = _drive(law, run_root, evidence, "gate-l1", RUN_ID, executor=stub)
     if code != drv.EXIT_OK or len(stub.calls) != 3 or not any("재진입" in line for line in lines):
         pytest.fail(f"gate-l1 재진입: {code} {lines}")
+    synthesize_downstream(run_root, law)
     code, lines = _drive(law, run_root, evidence, "cp2", RUN_ID, "--variant", VARIANT)
     if code != drv.EXIT_OK or not any(line.startswith("CP2 ship_approval") for line in lines) or not any("f-l0-001" in line for line in lines):
         pytest.fail(f"cp2 명령: {code} {lines}")

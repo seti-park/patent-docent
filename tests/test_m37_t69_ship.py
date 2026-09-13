@@ -37,11 +37,8 @@ def setup(tmp_path, monkeypatch):
     monkeypatch.setattr("engine.stages.compose.law_commit_of", lambda repo: "e" * 40)
     root = make_run(str(tmp_path / "r"))
     paths = RunPaths(root, str(law))
-    # 복사 시각은 원 생성 시각이 아니다. 이 합성 시험은 동결 시각을 명시해 N1을 시험한다.
-    brief = load_json(paths.final_eyes_brief(VARIANT))
-    boundary = datetime.fromisoformat(brief["generated_at"].replace("Z", "+00:00")).timestamp()
-    for p in (paths.final_eyes_brief(VARIANT), paths.frozen_spec(1)):
-        os.utime(p, (boundary, boundary))
+    # 복사 시각은 원 생성 시각이 아니다 — N1 은 mtime 을 보지 않고 런이 기록한 사실
+    # (발췌본의 루프 전 표기 · run.yaml 등재 동결 지문)로 판별한다(발주자 오류 256).
     targets = load_json(paths.blueprint_json)["transmission_targets"]
     write_json(paths.score_json(VARIANT), {"input_digest": sha256_file(paths.thread_stripped_md(VARIANT)),
         "delivery_fidelity": 0.5, "per_target": [{"material_id": t, "hit_rate": i / len(targets), "weakest_tweet": 1} for i, t in enumerate(targets)],
@@ -192,7 +189,7 @@ def test_final_four_inputs_and_fingerprints(setup):
     require(not list(Draft202012Validator(schema).iter_errors(load_json(paths.verdict_json(VARIANT)))))
 
 
-@pytest.mark.parametrize("mutation", ["extra", "late", "pin", "open"])
+@pytest.mark.parametrize("mutation", ["extra", "frozen-swap", "pin", "open"])
 def test_final_isolation_failures(setup, mutation):
     paths, law = setup
     if mutation == "extra":
@@ -200,8 +197,11 @@ def test_final_isolation_failures(setup, mutation):
         v = load_json(paths.verdict_json(VARIANT))
         v["final_eyes"]["inputs_read"].append({"path": "extra", "digest": "sha256:" + "b" * 64})
         write_json(paths.verdict_json(VARIANT), v)
-    elif mutation == "late":
-        os.utime(paths.frozen_spec(1), None)
+    elif mutation == "frozen-swap":
+        # 루프가 만든 내용을 동결본 자리에 놓으면 run.yaml 등재 지문과 어긋난다(동결본은 0o444 라 먼저 푼다)
+        os.chmod(paths.frozen_spec(1), 0o644)
+        with open(paths.frozen_spec(1), "a", encoding="utf-8") as handle:
+            handle.write(" ")
     elif mutation == "pin":
         with open(paths.final_eyes_brief(VARIANT), "a") as handle:
             handle.write(" ")
