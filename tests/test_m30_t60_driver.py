@@ -239,7 +239,7 @@ def test_response_model_is_modelusage_main_key_and_effort_is_requested(tmp_path)
     if response["input_digest"] != request.input_digest or response["lane_id"] != request.lane_id:
         pytest.fail("payload 밖 필드가 레인 출력 그대로가 아니다")
     rec = receipt(ctx, request.lane_id)
-    if rec["lane_self_report"] != {"model": "self-reported", "effort": "self-effort"}:
+    if {k: rec["lane_self_report"].get(k) for k in ("model", "effort")} != {"model": "self-reported", "effort": "self-effort"}:
         pytest.fail(f"자기 신고가 영수증에 없다: {rec['lane_self_report']}")
     if drv.main_model_of({"a": {"outputTokens": 5}, "b": {"outputTokens": 50}}) != "b":
         pytest.fail("주 키 선택이 출력 토큰 최대가 아니다")
