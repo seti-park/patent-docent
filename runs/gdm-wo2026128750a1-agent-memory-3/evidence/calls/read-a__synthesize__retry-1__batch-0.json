@@ -1,0 +1,60 @@
+{
+  "attempt": 1,
+  "duration_ms": 71079,
+  "ended_at": "2026-09-13T05:41:04Z",
+  "is_error": false,
+  "lane_id": "read-a/synthesize/retry-1/batch-0",
+  "lane_self_report": {
+    "effort": "low",
+    "lane_id": "read-a/synthesize/retry-1/batch-0",
+    "model": "fable-5.1"
+  },
+  "note": "",
+  "num_turns": 2,
+  "observed": {
+    "main_model": "claude-fable-5-1",
+    "modelUsage": {
+      "claude-fable-5-1": {
+        "cacheCreationInputTokens": 113330,
+        "cacheReadInputTokens": 5023,
+        "canonicalModel": "claude-fable-5-1",
+        "contextWindow": 1000000,
+        "costBasis": "list",
+        "costUSD": 2.58937575,
+        "inputTokens": 2,
+        "maxOutputTokens": 64000,
+        "outputTokens": 6430,
+        "provider": "firstParty",
+        "thinkingTokens": 1793,
+        "webSearchRequests": 0
+      },
+      "claude-haiku-4-5-20251001": {
+        "cacheCreationInputTokens": 0,
+        "cacheReadInputTokens": 0,
+        "canonicalModel": "claude-haiku-4-5",
+        "contextWindow": 200000,
+        "costBasis": "list",
+        "costUSD": 0.079127,
+        "inputTokens": 79057,
+        "maxOutputTokens": 32000,
+        "outputTokens": 14,
+        "provider": "firstParty",
+        "thinkingTokens": 0,
+        "webSearchRequests": 0
+      }
+    }
+  },
+  "request_md_sha256": "bcb97858cd54c453cde195f6cbef7f76ab91af6df87d39aa12955e39854f0704",
+  "requested": {
+    "api_id": "claude-fable-5-1",
+    "effort": "low",
+    "model": "fable-5.1"
+  },
+  "response_json_sha256": "81c61cc4d33067eb3cdd2adc1611e220dcf5eda42677a0349b7d999503aa5a07",
+  "returncode": 0,
+  "session_id": "1d92915f-e499-4394-915e-bd59762374f3",
+  "started_at": "2026-09-13T05:39:51Z",
+  "stderr_tail": "strict mode: missing type \"object\" for keyword \"properties\" at \"#/properties/payload/properties/drop_signal/allOf/1\" (strictTypes)\nstrict mode: missing type \"object\" for keyword \"required\" at \"#/properties/payload/properties/items/items/allOf/1\" (strictTypes)\nstrict mode: missing type \"object\" for keyword \"properties\" at \"#/properties/payload/properties/items/items/allOf/1\" (strictTypes)\nstrict mode: missing type \"object\" for keyword \"required\" at \"#/properties/payload/properties/items/items/allOf/2/if\" (strictTypes)\nstrict mode: missing type \"object\" for keyword \"properties\" at \"#/properties/payload/properties/items/items/allOf/2/if\" (strictTypes)\nstrict mode: missing type \"object\" for keyword \"required\" at \"#/properties/payload/properties/items/items/allOf/2/then\" (strictTypes)\nstrict mode: missing type \"object\" for keyword \"properties\" at \"#/properties/payload/properties/items/items/allOf/2/then\" (strictTypes)\nstrict mode: missing type \"object\" for keyword \"properties\" at \"#/properties/payload/properties/items/items/allOf/3\" (strictTypes)\nstrict mode: missing type \"object\" for keyword \"required\" at \"#/properties/payload/properties/items/items/allOf/4/if\" (strictTypes)\nstrict mode: missing type \"object\" for keyword \"properties\" at \"#/properties/payload/properties/items/items/allOf/4/if\" (strictTypes)\nstrict mode: missing type \"object\" for keyword \"required\" at \"#/properties/payload/properties/items/items/allOf/4/then\" (strictTypes)\nstrict mode: missing type \"object\" for keyword \"properties\" at \"#/properties/payload/properties/items/items/allOf/4/then\" (strictTypes)\n",
+  "timed_out": false,
+  "total_cost_usd": 2.66850275
+}

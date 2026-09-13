@@ -1,0 +1,60 @@
+{
+  "attempt": 1,
+  "duration_ms": 46266,
+  "ended_at": "2026-09-13T05:34:10Z",
+  "is_error": false,
+  "lane_id": "read-a/ground-independent/retry-1/batch-0",
+  "lane_self_report": {
+    "effort": "low",
+    "lane_id": "read-a/ground-independent/retry-1/batch-0",
+    "model": "opus-5"
+  },
+  "note": "",
+  "num_turns": 3,
+  "observed": {
+    "main_model": "claude-opus-5",
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "cacheCreationInputTokens": 0,
+        "cacheReadInputTokens": 0,
+        "canonicalModel": "claude-haiku-4-5",
+        "contextWindow": 200000,
+        "costBasis": "list",
+        "costUSD": 0.072564,
+        "inputTokens": 72489,
+        "maxOutputTokens": 32000,
+        "outputTokens": 15,
+        "provider": "firstParty",
+        "thinkingTokens": 0,
+        "webSearchRequests": 0
+      },
+      "claude-opus-5": {
+        "cacheCreationInputTokens": 108760,
+        "cacheReadInputTokens": 113183,
+        "canonicalModel": "claude-opus-5",
+        "contextWindow": 1000000,
+        "costBasis": "list",
+        "costUSD": 1.2609614999999998,
+        "inputTokens": 4,
+        "maxOutputTokens": 64000,
+        "outputTokens": 4670,
+        "provider": "firstParty",
+        "thinkingTokens": 1344,
+        "webSearchRequests": 0
+      }
+    }
+  },
+  "request_md_sha256": "db3fe672edaec4aee51992ff7c0ec06b0e16133fc1a5a496711b400a0a0eb31e",
+  "requested": {
+    "api_id": "claude-opus-5",
+    "effort": "low",
+    "model": "opus-5"
+  },
+  "response_json_sha256": "aad6e79a5cd1b5ab7fb6cde6a91d86975cb13b3882033369b0e28c0c0706ad41",
+  "returncode": 0,
+  "session_id": "2b7b3dff-79f8-4e0f-83e8-faffb29596be",
+  "started_at": "2026-09-13T05:33:22Z",
+  "stderr_tail": "strict mode: missing type \"object\" for keyword \"properties\" at \"#/properties/payload/properties/items/items/allOf/1\" (strictTypes)\n",
+  "timed_out": false,
+  "total_cost_usd": 1.3335255
+}

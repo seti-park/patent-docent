@@ -1,0 +1,67 @@
+{
+  "properties": {
+    "effort": {
+      "type": "string"
+    },
+    "input_digest": {
+      "type": "string"
+    },
+    "lane_id": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "payload": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "items": {
+          "items": {
+            "allOf": [
+              {
+                "properties": {
+                  "id": {
+                    "pattern": "^M[0-9]+$",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "kind"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "const": "grounding"
+                  }
+                }
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "review_requests": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "lane-response/grounding",
+      "type": "object"
+    }
+  },
+  "required": [
+    "lane_id",
+    "model",
+    "effort",
+    "input_digest",
+    "payload"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,89 @@
+{
+  "batch": 0,
+  "effort": "low",
+  "input_digest": "84c1518347e8a7497ccbc93778a495d1594f3c2988889e91e12f6c0b41a5400e",
+  "instructions": "청구항 구간 전량을 분해한다. 원천에 있는 **모든** 청구항이 대상이며, 하나라도 빠지면\n`read.claim-inventory` 가 잡는다. 산출은 `claims`(독립·종속·출원인 관심)과\n`items`(kind: component) 와 `screening_memo` 다.\n맹검 스크리닝 메모는 **상신이 아니다** — 기록만 하며 네 메모가 런을 세우지 않는다(재정 P-A). 판단 방향(`clear`·`concern`) 하나와 근거 요지(KR) 하나를 적는다.\n이 요청은 독립 실행 `read-b` 의 것이며, 다른 실행의 산출을 보지 않는다.",
+  "lane_id": "read-b/decompose/batch-0",
+  "model": "fable-5.1",
+  "prompt_path": "reader/procedure/10-decompose.md",
+  "read_run": "read-b",
+  "response_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+      "claims": {
+        "properties": {
+          "applicant_interest": {
+            "type": "array"
+          },
+          "dependents": {
+            "type": "array"
+          },
+          "independent": {
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "independent",
+          "dependents",
+          "applicant_interest"
+        ],
+        "type": "object"
+      },
+      "items": {
+        "items": {
+          "properties": {
+            "id": {
+              "pattern": "^M[0-9]+$",
+              "type": "string"
+            },
+            "kind": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "kind"
+          ],
+          "type": "object"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "review_requests": {
+        "type": "array"
+      },
+      "screening_memo": {
+        "properties": {
+          "direction": {
+            "enum": [
+              "concern",
+              "clear"
+            ]
+          },
+          "reason": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "direction",
+          "reason"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "claims",
+      "items",
+      "screening_memo"
+    ],
+    "title": "lane-response/decompose",
+    "type": "object"
+  },
+  "slices": {
+    "bibliographic-head": "# DYNAMIC INTERACTION MEMORY DATASTORE FOR MACHINE-LEARNED AGENT SYSTEMS\n\n## Biblio. Data\n\n발명의 명칭\nDYNAMIC INTERACTION MEMORY DATASTORE FOR MACHINE-LEARNED AGENT SYSTEMS\n\n요약서\nAn example method includes receiving, by a machine-learned agent system, a query associated with a user; accessing, by the machine-learned agent system, memory data from an interaction memory datastore associated with the user, wherein the interaction memory datastore comprises one or more memory objects that were generated based on one or more prior interactions between the machine-learned agent system and the user; inputting, by the machine-learned agent system and to a machine-learned sequence processing model, an input data structure based on the query and the memory data; generating, by the machine-learned agent system and based on processing the input data structure using the machine-learned sequence processing model, an output; and outputting, by the machine-learned agent system, and based on the output, a response to the query.\n\n공개번호\nWO2026-128750\n\n공개일\n2026-06-18\n\n국제출원번호\nPCT/US2025/059270\n\n국제출원일\n2025-12-11\n\nIPC\nG06F 16/41\n\nCPC\nG06F 16/41\n\n출원인\n- GDM HOLDING LLC \n- \n발명자\n- HASSABIS, Demis\n- THOTA, Chandrasekhar\n- CHI, Ed Huai-hsin\n- WAYNE, Gregory Duncan\n\n우선권 정보\nUS 63/730,845 (2024-12-11)\n\n\n## Description\n\nDYNAMIC INTERACTION MEMORY DATASTORE FOR MACHINE-LEARNED AGENT SYSTEMS\n\nPRIORITY\n\n",
+    "claims-section": "WHAT IS CLAIMED IS:\n\n1 . A computer-implemented method, comprising:\n\nreceiving, by a machine-learned agent system, a query associated with a user;\n\naccessing, by the machine-learned agent system, memory data from an interaction memory datastore associated with the user, wherein the interaction memory datastore comprises one or more memory objects that were generated based on one or more prior interactions between the machine-learned agent system and the user;\n\ninputting, by the machine-learned agent system and to a machine-learned sequence processing model, an input data structure based on the query and the memory data;\n\ngenerating, by the machine-learned agent system and based on processing the input data structure using the machine-learned sequence processing model, an output; and\n\noutputting, by the machine-learned agent system, and based on the output, a response to the query.\n\n2. The method of claim 1 , wherein the interaction memory datastore comprises multimodal data, and wherein the memory data is based on a first memory object associated with a first data modality and a second memory object associated with a second data modality.\n\n3. The method of claim 2, wherein:\n\nthe first data modality comprises audio data, and wherein the second data modality comprises image data;\n\nthe first data modality comprises text data, and wherein the second data modality comprises image data; or\n\nthe first data modality comprises text data, and wherein the second data modality comprises audio data.\n\n4. The method of claim 1 , comprising:\n\nretrieving, by the machine-learned agent system, and from the interaction memory datastore, the one or more memory values based on a relevance of the one or more memory values to the query.\n\n5. The method of any of the preceding claims, comprising:\n\nafter receiving an input during an interactive session, processing, by the machine-learned agent system, the input using a machine-learned model to generate one or more values; and \n\nbased on the generated one or more values indicating that at least a portion of the input is to be stored:\n\nextracting, by the machine-learned agent system, the portion; and\n\nstoring, by the machine-learned agent system, the portion as a memory value in a memory object in the interaction memory datastore.\n\n6. The method of claim 5, comprising:\n\nstoring, by the machine-learned agent system, metadata associated with the memory value in the memory object.\n\n7. The method of claim 5, wherein the portion comprises at least one of: text data, image data, or audio data.\n\n8. The method of claim 5, wherein the portion corresponds to an explicit instruction to remember information.\n\n9. The method of any of the preceding claims, comprising:\n\nreceiving, by the machine-learned agent system, input data indicating an instruction to forget specified information; and\n\ndeleting, by the machine-learned agent system, the specified information from the interaction memory datastore.\n\n10. The method of any of the preceding claims, comprising:\n\nreceiving, by the machine-learned agent system, input data indicating an instruction to forget specified information after a specified interval; and\n\nqueuing, by the machine-learned agent system, the specified information for deletion from the interaction memory datastore after the specified interval.\n\n11 . The method of any of the preceding claims, wherein the memory data comprises an ordered combination of the one or more memory values, the ordered combination ordered based on corresponding timestamps of the plurality of memory objects.\n\n12. The method of any of the preceding claims, comprising:\n\nfiltering the plurality of memory objects to obtain the one or more memory values, wherein the filtering comprises: \n\ncomputing one or more relevance measures for the plurality of memory objects based on the query; and\n\nreturning a subset of the plurality of memory objects based on the relevance measure.\n\n13. The method of claim 12, wherein the one or more relevance measures comprise:\n\na respective score generated based on distance between a query embedding and a respective memory value embedding; or\n\na respective sequence output generated by processing the query and one or more respective memory values using a second machine-learned sequence processing model that is optionally the same as or different from the machine-learned sequence processing model.\n\n14. The method of any of the preceding claims, wherein the one or more memory values each comprise a respective string, and wherein the memory data comprises a string comprising the one or more respective strings from the one or more memory values.\n\n15. The method of any of the preceding claims, comprising:\n\ninputting at least a portion of the output to the machine-learned sequence processing model; generating, based on processing the output using the machine-learned sequence processing model, the response to the query;\n\nwherein the output comprises a plurality of predictions for analytical content that comprises an analysis of the query with respect to the memory data.\n\n16. The method of any of the preceding claims, wherein the plurality of predictions for analytical content are not exposed on a user interface associated with the query.\n\n17. The method of any of the preceding claims, comprising:\n\nconsolidating, in the interaction memory datastore, a subset of the plurality of memory objects into a single memory object based on an alignment between the subset.\n\n18. The method of any of the preceding claims, comprising:\n\nreceiving input data associated with a timestamp;\n\ncreating a current memory object comprising:\n\nthe timestamp; and\n\na current memory value based on the input data;\n\nmatching the current memory object to a prior memory object; and \n\nreplacing, in the interaction memory datastore, the prior memory object with the current memory object.\n\n19. The method of any of the preceding claims, comprising:\n\nreceiving input data associated with a timestamp;\n\nmatching at least a portion of the input data to a prior memory object;\n\nupdating, in the interaction memory datastore, the prior memory object based on the portion of the input data.\n\n20. The method of any of the preceding claims, wherein the response comprises instructions configured to control an application programming interface to cause a computing system to perform an action.\n\n21 . The method of claim 20, wherein the query indicates a configuration parameter that controls an operation of the computing system, and wherein the instructions are configured to control the application programming interface to cause the computing system to assign a value for the configuration parameter.\n\n22. The method of claim 21 , wherein the configuration parameter is associated with at least one of:\n\ndata access by the computing system;\n\ndata retention by the computing system; or\n\ndata communication by the computing system.\n\n23. One or more non-transitory computer-readable media storing instructions that are executable by one or more processors to cause a computing system to perform operations, the operations comprising the method of any of the preceding claims.\n\n24. A computing system, comprising:\n\none or more processors; and\n\none or more non-transitory computer-readable media storing instructions that are executable by the one or more processors to cause the computing system to perform operations, the operations comprising the method of any of the preceding claims.\n\n25. A computer program product comprising instructions that are executable by one or more processors to cause a computing system to perform operations, the operations comprising the method of any of the preceding claims.\n"
+  },
+  "task": "decompose"
+}

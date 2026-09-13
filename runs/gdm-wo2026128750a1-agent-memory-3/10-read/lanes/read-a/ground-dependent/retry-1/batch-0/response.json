@@ -1,0 +1,792 @@
+{
+  "lane_id": "read-a/ground-dependent/retry-1/batch-0",
+  "model": "claude-opus-5",
+  "effort": "low",
+  "input_digest": "5a091b07afa7285a82aef25d48672d9168c4b6ea47c8dc0285b38663e863cf5a",
+  "payload": {
+    "items": [
+      {
+        "id": "M1052",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M7",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0100]",
+            "quote": "Interaction memory datastore 110 can be multimodal. For example, one or more queries can include data of a first modality and one or more queries can include data of a second modality."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-2",
+            "numerals": [
+              "110"
+            ],
+            "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1053",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M8",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0159]",
+            "quote": "A memory object can include data of a first modality and data of a second modality. Different modalities can be stored in different memory objects and linked through metadata."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-2",
+            "numerals": [
+              "202-1",
+              "204-1"
+            ],
+            "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1054",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M9",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0162]",
+            "quote": "interaction memory datastore 110 can store image data in association with audio data, such as a video recording recorded during an interaction session and a voice recording recorded during the interaction session."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-2",
+            "numerals": [
+              "110",
+              "204-1"
+            ],
+            "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1055",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M10",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0163]",
+            "quote": "interaction memory datastore 110 can store image data in association with text data, such as image data from a video recording recorded during an interaction session and a transcription from a voice recording recorded during the interaction session."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-2",
+            "numerals": [
+              "110",
+              "204-1"
+            ],
+            "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1056",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M11",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0164]",
+            "quote": "interaction memory datastore 110 can store audio data in association with text data. Audio data (e.g., music) and text data (e.g., comments on the music) can be stored as multimodal memories in interaction memory datastore 110."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-2",
+            "numerals": [
+              "110",
+              "204-1"
+            ],
+            "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1057",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M12",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0090]",
+            "quote": "For example, memory model 105 can initiate similarity search operations to retrieve a number of relevant stored memories for a particular query."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-1",
+            "numerals": [
+              "105",
+              "106",
+              "110"
+            ],
+            "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1058",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M13",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0088]",
+            "quote": "memory model 105 can invoke a machine-learned model input (e.g., after one or more inputs are received) that causes a machine-learned model to predict whether there is anything in the query that is to be remembered."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-8",
+            "numerals": [
+              "802",
+              "804"
+            ],
+            "caption_quote": "Figure 8 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1059",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M14",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0439]",
+            "quote": "The values can indicate that at least a portion of the input is to be stored."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-8",
+            "numerals": [
+              "804"
+            ],
+            "caption_quote": "Figure 8 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1060",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M15",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0088]",
+            "quote": "Predicting new information to remember can include generating a portion or excerpt of content to remember."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-8",
+            "numerals": [
+              "804"
+            ],
+            "caption_quote": "Figure 8 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1061",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M16",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0282]",
+            "quote": "Memory model 105 can execute a memory data write 806 to add or update memory data objects in interaction memory datastore 110."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-8",
+            "numerals": [
+              "806"
+            ],
+            "caption_quote": "Figure 8 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1062",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M17",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0054]",
+            "quote": "Additional metadata may be stored in the memory object, such as a timestamp, the type of trigger used for storing the memory, a summary of the interaction during which the memory value was received, or other attributes."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-2",
+            "numerals": [
+              "206-1"
+            ],
+            "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1063",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M18",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0154]",
+            "quote": "A memory value can be extracted or excerpted from an interaction. For example, a visual memory can be stored by saving all or part of one or more images associated with an interaction session. A textual memory can be stored by saving all or part of one or more messages or documents associated with an interaction session. An audio memory can be stored by saving all or part of one or more audio files or streams associated with an interaction session."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-2",
+            "numerals": [
+              "204-1"
+            ],
+            "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1064",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M19",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0054]",
+            "quote": "An example explicit trigger may occur when a user instructs the machine-learned agent system to remember a particular piece of information, such as the user’s favorite architect."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-7",
+            "numerals": [
+              "702"
+            ],
+            "caption_quote": "Figure 7 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1065",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M20",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0293]",
+            "quote": "Explicit forgetting may be triggered by user commands such as “forget that,” “delete this conversation,” or “forget information related to [topic].”"
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-10",
+            "numerals": [
+              "1002"
+            ],
+            "caption_quote": "Figure 10 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1066",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M21",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0443]",
+            "quote": "Memory model 105 can then cause the identified memory objects to be deleted from interaction memory datastore 110."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-10",
+            "numerals": [
+              "1002",
+              "804"
+            ],
+            "caption_quote": "Figure 10 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1067",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M22",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0057]",
+            "quote": "The user can instruct the machine-learned agent system to forget information after three months."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-10",
+            "numerals": [
+              "1002"
+            ],
+            "caption_quote": "Figure 10 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1068",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M23",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0295]",
+            "quote": "Memory objects exceeding their expiration time may be automatically deleted during scheduled maintenance operations."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-10",
+            "numerals": [
+              "1002",
+              "804"
+            ],
+            "caption_quote": "Figure 10 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1069",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M24",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0165]",
+            "quote": "In some implementations, the memory data includes an ordered combination of one or more memory values, the ordered combination ordered based on corresponding timestamps of the plurality of memory objects."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-3",
+            "numerals": [
+              "308"
+            ],
+            "caption_quote": "Figure 3 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1070",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M25",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0446]",
+            "quote": "the machine-learned agent system (e.g., 100) can use a memory query"
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-3",
+            "numerals": [
+              "302",
+              "304",
+              "306"
+            ],
+            "caption_quote": "Figure 3 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1071",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M26",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0446]",
+            "quote": "The filtering process can involve computing one or more relevance measures (e.g., similarity scores, distance metrics, or probabilities) for each memory object"
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-1",
+            "numerals": [
+              "106",
+              "108"
+            ],
+            "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1072",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M27",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0179]",
+            "quote": "The top-K most similar memory objects can be retrieved, where K is a configurable parameter."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-3",
+            "numerals": [
+              "302",
+              "304",
+              "306"
+            ],
+            "caption_quote": "Figure 3 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1073",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M28",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0179]",
+            "quote": "A vector embedding of the pre-processed query can be compared to vector embeddings of values within memory objects stored in the database. This comparison can use similarity metrics like cosine similarity to identify memory objects semantically related to the query."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-2",
+            "numerals": [
+              "204-1"
+            ],
+            "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1074",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M29",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0447]",
+            "quote": "the one or more relevance measures include a respective sequence output generated by processing the query and one or more respective memory values using a second machine-learned sequence processing model that is optionally the same as or different from the machine-learned sequence processing model."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-13",
+            "numerals": [
+              "4",
+              "6"
+            ],
+            "caption_quote": "Figure 13 is a block diagram of an example sequence processing model according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1075",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M30",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0053]",
+            "quote": "a memory object can be a data container that stores one or more memory values (e.g., strings, images, audio, etc.) along with relevant metadata."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-2",
+            "numerals": [
+              "204-1"
+            ],
+            "caption_quote": "Figure 2 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1076",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M31",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0182]",
+            "quote": "concatenating multiple textual memory values into a string representation for insertion into a prompt"
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-3",
+            "numerals": [
+              "308"
+            ],
+            "caption_quote": "Figure 3 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1077",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M32",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0117]",
+            "quote": "A second input data structure can contain the generated analysis along with an instruction to generate a final response based on the analysis."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-1",
+            "numerals": [
+              "116",
+              "118"
+            ],
+            "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1078",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M33",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0117]",
+            "quote": "A second output data structure can contain the final response. Machine-learned agent system 100 can generate response 122 based on the second output data structure, which was based on the first output data structure."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-1",
+            "numerals": [
+              "120",
+              "122"
+            ],
+            "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1079",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M34",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0117]",
+            "quote": "For example, a first input data structure can contain an instruction to generate a thorough analysis of query 104 in view of memory data 114. Output data structure 120 can contain the generated analysis."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-1",
+            "numerals": [
+              "120"
+            ],
+            "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      },
+      {
+        "id": "M1080",
+        "kind": "grounding",
+        "status": "active",
+        "superseded_by": null,
+        "component": "M35",
+        "anchor_state": {
+          "spec": "found",
+          "figure": "found"
+        },
+        "spec_refs": [
+          {
+            "locator": "[0117]",
+            "quote": "The raw outputs may not be surfaced to the user. For example, only a response 122 might be output to output interface(s) 124."
+          }
+        ],
+        "figure_refs": [
+          {
+            "figure": "FIG-1",
+            "numerals": [
+              "122",
+              "124"
+            ],
+            "caption_quote": "Figure 1 is a block diagram that illustrates aspects of a machine-learned agent system according to example implementations of aspects of the present disclosure."
+          }
+        ]
+      }
+    ],
+    "review_requests": [
+      {
+        "target": "M1074",
+        "reason": "CL-13/a2 의 「second machine-learned sequence processing model」이 도면상 별개 블록으로 표현되지 않는다 — FIG-13 의 모델 4·예측층 6 을 부호로 들었으나 이것이 「두 번째」 모델인지는 도면으로 판가름나지 않는다. [0447] 문언과 FIG-13 을 함께 보아 부호 부착의 타당성을 확인해 주기 바란다."
+      },
+      {
+        "target": "M1060",
+        "reason": "CL-5/a3 「extracting the portion」의 조응으로 [0088] 을 들었으나 이 문단은 추출을 「remember 할 내용의 발췌 예측」으로 서술해 청구항 어형과 다르다. [0439] 의 재서술이 더 가까울 수 있어 어느 쪽을 정본 인용으로 둘지 판단을 요청한다."
+      }
+    ]
+  }
+}

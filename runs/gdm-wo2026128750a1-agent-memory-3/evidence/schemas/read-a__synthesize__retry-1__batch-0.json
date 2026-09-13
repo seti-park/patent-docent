@@ -1,0 +1,188 @@
+{
+  "properties": {
+    "effort": {
+      "type": "string"
+    },
+    "input_digest": {
+      "type": "string"
+    },
+    "lane_id": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "payload": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "drop_signal": {
+          "allOf": [
+            {
+              "properties": {
+                "reason": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "stage": {
+                  "enum": [
+                    "early",
+                    "final"
+                  ]
+                },
+                "verdict": {
+                  "enum": [
+                    "go",
+                    "drop-proposed"
+                  ]
+                }
+              },
+              "required": [
+                "stage",
+                "verdict",
+                "reason"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "stage": {
+                  "const": "final"
+                }
+              }
+            }
+          ]
+        },
+        "figures": {
+          "type": "array"
+        },
+        "items": {
+          "items": {
+            "allOf": [
+              {
+                "properties": {
+                  "id": {
+                    "pattern": "^M[0-9]+$",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "kind"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "active",
+                      "retracted",
+                      "superseded"
+                    ]
+                  },
+                  "superseded_by": {
+                    "oneOf": [
+                      {
+                        "pattern": "^M[0-9]+$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "status",
+                  "superseded_by"
+                ]
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "fact"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "label_en": {
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "label_en"
+                  ]
+                }
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "fact",
+                      "implication",
+                      "positioning",
+                      "figure_note"
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "fact"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "origin": {
+                      "enum": [
+                        "derived",
+                        "figure-sourced"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "origin"
+                  ]
+                }
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "review_requests": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "items",
+        "figures",
+        "drop_signal"
+      ],
+      "title": "lane-response/synthesis",
+      "type": "object"
+    }
+  },
+  "required": [
+    "lane_id",
+    "model",
+    "effort",
+    "input_digest",
+    "payload"
+  ],
+  "type": "object"
+}

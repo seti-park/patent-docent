@@ -1,0 +1,60 @@
+{
+  "attempt": 1,
+  "duration_ms": 97130,
+  "ended_at": "2026-09-13T05:28:07Z",
+  "is_error": false,
+  "lane_id": "read-a/ground-dependent/batch-0",
+  "lane_self_report": {
+    "effort": "low",
+    "lane_id": "read-a/ground-dependent/batch-0",
+    "model": "opus-5"
+  },
+  "note": "",
+  "num_turns": 3,
+  "observed": {
+    "main_model": "claude-opus-5",
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "cacheCreationInputTokens": 0,
+        "cacheReadInputTokens": 0,
+        "canonicalModel": "claude-haiku-4-5",
+        "contextWindow": 200000,
+        "costBasis": "list",
+        "costUSD": 0.072244,
+        "inputTokens": 72134,
+        "maxOutputTokens": 32000,
+        "outputTokens": 22,
+        "provider": "firstParty",
+        "thinkingTokens": 0,
+        "webSearchRequests": 0
+      },
+      "claude-opus-5": {
+        "cacheCreationInputTokens": 108586,
+        "cacheReadInputTokens": 112971,
+        "canonicalModel": "claude-opus-5",
+        "contextWindow": 1000000,
+        "costBasis": "list",
+        "costUSD": 1.3951905000000002,
+        "inputTokens": 4,
+        "maxOutputTokens": 64000,
+        "outputTokens": 10113,
+        "provider": "firstParty",
+        "thinkingTokens": 2970,
+        "webSearchRequests": 0
+      }
+    }
+  },
+  "request_md_sha256": "3ca7048931fbdf44ad731b1b449d2ce078e9929e51677c20d9c918c83af7d497",
+  "requested": {
+    "api_id": "claude-opus-5",
+    "effort": "low",
+    "model": "opus-5"
+  },
+  "response_json_sha256": "844829fc2f623cacc86aa5e691819aa60350974bfd54c6d6ba16f5fda7c6a2e5",
+  "returncode": 0,
+  "session_id": "26ab8b9d-81c7-493c-9383-9a4ab7e3b6c4",
+  "started_at": "2026-09-13T05:26:29Z",
+  "stderr_tail": "strict mode: missing type \"object\" for keyword \"properties\" at \"#/properties/payload/properties/items/items/allOf/1\" (strictTypes)\n",
+  "timed_out": false,
+  "total_cost_usd": 1.4674345000000002
+}

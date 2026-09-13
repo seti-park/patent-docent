@@ -1,0 +1,98 @@
+{
+  "properties": {
+    "effort": {
+      "type": "string"
+    },
+    "input_digest": {
+      "type": "string"
+    },
+    "lane_id": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "payload": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "claims": {
+          "properties": {
+            "applicant_interest": {
+              "type": "array"
+            },
+            "dependents": {
+              "type": "array"
+            },
+            "independent": {
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "independent",
+            "dependents",
+            "applicant_interest"
+          ],
+          "type": "object"
+        },
+        "items": {
+          "items": {
+            "properties": {
+              "id": {
+                "pattern": "^M[0-9]+$",
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "kind"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "review_requests": {
+          "type": "array"
+        },
+        "screening_memo": {
+          "properties": {
+            "direction": {
+              "enum": [
+                "concern",
+                "clear"
+              ]
+            },
+            "reason": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "direction",
+            "reason"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "claims",
+        "items",
+        "screening_memo"
+      ],
+      "title": "lane-response/decompose",
+      "type": "object"
+    }
+  },
+  "required": [
+    "lane_id",
+    "model",
+    "effort",
+    "input_digest",
+    "payload"
+  ],
+  "type": "object"
+}
