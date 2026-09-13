@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(165차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(166차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 166차 — **재정 T63 「① A / ② A′(wherein만)」 등재(`ruling-20260913-08-T63.md`) → 절차 적용 완료(총괄 직접)**: `10-decompose.md` 규약 ① 선두 `wherein`(한 낱말만 · 유추 확장 금지 · addition 공통) · `20-grounding.md` §5 ⓓ 범주항 → 장치 블록도 부호 · §2 복수 인용 · §6 이유문 명세 ID · `HISTORY.md` H-13·G-4·G-5 · `reader-rules.yaml` open_question ② 세 런 자료 · `engine/lanes/plan.py` allOf `type: object`(strict 경고 원인) · 관문 7 · 939 통과 · 추기 133. **백로그 ⓐ~ⓔ 전부 처분됐다. 지금 할 일 = 없음 — 다음 런(적용된 규약으로 · 첫 검증 = M99·M102 류 자기 신고와 harvest-parity 재시도 소멸 여부)은 Owner 지시를 기다린다.** 살아 있는 배경 = 없음. 런 -3 동결본은 그대로(undecided 표지 유지).**
+
+> [정정 2026-09-13 · 166차] 165차의 「Owner T63 대기」는 끝났다(재정 도착 · 적용 완료).
 
 **★ 09-13 165차 — **결정 브리핑 T63 「런 3 뒤 절차 둘」 발행** `https://claude.ai/code/artifact/070d591f-a687-4380-b831-436a7c4c2df2`(추기 132 · 홈 사본 `OWNER-BRIEF-T63-procedure-20260913.html`): ① 범주항 도면 조응 규칙(20-grounding.md §5 행 ⓓ · 추천 A 신설 — FIG-18 부호 미등재가 런 -3 재시도 $7.52 의 원인) · ② 요소 문언 선두 「wherein」 경계(10-decompose.md 규약 ① 확장 · 추천 A — 런 -2 의 0.714 는 정확히 그 한 낱말). 재량 넷(복수 인용 · 이유문 ID · strict 경고 · 0.95 자료)은 반대 없으면 진행. **지금 할 일 = Owner `T63: ① _ / ② _` 대기 → 재정문 `ruling-20260913-08-T63.md` + 색인 행 → 절차 문서 편집(총괄 직접 · 20-grounding.md · 10-decompose.md · HISTORY.md · reader-rules open_question ②) → 관문 7종 → 커밋 → 추기 133. 그 다음 런은 Owner 지시.** 살아 있는 배경 = 없음.**
 
