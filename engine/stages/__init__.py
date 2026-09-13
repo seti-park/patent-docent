@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""스테이지 러너 6종(`source` · `read` · `freeze` · `design` · `compose` · `gate`)과 그들이 공유하는 최소 도구.
+"""스테이지 러너 7종(`source` · `read` · `freeze` · `design` · `figures` · `compose` · `gate`)과 그들이 공유하는 최소 도구.
 
 여기 있는 함수는 전부 **결정론**이며 판단하지 않는다. 판단은 레인(LLM)과 Owner 의 몫이고,
 러너는 계약이 정한 자리에 계약이 정한 형태로 산출물을 놓고 검사 결과를 그대로 보고한다.
@@ -486,6 +486,27 @@ def _entry_compose_input_digest(row: CheckRow, paths, entry: dict, inputs: dict)
         str(blueprint.get("spec_digest", "")), recorded,
         "블루프린트의 spec_digest 가 최신 동결본 기록과 다르다 — 펜은 그 위에 서지 않는다(재정 N11)",
     )
+    # 도면 자산층(재정 T65 ③). 선택·매니페스트가 실재하면 같은 재료 판·같은 블루프린트 위에 섰는지 대조하고,
+    # 호출자가 `figures_required` 를 켜면(2회차 재펜) 부재도 환경 오류다 — 도면 없이 도면 헤더를 쓰게 할 수 없다.
+    selection_path = paths.figures_selection_json
+    manifest_path = paths.figures_manifest_json
+    required = bool(inputs.get("figures_required"))
+    present = os.path.isfile(selection_path) and os.path.isfile(manifest_path)
+    row.extras["figures_present"] = present
+    if not present:
+        if required:
+            for path, label in ((selection_path, "30-figures/selection.json"), (manifest_path, "30-figures/assets/manifest.json")):
+                _require_file(row, check_id, path, label)
+        return
+    row.checked += 1
+    selection = load_json(selection_path)
+    manifest = load_json(manifest_path)
+    _compare(row, check_id, "30-figures/selection.json#spec_digest", str(selection.get("spec_digest", "")), recorded,
+             "선택이 선 재료 판이 최신 동결본과 다르다 — 재료 개정으로 무효화된 선택이다(재정 N11)")
+    _compare(row, check_id, "30-figures/assets/manifest.json#spec_digest", str(manifest.get("spec_digest", "")), recorded,
+             "매니페스트가 선 재료 판이 최신 동결본과 다르다(재정 N11)")
+    _compare(row, check_id, "30-figures/selection.json#blueprint_digest", str(selection.get("blueprint_digest", "")),
+             sha256_file(paths.blueprint_json), "선택이 사영한 블루프린트가 지금의 블루프린트와 다르다 — figures.select 를 다시 돈다")
 
 
 def _entry_gate_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) -> None:
@@ -515,11 +536,61 @@ def _entry_gate_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) ->
     row.extras["absent_inputs"] = absent
 
 
+def _entry_figures_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) -> None:
+    """`figures.input-digest` — 동결본 실재·지문·쓰기 불가 + 원천 도면 변경 감지(재정 T65 ③ · P-U2 · P-C).
+
+    동결본 `figures[].raw_path` 가 가리키는 `00-source/figures-raw/` 의 **실재하는** 파일마다 sha256 을
+    `00-source/source-report.json#figures[]` 의 같은 파일명 행과 대조한다 — 어긋나면 원천이 봉인 뒤 바뀐 런이며
+    환경 오류다. 실재하지 않는 원본은 여기서 결함이 아니다(변경 감지와 누락은 다른 물음) — `extras.missing_raw`
+    에 적고 `figures.asset-completeness`(출구 검사)가 누락으로 판정한다. 보고서에 행이 없는 파일명도 환경 오류다
+    (source 가 모르는 파일이 원천 디렉터리에 있다).
+    """
+    _entry_design_input_digest(row, paths, entry, inputs)
+    if row.findings:
+        return
+    check_id = str(entry.get("id"))
+    version = int(inputs.get("spec_version"))
+    frozen = load_json(paths.frozen_spec(version))
+    if not _require_file(row, check_id, paths.source_report, "00-source/source-report.json"):
+        return
+    row.checked += 1
+    report_rows = {
+        str(figure.get("filename", "")): str(figure.get("sha256", ""))
+        for figure in (load_json(paths.source_report).get("figures") or []) if isinstance(figure, dict)
+    }
+    missing: list[str] = []
+    verified: dict[str, str] = {}
+    for figure in frozen.get("figures") or []:
+        if not isinstance(figure, dict):
+            continue
+        figure_id = str(figure.get("id", ""))
+        raw = str(figure.get("raw_path", ""))
+        path = paths.absolute(raw) if raw else ""
+        if not raw or not os.path.isfile(path):
+            missing.append(figure_id)
+            continue
+        name = os.path.basename(raw)
+        if name in verified:
+            continue
+        row.checked += 1
+        actual = sha256_file(path)
+        verified[name] = actual
+        if name not in report_rows:
+            row.add(check_id, f"00-source/source-report.json#figures[filename={name}]", "(행 없음)", "도면별 행",
+                    "source 보고서가 모르는 원본 파일이다 — 도면 세트가 봉인 뒤 바뀌었다(재정 P-U2)")
+            continue
+        _compare(row, check_id, f"00-source/figures-raw/{name}", actual, report_rows[name],
+                 "원본 도면의 실측 지문이 source 보고와 다르다 — 원천 변경은 부분 복구가 아니라 새 런이다(재정 P-U2)")
+    row.extras["missing_raw"] = missing
+    row.extras["verified_raw"] = verified
+
+
 _ENTRY_CHECKS = {
     "read.input-digest": _entry_read_input_digest,
     "source.input-digest": _entry_source_input_digest,
     "freeze.input-digest": _entry_freeze_input_digest,
     "design.input-digest": _entry_design_input_digest,
+    "figures.input-digest": _entry_figures_input_digest,
     "compose.input-digest": _entry_compose_input_digest,
     "gate.input-digest": _entry_gate_input_digest,
 }

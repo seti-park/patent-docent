@@ -4,15 +4,17 @@
 규칙마다 행 하나(`CheckRow`)와 결함 목록을 낸다. `checked` = 그 규칙이 실제로 본 대상 수(트윗 수 등).
 지시문(`fix_directive`)은 「어디를 · 어느 재료로」 형식이며 대체 문장을 담지 않는다(D8 · SPEC §4.7).
 
-`format.stop-shape` 는 재정 T64 ④(도면 자산층 부재)로 이 라운드에 미가동이다 — 코드는 있고, 매니페스트
-(`30-figures/assets/manifest.json`)가 실재하면 가동되는 구조다. 부재이면 행을 `checked 0` 으로 내고
-`extras.inactive_reason` 에 계약(`gate.yaml#layers`)의 사유를 옮긴다.
+`format.stop-shape` 는 재정 T65 ③(도면 자산층 실물화)으로 **가동**이다 — 매니페스트(`30-figures/assets/manifest.json`)
+가 실재하면 헤더 `fig` 의 자산 id 를 매니페스트 항목(`asset_id` · 골든 표기 `figure` · 없으면 `asset_path` basename —
+`engine/figures/asset_id_of`)으로 해소해 `edit_class` 를 센다. 매니페스트가 없는 런(T64 ④ 시절의 판)에서는 행을
+`checked 0` 으로 내고 `extras.inactive_reason` 에 사유를 적는다 — 러너가 그 사실을 `inactive_layers[]` 에도 옮긴다.
 """
 
 from __future__ import annotations
 
 from reader.lib.report import CheckRow
 
+from ...figures import asset_classes
 from ...stages import StageError
 from ..sentence_count import count_sentences
 from .context import L0Context, RuleResult
@@ -25,6 +27,8 @@ R_STOP_SHAPE = "format.stop-shape"
 R_HASHTAG = "format.hashtag-zero"
 R_NO_LINK = "format.no-link-in-body"
 R_IMAGES = "format.images-per-post"
+#: 매니페스트가 없는 런의 미가동 사유(계약 `gate.yaml#layers` 에 행이 없을 때의 기본 문언).
+MANIFEST_ABSENT_REASON = "30-figures/assets/manifest.json 부재 — figures.prepare 가 돌지 않은 런"
 
 
 def _tweets(ctx: L0Context):
@@ -122,14 +126,11 @@ def stop_shape(ctx: L0Context) -> RuleResult:
     res = RuleResult(CheckRow(check_id=R_STOP_SHAPE, checked=0))
     if ctx.manifest is None:
         layer = ctx.inactive.get(R_STOP_SHAPE) or {}
-        res.row.extras["inactive_reason"] = str(layer.get("reason") or "30-figures/assets/manifest.json 부재")
+        res.row.extras["inactive_reason"] = str(layer.get("reason") or MANIFEST_ABSENT_REASON)
         res.row.extras["inactive_ruling"] = str(layer.get("ruling") or "")
         return res
-    classes: dict[str, str] = {}
-    for item in ctx.manifest.get("items") or []:
-        figure = item.get("figure") or item.get("figure_id")
-        if figure:
-            classes[str(figure)] = str(item.get("edit_class", ""))
+    # 헤더 fig 항목(fig-NN) ↔ 매니페스트 자산 id. 매니페스트의 figure_id(FIG-n)로는 해소하지 않는다 — 헤더는 자산 id 를 든다(§3.2).
+    classes = asset_classes(ctx.manifest)
     if ctx.stripped is None:
         raise StageError("format.stop-shape 는 strip 산출 위에서만 돈다")
     counting = ctx.law.block("sentence_counting")

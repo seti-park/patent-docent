@@ -11,7 +11,10 @@
    (`gate-report/v0`) · `thread.stripped.md` · `thread.json` · `annotation-index.json`.
 ③ 처분 — 러너는 판정을 **기록**하며 루프를 돌리지 않는다(국소 수정 루프 = M6 미가동). `decision` 은 가동 층만으로
    정한다(총괄 재량 ⓑ · 미가동 층은 `inactive_layers[]` 에 적는다). 어느 변주에 결함이 있어도 러너 status 는 `ok`
-   (기록 완료). 산출이 이미 있으면 `thread_digest` 가 같을 때 재계산 없이 `ok`, 다르면 다시 판정하고 덮어쓴다.
+   (기록 완료). 산출이 이미 있으면 `thread_digest` 가 같을 때 재계산 없이 `ok`, 다르면 **직전 산출을
+   `50-gate/<v>/rounds/r<n>/` 로 옮긴 뒤** 다시 판정한다(재정 T65 ③ · 총괄 재량 ⓔ — 「덮어씀」을 보존으로 · 사료 규율).
+④ `format.stop-shape` 는 매니페스트(`30-figures/assets/manifest.json`)가 실재하면 가동이다(재정 T65 ③). 없는 런에서는
+   러너가 `inactive_layers[]` 에 그 사실을 동적으로 더한다 — 판정하지 않은 층을 판정한 것처럼 적지 않는다(재정 N5).
 
 ★ 게이트는 글을 고치지 않는다(D8) — `fix_directive` 는 지시문이고 러너가 자기 산출에 `gate.no-rewrite` 린트를
   건다. `40-compose/**`·`15-frozen/**`·`20-design/**` 에 쓰지 않는다. 회귀 표본(`ledgers/regression/**`)은 읽기만.
@@ -26,6 +29,7 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
 
 from reader.lib.report import CheckRow
 
@@ -48,9 +52,11 @@ from ..annotation.index import annotation_dict, build_index, build_thread
 from ..annotation.parse import parse as parse_annotation
 from ..annotation.reassemble import reassemble
 from ..annotation.strip import RESIDUAL_TAG_RE, _reference_strip, strip
+from ..figures import asset_paths as manifest_asset_paths
+from ..gate.l0.rules_format import MANIFEST_ABSENT_REASON, R_STOP_SHAPE
 from ..gate.l0 import L0Context, L0Law, Rule, load_rules_from_law, stamp_ruleset
 from ..gate.l0.weighted_length import EMOJI_APPROXIMATION_NOTE, weighted_length
-from ..paths import RunPaths, load_format_parameters, load_stage_contract, repo_root
+from ..paths import ROUNDS_DIRNAME, RunPaths, load_format_parameters, load_stage_contract, repo_root
 from ..pens import registry
 
 STAGE_ID = "gate"
@@ -151,12 +157,34 @@ def _load_manifest(paths: RunPaths) -> dict | None:
 
 
 def _asset_paths(manifest: dict | None) -> dict[str, str]:
-    out: dict[str, str] = {}
-    for item in (manifest or {}).get("items") or []:
-        figure = item.get("figure") or item.get("figure_id")
-        if figure and item.get("asset_path"):
-            out[str(figure)] = str(item["asset_path"])
-    return out
+    """헤더 fig 자산 id → asset_path(`engine/figures/asset_paths` — stop-shape 와 같은 해소 규칙)."""
+    return manifest_asset_paths(manifest)
+
+
+def _round_number(gate_dir: str) -> int:
+    """다음 보존 회차 번호 = 기존 `rounds/r<n>/` 수 + 1."""
+    rounds = os.path.join(gate_dir, ROUNDS_DIRNAME)
+    if not os.path.isdir(rounds):
+        return 1
+    used = [int(name[1:]) for name in os.listdir(rounds) if re.fullmatch(r"r[1-9][0-9]*", name)]
+    return (max(used) + 1) if used else 1
+
+
+def _preserve_previous(paths: RunPaths, variant: str) -> str | None:
+    """직전 판정 산출(파일들)을 `50-gate/<v>/rounds/r<n>/` 로 옮긴다. 옮긴 자리를 돌려준다(없으면 None)."""
+    gate_dir = paths.gate_dir(variant)
+    if not os.path.isdir(gate_dir):
+        return None
+    files = [name for name in os.listdir(gate_dir) if os.path.isfile(os.path.join(gate_dir, name))]
+    if not files:
+        return None
+    target = paths.gate_round_dir(variant, _round_number(gate_dir))
+    if os.path.exists(target):
+        raise StageError(f"보존 자리가 이미 있다 — 덮어쓰지 않는다: {target}")
+    os.makedirs(target)
+    for name in files:
+        shutil.move(os.path.join(gate_dir, name), os.path.join(target, name))
+    return target
 
 
 def _total_words(stripped) -> int:
@@ -183,6 +211,9 @@ def judge_variant(*, text: str, variant: str, run_id: str, spec_version: int, sp
     `entry_row` = 러너의 진입 검사 행(`gate.input-digest`) — verdict.json#checks[] 의 첫 행으로 싣는다.
     """
     layers_block, inactive = inactive_layers(contract)
+    if manifest is None and not any(row.get("layer") == R_STOP_SHAPE for row in inactive):
+        # 계약은 가동으로 적었으나 이 런에는 자산층이 없다 — 판정 못 한 층을 그대로 적는다(재정 N5 · T65 ③).
+        inactive = [*inactive, {"layer": R_STOP_SHAPE, "reason": MANIFEST_ABSENT_REASON, "ruling": "재정 2026-09-13 T65 ③"}]
     parsed = parse_annotation(text, slot_enum=slot_enum)
     weighted_config = law.param("format-parameters.yaml#weighted_length")
     ctx = L0Context(law=law, repo=repo, parsed=parsed, stripped=None, index=None, frozen=frozen,
@@ -377,11 +408,15 @@ def run(*, run_root: str, repo: str | None = None, variants=None, strip_only: bo
             continue
         text = read_text(source)
         digest = sha256_bytes(text.encode("utf-8"))
-        if not strip_only and _existing_digest(paths, variant) == digest:
+        previous = _existing_digest(paths, variant)
+        if not strip_only and previous == digest:
             verdict = load_json(paths.verdict_json(variant))
             variants_out[variant] = {**_summary(verdict), "reentered": True, "paths": _paths_of(paths, variant)}
             rows_out[variant] = [entry_row]
             continue
+        preserved = None
+        if not strip_only and previous is not None and previous != digest:
+            preserved = _preserve_previous(paths, variant)
         outcome = judge_variant(text=text, variant=variant, run_id=run_id, spec_version=version, spec_digest=spec_digest,
                                 frozen=frozen, meta=meta, law=law, rules=rules, repo=repo, contract=contract,
                                 manifest=manifest, slot_enum=slot_enum, entry_row=entry_row)
@@ -398,7 +433,8 @@ def run(*, run_root: str, repo: str | None = None, variants=None, strip_only: bo
             continue
         write_json(paths.l0_json(variant), outcome["l0"])
         write_json(paths.verdict_json(variant), outcome["verdict"])
-        variants_out[variant] = {**_summary(outcome["verdict"]), "reentered": False, "paths": _paths_of(paths, variant)}
+        variants_out[variant] = {**_summary(outcome["verdict"]), "reentered": False, "paths": _paths_of(paths, variant),
+                                 "preserved_previous": preserved}
         rows_out[variant] = list(outcome["rows"])
 
     judged = [v for v, s in variants_out.items() if "skipped" not in s]

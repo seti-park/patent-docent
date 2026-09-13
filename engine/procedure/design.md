@@ -24,7 +24,7 @@
 
 ⑺ **도면 계획.** `figure_plan` 은 트윗마다 한 원소(`tweet` = 그 슬롯의 `n`)이며 `figures` 는 그 슬롯의 `figures` 와 같은 집합이고 `intent_kr` 에 무엇을 보이려는지 적는다. 이번 초안은 도면을 **지정만** 한다 — 자산은 아직 없다.
 
-⑻ **허용 수치.** `numeric_whitelist` 에는 스레드 순번 `n/N` 하나만 제안한다(`pattern` 은 정규식 · `rationale` 은 한 줄). 재료에 없어도 허용할 수치는 그것뿐이다.
+⑻ **허용 수치.** `numeric_whitelist` 에는 스레드 순번 `n/N` 하나만 제안한다(`pattern` 은 MATCH_KEY 형태 `n/N|` 에 fullmatch 되는 정규식 — 예 `^\d{1,2}/\d{1,2}\|$` · 키 끝의 `|` 는 단위 자리가 비었다는 표기이며 패턴이 그것까지 덮어야 닿는다 · `rationale` 은 한 줄). 재료에 없어도 허용할 수치는 그것뿐이다.
 
 ⑼ **상신.** 재료로 훅이 서지 않으면 `escalation: {reason: "hook-not-feasible", note_kr}` 를 채우고 나머지는 최선의 초안으로 둔다. 강한 전시물이 시트의 `tweet_count.max` 를 넘으면 `escalation: {reason: "exhibit-overflow", note_kr}` 와 `overflow_proposal: {proposal, rationale_kr}` 를 함께 채운다 — 자르지도 쪼개지도 않는다. 선별인지 시리즈 분할인지는 Owner 가 결정한다. 상신이 없으면 `escalation` 과 `overflow_proposal` 은 둘 다 `null` 이다.
 

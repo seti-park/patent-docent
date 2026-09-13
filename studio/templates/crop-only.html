@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  crop-only/v0 — v1 폴백 템플릿(SPEC §6.6 정정 · 재정 R11 · 재정 2026-09-13 T65 ③).
+  순수 크롭 = 프레이밍만. 1200×675 흰 캔버스 위에 원본 도면 하나를 object-fit: contain 으로 놓고
+  여백을 균등하게 둔다. 텍스트·주석·오버레이 없음(주석판은 사용권 재정 뒤 · edit_class 가 다르다).
+  `{{image_data_uri}}` 는 러너(engine/stages/figures.py)가 원본 바이트를 base64 로 인라인해 채운다 —
+  렌더가 00-source/ 를 직접 열지 않는다.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; padding: 0; width: 1200px; height: 675px; background: #ffffff; overflow: hidden; }
+  .frame {
+    box-sizing: border-box; width: 1200px; height: 675px; padding: 24px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .frame img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+</style>
+</head>
+<body>
+<div class="frame"><img src="{{image_data_uri}}" alt=""></div>
+</body>
+</html>

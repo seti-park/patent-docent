@@ -1,0 +1,39 @@
+{
+  "schema": "figures-manifest/v0",
+  "run_id": "example-xx0000000c8-thread-marker",
+  "spec_version": 1,
+  "spec_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "renderer": {
+    "engine": "playwright-chromium",
+    "playwright": "1.49.1",
+    "browser": "chromium-1148",
+    "channel": "chromium",
+    "viewport": [
+      1200,
+      675
+    ],
+    "device_scale_factor": 2
+  },
+  "items": [
+    {
+      "figure_id": "FIG-1",
+      "source_raw_path": "00-source/figures-raw/fig-01.png",
+      "source_sha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "asset_id": "fig-01",
+      "asset_path": "30-figures/assets/fig-01.png",
+      "sha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "renderer": "playwright-chromium-1148",
+      "template": "crop-only/v0",
+      "fallback": true,
+      "edits": [
+        {
+          "op": "crop-only-framing",
+          "template": "crop-only/v0"
+        }
+      ],
+      "edit_class": "crop-only",
+      "publishable": false,
+      "rendered_at": "2026-09-13T12:00:00Z"
+    }
+  ]
+}

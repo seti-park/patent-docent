@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patent-docent.local/contracts/schemas/figures-selection.schema.json",
+  "title": "figures-selection/v0",
+  "$comment": "출하 도면 선택 `30-figures/selection.json`(SPEC §1.8 · §7.5 · 재정 2026-09-13 T65 ③). **포인터만** — 슬롯 행은 tweet·asset·role 세 키뿐이며 additionalProperties: false 가 파일 경로·이미지 데이터의 동반을 스키마 층에서 막는다(figures.no-copy 의 스키마 몫). asset 값은 자산 id(fig-NN)이고 해소는 manifest.json 이 한다. blueprint_digest = 이 선택이 사영한 20-design/blueprint.json 의 sha256.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "spec_version", "spec_digest", "blueprint_digest", "slots"],
+  "properties": {
+    "schema": { "const": "figures-selection/v0" },
+    "run_id": { "type": "string", "pattern": "^[a-z0-9]+-[a-z0-9]+-[a-z0-9-]+$" },
+    "spec_version": { "type": "integer", "minimum": 1 },
+    "spec_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "blueprint_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "slots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tweet", "asset", "role"],
+        "properties": {
+          "tweet": { "type": "integer", "minimum": 1 },
+          "asset": { "type": "string", "pattern": "^fig-[0-9]{2,}(?:\\.r[1-9][0-9]*)?$" },
+          "role": { "enum": ["hero", "exhibit"] }
+        }
+      }
+    }
+  }
+}

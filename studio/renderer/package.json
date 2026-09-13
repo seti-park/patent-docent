@@ -1,0 +1,10 @@
+{
+  "name": "patent-docent-studio-renderer",
+  "private": true,
+  "version": "0.1.0",
+  "description": "figures.prepare 렌더(헤드리스 Chromium · 1200x675 @2x). 설치 = PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i --no-fund --no-audit (브라우저는 ~/.cache/ms-playwright/chromium-1148 전체 빌드 · 총괄 실측 2026-09-13).",
+  "type": "module",
+  "dependencies": {
+    "playwright": "1.49.1"
+  }
+}

@@ -3752,7 +3752,8 @@ patent-docent/
       source.yaml            # ★현행 (M1) — 조기 보고·전시물 후보 산정식(잠정)
       read.yaml              # ★현행 (M1) — D5 5단계·레인 배정·CP1 부착
       freeze.yaml            # ★현행 (M1) — 동결 3동작·봉투 검증
-      design.yaml            # ★현행 (M5-a · T64) — 설계 레인·검사 6·실패표   figures.yaml (M9)
+      design.yaml            # ★현행 (M5-a · T64) — 설계 레인·검사 6·실패표
+      figures.yaml           # ★현행 (M9-a · T65 ③) — prepare(크롭 전용 렌더)/select(포인터 사영) steps 둘·검사 6·실패표 5+1
       compose.yaml           # ★현행 (M5-b · T64) — 펜 변주 3(effort 사다리)·검사 4·린트·실패표 6+1
       gate.yaml              # ★현행 (M3/M4-a · T64 ②) — L0 13 · strip 검사 4 · 미가동 층 명기(layers)   probe.yaml (M7)     critique.yaml (M8)
       ship.yaml              # (M10 예정)  feedback.yaml (M10)
@@ -3766,6 +3767,8 @@ patent-docent/
       blueprint.schema.json          # ★현행 (M5-a · T64). 블루프린트 계약 blueprint/v0
       extension-envelope.schema.json # ★현행 (M5-a · T64). 부분 런 종료선 연장 봉투 extension-envelope/v0
       gate-report.schema.json        # ★현행 (M3/M4-a · T64 ②). 판정문 gate-report/v0
+      figures-manifest.schema.json   # ★현행 (M9-a · T65 ③). 도면 자산 매니페스트 figures-manifest/v0
+      figures-selection.schema.json  # ★현행 (M9-a · T65 ③). 출하 도면 선택(포인터만) figures-selection/v0
       probe-report.schema.json       # (M7 예정)
       probe-score.schema.json        # (M7 예정)
       convergence.schema.json        # ★현행 (M1). READ 검사 보고서 — 판정 행 배열(재정 N5)
@@ -4132,7 +4135,7 @@ effective_from: gate_version 1.3
 | `reader/core-surface.yaml` | 현행 | M1.5 |
 | `contracts/pipeline.yaml` | 예정 | M12 |
 | `contracts/stages/design.yaml` | 현행 | M5-a(T64) |
-| `contracts/stages/figures.yaml` | 예정 | M9 |
+| `contracts/stages/figures.yaml` | 현행 | M9-a(T65) |
 | `contracts/stages/compose.yaml` | 현행 | M5-b(T64) |
 | `contracts/stages/gate.yaml` | 현행 | M3/M4-a(T64) |
 | `contracts/stages/probe.yaml` | 예정 | M7 |
@@ -4145,6 +4148,8 @@ effective_from: gate_version 1.3
 | `contracts/schemas/blueprint.schema.json` | 현행 | M5-a(T64) |
 | `contracts/schemas/extension-envelope.schema.json` | 현행 | M5-a(T64) |
 | `contracts/schemas/gate-report.schema.json` | 현행 | M3/M4-a(T64) |
+| `contracts/schemas/figures-manifest.schema.json` | 현행 | M9-a(T65) |
+| `contracts/schemas/figures-selection.schema.json` | 현행 | M9-a(T65) |
 | `contracts/schemas/probe-report.schema.json` | 예정 | M7 |
 | `contracts/schemas/probe-score.schema.json` | 예정 | M7 |
 | `contracts/schemas/run.schema.json` | 예정 | M12 |
@@ -4152,7 +4157,7 @@ effective_from: gate_version 1.3
 
 글로브(`*`)를 포함한 행은 존재 검사에서 제외하고 부모 디렉터리만 확인한다. **M1에서 `contracts/stages/*.yaml` 글로브 행은 스테이지별 실경로 행으로 분해되었다** — 세 스테이지(`source`·`read`·`freeze`)가 실물이 되면서 글로브 하나로는 "만든 것"과 "만들 것"을 구별할 수 없게 되었기 때문이다. K2는 `현행` 행의 실재와 `예정` 행의 부재를 각각 대조하므로, 분해하지 않으면 나머지 여덟 스테이지가 이미 존재한다는 잘못된 인상이 표에 남는다.
 
-`현행` 파일이 선언하는 계약 라인은 `material-spec/v0` · `l0-format/v0` · `parameters/v0` · `speech-acts/v1` · `defect-catalog/v0` · `approval-envelope/v0` · `metrics-row/v0` · `format-parameters/v0` · `run-kinds/v0` · `score-lint/v1` · `verdict-check-row/v0` · `reader-rules/v0` · `stage-contract/v0` · `convergence/v0` **열넷**이다(M0.5의 7종 + M0.6의 4종 + **M1의 3종**). K3가 문서의 언급과 파일의 선언(`title` 또는 `properties.schema.const`, YAML은 최상위 `schema`)을 **양방향**으로 대조하므로, 파일에만 있는 계약도 문서에만 있는 계약도 결함으로 잡힌다. T64(M5-a)가 `blueprint/v0` · `extension-envelope/v0` 둘을 더해 열여섯이 되었고, T64 ②(M3/M4-a · L0 게이트)가 `thread/v0` · `annotation-index/v0` · `annotation/v0` · `gate-report/v0` 넷을 더해 **스물**이다.
+`현행` 파일이 선언하는 계약 라인은 `material-spec/v0` · `l0-format/v0` · `parameters/v0` · `speech-acts/v1` · `defect-catalog/v0` · `approval-envelope/v0` · `metrics-row/v0` · `format-parameters/v0` · `run-kinds/v0` · `score-lint/v1` · `verdict-check-row/v0` · `reader-rules/v0` · `stage-contract/v0` · `convergence/v0` **열넷**이다(M0.5의 7종 + M0.6의 4종 + **M1의 3종**). K3가 문서의 언급과 파일의 선언(`title` 또는 `properties.schema.const`, YAML은 최상위 `schema`)을 **양방향**으로 대조하므로, 파일에만 있는 계약도 문서에만 있는 계약도 결함으로 잡힌다. T64(M5-a)가 `blueprint/v0` · `extension-envelope/v0` 둘을 더해 열여섯이 되었고, T64 ②(M3/M4-a · L0 게이트)가 `thread/v0` · `annotation-index/v0` · `annotation/v0` · `gate-report/v0` 넷을 더해 스물이 되었고, T65 ③(M9-a · 도면 자산층 crop-only)이 `figures-manifest/v0` · `figures-selection/v0` 둘을 더해 **스물둘**이다.
 
 M1이 신설한 계약 3종의 자리는 §6.2의 배치 예시 표가 판별과 함께 싣는다.
 

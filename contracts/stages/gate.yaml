@@ -2,11 +2,12 @@
 #
 # 정본 서술 = docs/SPEC.md §1.10. 이 파일은 그 서술의 기계 판독본이며, 어긋나면 SPEC 이 이긴다.
 # 서식 = SPEC §1.2 고정 서식 + `schema` 키 + 서식 확장 3 `checks_on_entry`(재정 P-C).
-# 실물화 = 재정 2026-09-13 T64 ②(L0 규칙 13 + strip + round-trip · **미가동 명기**) · ④(도면 자산층 부재).
-#   이 라운드(M3 · T64 집행 ③)가 실물로 만든 것은 **L0 결정론 층과 strip 산출**뿐이다. L1 · L2 · 화행
-#   플래그 · 최종 심급 · `format.stop-shape` 는 아래 `layers` 주석 블록이 「미가동」으로 적으며, 러너는
-#   그 사실을 verdict.json#inactive_layers[] 에 그대로 옮긴다 — 판정하지 않은 층을 판정한 것처럼 적지 않는다
-#   (재정 N5 규율 · run-kinds.yaml#kinds.rehearsal.verdict_requirements.inactive_gates_enumerated).
+# 실물화 = 재정 2026-09-13 T64 ②(L0 규칙 13 + strip + round-trip · **미가동 명기**) · ④(도면 자산층 부재) ·
+#   재정 2026-09-13 T65 ③(도면 자산층 실물화 → `format.stop-shape` 가동 · 재판정 시 직전 산출 보존 `rounds/r<n>/`).
+#   실물 = **L0 결정론 층(stop-shape 포함)과 strip 산출**이다. L1 · L2 · 화행 플래그 · 최종 심급은 아래 `layers`
+#   주석 블록이 「미가동」으로 적으며, 러너는 그 사실을 verdict.json#inactive_layers[] 에 그대로 옮긴다 — 판정하지
+#   않은 층을 판정한 것처럼 적지 않는다(재정 N5 규율 · run-kinds.yaml#kinds.rehearsal.verdict_requirements.
+#   inactive_gates_enumerated). 매니페스트가 없는 런에서는 러너가 stop-shape 미가동 행을 동적으로 더한다.
 #
 # ★ 공통 규칙 — 런은 시작 시점 git 커밋에 결박된다(재정 P-U1). 계약·스키마·검증기·러너가
 #   함께 고정되므로, 런 도중 리포가 개정되어도 이 런의 법은 run.yaml#engine.commit 하나다.
@@ -46,12 +47,13 @@ layers:
     reason: "재정 T64 ② — 첫 초안 범위 밖 · 소관 M6·M8"
     ruling: "재정 2026-09-13 T64 ②"
   format.stop-shape:
-    status: inactive
-    reason: "재정 T64 ④ 도면 자산층 부재"
-    ruling: "재정 2026-09-13 T64 ④"
+    status: active
+    ruling: "재정 2026-09-13 T65 ③"
     note: >-
-      코드는 구현되어 있다(engine/gate/l0/rules_format.py) — 30-figures/assets/manifest.json 이 실재하면
-      가동되는 구조이며, 부재이면 판정 행을 checked 0 · extras.inactive_reason 으로 낸다.
+      도면 자산층(figures.prepare · 30-figures/assets/manifest.json)이 실물이 되어 가동이다. 헤더 fig 의 자산 id 를
+      매니페스트 항목(asset_id)으로 해소해 edit_class 를 센다(engine/figures/asset_id_of). 매니페스트가 없는 런
+      (T64 ④ 시절의 판)에서는 판정 행을 checked 0 · extras.inactive_reason 으로 내고 러너가 inactive_layers[] 에
+      {layer: format.stop-shape, reason: 매니페스트 부재} 를 더한다 — 계약이 아니라 그 런의 사실을 적는 것이다.
 
 checks_on_entry:
   - id: gate.input-digest
@@ -61,16 +63,17 @@ checks_on_entry:
     implemented_by: engine/stages/__init__.py
     on_mismatch: environment-error
     note: >-
-      불일치는 품질 결함이 아니라 환경 오류다 — 즉시 중단+진단(재정 P-C). 30-figures/selection.json 의
-      부재는 이 라운드에 정상이며(T64 ④) 러너가 extras.absent_inputs 에 적는다.
+      불일치는 품질 결함이 아니라 환경 오류다 — 즉시 중단+진단(재정 P-C). 30-figures/selection.json 이 실재하면
+      그 spec_digest·blueprint_digest 정합도 본다(T65 ③). 부재는 T64 ④ 판(도면 없는 초안)의 사실이며 러너가
+      extras.absent_inputs 에 적는다 — 결함이 아니라 기록이다.
 
-# SPEC §1.10 표 글자 그대로. 30-figures/selection.json 은 재정 T64 ④(도면 자산층 부재)로 이번 런에 없다 —
-# inputs 에 남긴 채 러너가 부재를 판정 행 extras 에 기록한다(계약을 좁혀 적지 않는다).
+# SPEC §1.10 표 글자 그대로. 30-figures/selection.json 은 figures.select 산출(재정 T65 ③)이며 도면 없는 판(T64 ④)
+# 에서는 부재다 — 러너가 부재를 판정 행 extras 에 기록한다(계약을 좁혀 적지 않는다).
 inputs:
   - "40-compose/<variant>/thread.annotated.md"
   - "15-frozen/material-spec.v<N>.json"
   - 20-design/blueprint.json
-  - 30-figures/selection.json           # note: T64 ④ 로 부재 — 러너가 extras.absent_inputs 에 기록
+  - 30-figures/selection.json           # note: 실재하면 진입 검사가 정합을 본다 · 부재 = extras.absent_inputs 기록(T64 ④ 판)
   - contracts/l0-format.yaml
   - contracts/format-parameters.yaml
   - contracts/lexicon/speech-acts.yaml
@@ -114,6 +117,7 @@ outputs:
 
 optional_outputs:
   - "50-gate/<variant>/revisions/r<n>/"   # 국소 수정 루프(M6 미가동) — 이 라운드에는 생성되지 않는다
+  - "50-gate/<variant>/rounds/r<n>/"      # 재판정 보존(재정 T65 ③ · 총괄 재량 ⓔ) — 주석본 지문이 바뀌면 직전 산출을 여기로 옮긴 뒤 다시 판정한다
 
 # SPEC §1.10 「종료 전 검사」 7행 글자 그대로 + strip 검사 4(SPEC §3.3 · 총괄 재량 ⓔ 검사 id).
 # status 가 inactive 인 행은 이 라운드에 돌지 않으며 verdict.json#checks[] 에 행을 내지 않는다 —

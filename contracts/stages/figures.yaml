@@ -1,0 +1,163 @@
+# 스테이지 I/O 계약 — `figures` (`prepare` / `select`)
+#
+# 정본 서술 = docs/SPEC.md §1.8. 이 파일은 그 서술의 기계 판독본이며, 어긋나면 SPEC 이 이긴다.
+# 서식 = SPEC §1.2 고정 서식 + `schema` 키 + 서식 확장 1 `steps:`(figures 전용 · 두 하위 단계)
+#   + 서식 확장 3 `checks_on_entry`(재정 P-C).
+# 실물화 = 재정 2026-09-13 T65 ③(도면 자산층 · crop-only · stop-shape 가동 · 사용권 재정 R11 은 공개 게시 전 별도).
+#   이 라운드(M3 · T65 집행 ④)가 실물로 만든 것은 **v1 폴백 경로 = 순수 크롭 프레이밍**(SPEC §6.6 정정)뿐이다.
+#   자작물 템플릿 · 주석판 · 재조판은 없다(사용권 재정 뒤 · 별도 발주).
+#
+# ★ 공통 규칙 — 런은 시작 시점 git 커밋에 결박된다(재정 P-U1). 계약·스키마·검증기·러너가
+#   함께 고정되므로, 런 도중 리포가 개정되어도 이 런의 법은 run.yaml#engine.commit 하나다.
+
+schema: stage-contract/v0
+id: figures
+
+# 두 하위 단계(SPEC §1.8 코드블록 그대로 · 서식 확장 1). 러너는 단계별로 다른 입력만 연다.
+steps:
+  - id: figures.prepare
+    lane: { tool: headless-chromium, model: none }
+    depends_on: [freeze]          # design 에 의존하지 않음 → 일정상 선행 실행 가능(D12 전량 선편집)
+    may_read:
+      - "00-source/figures-raw/**"
+      - "15-frozen/**"
+      - "studio/**"
+    must_not_read:
+      - "20-design/**"            # 편집 편향 방지 — 블루프린트를 본 편집은 선택될 도면만 정성껏 편집한다
+      - "40-compose/**"
+    implemented_by: engine/stages/figures.py#prepare
+    renderer: studio/renderer/render.mjs   # node + playwright(핀 = studio/renderer/package.json) · 브라우저 1회 기동에 전량
+    template: studio/templates/crop-only.html
+  - id: figures.select
+    # ★ 총괄 재량 ⓐ — SPEC §1.8 은 이 좌석을 `{model: opus-5, effort: high}` 로 적었다. v1 자산은
+    #   도면당 정확히 1개(전장 크롭)라 **고를 것이 없다** — 선택 = 블루프린트 figure_plan 의 결정론 사영이다.
+    #   LLM 좌석은 자산 변형이 둘 이상 생길 때(주석판·재조판 · 사용권 재정 R11 뒤) 이 계약을 되돌린다.
+    #   좌석 변경은 Owner 재정 사항이며 다음 브리핑 자잘로 상신한다 — 그때까지 이 행이 실물의 기록이다.
+    lane: { kind: tool, model: null, effort: null }
+    depends_on: [design, figures.prepare]
+    may_read:
+      - 20-design/blueprint.json
+      - 30-figures/assets/manifest.json
+      - "15-frozen/**"
+    must_not_read:
+      - "00-source/**"
+      - "40-compose/**"
+    implemented_by: engine/stages/figures.py#select
+
+lane:
+  kind: tool                  # 스테이지 전체로는 도구 실행(결정론). 모델 호출 없음 — 단계별 좌석은 위 steps
+  model: null
+  effort: null
+
+checks_on_entry:
+  - id: figures.input-digest
+    criterion: >-
+      최신 동결본 실재 · sha256 == run.yaml#frozen[-1].spec_digest · 동결본 figures[].raw_path 가 가리키는
+      00-source/figures-raw/ 의 각 실재 파일 sha256 이 00-source/source-report.json#figures[] 의 같은 파일명 행과
+      일치(원천 변경 감지 · 재정 P-U2). 실재하지 않는 원본은 여기서 결함이 아니라 extras.missing_raw 에 적고
+      figures.asset-completeness 가 판정한다(변경 감지와 누락은 다른 물음이다).
+    implemented_by: engine/stages/__init__.py
+    on_mismatch: environment-error
+    note: "불일치는 품질 결함이 아니라 환경 오류다 — 즉시 중단+진단(재정 P-C). 원천이 바뀐 런의 처분은 새 런이다(P-U2)."
+
+inputs:
+  - "00-source/figures-raw/"
+  - 00-source/source-report.json
+  - "15-frozen/material-spec.v<N>.json"
+  - 20-design/blueprint.json            # select 만 연다(prepare 의 must_not_read)
+  - run.yaml
+
+may_read:                               # 단계별 목록은 steps[].may_read 가 정본 — 여기는 합집합
+  - "00-source/figures-raw/**"
+  - 00-source/source-report.json
+  - "15-frozen/**"
+  - "studio/**"
+  - 20-design/blueprint.json
+  - 30-figures/assets/manifest.json
+  - contracts/format-parameters.yaml    # figures.selection-resolve 의 images_per_post_max
+  - contracts/run-kinds.yaml            # figures.publish-gate 의 run_kind 분기
+  - run.yaml
+
+must_not_read:
+  - "40-compose/**"
+  - "50-gate/**"
+  - "10-read/**"
+
+outputs:
+  - "30-figures/assets/"                # fig-NN.png 전량(1급 보존 · 삭제·덮어쓰기 금지 §7.5)
+  - 30-figures/assets/manifest.json     # figures-manifest/v0
+  - 30-figures/selection.json           # figures-selection/v0 · 포인터만
+  - 30-figures/figures-report.json      # 판정 행 8키 + findings + 렌더 환경 실측
+  - 30-figures/corrections-rows.md      # 교정 원장 행(런 안 · 총괄 재량 ⓓ — ledgers/corrections.md 의 W 는 ship · §1.17)
+
+# SPEC §1.8 「종료 전 검사」 6행 글자 그대로.
+checks_before_exit:
+  - id: figures.asset-completeness
+    criterion: "figures-raw/의 모든 도면에 대응하는 assets/fig-NN.png가 존재(전량 편집의 기계 확인)"
+    implemented_by: engine/stages/figures.py
+    note: >-
+      대상 = 동결본 figures[] 전량(도면의 정본 목록은 동결본이다 — figures-raw/ 의 파일 수가 아니라).
+      원본 파일 부재도 여기서 누락으로 센다.
+  - id: figures.render-spec
+    criterion: "모든 자산이 1200×675, @2x(실제 픽셀 2400×1350)"
+    implemented_by: engine/stages/figures.py
+    note: "판독 = PNG IHDR(표준 라이브러리) · 기준 = steps[0] 렌더 뷰포트 × 배율."
+  - id: figures.manifest-parity
+    criterion: "manifest.json의 항목 수 = 자산 파일 수, 각 항목이 동결본 figures[]의 id로 해소, 모든 항목에 edit_class·publishable 존재"
+    implemented_by: engine/stages/figures.py
+  - id: figures.selection-resolve
+    criterion: "selection.json의 모든 포인터가 manifest.json에 해소되고, 포스트당 도면 수가 시트의 images_per_post_max 이하"
+    implemented_by: engine/stages/figures.py
+    params: format-parameters.yaml#images_per_post_max
+  - id: figures.publish-gate
+    criterion: "위 run_kind 분기표대로 판정(재정 R11, 재감수 B-05). 위반 시 halt이며 ship에서 재확인한다(§1.14)"
+    implemented_by: engine/stages/figures.py
+    note: >-
+      publish = ① 지목 자산 전건 publishable == true 그리고 ② run.yaml#figures.usage_rights_decision 이 가리키는
+      재정 파일이 docs/decisions/ 에 실재. rehearsal = ①만. **partial 도 rehearsal 과 같이 ①만** —
+      run-kinds.yaml#kinds.partial.publishes: false 가 근거다(게시하지 않는 런에 사용권 재정을 요구하지 않는다 ·
+      SPEC 분기표에 partial 행이 없는 자리의 총괄 재량 · extras.run_kind 로 남긴다).
+  - id: figures.no-copy
+    criterion: "selection.json이 파일 경로 복사본이 아니라 자산 ID 참조만 담음"
+    implemented_by: engine/stages/figures.py
+    note: "슬롯 행의 키가 tweet·asset·role 셋뿐이고 asset 값이 자산 id 문법이며 경로 구분자·data URI 를 담지 않는다."
+
+report_format: contracts/schemas/verdict-check-row.schema.json
+
+# 조치 어휘 = SPEC §1.2 C6. 5행 = SPEC §1.8 실패표 글자 그대로 + 1행(종료선).
+failure:
+  - condition: "일부 도면 렌더 실패"
+    action: retry(1)
+    then: escalate
+    note: "재실패 시 누락 도면 목록 첨부. 부분 자산층으로 진행하지 않는다"
+  - condition: "figures.render-spec 위반"
+    action: retry(1)
+    then: halt
+  - condition: "selection.json 포인터 미해소"
+    action: retry(1)
+    then: escalate
+    note: "figures.selection-resolve 실패(트윗당 자산 수 초과 포함) — 선택은 결정론 사영이라 재시도가 같은 답을 내면 상신한다"
+  - condition: "블루프린트가 지정한 도면이 자산층에 없음"
+    action: reject-upstream
+    to: design
+  - condition: "figures.publish-gate 실패(게시 보류 자산 지목, 또는 publish 런인데 사용권 재정 파일 부재)"
+    action: halt
+    note: "사용권 재정 전에는 게시하지 않는다(재정 R11, 재감수 B-05)"
+  - condition: "partial_until 종료선이 figures 앞(run-kinds.yaml#kinds.partial.terminates_at_enum 순서)"
+    action: halt
+    note: "종료선 초과 실행 차단(T40 ③ G-12 의 부분 집행)"
+
+# 재료 개정 시 하류 산출물은 전량 무효·재생성이다(재정 N11). 자산 파일은 지우지 않고(§7.5) 새 판을 더한다.
+downstream_invalidation:
+  on: "spec_version 증가"
+  effect: "manifest·selection 무효 · 재생성(자산 파일은 보존 · 재편집은 fig-NN.r2.png 로 추가)"
+  enforced_by: "manifest.json#spec_digest · selection.json#spec_digest(하류 진입 검사가 대조)"
+
+# 주석(계약 키 아님 · SPEC §1.2 「위 키 밖의 항목은 주석」).
+composite_sheet:
+  tag: "[주석]"
+  basis: "총괄 재량 ⓑ · 재정 T65 ③"
+  note: >-
+    둘 이상의 FIG 가 같은 raw_path 를 가리키면(복합 시트) 각 FIG 가 같은 원본의 전장 프레이밍을 자기 자산으로
+    갖고 edits[] 에 {op: composite-sheet, shares_with: [...]} 를 적는다. 하위 크롭 상자는 이번에 판단하지 않는다
+    (판단 좌석 없음 · 사용권 재정 뒤 주석판과 함께).

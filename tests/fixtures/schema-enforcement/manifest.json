@@ -503,6 +503,62 @@
       "expect": "reject",
       "series": "T64 ② memo 객체에 숫자 필드",
       "basis": "accept 에서 l2.memos 에 score: 7 을 가진 메모를 넣은 판. memo 는 additionalProperties false · 전 속성 string 이다(SPEC §4.6 기제 1·2 — 점수 발행 금지 D8·D15)."
+    },
+    {
+      "file": "accept/figures-manifest.minimal.json",
+      "schema": "contracts/schemas/figures-manifest.schema.json",
+      "expect": "accept",
+      "series": "T65 도면 매니페스트 유효 대응쌍",
+      "basis": "재정 2026-09-13 T65 ③ figures.prepare 산출. §7.5 10키 + asset_id·source_sha256(재량 ⓒ) + renderer 실측 블록을 갖춘 crop-only 항목 1건의 정상 형태."
+    },
+    {
+      "file": "reject/figures-manifest.crop-only-unpublishable.json",
+      "schema": "contracts/schemas/figures-manifest.schema.json",
+      "expect": "reject",
+      "series": "T65 edit_class↔publishable 대응",
+      "basis": "accept/figures-manifest.minimal.json 에서 publishable 만 false 로 바꾼 판. SPEC §7.5 표(재정 R11)는 crop-only → true 다 — 크롭 자산이 게시 보류로 찍히면 v1 의 유일한 렌더 경로가 publish-gate 에 막힌다(§6.6 정정의 귀결)."
+    },
+    {
+      "file": "reject/figures-manifest.edit-class-outside-enum.json",
+      "schema": "contracts/schemas/figures-manifest.schema.json",
+      "expect": "reject",
+      "series": "T65 edit_class 어휘 밖",
+      "basis": "accept/figures-manifest.minimal.json 에서 edit_class 만 overlay 로 바꾼 판. 어휘 4종(재정 R11)은 닫힌 집합이다."
+    },
+    {
+      "file": "reject/figures-manifest.missing-source-sha256.json",
+      "schema": "contracts/schemas/figures-manifest.schema.json",
+      "expect": "reject",
+      "series": "T65 원천 지문 누락",
+      "basis": "accept/figures-manifest.minimal.json 에서 source_sha256 만 지운 판. 원천 지문이 없으면 자산이 어느 원본에서 왔는지 사후 대조가 불가하다(재량 ⓒ · P-U2)."
+    },
+    {
+      "file": "accept/figures-selection.minimal.json",
+      "schema": "contracts/schemas/figures-selection.schema.json",
+      "expect": "accept",
+      "series": "T65 도면 선택 유효 대응쌍",
+      "basis": "재정 2026-09-13 T65 ③ figures.select 산출. 슬롯 = {tweet, asset, role} 포인터만 · T1 hero · 같은 자산의 재지목 허용."
+    },
+    {
+      "file": "reject/figures-selection.slot-with-asset-path.json",
+      "schema": "contracts/schemas/figures-selection.schema.json",
+      "expect": "reject",
+      "series": "T65 no-copy(경로 동반)",
+      "basis": "accept/figures-selection.minimal.json 의 첫 슬롯에 asset_path 키를 더한 판. 선택은 포인터만 담는다(§7.5 · figures.no-copy 의 스키마 몫 = additionalProperties: false)."
+    },
+    {
+      "file": "reject/figures-selection.role-outside-enum.json",
+      "schema": "contracts/schemas/figures-selection.schema.json",
+      "expect": "reject",
+      "series": "T65 role 어휘 밖",
+      "basis": "accept/figures-selection.minimal.json 에서 role 만 thumbnail 로 바꾼 판. role 은 hero·exhibit 둘뿐이다."
+    },
+    {
+      "file": "reject/figures-selection.asset-not-asset-id.json",
+      "schema": "contracts/schemas/figures-selection.schema.json",
+      "expect": "reject",
+      "series": "T65 asset 값이 자산 id 가 아님",
+      "basis": "accept/figures-selection.minimal.json 에서 asset 만 FIG-1(재료 도면 id)로 바꾼 판. 선택 포인터는 자산 id(fig-NN)이지 재료 도면 id 가 아니다 — 둘의 대응은 매니페스트가 든다."
     }
   ]
 }

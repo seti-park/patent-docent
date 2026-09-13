@@ -1,0 +1,65 @@
+{
+  "golden_id": "rc-0008-thread-marker-counterexamples",
+  "subject": "numeric.tokenizers rank 0 thread-marker(재정 2026-09-13 T65 자잘) — 스레드 순번 n/N 이 한 토큰이 되어 MATCH_KEY 'n/N|' 로 run.yaml#numeric_whitelist 의 fullmatch 에 닿는가, 소수·특허번호는 순번이 아닌가, 그리고 현행 어형의 알려진 과광화(값+단위 '1/2 inch')를 정직하게 고정한다.",
+  "ruling": "재정 2026-09-13 T65 자잘 — n/N 스레드 순번 토크나이저 신설 승인(값 공간 · 반례 golden 동반 · N4 요건). 원장 = docs/decisions/ruling-20260913-10-T65.md 「자잘 넷」.",
+  "expectation_note": "expect_tokens 는 engine.gate.l0.rules_numeric.tokenize 의 실제 산출 [kind, text] 순서 목록이고 expect_keys 는 keys_of 의 MATCH_KEY 목록이다. 기대값은 이 파일이 들고 시험(tests/test_m34_t65_figures.py)이 이 파일을 읽어 실제 토큰화에 물린다 — 시험에 값을 복제하면 한 벌이 반드시 낡는다. whitelist_pass 는 run.yaml 화이트리스트 패턴 '^\\d{1,2}/\\d{1,2}\\|$' 이 그 키에 fullmatch 하는가, whitelist_legacy_pass 는 런 -3 의 구 패턴 '\\b[1-9]/[1-9]\\b' 이 fullmatch 하는가(안 된다 — 이 골든이 그 실효 없음을 고정한다).",
+  "whitelist_pattern": "^\\d{1,2}/\\d{1,2}\\|$",
+  "whitelist_legacy_pattern": "\\b[1-9]/[1-9]\\b",
+  "samples": [
+    {
+      "id": "tm-01",
+      "role": "적중 — 한 자리 순번",
+      "text": "Memory is its own box. 3/9",
+      "expect_tokens": [["thread-marker", "3/9"]],
+      "expect_keys": ["3/9|"],
+      "whitelist_pass": true,
+      "whitelist_legacy_pass": false
+    },
+    {
+      "id": "tm-02",
+      "role": "적중 — 두 자리 순번",
+      "text": "Last stop before the landing. 12/12",
+      "expect_tokens": [["thread-marker", "12/12"]],
+      "expect_keys": ["12/12|"],
+      "whitelist_pass": true,
+      "whitelist_legacy_pass": false
+    },
+    {
+      "id": "tm-03",
+      "role": "반례 — 소수는 순번이 아니다(bare-number 한 토큰)",
+      "text": "The ratio is 3.9 in the example.",
+      "expect_tokens": [["bare-number", "3.9"]],
+      "expect_keys": ["3.9|"],
+      "whitelist_pass": false,
+      "whitelist_legacy_pass": false
+    },
+    {
+      "id": "tm-04",
+      "role": "알려진 과광화 — 값+단위 '1/2 inch' 도 현행 어형이 순번으로 잡는다(재정 대상 · 어형을 좁히는 것은 재정 사항이라 여기서 고치지 않는다)",
+      "text": "A 1/2 inch gap remains.",
+      "expect_tokens": [["thread-marker", "1/2"]],
+      "expect_keys": ["1/2|"],
+      "whitelist_pass": true,
+      "whitelist_legacy_pass": false,
+      "note": "현행 어형 \\b\\d{1,2}/\\d{1,2}\\b 는 분수 값 '1/2' 를 순번으로 잡는다 — 그러면 화이트리스트가 이 값을 통과시켜 재료 없는 수치가 출하될 수 있다. 알려진 과광화이며 배치 리뷰 상신 대상이다. 이 표본이 고정하는 것은 그 사실이다(반증이 아니라 실측)."
+    },
+    {
+      "id": "tm-05",
+      "role": "반례 — 슬래시형 특허번호는 순번이 아니다(rank 1 patent-number-slash 가 온전히 잡는다 · rank 0 이 앞서도 \\b 경계가 성립하지 않아 쪼개지지 않는다)",
+      "text": "See US 2026/0147854 A1 for the family.",
+      "expect_tokens": [["patent-number-slash", "US 2026/0147854 A1"]],
+      "expect_keys": ["US20260147854A1|"],
+      "whitelist_pass": false,
+      "whitelist_legacy_pass": false
+    },
+    {
+      "id": "tm-06",
+      "role": "반례 — 세 자리 분모는 순번 어형 밖(bare-number 둘)",
+      "text": "Roughly 3/100 of the traffic.",
+      "expect_tokens": [["bare-number", "3"], ["bare-number", "100"]],
+      "expect_keys": ["3|", "100|"],
+      "whitelist_pass": false,
+      "whitelist_legacy_pass": false
+    }
+  ]
+}

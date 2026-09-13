@@ -4,6 +4,8 @@
 # 서식 = SPEC §1.2 고정 서식 + `schema` 키 + 서식 확장 3 `checks_on_entry`(재정 P-C).
 # 실물화 = 재정 2026-09-13 T64 ③(펜 = Opus 5 high·xhigh·max 3판 · 변주 v1·v2·v3 · R10 규약 ①~④) ·
 #   ④(첫 초안은 fig: none) · 재량(펜 프롬프트 = 긍정형만 · may_read = 동결본 + blueprint + glossary).
+#   재정 2026-09-13 T65 ③ — 도면 자산층이 실물이 되어 inputs 에 selection.json·manifest.json 이 복귀했고(§1.9 원문),
+#   같은 런에서 기준판을 도면 헤더로 다시 쓰는 「회차」(아래 rounds 주석 블록 · 총괄 재량 ⓔ)가 더해졌다.
 #
 # ★ 공통 규칙 — 런은 시작 시점 git 커밋에 결박된다(재정 P-U1). 계약·스키마·검증기·러너가
 #   함께 고정되므로, 런 도중 리포가 개정되어도 이 런의 법은 run.yaml#engine.commit 하나다.
@@ -21,9 +23,9 @@ lane:
     - { variant: v3, vendor: anthropic, model: opus-5, effort: max   }
   comparison_axis: effort     # 토너먼트 행의 비교 축(R10 규약 4). 2호 런부터 model
   lane_id_vocabulary:
-    form: "compose/<variant>[/retry-<n>]/batch-0"
+    form: "compose[-r<n>]/<variant>[/retry-<n>]/batch-0"    # -r<n> = 회차 2 이상(아래 rounds · 재정 T65 ③)
     pattern: "^(?P<read_run>[a-z0-9]+(?:-[a-z0-9]+)*)/(?P<task>[a-z0-9]+(?:-[a-z0-9]+)*)(?:/retry-(?P<retry>[1-9][0-9]*))?/batch-(?P<batch>0|[1-9][0-9]*)$"
-    membership: {run: [compose], task: [v1, v2, v3]}
+    membership: {run: [compose, compose-r2, compose-r3, compose-r4, compose-r5, compose-r6, compose-r7, compose-r8, compose-r9], task: [v1, v2, v3]}
     enforced_by: engine/stages/compose.py#ComposeLaneRequest
   effort_evidence:
     lane_self_report: echo
@@ -58,9 +60,8 @@ checks_on_entry:
 inputs:
   - "15-frozen/material-spec.v<N>.json"
   - 20-design/blueprint.json
-  # 30-figures/selection.json · 30-figures/assets/manifest.json 은 SPEC §1.9 inputs 에 있으나 이번 런에는
-  # 없다(재정 T64 ④ — 첫 초안은 글만 · 도면은 다음 판). may_read 에만 두고 inputs 에서 뺀다 —
-  # inputs 에 두면 verify_declared_inputs 가 부재를 환경 오류로 세운다.
+  - 30-figures/selection.json           # SPEC §1.9 원문(재정 T65 ③ 복귀). 진입 검사가 실재할 때 지문·판 정합을 보고,
+  - 30-figures/assets/manifest.json     # 회차 2 이상(figures_required)에서는 부재도 환경 오류다. 1회차 부재 = T64 ④ 판(정상 · 헤더 전부 none)
 
 may_read:
   - "15-frozen/material-spec.v<N>.json"
@@ -151,8 +152,20 @@ downstream_invalidation:
 # 주석(계약 키 아님 · SPEC §1.2 「위 키 밖의 항목은 주석」).
 figures_absent:
   tag: "[주석]"
-  basis: "재정 T64 ④ · 총괄 재량 ⓑ"
+  basis: "재정 T64 ④ · 총괄 재량 ⓑ (역사 — 재정 T65 ③ 으로 닫힘)"
   note: >-
-    이번 초안의 모든 헤더 fig 는 none 이다 — 도면은 다음 판에서 붙는다. compose.annotation-syntax 는
-    fig 문법만 본다. 자산 해소는 L0 format.images-per-post · format.stop-shape 의 몫이며 후자는 T64 ④ 로
-    미가동이다.
+    1회차 초안(런 -3)의 모든 헤더 fig 는 none 이었다 — 도면은 다음 판(회차 2)에서 붙는다. 선택·매니페스트가
+    실재하면 compose.annotation-syntax 가 헤더 fig 자산 집합 == selection.json 의 그 트윗 자산 집합도 본다
+    (finding rule annotation.schema · 메시지 표지 annotation.fig-selection-mismatch · extras.fig_selection_mismatch ·
+    새 L0 규칙 id 아님). format.stop-shape 는 매니페스트가 실재하면 가동이다(gate.yaml#layers).
+
+rounds:
+  tag: "[주석]"
+  basis: "재정 2026-09-13 T65 ③ · 총괄 재량 ⓔ — 계약에 없는 자리"
+  note: >-
+    SPEC 순서는 design → figures → compose 인데 런 -3 은 compose 가 도면 없이 먼저 돌았다(T64 ④). 같은 런에서
+    compose 를 다시 도는 「회차」 = engine/stages/compose.py#run(variants=(v,), round_no=n) · 좌표 compose-r<n>/<v>/batch-0
+    (위 어휘 정규식 안 · membership.run 에 등재) · 직전 판은 먼저 40-compose/<v>/rounds/r<n-1>/{thread.annotated.md,
+    response.json(사본)} 로 옮기고(덮어쓰기 금지 · 있으면 StageError) 새 판을 40-compose/<v>/thread.annotated.md 에 ·
+    compose-report.json#rounds · tournament-rows.jsonl 에 {outcome: redrafted, round: n, reason} 행. 나머지 변주는
+    건드리지 않는다. §1.10 revisions/r<n>/ (게이트 결함 지시 라운드)와 다른 자리다. 프런트매터 5키는 회차와 무관하다.

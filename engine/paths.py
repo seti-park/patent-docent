@@ -37,6 +37,8 @@ PROVENANCE_BASENAME = "PROVENANCE.md"
 LANES_DIRNAME = "lanes"
 LANE_LOG_BASENAME = "lane-log.json"
 SHADOW_POINTER_BASENAME = "shadow-ledger.json"
+ROUNDS_DIRNAME = "rounds"
+RENDER_DIRNAME = ".render"
 
 # 섀도 원장의 리포 상대 자리(재정 P-U4). 루트가 어디인가는 아래 `shadow_ledger_root` 가 정한다.
 SHADOW_LEDGER_RELATIVE = ("ledgers", "shadow", "screening.jsonl")
@@ -238,7 +240,7 @@ class RunPaths:
     어긋나는 순간을 조용히 넘기지 않기 위해서다.
     """
 
-    STAGES = ("source", "read", "freeze", "design", "compose", "gate")
+    STAGES = ("source", "read", "freeze", "design", "figures", "compose", "gate")
 
     def __init__(self, run_root: str, repo: str | None = None) -> None:
         self.run_root = os.path.abspath(run_root)
@@ -454,8 +456,41 @@ class RunPaths:
 
     @property
     def figures_manifest_json(self) -> str:
-        """`30-figures/assets/manifest.json`(design 계약의 선언 입력 · 선행 실행된 경우에만 실재)."""
+        """`30-figures/assets/manifest.json`(figures-manifest/v0 · `figures.prepare` 산출 · design 은 실재할 때만 읽는다)."""
         return self.path("manifest.json")
+
+    # -- 30-figures (재정 T65 ③ · M9-a) --------------------------------------
+
+    @property
+    def figures_assets_dir(self) -> str:
+        """`30-figures/assets/` — 전량 편집본의 1급 보존처(§7.5 · 삭제·덮어쓰기 금지)."""
+        return os.path.dirname(self.figures_manifest_json)
+
+    @property
+    def figures_dir(self) -> str:
+        return os.path.dirname(self.figures_assets_dir)
+
+    @property
+    def figures_render_dir(self) -> str:
+        """`30-figures/assets/.render/` — 렌더 입력(채운 템플릿 html · jobs.json). 계약 미선언 — 러너 산출물이며 assets/ 안이다."""
+        return os.path.join(self.figures_assets_dir, RENDER_DIRNAME)
+
+    @property
+    def figures_selection_json(self) -> str:
+        """`30-figures/selection.json`(figures-selection/v0 · 포인터만)."""
+        return self.path("selection.json")
+
+    @property
+    def figures_report_json(self) -> str:
+        return self.path("figures-report.json")
+
+    @property
+    def figures_corrections_md(self) -> str:
+        """`30-figures/corrections-rows.md` — 교정 원장 행(런 안 · 총괄 재량 ⓓ · `ship` 이 원장에 옮긴다)."""
+        return self.path("corrections-rows.md")
+
+    def figure_asset(self, asset_id: str) -> str:
+        return os.path.join(self.figures_assets_dir, f"{asset_id}.png")
 
     # -- 40-compose ---------------------------------------------------------
 
@@ -495,6 +530,15 @@ class RunPaths:
     def compose_lanes_dir(self) -> str:
         """펜 레인 왕복 보관소 `40-compose/lanes/` — 계약 outputs 에 선언되어 있다."""
         return os.path.join(self.compose_root, LANES_DIRNAME)
+
+    def compose_round_dir(self, variant: str, round_no: int) -> str:
+        """`40-compose/<variant>/rounds/r<n>/` — 회차 보존(총괄 재량 ⓔ · 재정 T65 ③). 직전 판을 옮겨 두는 자리이며
+        `revisions/r<n>/`(게이트 결함 지시 라운드 · §1.10)와 다른 자리다. 계약 미선언 — 변주 디렉터리 안의 러너 산출물."""
+        return os.path.join(self.compose_dir(variant), ROUNDS_DIRNAME, f"r{int(round_no)}")
+
+    def gate_round_dir(self, variant: str, round_no: int) -> str:
+        """`50-gate/<variant>/rounds/r<n>/` — 주석본 지문이 바뀌어 재판정할 때 직전 판정 산출을 옮겨 두는 자리(사료 규율 · 재량 ⓔ)."""
+        return os.path.join(self.gate_dir(variant), ROUNDS_DIRNAME, f"r{int(round_no)}")
 
     # -- 50-gate ------------------------------------------------------------
 
@@ -541,6 +585,9 @@ class RunPaths:
 
     def ensure_design_dirs(self) -> None:
         os.makedirs(self.design_lanes_dir, exist_ok=True)
+
+    def ensure_figures_dirs(self) -> None:
+        os.makedirs(self.figures_render_dir, exist_ok=True)
 
     def ensure_compose_dirs(self, variants=()) -> None:
         os.makedirs(self.compose_lanes_dir, exist_ok=True)

@@ -34,6 +34,8 @@
 | `annotation-index/v0` | `contracts/schemas/annotation-index.schema.json` | 주석 인덱스 `50-gate/<v>/annotation-index.json`(재정 T64 ② · SPEC §3.3). 전 문장 + `by_material` 역인덱스 + `narrative_sentences` · `text_raw`(총괄 재량 ⓕ · optional) |
 | `annotation/v0` | `contracts/schemas/annotation.schema.json` | 파서 산출(`engine/annotation/parse.py#parse`)의 직렬화 서식(재정 T64 ② · SPEC §3.2 문법의 데이터 형태). 파일 산출물이 아니라 구조의 계약 |
 | `gate-report/v0` | `contracts/schemas/gate-report.schema.json` | 게이트 판정문 `50-gate/<v>/verdict.json`(재정 T64 ② · SPEC §4.3 전 필드 · memo 객체 §4.6 · `inactive_layers[]` 총괄 재량 ⓑ) |
+| `figures-manifest/v0` | `contracts/schemas/figures-manifest.schema.json` | 도면 자산 매니페스트 `30-figures/assets/manifest.json`(재정 T65 ③ · M9-a · SPEC §1.8·§7.5). 항목 = §7.5 10키 + `asset_id`·`source_sha256`(총괄 재량 ⓒ) · `edit_class`↔`publishable` 대응(재정 R11)을 if/then 으로 집행 · `renderer` 실측 블록 |
+| `figures-selection/v0` | `contracts/schemas/figures-selection.schema.json` | 출하 도면 선택 `30-figures/selection.json`(재정 T65 ③ · M9-a · SPEC §7.5). 슬롯 = `{tweet, asset, role}` **포인터만**(`additionalProperties: false` = `figures.no-copy` 의 스키마 몫) · `blueprint_digest` |
 
 **버전 축의 구별**(혼동 지점이다).
 
@@ -91,14 +93,21 @@
 | `compose.prompt-lint` | `engine/pens/lint.py` | (진입 시) 펜 프롬프트(템플릿 + 응답 계약 + 지시 블록 · 원천 조각·블루프린트 요약 제외)에 부정 명령형 `PROMPT_NEGATION_RE` 또는 화행 술어·결함 카탈로그 리터럴이 있음(D8). 판정 행 2 — `ruleset: prompt-negation` · `speech-acts+defect-catalog`(카탈로그 0항이면 `extras.defect_catalog.vacuous = empty-ruleset`). 1건 = `halt` |
 | `compose.lane-verified` | `engine/stages/compose.py` | 변주 응답의 `model` 이 `read.yaml#model_identity` 의 `opus-5` 수용 집합 밖이거나 `effort` 가 계약 배정과 다름(재정 R10 · 토너먼트 기입 자격 없음 → `halt`). `extras.effort_evidence = requested-flag` |
 | `compose.spec-digest` | `engine/stages/compose.py` | 프런트매터 `spec_digest` 가 `run.yaml#frozen[-1]` 과 동결본 실측 둘 다와 일치하지 않음(재정 N11 → `halt`) |
-| `compose.annotation-syntax` | `engine/stages/compose.py` | `engine/annotation/parse.py#parse` 가 위반을 냄 — finding `rule` 은 §3.2 대응표의 `annotation.schema`·`annotation.missing-tag`, locus `T<n>/S<i>`. `retry(2)` → `escalate`(그 변주만) |
+| `compose.annotation-syntax` | `engine/stages/compose.py` | `engine/annotation/parse.py#parse` 가 위반을 냄 — finding `rule` 은 §3.2 대응표의 `annotation.schema`·`annotation.missing-tag`, locus `T<n>/S<i>`. **선택이 있으면** 헤더 `fig` 자산 집합 ≠ `selection.json` 의 그 트윗 자산 집합도 위반(rule `annotation.schema` · 메시지 표지 `annotation.fig-selection-mismatch` · `extras.fig_selection_mismatch` — 새 L0 규칙 id 아님 · 재정 T65 ③). `retry(2)` → `escalate`(그 변주만) |
 | `compose.frontmatter` | `engine/stages/compose.py` | 프런트매터 5키 정확히 · `run_id`·`variant`·`pen`(계약 배정)·`spec_version`·`spec_digest` 형식 중 하나라도 어긋남(→ `halt` · spec-digest 행을 따른다) |
+| `figures.input-digest` | `engine/stages/__init__.py` | 최신 동결본 부재·지문 불일치·쓰기 가능이거나, 동결본 `figures[].raw_path` 가 가리키는 **실재** 원본의 sha256 이 `00-source/source-report.json#figures[]` 행과 다르거나 보고서가 모르는 파일인 채로 도면 편집이 시작됨(재정 T65 ③ · P-U2 · P-C) — 환경 오류. 원본 부재는 `extras.missing_raw`(누락은 `figures.asset-completeness` 몫) |
+| `figures.asset-completeness` | `engine/stages/figures.py` | 동결본 `figures[]` 전량에 대응하는 `assets/fig-NN.png` 가 없음(원본 부재 · 렌더 실패 · 파일 부재 — `extras.missing`). `retry(1)` → `escalate`(누락 목록) |
+| `figures.render-spec` | `engine/stages/figures.py` | 자산 PNG 의 IHDR 치수(`engine/figures/render.py#png_size`)가 렌더 뷰포트 × 배율(2400×1350)이 아님. `retry(1)` → `halt` |
+| `figures.manifest-parity` | `engine/stages/figures.py` | 매니페스트 항목 수 ≠ 자산 파일 수 · 항목이 동결본 `figures[].id` 로 해소되지 않음 · 자산 파일 부재·중복 · `edit_class`·`publishable` 누락 |
+| `figures.selection-resolve` | `engine/stages/figures.py` | 선택 포인터가 매니페스트 `asset_id` 에 해소되지 않음 · 트윗당 자산 수 > 시트 `images_per_post_max` · 블루프린트 지정 도면이 자산층에 없음(`selection.figure-not-in-assets` → `reject-upstream` → design) |
+| `figures.publish-gate` | `engine/stages/figures.py` | 지목 자산에 `publishable != true` 가 있음(①) · `publish` 런이면 ② `run.yaml#figures.usage_rights_decision` 재정 파일 부재도(재정 R11 · B-05). partial·rehearsal 은 ①만(`extras.branch`) → `halt` |
+| `figures.no-copy` | `engine/stages/figures.py` | 슬롯 행에 `tweet`·`asset`·`role` 밖의 키가 있거나 `asset` 값이 자산 id 문법(`fig-NN`)이 아님(경로·데이터 복사 의심) |
 | `gate.input-digest` | `engine/stages/__init__.py` | 최신 동결본·블루프린트가 부재·지문 불일치이거나 `40-compose/<v>/thread.annotated.md` 가 변주 1개도 없는 채로 게이트가 시작됨(재정 P-C · T64 ②) — 환경 오류. `30-figures/selection.json` 부재는 `extras.absent_inputs`(T64 ④) |
 | `run.publish-preconditions` | `engine/gate/l0/rules_run.py` | `run_kind: publish` 런이 `run-kinds.yaml#requirements` 3종(방어층 가동 · 도면 사용권 재정 · 템플릿 동결) 미충족인데 시작됨(재정 N10). partial·rehearsal 은 `checked 0`(`vacuous: empty-target`) |
 | `format.tweet-count` | `engine/gate/l0/rules_format.py` | 트윗 수가 시트 `tweet_count` 밖 |
 | `format.slot-count` | `engine/gate/l0/rules_format.py` | 시트 `slot_placement` 위반 — hook 수·위치 · landing 수 · tail 수·위치 · 나머지 슬롯이 `other.allowed` 밖(위반마다 결함 1) |
 | `format.body-length` | `engine/gate/l0/rules_format.py` | 슬롯별 **가중 글자 수**(`engine/gate/l0/weighted_length.py` · 시트 `weighted_length`)가 시트 `length_by_slot` 범위 밖(exempt 슬롯 제외 · `extras.weighted_char_counts`) |
-| `format.stop-shape` | `engine/gate/l0/rules_format.py` | stop·pivot 의 편집 자산(매니페스트 `edit_class ∈ counted_edit_classes`) < `edited_assets_min` 또는 문장 수(`engine/gate/sentence_count.py`) > `sentences_max`. **미가동**(T64 ④ 매니페스트 부재 → `checked 0` · `extras.inactive_reason`) — 매니페스트가 실재하면 가동 |
+| `format.stop-shape` | `engine/gate/l0/rules_format.py` | stop·pivot 의 편집 자산(헤더 `fig` 자산 id → 매니페스트 항목 `asset_id` 의 `edit_class ∈ counted_edit_classes` · `engine/figures/asset_id_of`) < `edited_assets_min` 또는 문장 수(`engine/gate/sentence_count.py`) > `sentences_max`. **가동**(재정 T65 ③ · 매니페스트 실재 시) — 매니페스트가 없는 런에서는 `checked 0` · `extras.inactive_reason` 이고 러너가 `inactive_layers[]` 에 동적으로 적는다. 구 문언(T64 ④ 미가동): 매니페스트가 실재하면 가동 |
 | `format.hashtag-zero` | `engine/gate/l0/rules_format.py` | `#`+문자 토큰 수 > 시트 `hashtags_max`(URL 안의 `#` 은 토큰이 아니다) |
 | `format.no-link-in-body` | `engine/gate/l0/rules_format.py` | URL(`engine/stages/gate.py#URL_RE` 최소 어형 · 총괄 재량 ⓒ)이 시트 `link_isolation` 허용 슬롯 밖 트윗에 있음 |
 | `format.images-per-post` | `engine/gate/l0/rules_format.py` | 헤더 fig 항목 수 > 시트 `images_per_post_max` |
@@ -170,6 +179,9 @@
 | 공허 종류 | `none` · `empty-ruleset` · `empty-target` | `verdict-check-row/v0` (**파생값 — 신고값이 아니다**) |
 | 승인 결정 | `approved` · `rejected` (**조건부 승인 제도 없음**) | `approval-envelope/v0` |
 | 런 종류 | `rehearsal` · `publish` | `run-kinds/v0` |
+| 도면 편집 등급 `edit_class` | `crop-only` · `self-authored` · `annotated-internal` · `recomposed-internal` (앞 둘 `publishable: true` · 뒤 둘 `false`) | `figures-manifest/v0` · SPEC §7.5(재정 R11). v1 실물은 `crop-only` 하나 |
+| 도면 선택 역할 `role` | `hero`(T1 첫 자산) · `exhibit`(나머지) | `figures-selection/v0` · SPEC §7.5 |
+| 토너먼트 결과 `outcome` | `drafted` · `missing` · `material-defect` · `redrafted`(회차 2 이상 · `round` 키 동반 · 재정 T65 ③ 재량 ⓔ) | `40-compose/tournament-rows.jsonl` |
 | 출처 태그 | `[물리]` · `[전승]` · `[가설]` | 재정 N-D11 (`format-parameters.yaml` · `reader-rules.yaml` 공용) |
 | 처분 어휘 | `해소` · `부분 해소` · `유보` | `docs/decisions/D-*.md` |
 
@@ -199,7 +211,14 @@
 | `20-design/lanes/` | `design` | 설계 레인 왕복 기록(`design/blueprint[/retry-1]/batch-0/{request.json,request.md,response.json}`) |
 | `20-design/escalation.json` | `design` | (선택) 상신 기록 — 레인의 `escalation` 또는 재시도 소진. 실재하면 러너는 재진입을 거부한다 |
 | `20-design/anchors-provided.json` | `design` | (선택) 레인에 제공된 재정 앵커 목록 + 차단 건수 — `design.anchors-adjudicated-only` 의 대상 |
+| `30-figures/assets/fig-NN.png` | `figures.prepare` | **전량 편집본**(1급 보존 · §7.5 삭제·덮어쓰기 금지 · 재편집은 `fig-NN.r2.png`). v1 = 순수 크롭 프레이밍 1200×675 @2x(`crop-only/v0` 템플릿 · 헤드리스 Chromium) |
+| `30-figures/assets/manifest.json` | `figures.prepare` | 도면 자산 매니페스트(`figures-manifest/v0`) — 항목마다 `figure_id`↔`asset_id` 대응 · 원천 지문 · `edit_class`·`publishable` · `edits[]`(복합 시트 표기 포함) · `renderer` 실측 |
+| `30-figures/assets/.render/` | `figures.prepare` | 렌더 입력(채운 템플릿 html · `jobs.json`). 계약 미선언 — `assets/` 안의 러너 산출물(재현 사료) |
+| `30-figures/selection.json` | `figures.select` | 출하 도면 선택(`figures-selection/v0`) — **포인터만**. 블루프린트 `figure_plan` 의 결정론 사영(총괄 재량 ⓐ) · 검사 3 전건 통과 뒤에만 쓴다 |
+| `30-figures/figures-report.json` | `figures` | 단계별(`figures.prepare` · `figures.select`) 판정 행 8키 + findings + 렌더 환경 실측 |
+| `30-figures/corrections-rows.md` | `figures.select` | 교정 원장 행의 **런 안** 사본(총괄 재량 ⓓ — `ledgers/corrections.md` 의 쓰기 소유자는 `ship` · §1.17). v1 은 「선택 = 사영 · 기각 0」 |
 | `40-compose/<v>/thread.annotated.md` | `compose` | 변주 `v` 의 **확정 초안**(주석층 · §3.2). 레인 바이트 그대로(끝 개행 하나만 정규화) · 검사 4 전건 통과 뒤에만 쓴다 · 전 변주 해소 뒤에 함께 쓴다(순서 효과 차단) |
+| `40-compose/<v>/rounds/r<n>/` | `compose`(회차 n+1) | **직전 회차 보존**(`thread.annotated.md` + 그 좌표 `response.json` 사본 · 재정 T65 ③ 재량 ⓔ). 회차 좌표 = `compose-r<n>/<v>/batch-0`. `revisions/r<n>/`(§1.10 결함 지시 라운드)와 다른 자리 |
 | `40-compose/<v>/material-defect.md` | `compose` | (선택) 재료 반려서 — YAML 프런트매터 4필드(`material_ids`·`defect_kind`·`evidence`·`blocked_slots`) + 본문 evidence. 실재 = 그 변주 `reject-upstream`(→ `read`) |
 | `40-compose/lanes/` | `compose` | 펜 레인 왕복 기록(`compose/<v>[/retry-<n>]/batch-0/{request.json,request.md,response.json}`) |
 | `40-compose/compose-report.json` | `compose` | 판정 행 8키 배열(진입 1 + 린트 2×변주 + 검사 4×변주) · findings · `variants` 상태 · `pens` · `comparison_axis` · `lanes` · `law_commit` |
@@ -209,6 +228,7 @@
 | `50-gate/<v>/thread.stripped.md` | `gate` | 출하 후보 텍스트(strip §3.3 ①~⑤). 예행 종료선의 실물(`run-kinds.yaml#kinds.rehearsal.terminates_at_artifact`) · `ship` 은 복사만 |
 | `50-gate/<v>/thread.json` | `gate` | 구조화 출하 객체(`thread/v0`) — `frontmatter_raw` 정본 · `weighted_char_count` · `ship` 은 복사만(재감수 B-04) |
 | `50-gate/<v>/annotation-index.json` | `gate` | 주석 인덱스(`annotation-index/v0`) — 계기 국소화(D9)·L1 감사 표본이 소비. `text_raw` 가 역방향 round-trip 의 전제(재량 ⓕ) |
+| `50-gate/<v>/rounds/r<n>/` | `gate` | 주석본 지문이 바뀌어 재판정할 때 **직전 판정 산출 전량**을 옮겨 둔 자리(재정 T65 ③ 재량 ⓔ — 「덮어씀」을 보존으로) |
 
 **런 밖의 원장 하나**(위 표와 층이 다르므로 따로 적는다).
 

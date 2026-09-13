@@ -32,8 +32,10 @@ T58 ②(좌석) · T59(봉투 `review_adjudicated[]`) · T64 ①②(연장 봉�
 
 `extend` 는 `15-frozen/extension-v<N>.md`(extension-envelope/v0)를 쓰고 `run.yaml#partial_until` 을
 옮긴다 · `design` 은 `engine/stages/design.py#run` 을 재진입(상한 4)하며 대기 좌표를 같은 `call_lane`
-으로 채운다(0 · 10 · 13 · 14 · 15) · `compose` 는 `engine/stages/compose.py#run` 을 재진입(상한 8)하며 변주 좌표를
-**순차** 호출하고, 호출 상한에 닿은 좌표는 결측으로 러너에 신고한다(0 · 10 · 13 · 14 · 15).
+으로 채운다(0 · 10 · 13 · 14 · 15) · `figures` 는 `engine/stages/figures.py#prepare` → `#select` 를 결정론으로 돈다
+(모델 호출 없음 · 렌더 환경 부재 = 2 · 0/13/14 — 재정 T65 ③) · `compose` 는 `engine/stages/compose.py#run` 을
+재진입(상한 8)하며 변주 좌표를 **순차** 호출하고, 호출 상한에 닿은 좌표는 결측으로 러너에 신고한다(0 · 10 · 13 · 14 · 15).
+`compose --variant v2 --round 2` 는 그 변주만 회차 2 로 다시 쓴다(좌표 `compose-r2/v2/batch-0` · T65 ③ 재량 ⓔ).
 
 실행기는 주입 가능한 호출체다. 기본 = 실제 `claude` 서브프로세스. 시험은 스텁을 넣는다.
 이 모듈은 표준 라이브러리와 리포 모듈만 쓴다.
@@ -76,6 +78,8 @@ from engine.paths import PathContractError, RunPaths, load_stage_contract, run_k
 from engine.stages import StageError, freeze as freeze_stage  # noqa: E402
 from engine.stages import compose as compose_stage  # noqa: E402
 from engine.stages import design as design_stage  # noqa: E402
+from engine.stages import StageEnvironmentError  # noqa: E402
+from engine.stages import figures as figures_stage  # noqa: E402
 from engine.stages import gate as gate_stage  # noqa: E402
 from engine.stages import read as read_stage  # noqa: E402
 from engine.stages import source as source_stage  # noqa: E402
@@ -111,7 +115,7 @@ APPROVAL_SCHEMA_REL = freeze_stage.APPROVAL_SCHEMA
 APPROVAL_NAME_RE = re.compile(r"^approval-v([1-9][0-9]*)\.md$")
 STDERR_TAIL_CHARS = 2000
 REVIEW_SECTION_LINES = 12
-COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal", "extend", "design", "compose", "gate-l0", "strip")
+COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal", "extend", "design", "figures", "compose", "gate-l0", "strip")
 DESIGN_REENTRY_CAP = 4
 COMPOSE_REENTRY_CAP = 8          # 변주 3 × 재시도 2 를 담는다(T64 ③ · 발주문 §3.6)
 EXTENSION_SCHEMA_REL = ("contracts", "schemas", "extension-envelope.schema.json")
@@ -1110,7 +1114,7 @@ def cmd_freeze(ctx: Context, args: argparse.Namespace) -> int:
 
 
 def manifest_lines(ctx: Context) -> list[str]:
-    """`evidence/**` 전건(MANIFEST 자신 제외) + `10-read/*.json` + `15-frozen/*` + `20-design/**` + `40-compose/**` + `50-gate/**` 의 sha256 · 경로."""
+    """`evidence/**` 전건(MANIFEST 자신 제외) + `10-read/*.json` + `15-frozen/*` + `20-design/**` + `30-figures/**` + `40-compose/**` + `50-gate/**` 의 sha256 · 경로."""
     paths = ctx.paths()
     entries: list[tuple[str, str]] = []
     base = ctx.worktree if os.path.commonpath([ctx.worktree, ctx.run_root]) == ctx.worktree else os.path.dirname(ctx.run_root)
@@ -1137,6 +1141,10 @@ def manifest_lines(ctx: Context) -> list[str]:
                 add(full)
     if os.path.isdir(paths.design_dir):
         for dirpath, _dirs, files in os.walk(paths.design_dir):
+            for name in files:
+                add(os.path.join(dirpath, name))
+    if os.path.isdir(paths.figures_dir):
+        for dirpath, _dirs, files in os.walk(paths.figures_dir):
             for name in files:
                 add(os.path.join(dirpath, name))
     if os.path.isdir(paths.compose_root):
@@ -1325,8 +1333,50 @@ def cmd_design(ctx: Context, args: argparse.Namespace) -> int:
     raise DriverExit(EXIT_CALL_CAP, f"design 재진입 상한 {DESIGN_REENTRY_CAP} 도달")
 
 
+def cmd_figures(ctx: Context, args: argparse.Namespace) -> int:
+    """figures 스테이지 1회 구동 — `figures.prepare`(크롭 전용 렌더 · 결정론) → `figures.select`(포인터 사영) · 재정 T65 ③.
+
+    모델 호출 없음. 종료 0 = 두 단계 ok · 2 = 렌더 환경 부재·환경 오류(진단) · 13 = halt·escalate·reject-upstream·StageError · 14 = io_fault.
+    """
+    paths = ctx.paths()
+    meta = _load_run_yaml(paths)
+    enum = _terminus_enum(ctx.law)
+    current = str(meta.get("partial_until", ""))
+    if meta.get("run_kind") == RUN_KIND and (current not in enum or enum.index(current) < enum.index("figures")):
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"종료선 — partial_until={current!r} 은 figures 앞이다 · `extend` 가 먼저다")
+    if ctx.dry_run:
+        ctx.out(f"[dry-run] figures.prepare(run_root={ctx.run_root}) → figures.select — 결정론 · 모델 호출 없음 · 렌더 = node studio/renderer/render.mjs")
+        return EXIT_OK
+    for label, step in (("prepare", lambda: figures_stage.prepare(ctx.run_root, ctx.law)),
+                        ("select", lambda: figures_stage.select(ctx.run_root, ctx.law))):
+        try:
+            outcome = step()
+        except StageEnvironmentError as exc:
+            raise DriverExit(EXIT_USAGE, f"figures.{label} 환경: {exc}") from exc
+        except OSError as exc:
+            raise DriverExit(EXIT_UNDECIDABLE, f"io_fault: figures.{label} {exc}") from exc
+        except StageError as exc:
+            raise DriverExit(EXIT_TERMINAL_FAIL, f"figures.{label} 정지: {exc}") from exc
+        for row in outcome.get("rows") or []:
+            for finding in getattr(row, "findings", []) or []:
+                ctx.out(f"  {row.check_id}/{finding.rule}@{finding.locus}: {finding.message}")
+        status = str(outcome.get("status"))
+        if status != "ok":
+            raise DriverExit(EXIT_TERMINAL_FAIL, f"figures.{label} 판정 {status}: {outcome.get('reason_label')}")
+        if label == "prepare":
+            manifest = outcome.get("manifest") or {}
+            ctx.out(f"자산: {len(manifest.get('items') or [])}건 · 렌더 {len(outcome.get('rendered') or [])} · {outcome.get('manifest_path')}")
+        else:
+            selection = outcome.get("selection") or {}
+            ctx.out(f"선택: 슬롯 {len(selection.get('slots') or [])} · {outcome.get('selection_path')}")
+    return EXIT_OK
+
+
 def cmd_compose(ctx: Context, args: argparse.Namespace) -> int:
     """compose 스테이지 1회 구동 — `compose.run` 재진입(상한 8) + 대기 좌표 **순차** 호출(재정 T64 ③).
+
+    `--variant v2 [--variant ..]` 는 대상 변주만 · `--round N`(N ≥ 2)은 회차 재펜이며 `--variant` 가 필수다(재정 T65 ③ · 재량 ⓔ).
+    회차 좌표 = `compose-r<N>/<v>/batch-0` · 래퍼 스키마 조회는 task(변주 id) 그대로.
 
     변주 좌표(`compose/v1/batch-0` → v2 → v3 · 재시도는 `retry-<n>`)를 한 번에 하나씩 부른다(RAM 함정).
     좌표가 호출 상한(3)에 닿아 `DriverExit 15` 가 나면 그 변주를 **결측**으로 러너에 신고한다 — 러너는
@@ -1341,11 +1391,17 @@ def cmd_compose(ctx: Context, args: argparse.Namespace) -> int:
         raise DriverExit(EXIT_TERMINAL_FAIL, f"종료선 — partial_until={current!r} 은 compose 앞이다 · `extend` 가 먼저다")
     if not os.path.isfile(paths.blueprint_json):
         raise DriverExit(EXIT_TERMINAL_FAIL, f"블루프린트가 없다 — `design` 먼저다: {paths.blueprint_json}")
+    wanted = [str(v) for v in (getattr(args, "variant", None) or [])] or None
+    round_no = int(getattr(args, "round", None) or 1)
+    if round_no >= 2 and not wanted:
+        raise DriverExit(EXIT_USAGE, "--round 2 이상은 --variant 가 필수다(전 변주 재펜은 회차가 아니라 새 런이다)")
+    if round_no < 1:
+        raise DriverExit(EXIT_USAGE, f"--round 는 1 이상이다: {round_no}")
     lanes_root = paths.compose_lanes_dir
     if ctx.dry_run:
         pending = [row["lane_id"] for row in lane_inventory(lanes_root) if not row["response"]]
         if not pending:
-            ctx.out(f"[dry-run] compose.run(run_root={ctx.run_root}) — 대기 좌표 없음(요청은 실행 시 생긴다)")
+            ctx.out(f"[dry-run] compose.run(run_root={ctx.run_root}, variants={wanted or '전 변주'}, round_no={round_no}) — 대기 좌표 없음(요청은 실행 시 생긴다)")
             return EXIT_OK
         for lane_id in pending:
             call_lane(ctx, lanes_root, lane_id)
@@ -1353,7 +1409,9 @@ def cmd_compose(ctx: Context, args: argparse.Namespace) -> int:
     missing: dict[str, str] = {}
     for _round in range(COMPOSE_REENTRY_CAP):
         try:
-            outcome = compose_stage.run(run_root=ctx.run_root, repo=ctx.law, missing=missing)
+            outcome = compose_stage.run(run_root=ctx.run_root, repo=ctx.law, missing=missing, variants=wanted, round_no=round_no)
+        except StageEnvironmentError as exc:
+            raise DriverExit(EXIT_USAGE, f"compose 환경: {exc}") from exc
         except OSError as exc:
             raise DriverExit(EXIT_UNDECIDABLE, f"io_fault: compose 스테이지 {exc}") from exc
         except StageError as exc:
@@ -1485,7 +1543,7 @@ def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="drive_partial_read.py",
-        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계·펜·L0 게이트(T64) — 재정 T60 집행. 명령 14 · 판단 없음.",
+        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계·도면·펜·L0 게이트(T64·T65) — 재정 T60 집행. 명령 15 · 판단 없음.",
     )
     parser.add_argument("--repo", help="정본 리포(기본 = 이 파일의 위치에서 추정)")
     parser.add_argument("--worktree-root", help="런 worktree 의 부모(기본 <repo>/.worktrees)")
@@ -1541,7 +1599,11 @@ def build_parser() -> argparse.ArgumentParser:
     extend.add_argument("--decided-at", help="ISO-8601 UTC(기본 지금)")
 
     sub.add_parser("design", help="design 스테이지 1회 구동(재진입 상한 4 · 대기 좌표 호출) — 재정 T64 ②").add_argument("run_id")
-    sub.add_parser("compose", help="compose 스테이지 1회 구동(변주 3 · 재진입 상한 8 · 좌표 순차 호출) — 재정 T64 ③").add_argument("run_id")
+    sub.add_parser("figures", help="figures 스테이지 1회 구동(prepare 크롭 전용 렌더 → select 포인터 · 결정론 · 모델 호출 없음) — 재정 T65 ③").add_argument("run_id")
+    compose_cmd = sub.add_parser("compose", help="compose 스테이지 1회 구동(변주 3 · 재진입 상한 8 · 좌표 순차 호출) — 재정 T64 ③ · --variant/--round 회차 재펜 = T65 ③")
+    compose_cmd.add_argument("run_id")
+    compose_cmd.add_argument("--variant", action="append", help="대상 변주(반복 가능 · 기본 = 전 변주 · --round 2 이상이면 필수)")
+    compose_cmd.add_argument("--round", type=int, default=1, help="회차(기본 1 · 2 이상 = 같은 런에서 그 변주를 도면 헤더로 다시 쓴다 · 좌표 compose-r<N>/<v>/batch-0)")
     gate_l0 = sub.add_parser("gate-l0", help="gate 스테이지 L0 1회 구동(결정론 · 모델 호출 없음 · 변주별 verdict.json) — 재정 T64 ②")
     gate_l0.add_argument("run_id")
     gate_l0.add_argument("--variant", action="append", help="대상 변주(반복 가능 · 기본 = 주석본이 있는 전 변주)")
@@ -1563,6 +1625,7 @@ _COMMANDS = {
     "seal": cmd_seal,
     "extend": cmd_extend,
     "design": cmd_design,
+    "figures": cmd_figures,
     "compose": cmd_compose,
     "gate-l0": cmd_gate_l0,
     "strip": cmd_strip,

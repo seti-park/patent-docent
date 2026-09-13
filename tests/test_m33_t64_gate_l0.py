@@ -519,19 +519,20 @@ def test_numeric_tokenizer_rank_and_whitelist_gap(tmp_path) -> None:
     tokenizers = rules_numeric.load_tokenizers(numeric)
     tokens = rules_numeric.tokenize("See US 2026/0147854 A1 and 3/6 done.", tokenizers)
     kinds = [(kind, raw) for _s, _e, kind, raw in tokens]
-    if kinds[0] != ("patent-number-slash", "US 2026/0147854 A1") or [k for k, _ in kinds[1:]] != ["bare-number", "bare-number"]:
+    # 재정 2026-09-13 T65 자잘(계수 정정) — rank 0 thread-marker 가 `3/6` 을 한 토큰으로 잡는다(구 판은 bare-number 둘 · 총괄 재량 ⓖ 공백).
+    if kinds != [("patent-number-slash", "US 2026/0147854 A1"), ("thread-marker", "3/6")]:
         pytest.fail(f"토큰화 순위·소비가 다르다: {kinds}")
-    # 총괄 재량 ⓖ — `^\d{1,2}/\d{1,2}$` 는 어떤 MATCH_KEY 에도 fullmatch 하지 않아 3/6 은 defect 2 다.
+    # `^\d{1,2}/\d{1,2}$` 는 여전히 MATCH_KEY(`3/6|` · 단위 자리 `|`)에 fullmatch 하지 않아 defect 1 이다 — 패턴은 `|` 까지 덮어야 한다.
     body = golden_body().replace("So the invention is smaller than the problem it answers, and more candid about itself than most.[narrative]",
                                  "Thread 3/6 so far.[narrative]", 1)
     run_root = make_run(os.path.join(str(tmp_path), "w1"), body=body,
                         whitelist=[{"pattern": r"^\d{1,2}/\d{1,2}$", "rationale": "n/N", "added_by": "run-discretion", "approved_in": None}])
     run_gate(run_root)
     defects = verdict_of(run_root)["l0"]["defects"]
-    if sorted(d["observed"] for d in defects) != ["3|", "6|"]:
-        pytest.fail(f"순번 3/6 은 두 키로 쪼개져 결함이어야 한다(ⓖ): {defects}")
+    if sorted(d["observed"] for d in defects) != ["3/6|"]:
+        pytest.fail(f"순번 3/6 은 한 키 `3/6|` 로 결함이어야 한다(T65 자잘): {defects}")
     run_root = make_run(os.path.join(str(tmp_path), "w2"), body=body,
-                        whitelist=[{"pattern": r"^[1-9]\|$", "rationale": "MATCH_KEY 전체에 fullmatch 되는 형태", "added_by": "run-discretion", "approved_in": None}])
+                        whitelist=[{"pattern": r"^\d{1,2}/\d{1,2}\|$", "rationale": "MATCH_KEY 전체에 fullmatch 되는 형태", "added_by": "run-discretion", "approved_in": None}])
     run_gate(run_root)
     if verdict_of(run_root)["l0"]["defects"]:
         pytest.fail("MATCH_KEY 에 fullmatch 하는 화이트리스트는 통과해야 한다")
@@ -727,8 +728,8 @@ def test_driver_gate_l0_strip_and_seal(tmp_path) -> None:
     evidence = os.path.join(str(tmp_path), "evidence")
     lines: list[str] = []
     head = ["--repo", law, "--run-root", run_root, "--evidence-dir", evidence]
-    if len(drv.COMMANDS) != 14 or drv.COMMANDS[-2:] != ("gate-l0", "strip"):
-        pytest.fail(f"명령 14 가 아니다: {drv.COMMANDS}")
+    if len(drv.COMMANDS) != 15 or drv.COMMANDS[-2:] != ("gate-l0", "strip"):
+        pytest.fail(f"명령 15 가 아니다: {drv.COMMANDS}")
     code = drv.main([*head, "strip", GOLDEN_RUN_ID], out=lines.append)
     if code != 0 or not os.path.isfile(os.path.join(run_root, "50-gate", "v1", "thread.stripped.md")) \
             or os.path.isfile(os.path.join(run_root, "50-gate", "v1", "verdict.json")):

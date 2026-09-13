@@ -1,0 +1,19 @@
+{
+  "schema": "figures-selection/v0",
+  "run_id": "example-xx0000000c8-thread-marker",
+  "spec_version": 1,
+  "spec_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "blueprint_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "slots": [
+    {
+      "tweet": 1,
+      "asset": "fig-01",
+      "role": "hero"
+    },
+    {
+      "tweet": 3,
+      "asset": "fig-01",
+      "role": "exhibit"
+    }
+  ]
+}

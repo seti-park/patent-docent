@@ -312,6 +312,9 @@ numeric:
   # rank 1 = 슬래시형 특허번호(재감수 M-06 신설). 기존 특허번호 패턴보다 먼저 시도해야
   # 'US 2026/0147854 A1' 이 bare-year + bare-number 로 부서지지 않는다.
   tokenizers:
+    # rank 0 = 스레드 순번 n/N(재정 2026-09-13 T65 자잘 · 값 공간 승인). bare-number 보다 먼저 시도해야 '3/9' 가
+    # '3'·'9' 둘로 쪼개지지 않는다. 정규화 = 값 문자열 그대로 · unit 없음(아래 normalization.thread_marker).
+    - { rank: 0,  kind: thread-marker,       pattern: '\b\d{1,2}/\d{1,2}\b' }
     - { rank: 1,  kind: patent-number-slash, pattern: '\b[A-Z]{2}\s?\d{4}/\d{6,}(?:\s?[A-Z]\d?)?\b' }
     - { rank: 2,  kind: patent-number,       pattern: '\b[A-Z]{2}\s?\d{6,}(?:\s?[A-Z]\d?)?\b' }
     - { rank: 3,  kind: iso-date,            pattern: '\b\d{4}-\d{2}-\d{2}\b' }
@@ -347,6 +350,8 @@ numeric:
         성립하지 않는다. 대안 목록의 **맨 끝**에 둔 것은 규율이다(위 주석 — 좌측 우선).
         `unit_aliases` 는 건드리지 않았다: 인식 어휘의 확장이지 정규화 매핑의 신설이 아니며,
         `normalize_unit("b") == "b"` 이므로 MATCH_KEY 의 의미는 바뀌지 않는다.
+    - at: 2026-09-13
+      change: "thread-marker 신설(rank 0) — 재정 T65 자잘 · 순번 n/N 이 bare-number 둘로 쪼개져 run.yaml#numeric_whitelist 가 닿지 않던 계약 공백"
 
   # 정규화 규칙
   normalization:
@@ -368,6 +373,7 @@ numeric:
     range: "두 끝값으로 분해해 각각 대조. 추가로 범위 자체를 'a-b|unit' 키로도 시도한다(재료가 범위를 한 항목으로 담은 경우)."
     date: "YYYY-MM-DD 로 환산. 연도 단독은 'YYYY|year'."
     patent_number: "공백·하이픈·슬래시 제거 + 대문자화"
+    thread_marker: "값 = 문자열 그대로(n/N) · unit 없음 → MATCH_KEY 'n/N|'"
 
 # ---------------------------------------------------------------------------
 # 10. 폐지된 규칙 (재정 2026-08-17 · 2026-08-18)

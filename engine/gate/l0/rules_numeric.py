@@ -18,9 +18,12 @@
 `reader/lib/derivation.py#_numeric_inventory` 와 같은 규칙: 참조 = `implication`·`positioning` 항목의 `numeric_refs[]`
 합집합 · 범위 = `reader-rules.yaml#numeric_harvest.answer_scope` · 미참조 = 범위 안 fact − 참조).
 
-★ 총괄 재량 ⓖ(계약 공백 · 상신 예정): 화이트리스트 `pattern` 은 MATCH_KEY 에 fullmatch 한다(§4.4.1). 토큰화 11종에
-스레드 순번 `n/N` 을 한 토큰으로 잡는 어형이 없어 `3/9` 는 bare-number 둘(`3|` · `9|`)로 쪼개지고, 어떤 순번
-패턴도 그 키에 닿지 않는다. 토크나이저 추가는 값 공간 변경(규율 11)이므로 여기서 하지 않는다 — 계약 그대로 구현한다.
+★ 총괄 재량 ⓖ 의 처분(재정 2026-09-13 T65 자잘 · 값 공간 승인): 화이트리스트 `pattern` 은 MATCH_KEY 에 fullmatch 한다
+(§4.4.1). 구 토큰화 11종에는 스레드 순번 `n/N` 을 한 토큰으로 잡는 어형이 없어 `3/9` 가 bare-number 둘(`3|` · `9|`)로
+쪼개졌고 어떤 순번 패턴도 그 키에 닿지 않았다. 재정 T65 가 `thread-marker`(rank 0 · `l0-format.yaml#numeric.tokenizers`)를
+승인했다 — 정규화 = 값 문자열 그대로 · unit 없음 → MATCH_KEY `3/9|`. 그러므로 화이트리스트는 `^\\d{1,2}/\\d{1,2}\\|$`
+형태로 적어야 닿는다(`|` 가 키의 일부다 · `engine/procedure/design.md` ⑻). 반례 골든 = `rc-0008`(알려진 과광화 —
+`1/2 inch` 도 순번으로 잡힌다 · 어형을 좁히는 것은 재정 사항).
 """
 
 from __future__ import annotations
@@ -113,6 +116,9 @@ def _safe_number(raw: str) -> str:
 def keys_of(kind: str, raw: str, aliases: dict) -> list[str]:
     """토큰 하나 → MATCH_KEY 목록(범위는 두 끝값 + 범위 키)."""
     text = raw.strip()
+    if kind == "thread-marker":
+        # `normalization.thread_marker`: 값 = 문자열 그대로(n/N) · unit 없음 → 'n/N|'.
+        return [match_key(text, None)]
     if kind in ("patent-number-slash", "patent-number"):
         return [match_key(normalize_patent_number(text), None)]
     if kind == "iso-date":
