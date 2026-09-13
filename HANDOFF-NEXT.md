@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(174차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(175차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 175차 — **재정 T65 「① A / ② 허용 / ③ A」 등재**(`ruling-20260913-10-T65.md` · 추기 142): 기준판 = **v2**(`runs/gdm-wo2026128750a1-agent-memory-3/50-gate/v2/thread.stripped.md`) · 꼬리 날짜 둘은 Owner 직접 확인으로 허용 · 다음 = **도면 자산층**. 자잘 확정 = `n/N` 토크나이저 신설 승인(값 공간 · 발주 ④ 에 동반 · 반례 golden) · figure-budget 조치 행 · opus max 900초 · §3.2 예시. **지금 할 일 = M3 발주문 ④ 작성·기동**(`SPEC-m3-t65-figures.md` · figures.prepare crop-only 1200×675 @2x HTML/CSS → 헤드리스 Chromium · `manifest.json` edit_class/publishable · figures.select → `selection.json` · `format.stop-shape` 가동 · l0-format `numeric.tokenizers` 순번 어형 + golden · compose 2회차(v2 만 · 도면 헤더 `fig-NN` · 문장 ≤2 · 직전 판 보존 자리 = 총괄 재량) · 구동기 `figures`·`compose --variant --round`) → 전제 = Chromium 설치(`npx playwright install chromium` · WSL2 의존 라이브러리 확인) · `fig-08-09.png` 복합 시트 처분 = 전장 프레이밍 + 표기 → 실행 → 도면 시안 브리핑(사용권 재정 R11 동반). 살아 있는 배경 = 없음.**
+
+> [정정 2026-09-13 · 175차] 174차의 「T65 대기」는 끝났다(재정 도착 · 전건 추천대로 + ② Owner 직접 확인).
 
 **★ 09-13 174차 — **재정 T64 집행 완주 → 결정 브리핑 T65 「세 판 중 어느 글로 가나」 발행** `https://claude.ai/code/artifact/9f244e2c-ddc4-433b-823c-ffb2576ca790`(추기 141 · 홈 사본 `OWNER-BRIEF-T65-drafts-20260913.html`): ③ L0 게이트·strip 병합(`3f8a984` · 구현 누계 $45.11) → 런 -3 `gate-l0` = **v2 xhigh advance(결함 0 · 미검토 날짜 플래그 2) · v1·v3 revise(T9 연도 단독 결함 2)** → 봉인·반입 `c6739da`. 산출 = `runs/gdm-wo2026128750a1-agent-memory-3/{20-design,40-compose,50-gate}` · 출하본 `50-gate/v2/thread.stripped.md`. **지금 할 일 = Owner `T65: ① _ / ② _ / ③ _` 대기 → 재정문 `ruling-20260913-10-T65.md` + RULINGS-LEDGER 행 → ①·② 처분 추기 → ③ 이 A 면 M3 발주문 ④(figures.prepare crop-only + select + stop-shape 가동 + `n/N` 토크나이저는 재정 뒤) · B 면 M6(L1 · 수정 루프) 발주.** 살아 있는 배경 = 없음. M3 worktree 셋(`pd-m3-t64-{design,compose,gate}`)은 병합 뒤 제거 · 브랜치는 남김.**
 
