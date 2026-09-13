@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(173차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(174차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 174차 — **재정 T64 집행 완주 → 결정 브리핑 T65 「세 판 중 어느 글로 가나」 발행** `https://claude.ai/code/artifact/9f244e2c-ddc4-433b-823c-ffb2576ca790`(추기 141 · 홈 사본 `OWNER-BRIEF-T65-drafts-20260913.html`): ③ L0 게이트·strip 병합(`3f8a984` · 구현 누계 $45.11) → 런 -3 `gate-l0` = **v2 xhigh advance(결함 0 · 미검토 날짜 플래그 2) · v1·v3 revise(T9 연도 단독 결함 2)** → 봉인·반입 `c6739da`. 산출 = `runs/gdm-wo2026128750a1-agent-memory-3/{20-design,40-compose,50-gate}` · 출하본 `50-gate/v2/thread.stripped.md`. **지금 할 일 = Owner `T65: ① _ / ② _ / ③ _` 대기 → 재정문 `ruling-20260913-10-T65.md` + RULINGS-LEDGER 행 → ①·② 처분 추기 → ③ 이 A 면 M3 발주문 ④(figures.prepare crop-only + select + stop-shape 가동 + `n/N` 토크나이저는 재정 뒤) · B 면 M6(L1 · 수정 루프) 발주.** 살아 있는 배경 = 없음. M3 worktree 셋(`pd-m3-t64-{design,compose,gate}`)은 병합 뒤 제거 · 브랜치는 남김.**
+
+> [정정 2026-09-13 · 174차] 173차의 「③ 회수 → gate-l0 → 브리핑」은 전부 됐다 — Owner 재정 대기.
 
 **★ 09-13 173차 — **런 -3 펜 3판 완주**(추기 140 · `83942b3`): v1 high $1.30/270s · v2 xhigh $1.72/404s · v3 max $3.04/733s(900초 안 완주) · 종료 검사 전건 pass · 초안 `runs/gdm-wo2026128750a1-agent-memory-3/40-compose/v{1,2,3}/thread.annotated.md`. **지금 할 일 = ③ 레인 회수(`pd-lanes/fable-m3-t64-gate/STATUS`) → 재현·병합 → 런 -3 `gate-l0` → 세 판 열람 브리핑(`/decision-brief` · 결정 = 변주 선택 + 자잘 2).** 살아 있는 배경 = ③ 레인 1(Monitor `byzvp5xb3`).**
 
