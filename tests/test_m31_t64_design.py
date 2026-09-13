@@ -142,13 +142,13 @@ def candidate_from(payload: dict, run_root: str, *, law: str) -> dict:
     out.update({
         "schema": "blueprint/v0", "run_id": RUN_ID, "spec_version": 1,
         "spec_digest": meta["frozen"][0]["spec_digest"],
-        "lane": {"model": "claude-fable-5-1", "effort": "high", "lane_id": LANE_ID},
+        "lane": {"model": "claude-fable-5-dd-artsa-6-tpg", "effort": "high", "lane_id": LANE_ID},
         "law_commit": design_stage.law_commit_of(law),
     })
     return out
 
 
-def respond(run_root: str, lane_id: str, payload: dict, *, model: str = "claude-fable-5-1", effort: str = "high") -> str:
+def respond(run_root: str, lane_id: str, payload: dict, *, model: str = "claude-fable-5-dd-artsa-6-tpg", effort: str = "high") -> str:
     """파일 어댑터가 쓴 요청의 지문을 반향하는 응답 파일을 쓴다(시험이 레인 역할)."""
     directory = os.path.join(run_root, "20-design", "lanes", *lane_id.split("/"))
     with open(os.path.join(directory, "request.json"), encoding="utf-8") as handle:
@@ -182,8 +182,8 @@ def test_contract_loads_and_paths_declare_design_outputs(law) -> None:
     ids = [row["id"] for row in contract["checks_before_exit"]]
     if contract["schema"] != "stage-contract/v0" or contract["id"] != "design" or len(ids) != 6:
         pytest.fail(f"design.yaml 골격이 다르다: {contract.get('schema')} · {ids}")
-    if contract["lane"]["model"] != "fable-5.1" or contract["lane"]["effort"] != "high":
-        pytest.fail("설계 좌석이 fable-5.1 high 가 아니다(T64 재량)")
+    if contract["lane"]["model"] != "gpt-6-astra" or contract["lane"]["effort"] != "high":
+        pytest.fail("설계 좌석이 gpt-6-astra high 가 아니다(T64 재량 · Owner 재정 2026-09-14)")
     paths = RunPaths("/nonexistent/run", law)
     if paths.STAGES[:4] != ("source", "read", "freeze", "design"):
         pytest.fail(f"STAGES 가 다르다: {paths.STAGES}")
@@ -277,7 +277,7 @@ def test_wrapper_schema_is_self_contained_and_resolves_inside_cli_wrapper() -> N
               encoding="utf-8") as handle:
         accepted = json.load(handle)
     payload = {k: v for k, v in accepted.items() if k not in design_stage.RUNNER_KEYS}
-    envelope = {"lane_id": "design/blueprint/batch-0", "model": "claude-fable-5-1", "effort": "high",
+    envelope = {"lane_id": "design/blueprint/batch-0", "model": "claude-fable-5-dd-artsa-6-tpg", "effort": "high",
                 "input_digest": "0" * 64, "payload": payload}
     errors = list(Draft202012Validator(wrapper).iter_errors(envelope))
     if errors:
@@ -293,7 +293,7 @@ def test_wrapper_schema_is_self_contained_and_resolves_inside_cli_wrapper() -> N
 
 
 def _fields(lane_id: str, read_run: str, task: str) -> dict:
-    return dict(lane_id=lane_id, read_run=read_run, task=task, model="fable-5.1", effort="high",
+    return dict(lane_id=lane_id, read_run=read_run, task=task, model="gpt-6-astra", effort="high",
                 prompt_path="engine/procedure/design.md", instructions="x", repo_root=REPO,
                 response_schema={"type": "object"})
 
@@ -320,7 +320,7 @@ def test_request_body_inlines_frozen_sheet_charter_and_excludes_source(law, run_
         pytest.fail("동결본 JSON 전문이 요청서에 없다")
     for needle in (f"| tweet_count.max | `{SHEET['tweet_count']['max']}` |", f"| images_per_post_max | `{SHEET['images_per_post_max']}` |",
                    "## D2. 독자상", "## D3. 핵심 독트린", "## D11. 형식", "재정된 앵커 0건", "도면은 **지정만**",
-                   "# 설계 레인 절차", "| 모델 | `fable-5.1` |", "| effort | `high` |"):
+                   "# 설계 레인 절차", "| 모델 | `gpt-6-astra` |", "| effort | `high` |"):
         if needle not in body:
             pytest.fail(f"요청서에 {needle!r} 가 없다")
     # 동결본 값(figures[].raw_path · patent.source_path)은 원천 **경로 문자열**을 든다 — 그것은 재료의
@@ -330,7 +330,7 @@ def test_request_body_inlines_frozen_sheet_charter_and_excludes_source(law, run_
         if forbidden in outside_slice:
             pytest.fail(f"요청서(동결본 조각 밖)에 must_not_read 경로 {forbidden!r} 문자열이 있다")
     request_json = json.load(open(request_md.replace("request.md", "request.json"), encoding="utf-8"))
-    if request_json["model"] != "fable-5.1" or request_json["effort"] != "high" or request_json["task"] != "blueprint":
+    if request_json["model"] != "gpt-6-astra" or request_json["effort"] != "high" or request_json["task"] != "blueprint":
         pytest.fail(f"request.json 좌석이 다르다: {request_json['model']}/{request_json['effort']}")
 
 
@@ -556,7 +556,7 @@ def test_runner_round_trip_writes_outputs_and_is_reentrant(law, run_root) -> Non
     schema = design_stage.load_blueprint_schema(law)
     if list(Draft202012Validator(schema).iter_errors(blueprint)):
         pytest.fail("쓴 블루프린트가 스키마를 위반한다")
-    if blueprint["lane"] != {"model": "claude-fable-5-1", "effort": "high", "lane_id": LANE_ID} or blueprint["law_commit"] != design_stage.law_commit_of(law):
+    if blueprint["lane"] != {"model": "claude-fable-5-dd-artsa-6-tpg", "effort": "high", "lane_id": LANE_ID} or blueprint["law_commit"] != design_stage.law_commit_of(law):
         pytest.fail(f"러너 기입 lane·law_commit 이 다르다: {blueprint['lane']} {blueprint['law_commit']}")
     report = json.load(open(os.path.join(design, "design-report.json"), encoding="utf-8"))
     row_schema = json.load(open(os.path.join(REPO, "contracts", "schemas", "verdict-check-row.schema.json"), encoding="utf-8"))
@@ -739,10 +739,10 @@ def test_driver_extend_then_design_then_seal(law, tmp_path) -> None:
     if code != drv.EXIT_OK:
         pytest.fail(f"design 이 0 이 아니다: {code} {lines}")
     argv = stub.calls[0]
-    if argv[argv.index("--model") + 1] != "claude-fable-5-1" or argv[argv.index("--effort") + 1] != "high":
+    if argv[argv.index("--model") + 1] != "claude-fable-5-dd-artsa-6-tpg" or argv[argv.index("--effort") + 1] != "high":
         pytest.fail(f"레인 명령줄 좌석이 다르다: {argv}")
     receipt = json.load(open(os.path.join(evidence, "calls", "design__blueprint__batch-0.json"), encoding="utf-8"))
-    if receipt["requested"] != {"model": "fable-5.1", "effort": "high", "api_id": "claude-fable-5-1"} or receipt["observed"]["main_model"] != "claude-fable-5-1":
+    if receipt["requested"] != {"model": "gpt-6-astra", "effort": "high", "api_id": "claude-fable-5-dd-artsa-6-tpg"} or receipt["observed"]["main_model"] != "claude-fable-5-dd-artsa-6-tpg":
         pytest.fail(f"영수증이 다르다: {receipt['requested']} {receipt['observed']}")
     if not os.path.isfile(os.path.join(run_root, "20-design", "blueprint.json")):
         pytest.fail("구동기 design 뒤 blueprint.json 이 없다")

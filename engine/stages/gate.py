@@ -83,7 +83,7 @@ L1_PENDING_LAYERS = ("l1", "speech_act_flag")
 L2_PENDING_LAYERS = ("l2",)
 MEMO_ID_FORMAT = "m-l2-{:03d}"
 #: 재판정 보존(`rounds/r<n>/`)에서 **제자리에 두는** 것 — 루프 개시 전 동결물(발췌본)과 보존·라운드 디렉터리 자신.
-PRESERVE_KEEP = ("final-eyes-brief.json", ROUNDS_DIRNAME, REVISIONS_DIRNAME)
+PRESERVE_KEEP = ("final-eyes-brief.json", "l2.md", ROUNDS_DIRNAME, REVISIONS_DIRNAME)
 BRIEF_KIND = "final-eyes-brief"
 
 #: URL 최소 어형(총괄 재량 ⓒ) — 시트에 URL 문법이 없다. `https?://…` 와 `www.…` 의 비공백 연속.
@@ -225,7 +225,8 @@ def _preserve_previous(paths: RunPaths, variant: str) -> str | None:
     """직전 판정 산출 전량을 `50-gate/<v>/rounds/r<n>/` 로 옮긴다. 옮긴 자리를 돌려준다(없으면 None).
 
     옮기는 것 = 판정 파일(l0·l1·verdict·strip 산출)과 L1 레인 왕복(`lanes/`). **제자리에 두는 것** = `final-eyes-brief.json`
-    (루프 개시 전 동결물 · 재정 N1 — 옮기면 「1회 생성·불변」이 깨진다) · `rounds/` · `revisions/`(라운드 사료 자신).
+    (루프 개시 전 동결물 · 재정 N1 — 옮기면 「1회 생성·불변」이 깨진다) · **`l2.md`**(위상이 한 번 닫히는 판단 산출 ·
+    D8 · 옮기면 재판정마다 CP2 필수 표면이 사라지고 `run_l2` 가 첫 실행으로 보인다) · `rounds/` · `revisions/`(라운드 사료 자신).
     """
     gate_dir = paths.gate_dir(variant)
     if not os.path.isdir(gate_dir):
@@ -469,7 +470,7 @@ def run(*, run_root: str, repo: str | None = None, variants=None, strip_only: bo
         final_veto = (previous_verdict.get("final_eyes") or {}).get("verdict") == "veto"
         from ..gate.loop import open_round
         final_revision = final_veto and open_round(paths, variant) is not None
-        prior_l2 = read_text(paths.l2_md(variant)) if final_revision and os.path.isfile(paths.l2_md(variant)) else None
+        prior_l2 = read_text(paths.l2_md(variant)) if os.path.isfile(paths.l2_md(variant)) else None
         if not strip_only and previous == digest and not final_revision:
             verdict = previous_verdict
             variants_out[variant] = {**_summary(verdict), "reentered": True, "paths": _paths_of(paths, variant)}
@@ -492,14 +493,17 @@ def run(*, run_root: str, repo: str | None = None, variants=None, strip_only: bo
                                      "paths": _paths_of(paths, variant)}
             rows_out[variant] = list(outcome["rows"])
             continue
-        if final_revision:
-            # 최종 심급의 국소 재진입은 L2의 위상을 다시 열지 않는다.
-            outcome["verdict"]["l2"] = previous_verdict["l2"]
-            if "free_revision_used" in previous_verdict:
+        if prior_l2 is not None:
+            # 재판정(결함 루프·최종 심급 국소 재진입)은 L2 의 위상을 다시 열지 않는다 — 메모는 1회, 자유 리비전도 1회다(D8).
+            # 판정문은 회차마다 새로 쓰이므로 L2 블록과 소진 표시를 여기서 승계하지 않으면 CP2 표면과 위상 봉쇄가 함께 사라진다.
+            if previous_verdict.get("l2"):
+                outcome["verdict"]["l2"] = previous_verdict["l2"]
+            if previous_verdict.get("free_revision_used") is not None:
                 outcome["verdict"]["free_revision_used"] = previous_verdict["free_revision_used"]
-            if prior_l2 is not None:
-                write_text(paths.l2_md(variant), prior_l2)
-                outcome["verdict"]["inactive_layers"] = [r for r in outcome["verdict"]["inactive_layers"] if r["layer"] != "l2"]
+            elif os.path.isdir(paths.free_revision_dir(variant)):
+                outcome["verdict"]["free_revision_used"] = True   # 소진 사실의 정본은 디스크다
+            write_text(paths.l2_md(variant), prior_l2)
+            outcome["verdict"]["inactive_layers"] = [r for r in outcome["verdict"]["inactive_layers"] if r["layer"] != "l2"]
         write_json(paths.l0_json(variant), outcome["l0"])
         write_json(paths.verdict_json(variant), outcome["verdict"])
         variants_out[variant] = {**_summary(outcome["verdict"]), "reentered": False, "paths": _paths_of(paths, variant),
@@ -770,6 +774,43 @@ def _l2_summary(verdict: dict, **extra) -> dict:
             "free_revision_used": bool(verdict.get("free_revision_used", False)), "thread_digest": verdict["thread_digest"], **extra}
 
 
+def _restore_preserved_l2(paths: RunPaths, variant: str, verdict: dict) -> bool:
+    """L2 메모는 **1회 생성·불변**이다(D8 · `final-eyes-brief.json` 과 같은 격). 보존 자리에만 있으면
+    제자리와 판정문으로 되돌린다.
+
+    2026-09-14 수리 전에는 `_preserve_previous` 가 `l2.md` 를 라운드 자리로 **옮겼고**, 판정문도 회차마다
+    새로 쓰여 L2 블록과 소진 표시가 함께 사라졌다. 그 시절에 돌던 런은 CP2 필수 표면을 잃고 `run_l2` 에는
+    첫 실행으로 보인다 — 결함 수정이 판단 경로를 다시 여는 것은 위상 위반이므로, 새로 만들지 않고 되돌린다.
+    """
+    if os.path.isfile(paths.l2_md(variant)):
+        return False
+    rounds_dir = os.path.join(paths.gate_dir(variant), ROUNDS_DIRNAME)
+    if not os.path.isdir(rounds_dir):
+        return False
+    for name in sorted(os.listdir(rounds_dir), key=_round_sort_key, reverse=True):
+        memo = os.path.join(rounds_dir, name, "l2.md")
+        if not os.path.isfile(memo):
+            continue
+        write_text(paths.l2_md(variant), read_text(memo))
+        kept = os.path.join(rounds_dir, name, "verdict.json")
+        if os.path.isfile(kept):
+            previous = load_json(kept)
+            if (previous.get("l2") or {}).get("memos"):
+                verdict["l2"] = previous["l2"]
+            if previous.get("free_revision_used") is not None:
+                verdict["free_revision_used"] = previous["free_revision_used"]
+        if verdict.get("free_revision_used") is None and os.path.isdir(paths.free_revision_dir(variant)):
+            verdict["free_revision_used"] = True   # 소진 사실의 정본은 디스크다
+        verdict["inactive_layers"] = [row for row in verdict.get("inactive_layers", []) if row.get("layer") != LAYER_L2]
+        return True
+    return False
+
+
+def _round_sort_key(name: str):
+    digits = "".join(ch for ch in name if ch.isdigit())
+    return (int(digits) if digits else 0, name)
+
+
 def run_l2(*, run_root: str, repo: str | None = None, variant: str, adapter=None) -> dict:
     """L2 자문 메모 1회 진입(변주 1건). 반환 = `{status: ok|pending|reentered, memos, decision, ...}` — 린트 실패는 기록 뒤 `StageHaltError`.
 
@@ -789,7 +830,11 @@ def run_l2(*, run_root: str, repo: str | None = None, variant: str, adapter=None
     text = read_text(paths.thread_annotated(variant))
     if str(verdict.get("thread_digest")) != sha256_bytes(text.encode("utf-8")):
         raise StageError("verdict.json 의 thread_digest 가 현 주석본과 다르다 — gate-l0 · gate-l1 을 다시 돌린다")
+    restored = _restore_preserved_l2(paths, variant, verdict)
+    if restored:
+        write_json(verdict_path, verdict)
     if verdict.get("free_revision_used") is True:
+        # 복원은 위 `_restore_preserved_l2` 가 디스크에 이미 마쳤다 — 봉쇄는 그대로 건다.
         raise StageHaltError("[halt] 위상 봉쇄 · D8 — L2 메모 1회 → 펜 자유 리비전 1회가 이미 소비되었다. 리비전 결과에 L2 를 다시 돌리지 않는다(SPEC §4.6)")
     if verdict.get("decision") != DECISION_ADVANCE:
         raise StageError(f"decision 이 advance 가 아니다({verdict.get('decision')}) — L2 는 L0·L1 을 통과한 판정문에만 돈다")

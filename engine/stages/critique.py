@@ -1,6 +1,7 @@
 """소견 1회와 재시도 1회. 자문 레인 장애는 결번으로 기록한다."""
 import json
 import os
+import shutil
 
 from jsonschema import Draft202012Validator
 from reader.lib.report import CheckRow
@@ -24,6 +25,25 @@ def mentions_id(text, target):
             return True
         start = text.find(target, start + 1)
     return False
+
+
+def _supersede_stale_lanes(root: str, previous_digest: str | None) -> bool:
+    """요청서가 갱신되면 옛 좌표에 남은 응답은 **새 요청의 답이 될 수 없다**(레인 결속).
+
+    좌표를 비우되 지우지 않고 직전 입력 지문 아래 보존한다 — 구동기가 영수증에 하는 처리와 같은 원리다.
+    이것이 없으면 절차 문서 한 줄을 고친 뒤 재실행할 때 러너가 매 회차 옛 응답을 만나 「낡음」으로 실패하고,
+    재시도 한도를 소진한 채 결번으로 끝난다(런 -3 02:11 실측).
+    """
+    source = os.path.join(root, "lanes", "critique")
+    if not os.path.isdir(source):
+        return False
+    tag = (previous_digest or "unknown").replace("sha256:", "")[:16]
+    keep = os.path.join(root, "superseded-lanes", tag)
+    if os.path.exists(keep):
+        return False
+    os.makedirs(os.path.dirname(keep), exist_ok=True)
+    shutil.move(source, keep)
+    return True
 
 
 def run(run_root, repo=None, variant=None, adapter=None, dead=None):
@@ -67,11 +87,17 @@ def run(run_root, repo=None, variant=None, adapter=None, dead=None):
     old = load_json(report_path) if os.path.isfile(report_path) else {}
     if old.get("input_digest") == fingerprint and old.get("status") in ("ok", "missing"):
         if old["status"] == "missing" and os.path.isfile(missing_path):
-            return {"status": "missing", "reentered": True}
+            # 결번이 확정이려면 그 좌표가 비어 있어야 한다. 응답이 남은 채 난 결번은 **그 응답 때문에** 난 것이며
+            # (요청 갱신 뒤의 낡은 응답 · 런 -3 02:11), 원인을 고친 뒤에는 다시 물어야 한다.
+            if not os.path.isdir(os.path.join(root, "lanes", "critique")):
+                return {"status": "missing", "reentered": True}
+            _supersede_stale_lanes(root, old.get("input_digest"))
         if os.path.isfile(paths.critique_memo(variant)):
             if sha256_file(paths.critique_memo(variant)) == old.get("memo_digest"):
                 return {"status": "reentered"}
             raise StageHaltError("소견 파일이 검사 후 바뀌었다")
+    if old.get("input_digest") not in (None, fingerprint):
+        _supersede_stale_lanes(root, old.get("input_digest"))
     attempt = int(old.get("attempt", 0)) if old.get("input_digest") == fingerprint else 0
     for artifact in (paths.critique_memo(variant), missing_path):
         if os.path.isfile(artifact):

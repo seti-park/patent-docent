@@ -3,7 +3,7 @@ schema: stage-contract/v0
 id: critique
 lane:
   kind: llm
-  model: fable-5.1
+  model: gpt-6-astra          # Owner 재정 2026-09-14 「fable high 자리는 astra high 자리로」 — fable 쿼터 소진
   effort: high
   lane_id_vocabulary:
     form: critique/<variant>[/retry-<n>]/batch-0

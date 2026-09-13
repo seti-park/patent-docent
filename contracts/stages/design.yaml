@@ -12,8 +12,8 @@ id: design
 
 lane:
   kind: llm
-  model: fable-5.1          # 티어 라벨 · API 식별자는 read.yaml#lane.model_identity 의 aliases[0] (= claude-fable-5-1)
-  effort: high              # 재정 T64 재량 「설계 좌석 = fable high 1판」
+  model: gpt-6-astra        # 티어 라벨 · API 식별자는 read.yaml#lane.model_identity 의 aliases[0]
+  effort: high              # 재정 T64 재량 「설계 좌석 = fable high 1판」 → Owner 재정 2026-09-14 로 astra high(fable 쿼터 소진 · 런 -3 의 설계는 이미 fable high 로 돌았다 · 사료)
   instances: 1
   lane_id_vocabulary:
     form: "design/blueprint[/retry-<n>]/batch-0"
