@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(182차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(183차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 183차 — **⑤ 병합(`85fcb41` · M6-a · 구현 누계 $83.32) → 런 -3 v2 `gate-l1` 기동 22:28**(추기 152): L1 opus high × 3 · 화행 플래그 · 수정 루프 · CP2 봉투 명령 실물. **지금 할 일 = `gate-l1` 회수(`pd-lanes/t65-figures/STATUS-gate-l1` · 영수증 `gate-l1__v2__batch-{0,1,2}`) → verdict `decision` 확인 → 결함이면 `revise`(스크립트는 `gate-l1.sh` 를 본떠 `revise $R --variant v2`) 최대 3 라운드 → `cp2 $R --variant v2`(표면 + 봉투 초안) → CP2 브리핑 T68(플래그 전건 판정 · 변주 v2 · 도면 유지 · 결번 4 명기) → Owner 육성 → `approve-ship` → 반입 → 다음(M6-b 최종 심급 · L2 · 계기는 별도 재정).** 살아 있는 배경 = gate-l1 1(Monitor). 맥락 접두 79만 — `/compact` 권고.**
+
+> [정정 2026-09-13 · 183차] 182차의 「⑤ 회수 대기」는 끝났다 — 병합·실행 중.
 
 **★ 09-13 182차 — **M3 발주문 ⑤(M6-a) 기동**(추기 150 · `a15d4a8`): L1 국소 대조 opus-5 high × k(`gate-l1/<v>/batch-<i>`) · 화행 플래그 3 · 수정 루프 캡 3(`revisions/r<n>/` · compose 회차 재사용 · 국소성 검사) · `final-eyes-brief.json`(루프 전 1회 · 핀) · CP2 봉투(`cp2`·`approve-ship` · critique·probe·final-eyes 결번 표기) · 골든 rc-0009(v2 2회차 실물) + 결함 표본 3. worktree `~/projects/workspaces/pd-m3-t67-l1`(`round-t67-l1`) · 레인 `pd-lanes/fable-m3-t67-l1/`. **지금 할 일 = ⑤ 회수 → 재현(pytest · 관문 7) → 병합 → 런 -3 v2 `gate-l1`(opus high × 3 · ~$3~5) → 결함 있으면 `revise`(라운드당 펜 1 + L0 + L1 3) → `cp2` → CP2 브리핑 T68(변주 = v2 고정 · 플래그 판정 · 도면 유지 · Owner 육성 → `approve-ship`).** 살아 있는 배경 = ⑤ 레인 1(Monitor). 맥락 접두 76만 — `/compact` 권고.**
 
