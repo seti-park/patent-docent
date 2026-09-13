@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-14(188차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-14(189차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-14 189차 — **발주문 ⑦ 병합(`dd819a9` · 소견·최종 심급·출하·CP2 표면 7 · 명령 25 · 시험 1151) · L2 좌석 astra 교체·실행(메모 3) · 자유 리비전 1회 → L1 결함 1 → 수정 라운드 2 재개**(추기 158). **지금 할 일 = 라운드 2 회수(`pd-lanes/t65-figures/STATUS-revise`) → advance 면 `probe`(opus low 1 + haiku-4.5 ×5 + opus low 1) → `critique`(fable high — **쿼터 확인 필요 · 막혔으면 좌석 상신**) → `final-eyes`(opus max ×3 · 900초) → `cp2`(표면 7) → **CP2 브리핑 T70** → Owner 육성 → `approve-ship` → `ship` → 게시본 `70-ship/{thread.md, thread.json, images/, SHIP.md}` → Owner 수동 X 게시.** 살아 있는 배경 = 라운드 2(Monitor) 1. **주의** — ⓐ `critique` 좌석이 fable-5.1 high 라 쿼터에 묶인다(L2 선례대로 astra 전환 가능 · 계약 1줄 + 시험) ⓑ 자유 리비전은 소진(`free_revision_used: true`) ⓒ 수정 캡 3 중 2 사용.**
+
+> [정정 2026-09-14 · 189차] 188차의 「⑦ 회수·병합」은 됐다. 「`gate-l2` 쿼터 해제 대기」는 astra 좌석 교체로 해소됐다.
 
 **★ 09-14 188차 — **발주문 ⑥ 병합(`205b5ef` · L2·자유 리비전·계기 probe · 명령 22 · 시험 1116) · 시험 픽스처를 스냅숏으로 고정(발주자 오류 255) · **fable 쿼터 소진** → ⑦ 좌석 = **GPT-6 Astra high**(Owner 육성 「sol 말고 astra high에게 시켜보자」 · 00:38:18 기동) · `gate-l2` 는 쿼터 해제 대기**(추기 157). **지금 할 일 = ⑦ 회수(`pd-lanes/fable-m3-t69-ship/STATUS-astra` · `FINAL-astra`) → 재현·병합 → 런 -3 v2 실행 `gate-l2`(재시도 루프가 자동) → `revise-free` → `probe` → `critique` → `final-eyes` → `cp2`(전 표면 7) → CP2 브리핑 T70 → Owner 육성 → `approve-ship` → `ship` → 게시본 `70-ship/{thread.md, thread.json, images/, SHIP.md}` → Owner 수동 X 게시.** 살아 있는 배경 = **2** — ⑦ astra 레인(Monitor) · `gate-l2` 재시도 루프(20분 × 15 · Monitor). **fable 쿼터 주의**: 대화창도 Opus 5 로 내려와 있고 `gate-l2`(계약 = fable high)만 그 쿼터에 묶여 있다. 나머지 좌표(펜 opus xhigh · L1 opus high · 프로브 haiku · 질문·채점 opus low · 최종 심급 opus max)는 무관.**
 
