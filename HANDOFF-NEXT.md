@@ -1,11 +1,13 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(156차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(157차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 157차 — 재정 **T60**(`ruling-20260913-05-T60.md` · 추기 119): 예행 런 2 구동 = **M1a 직접 · 전 레인 CLI 직접 호출 · 결정론 파이썬 구동기**(T40 구동기 골격 · 검수원 미사용). 레인 모델은 T58 ②(fable-5.1 low ×2 · opus-5 low ×2). 지금 할 일 = 변함없이 **M3 T59 적용 레인 회수 대기**(12:37 기동) → 재현·병합 → 구동 설계 문서 `D-20260913-03-rehearsal-2-driver.md`(CLI json 출력에 model 이 있는지 실측 · 없으면 stream-json `message.model`) → 구동기 M3 → 예행 런 2 → CP1 판정지.**
 
 **★ 09-13 156차 — 재정 **`T59: ① A / ② A / ③ A / ④ A`**(`ruling-20260913-04-T59.md` · 추기 118) → **M3 적용 레인 기동**(12:37:58 · `좌석 M3` fable low CLI · worktree `~/projects/workspaces/pd-m3-t59-apply` 브랜치 `round-t59-apply` · 레인 `pd-lanes/fable-m3-t59-apply/` · SPEC 9,137 B = 메모 §7 diff A~H · 스키마 0.9.0 · 렌더 §8-b · 봉투 `review_adjudicated[]` · `freeze.approval-valid` 전건 덮기 · 절차 문서 3 · SPEC 표 · 새 시험 M29 · pytest basetemp `~/.cache/pd-t59-pytest-tmp`). **지금 할 일 = 회수 대기**(Monitor · 예상 15~40분) → 총괄 재현(전체 시험 basetemp 리포 밖 · 관문 14 · 09-01 런 재렌더 스모크 「요청 0 건」 · 봉투 전건 덮기 통과/실패) → 병합 → **예행 런 2 구동 설계**(fable 레인 = `claude -p --model claude-fable-5-1 --effort low` CLI 직접 · opus 레인 · 응답 파일 어댑터 `engine/lanes/file_adapter.py` 그대로 · 실호출 검증 · 새 run_id · rehearsal) → 예행 런 2 → CP1 판정지. Owner 재정 대기 = 없음. 살아 있는 배경 = M3 적용 레인 1 + `/tmp` 감시 Monitor 1.**
 
