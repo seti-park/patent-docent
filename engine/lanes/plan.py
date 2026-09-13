@@ -136,7 +136,7 @@ GROUNDING_SCHEMA: dict = {
         "items": {
             "type": "array",
             "items": {
-                "allOf": [_ITEM, {"properties": {"kind": {"const": "grounding"}}}]
+                "allOf": [_ITEM, {"type": "object", "properties": {"kind": {"const": "grounding"}}}]
             },
         },
         # Owner 판독 요청(재정 T59 ①) — optional · 위 DECOMPOSE_SCHEMA 의 주석과 같다.
@@ -162,6 +162,7 @@ SYNTHESIS_SCHEMA: dict = {
                     #   (reader/schemas/material-spec.schema.json#$defs.item_common)에서
                     #   그대로 가져왔다 — **최종 스키마가 요구하는 것보다 더 요구하지 않는다.**
                     {
+                        "type": "object",
                         "required": ["status", "superseded_by"],
                         "properties": {
                             "status": {"enum": ["active", "retracted", "superseded"]},
@@ -218,7 +219,7 @@ SYNTHESIS_SCHEMA: dict = {
         },
         "figures": {"type": "array"},
         "drop_signal": {
-            "allOf": [_DROP_SIGNAL, {"properties": {"stage": {"const": "final"}}}]
+            "allOf": [_DROP_SIGNAL, {"type": "object", "properties": {"stage": {"const": "final"}}}]
         },
         # Owner 판독 요청(재정 T59 ①) — optional · 위 DECOMPOSE_SCHEMA 의 주석과 같다.
         "review_requests": {"type": "array"},

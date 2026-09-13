@@ -55,7 +55,7 @@
 
 | # | 규약 | 이유 |
 |---|---|---|
-| ① | **선두 등위접속사(`and`·`or`)와 그 뒤 공백은 element에 포함하지 않는다.** 열거의 마지막 항이 `and a heat spreader …`라면 element는 `a heat spreader …`부터다 | 접속사는 **열거의 문법**이지 구성요소의 일부가 아니다. 포함 여부가 갈리면 같은 구성요소가 두 문자열이 된다 |
+| ① | **선두 등위접속사(`and`·`or`)와 선두 `wherein`, 그리고 그 뒤 공백은 element에 포함하지 않는다.** 열거의 마지막 항이 `and a heat spreader …`라면 element는 `a heat spreader …`부터고, `wherein the datastore comprises one or more memory objects …`라면 `the datastore comprises …`부터다. `and wherein …`은 `and` 를 걷어낸 뒤 `wherein` 을 걷어내는 **순차 적용**이다. **`wherein` 한 낱말만이다**(재정 2026-09-13 T63 ② A′ — 특허 청구항 특유의 연결어 · 다른 연결어(`further comprising`·`such that`·`whereby` 등)로 **유추 확장하지 않는다**) | 접속사는 **열거의 문법**이지 구성요소의 일부가 아니다. 포함 여부가 갈리면 같은 구성요소가 두 문자열이 된다. `wherein` 도 같다 — 2026-09-13 런 -2 실측: 두 독립 분해의 element 집합 차이가 **정확히 이 한 낱말**(공통 5/6 · Jaccard 0.714 · 상신 T61) |
 | ② | **선행 구성요소를 수식하는 후치 수식절은 새 element가 아니라 그 구성요소의 `children`이다.** `…, the first format and the second format being flexible`처럼 앞에서 도입된 대상을 한정하는 절이 여기 해당한다 | 형제로 올리면 트리의 층이 하나 사라지고(②의 관계 트리 상실), 두 실행이 같은 절을 서로 다른 층에 놓는다 |
 | ③ | **끝 구분자(`;`·`,`·`.`)는 element에 포함하지 않는다.** 열거 항의 끝은 구분자 **앞**이다 | 구분자는 열거의 문법이며 ①과 같은 이유다 |
 | ④ | 위 셋을 적용한 뒤에도 **남은 문자열은 원문의 연속 부분문자열이어야 한다.** 잘라낸 자리를 메우려고 글자를 더하거나 고치지 마라 | `read.verbatim`은 바이트로 대조한다. 규약은 **어디서 자르는가**를 정할 뿐 무엇을 쓰는가를 바꾸지 않는다 |
@@ -85,6 +85,7 @@
 | ④ | 병렬한 여러 element에 **동시에** 걸리면, **후보 집합 안에서** 다른 후보 전부를 트리상 지배하는 element가 **유일하게 있으면 그것**을 고른다. 없으면 **원문 등장 순서상 첫 번째**를 고른다 |
 
 - **`additions`는 비울 수 없다.** 전문이 있는 종속항을 빈 배열로 두면 "전 구성요소 3중 접지"가 접지할 것이 없어서 공허하게 통과한다.
+- **경계 규약 ①·③·④ 는 addition 의 `text_verbatim` 에도 그대로 적용된다**(재정 2026-09-13 T63 ② A′). `wherein the memory data comprises …` 로 시작하는 종속항 한정은 `the memory data comprises …` 부터다. 수렴 축 `addition-attachment` 도 문자열로 비교하므로 element 와 같은 자리에서 끊어야 한다.
 
 #### ★ addition은 층위를 갖지 않는다 — 평면 분할로 쓴다 (재정 2026-08-19 Q5 ③ = 총괄 위임 · 처분 = 총괄)
 
