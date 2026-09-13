@@ -52,7 +52,7 @@ LAW_FILES = (("docs", "CHARTER.md"), ("engine", "procedure", "design.md"), ("eng
              ("engine", "probe", "procedure-questions.md"), ("engine", "probe", "procedure-probe.md"), ("engine", "probe", "procedure-grader.md"))
 COPIED_DIRS = ("15-frozen", "20-design", "30-figures", "40-compose", os.path.join("50-gate", VARIANT))
 SNAPSHOT_DIRS = ("40-compose", os.path.join("50-gate", VARIANT))
-FABLE = "claude-fable-5-1"
+ASTRA = "claude-fable-5-dd-artsa-6-tpg"  # L2 좌석 — Owner 재정 2026-09-14(fable 쿼터 장애) · 게이트웨이가 노출하는 Claude 호환 id
 OPUS = "claude-opus-5"
 HAIKU = "claude-haiku-4-5-20251001"
 
@@ -170,7 +170,7 @@ def l2_done(run_root: str, law: str, memos=None) -> dict:
     outcome = run_l2(run_root, law)
     if outcome["status"] != "pending" or outcome["pending"] != [f"gate-l2/{VARIANT}/batch-0"]:
         pytest.fail(f"L2 첫 진입이 대기 1 이 아니다: {outcome}")
-    respond(gate_lanes(run_root), outcome["pending"][0], {"memos": GOOD_MEMOS if memos is None else memos}, model=FABLE)
+    respond(gate_lanes(run_root), outcome["pending"][0], {"memos": GOOD_MEMOS if memos is None else memos}, model=ASTRA)
     return run_l2(run_root, law)
 
 
@@ -270,7 +270,7 @@ def test_contracts_paths_and_haiku_label(law) -> None:
         pytest.fail("계기 어휘가 다르다")
     gate = load_stage_contract("gate", law)
     l2 = gate["layers"]["l2"]
-    if l2["status"] != "active" or l2["lane"] != {"kind": "llm", "model": "fable-5.1", "effort": "high"} or gate["loop"]["free_revision"] != 1:
+    if l2["status"] != "active" or l2["lane"] != {"kind": "llm", "model": "gpt-6-astra", "effort": "high"} or gate["loop"]["free_revision"] != 1:
         pytest.fail(f"gate.yaml#layers.l2 · loop.free_revision 이 다르다: {l2} {gate['loop']}")
     no_score = next(row for row in gate["checks_before_exit"] if row["id"] == "gate.no-score")
     if no_score.get("status") == "inactive" or no_score["implemented_by"] != "engine/gate/l2/lint.py":
@@ -336,12 +336,12 @@ def test_l2_request_memo_ids_l2_md_verdict_and_decision_unchanged(run_root, law)
     outcome = run_l2(run_root, law)
     lane_id = outcome["pending"][0]
     request = read_json(lane_file(gate_lanes(run_root), lane_id, REQUEST_JSON))
-    if request["model"] != "fable-5.1" or request["effort"] != "high" or request["read_run"] != "gate-l2":
-        pytest.fail(f"L2 좌석이 fable-5.1 high 가 아니다: {request['model']} {request['effort']}")
+    if request["model"] != "gpt-6-astra" or request["effort"] != "high" or request["read_run"] != "gate-l2":
+        pytest.fail(f"L2 좌석이 gpt-6-astra high 가 아니다: {request['model']} {request['effort']}")
     slices = set(request["slices"])
     if not {f"40-compose/{VARIANT}/thread.annotated.md", "15-frozen/material-spec.v1.json", "20-design/blueprint.json"} <= slices or any("l1.json" in s for s in slices):
         pytest.fail(f"L2 원천 조각이 다르다: {slices}")
-    respond(gate_lanes(run_root), lane_id, {"memos": GOOD_MEMOS}, model=FABLE)
+    respond(gate_lanes(run_root), lane_id, {"memos": GOOD_MEMOS}, model=ASTRA)
     outcome = run_l2(run_root, law)
     verdict = verdict_of(run_root)
     if outcome["status"] != "ok" or outcome["memos"] != 3 or [m["id"] for m in verdict["l2"]["memos"]] != ["m-l2-001", "m-l2-002", "m-l2-003"]:
@@ -842,7 +842,7 @@ def test_driver_gate_l2_revise_free_probe_and_seal(run_root, law, tmp_path) -> N
     if code != drv.EXIT_OK or len(stub.calls) != 1 or not any(line.startswith("v2: l2 memos 3") for line in lines):
         pytest.fail(f"gate-l2 명령: {code} {lines}")
     argv = stub.calls[0]
-    if argv[argv.index("--model") + 1] != FABLE or argv[argv.index("--effort") + 1] != "high" or argv[argv.index("--tools") + 1] != "":
+    if argv[argv.index("--model") + 1] != ASTRA or argv[argv.index("--effort") + 1] != "high" or argv[argv.index("--tools") + 1] != "":
         pytest.fail(f"L2 레인 명령줄이 다르다: {argv}")
     if json.loads(argv[argv.index("--json-schema") + 1])["properties"]["payload"].get("title") != "lane-response/gate-l2":
         pytest.fail("L2 좌표에 다른 스키마가 실렸다")
