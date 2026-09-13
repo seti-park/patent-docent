@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(187차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-14(188차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-14 188차 — **발주문 ⑥ 병합(`205b5ef` · L2·자유 리비전·계기 probe · 명령 22 · 시험 1116) · 시험 픽스처를 스냅숏으로 고정(발주자 오류 255) · **fable 쿼터 소진** → ⑦ 좌석 = **GPT-6 Astra high**(Owner 육성 「sol 말고 astra high에게 시켜보자」 · 00:38:18 기동) · `gate-l2` 는 쿼터 해제 대기**(추기 157). **지금 할 일 = ⑦ 회수(`pd-lanes/fable-m3-t69-ship/STATUS-astra` · `FINAL-astra`) → 재현·병합 → 런 -3 v2 실행 `gate-l2`(재시도 루프가 자동) → `revise-free` → `probe` → `critique` → `final-eyes` → `cp2`(전 표면 7) → CP2 브리핑 T70 → Owner 육성 → `approve-ship` → `ship` → 게시본 `70-ship/{thread.md, thread.json, images/, SHIP.md}` → Owner 수동 X 게시.** 살아 있는 배경 = **2** — ⑦ astra 레인(Monitor) · `gate-l2` 재시도 루프(20분 × 15 · Monitor). **fable 쿼터 주의**: 대화창도 Opus 5 로 내려와 있고 `gate-l2`(계약 = fable high)만 그 쿼터에 묶여 있다. 나머지 좌표(펜 opus xhigh · L1 opus high · 프로브 haiku · 질문·채점 opus low · 최종 심급 opus max)는 무관.**
+
+> [정정 2026-09-14 · 188차] 187차의 「⑥ 회수 → ⑦ 작성·기동」은 됐다 — ⑦ 은 fable 쿼터로 좌석이 astra high 로 바뀌었다.
 
 **★ 09-13 187차 — **재정 T69 「최종 게시 버전으로 파이프라인 마지막까지」 등재 · 연장 v2(`partial_until: ship`) · 발주문 ⑥(L2·자유 리비전·계기) 기동**(추기 156). **지금 할 일 = ⑥ 회수(`pd-lanes/fable-m3-t69-probe/STATUS`) → 재현·병합 → 발주문 ⑦ 작성·기동(소견 critique · 최종 심급 final-eyes · ship · CP2 재상신 표면) → 런 -3 v2 실행 순서 = `gate-l2` → `revise-free`(1회) → `probe` → (⑦ 뒤) `critique` → `final-eyes` → `cp2`(전 표면) → CP2 브리핑 T70 → `approve-ship` → `ship` → 게시본 패키지 `70-ship/{thread.md, thread.json, images/}` → Owner 수동 게시.** 살아 있는 배경 = ⑥ 레인 1(Monitor). 맥락 접두 86만 — `/compact` 권고.**
 
