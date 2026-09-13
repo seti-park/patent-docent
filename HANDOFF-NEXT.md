@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(176차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(177차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 177차 — **④ 병합(`b8d3a9f` · M3 누계 $63.62) → 런 -3 `figures` = escalate**(추기 145): 동결본 v1 의 `raw_path` 2건(FIG-8 `fig-08.png` ↔ 실물 `fig-08-09.png` · FIG-19 `fig-19.png` ↔ `fig-19.jpg`)이 어긋나 자산층이 서지 않음 — 재료 참조 결함 · 처분은 재정. **지금 할 일 = 결정 브리핑 T66 발행(① raw_path 처분 A 해소 규칙/B READ 반려/C 종결 · 추천 A · ② select 좌석 결정론 추인 · ③ rc-0008 과광화 유보) → 재정 → A 면 `figures.yaml` 규칙 + 러너 수정(총괄 직접 · 소규모) → `figures` → `compose --variant v2 --round 2` → `gate-l0 --variant v2` → 도면 시안 브리핑 T67(사용권 R11).** 살아 있는 배경 = 없음. 스크립트 = `pd-lanes/t65-figures/{figures,compose-r2,gate}.sh`.**
+
+> [정정 2026-09-13 · 177차] 176차의 「④ 회수 → 런 -3 figures」는 했고 figures 가 재료 참조 결함으로 섰다 — Owner 재정(T66) 필요.
 
 **★ 09-13 176차 — **M3 발주문 ④ 기동 20:08:32**(추기 143·144 · `ef35b2e`): figures.prepare(crop-only · Playwright 1.49.1 · `chromium-1148` 전체 빌드 `channel: chromium` · 2400×1350 스모크 통과) · figures.select(결정론 · 좌석 변경 상신) · stop-shape 가동 · `n/N` 토크나이저(rank 0) + golden rc-0008 · compose 2회차(`compose-r2/v2/batch-0` · `rounds/r1/` 보존) · 구동기 `figures`·`compose --variant --round`(명령 15). worktree `~/projects/workspaces/pd-m3-t65-figures`(`round-t65-figures` @ `ef35b2e`) · 레인 `pd-lanes/fable-m3-t65-figures/`. **지금 할 일 = ④ 회수 → 재현(pytest · 관문 7 · `PD_REAL_RENDER=1` 스모크) → 병합 → 런 -3 `figures`(`pd-lanes/t65-figures/figures.sh`) → `compose --variant v2 --round 2`(opus xhigh · `compose-r2.sh`) → `gate-l0`(`gate.sh`) → 도면 시안 브리핑 T66(사용권 재정 R11 + select 좌석 변경 + 복합 시트 처분 + rc-0008 과광화).** 살아 있는 배경 = ④ 레인 1(Monitor `b9l51k3y7`).**
 
