@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(171차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(172차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 172차 — **② 병합(`ea28832`) · ③ 기동 18:17:52**(추기 139): compose 러너 · 긍정형 템플릿 · 린트 · 파서(`engine/annotation/parse.py`) · 구동기 `compose`(명령 12) 실물. **지금 할 일 = 런 -3 `compose`(opus high/xhigh/max 순차 · `pd-lanes/t64-run3/compose.sh`) 를 RAM 여유 확인 뒤 기동 → ③ 레인 회수(`pd-lanes/fable-m3-t64-gate/STATUS`) → 재현·병합 → 런 -3 `gate-l0` → 세 판 열람 브리핑.** 살아 있는 배경 = ③ 레인 1(Monitor `byzvp5xb3`).**
+
+> [정정 2026-09-13 · 172차] 171차의 「② 회수 대기」는 끝났다(병합) — ③ 이 돈다.
 
 **★ 09-13 171차 — **① 병합(`c0d18a1`) · 오류 253 수리(`d8b4fb3`) · 런 -3 `extend`(봉투 v1 · `partial_until: gate`) · `design` 성공(블루프린트 9 슬롯 · fable high · $1.74 · 검사 7 pass · 정본 반입 커밋) · golden rc-0001 → blueprint/v0 · 발주문 ② 기동 17:46**(추기 138). **지금 할 일 = ② 레인 회수(`pd-lanes/fable-m3-t64-compose/STATUS` `EXIT=` · FINAL · usage) → 총괄 재현(`pytest tests` · 관문 7) → `round-t64-compose` 커밋 · `main` ff 병합 → ③ 기동(worktree `pd-m3-t64-gate` 를 `main` 최신에서 만들고 `pd-lanes/fable-m3-t64-gate/launch.sh` 는 ② 것에서 이름만 바꿔) → ③ 회수·병합 → 런 -3 `compose`(opus high/xhigh/max 순차 · RAM 함정 J) → `gate-l0` → 세 판 열람 브리핑(EN 출하본 + KR 요약 + L0 결과표 + 미가동 목록 + 자잘한 것 = figure-budget 조치 행 · n/N 토크나이저 공백).** 살아 있는 배경 = ② 레인 1(Monitor `ba6goor53` · 1시간 · 예상 20~40분 · $8~13). 설계 산출 열람 = `runs/gdm-wo2026128750a1-agent-memory-3/20-design/blueprint.md`.**
 
