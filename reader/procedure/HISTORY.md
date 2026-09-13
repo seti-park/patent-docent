@@ -146,6 +146,10 @@
 같은 자리에서 `'854`가 통과한 이유는 수가 더 쉬워서가 아니라 **수와 이름을 갈라 적었기 때문**이다: 값은 `value_raw: "8"`, 이름은 `label_en: "operation modes tabulated in Table 2 of FIG. 60"`(동결본 `M107` · `origin: figure-sourced` — WO의 셋과 **같은 갈래**다).
 **★ 문법은 옳게 거부했다 — 넓힐 자리가 아니다(재정 2026-09-01 T11 §4 D-2).** 총괄은 이것을 한 번 "소프트웨어 수치 어형을 문법에 편입하자"로 상신했다가 기각되었다. 문법을 넓혔다면 **레인의 기입 오류를 검사가 흡수하고 진짜 원인(`label_en`이 빈 것)이 가려졌을 것**이며, 그것은 재정 T10 ⓑ가 기각한 것과 같은 형태다. 그 상신이 틀렸던 사실을 여기 남기는 이유는, 같은 자리에서 다음 사람이 같은 처방을 다시 내지 않게 하기 위해서다.
 
+## H-14. 30-synthesis.md §4 `raw_path` 추정 금지 규약(2026-09-13 · 재정 T66 ① 재발 방지)
+
+경위 = 런 -3(`gdm-wo2026128750a1-agent-memory-3`) 동결본 v1 의 `figures[].raw_path` 두 건(FIG-8 `fig-08.png` · FIG-19 `fig-19.png`)이 원천 파일명(`fig-08-09.png` · `fig-19.jpg`)과 어긋나 `figures.prepare` 가 `asset.source-missing` 으로 섰다. 통합 레인이 파일명을 `fig-NN.png` 규칙으로 추정해 적었고, CP1 판독본은 파일명을 검토 표면에 올리지 않았다. 처분 = 재정 T66 ① 해소 규칙(`contracts/stages/figures.yaml#raw_path_resolution` · 재료 무변경). 재발 방지 = 위 §4 규약 한 줄(총괄 저작 · 절차 편집 재량). **백로그** = 요청서가 도면 파일명을 싣지 않으므로(`engine/lanes/plan.py#_figure_registry_block` 은 FIG id 만 든다) 다음 READ 런 전에 `source-report.json#figures[].filename` 을 등재 목록에 함께 싣는 엔진 변경이 필요하다 — 그때까지 이 규약은 「지어내지 않는다」 절반만 집행된다.
+
 ## O-1. 40-output-contract.md §5 금지표 — `alternative-form` 행(폐기 값)
 
 출처 = `40-output-contract.md` 구 L87 (2026-09-03 이동)

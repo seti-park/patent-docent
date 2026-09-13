@@ -560,6 +560,11 @@ def _entry_figures_input_digest(row: CheckRow, paths, entry: dict, inputs: dict)
     }
     missing: list[str] = []
     verified: dict[str, str] = {}
+    resolved: dict[str, dict] = {}
+    report_by_number: dict[int, list[dict]] = {}
+    for figure_row in load_json(paths.source_report).get("figures") or []:
+        if isinstance(figure_row, dict) and isinstance(figure_row.get("figure_number"), int):
+            report_by_number.setdefault(int(figure_row["figure_number"]), []).append(figure_row)
     for figure in frozen.get("figures") or []:
         if not isinstance(figure, dict):
             continue
@@ -567,8 +572,17 @@ def _entry_figures_input_digest(row: CheckRow, paths, entry: dict, inputs: dict)
         raw = str(figure.get("raw_path", ""))
         path = paths.absolute(raw) if raw else ""
         if not raw or not os.path.isfile(path):
-            missing.append(figure_id)
-            continue
+            # ★ 재정 2026-09-13 T66 ① — 포인터 결함의 해소(재료 무변경 · D6 규율 ② 의 포인터 한정 예외).
+            #   동결본 raw_path 가 실재하지 않으면 source-report 도면별 행에서 figure_number 가 **유일하게**
+            #   일치하는 파일로 푼다. 실재 + 지문 일치일 때만 쓰고, 유일 일치가 없으면 종전대로 누락이다.
+            #   해소 사실은 extras.resolved_raw 로 러너에 넘겨 manifest.edits[] 에 남긴다(감사 가능).
+            candidate = _resolve_raw_path(figure_id, report_by_number, paths)
+            if candidate is None:
+                missing.append(figure_id)
+                continue
+            resolved[figure_id] = {"from": raw, "to": candidate, "basis": "source-report#figures[figure_number]"}
+            raw = candidate
+            path = paths.absolute(raw)
         name = os.path.basename(raw)
         if name in verified:
             continue
@@ -583,6 +597,29 @@ def _entry_figures_input_digest(row: CheckRow, paths, entry: dict, inputs: dict)
                  "원본 도면의 실측 지문이 source 보고와 다르다 — 원천 변경은 부분 복구가 아니라 새 런이다(재정 P-U2)")
     row.extras["missing_raw"] = missing
     row.extras["verified_raw"] = verified
+    row.extras["resolved_raw"] = resolved
+
+
+_FIGURE_NUMBER_RE = re.compile(r"^FIG-(\d+)$")
+
+
+def _resolve_raw_path(figure_id: str, report_by_number: dict, paths) -> str | None:
+    """재정 T66 ① 해소 규칙 — 도면 번호가 source-report 행에 **유일하게** 일치하고 그 파일이 실재할 때만 경로를 돌려준다.
+
+    지문 대조는 호출자(진입 검사 본문)가 다른 파일과 같은 규칙으로 한다. 유일하지 않으면(같은 번호 행 둘) 풀지
+    않는다 — 추정으로 자산을 만들지 않는 것이 규칙의 절반이다.
+    """
+    match = _FIGURE_NUMBER_RE.match(figure_id)
+    if match is None:
+        return None
+    rows = report_by_number.get(int(match.group(1))) or []
+    if len(rows) != 1:
+        return None
+    filename = str(rows[0].get("filename", ""))
+    if not filename:
+        return None
+    candidate = "00-source/figures-raw/" + filename
+    return candidate if os.path.isfile(paths.absolute(candidate)) else None
 
 
 _ENTRY_CHECKS = {

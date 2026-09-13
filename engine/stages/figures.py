@@ -68,6 +68,7 @@ ROLE_HERO = "hero"
 ROLE_EXHIBIT = "exhibit"
 OP_COMPOSITE = "composite-sheet"
 OP_CROP = "crop-only-framing"
+OP_RESOLVED = "raw-path-resolved"   # 재정 T66 ① — 동결본 포인터를 source-report 로 푼 기록
 RETRY_RE = re.compile(r"^retry\((\d+)\)$")
 ASSET_FILE_RE = re.compile(r"^fig-[0-9]{2,}(?:\.r[1-9][0-9]*)?\.png$")
 #: 자산 id 문법(선택 포인터의 no-copy 판정) — 경로 구분자·data URI 가 들어올 자리가 없다.
@@ -242,19 +243,30 @@ def check_manifest_parity(manifest: dict, figures: list[dict], assets_dir: str, 
 # ---------------------------------------------------------------------------
 
 
-def _plan_items(figures: list[dict], paths: RunPaths, missing_raw: list[str]) -> list[dict]:
+def _effective_raw(figure: dict, resolved_raw: dict | None) -> str:
+    """동결본 raw_path — 진입 검사가 재정 T66 ① 규칙으로 푼 경로가 있으면 그것(재료는 바뀌지 않는다 · 기록만 남는다)."""
+    figure_id = str(figure.get("id", ""))
+    entry = (resolved_raw or {}).get(figure_id)
+    return str(entry["to"]) if entry else str(figure.get("raw_path", ""))
+
+
+def _plan_items(figures: list[dict], paths: RunPaths, missing_raw: list[str], resolved_raw: dict | None = None) -> list[dict]:
     """동결본 도면 → 렌더 계획 행(자산 id · 원본 · 복합 시트 관계). 원본이 없는 도면은 계획에서 뺀다."""
     by_raw: dict[str, list[str]] = {}
     for figure in figures:
-        by_raw.setdefault(str(figure.get("raw_path", "")), []).append(str(figure["id"]))
+        by_raw.setdefault(_effective_raw(figure, resolved_raw), []).append(str(figure["id"]))
     plan: list[dict] = []
     for figure in figures:
         figure_id = str(figure["id"])
         if figure_id in missing_raw:
             continue
-        raw = str(figure.get("raw_path", ""))
+        raw = _effective_raw(figure, resolved_raw)
         shares = [other for other in by_raw.get(raw, []) if other != figure_id]
         edits = [{"op": OP_CROP, "template": render_mod.TEMPLATE_ID, "note": "전장 프레이밍 · 오버레이 없음"}]
+        if (resolved_raw or {}).get(figure_id):
+            entry = resolved_raw[figure_id]
+            edits.append({"op": OP_RESOLVED, "from": entry["from"], "to": entry["to"], "basis": entry["basis"],
+                          "note": "동결본 raw_path 가 실재하지 않아 source-report 도면 번호 유일 일치 파일로 해소(재정 T66 ①) · 재료 무변경"})
         if shares:
             edits.append({"op": OP_COMPOSITE, "shares_with": shares,
                           "note": "복합 시트 — 같은 원본의 전장 프레이밍 · 하위 크롭 상자는 사용권 재정 뒤(총괄 재량 ⓑ)"})
@@ -297,6 +309,7 @@ def prepare(run_root: str, repo: str | None = None, renderer: Renderer | None = 
     entry_row = verify_declared_inputs(paths, contract, STAGE_ID, inputs={"spec_version": version})
     missing_raw = list(entry_row.extras.get("missing_raw") or [])
     verified_raw = dict(entry_row.extras.get("verified_raw") or {})
+    resolved_raw = dict(entry_row.extras.get("resolved_raw") or {})
     frozen = load_json(paths.frozen_spec(version))
     figures = _frozen_figures(frozen)
     assets_dir = paths.figures_assets_dir
@@ -316,7 +329,7 @@ def prepare(run_root: str, repo: str | None = None, renderer: Renderer | None = 
         raise StageError(f"매니페스트에 없는 자산 파일이 있다 — 덮어쓰지 않는다(§7.5): {stray}")
 
     todo = [figure for figure in figures if str(figure["id"]) not in existing and str(figure["id"]) not in missing_raw]
-    plan = _plan_items([figure for figure in figures if str(figure["id"]) in {str(f["id"]) for f in todo}], paths, missing_raw)
+    plan = _plan_items([figure for figure in figures if str(figure["id"]) in {str(f["id"]) for f in todo}], paths, missing_raw, resolved_raw)
     renderer = renderer or render_mod.NodeRenderer(repo)
     env_report = None
 

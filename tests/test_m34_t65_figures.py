@@ -454,6 +454,58 @@ def test_missing_source_figure_escalates_with_missing_list(law, run_root) -> Non
 
 
 # ---------------------------------------------------------------------------
+# ⑹-b 재정 T66 ① — 동결본 raw_path 부재 시 source-report 도면 번호 유일 일치로 해소(재료 무변경)
+# ---------------------------------------------------------------------------
+
+
+def _rename_source(run_root: str, old: str, new: str, *, extra_row: bool = False) -> None:
+    raw_dir = os.path.join(run_root, "00-source", "figures-raw")
+    os.rename(os.path.join(raw_dir, old), os.path.join(raw_dir, new))
+    report_path = os.path.join(run_root, "00-source", "source-report.json")
+    report = read_json(report_path)
+    for row in report["figures"]:
+        if row["filename"] == old:
+            row["filename"] = new
+            if extra_row:
+                report["figures"].append(dict(row, filename=old + ".dup"))
+    write_json(report_path, report)
+
+
+def test_resolves_missing_raw_path_by_unique_figure_number_and_records_edit(law, run_root) -> None:
+    """런 -3 실측(FIG-19 fig-19.png ↔ fig-19.jpg)의 재현 — 동결본은 그대로, 매니페스트에 해소 기록."""
+    _rename_source(run_root, "fig-03.png", "fig-03.jpg")
+    outcome, renderer = prepared(run_root, law)
+    rows = rows_by_id(outcome)
+    if outcome["status"] != "ok" or rows["figures.asset-completeness"].status != "pass":
+        pytest.fail(f"유일 일치 해소가 통과하지 않았다: {outcome['status']} {[f.locus for f in rows['figures.asset-completeness'].findings]}")
+    item = next(entry for entry in outcome["manifest"]["items"] if entry["figure_id"] == "FIG-3")
+    edit = next((edit for edit in item["edits"] if edit["op"] == figures_stage.OP_RESOLVED), None)
+    if edit is None or edit["from"] != "00-source/figures-raw/fig-03.png" or edit["to"] != "00-source/figures-raw/fig-03.jpg" \
+            or item["source_raw_path"] != "00-source/figures-raw/fig-03.jpg":
+        pytest.fail(f"해소 기록이 없거나 다르다: {item['edits']} {item['source_raw_path']}")
+    frozen = read_json(os.path.join(run_root, "15-frozen", "material-spec.v1.json"))
+    if next(f for f in frozen["figures"] if f["id"] == "FIG-3")["raw_path"] != "00-source/figures-raw/fig-03.png":
+        pytest.fail("재료가 바뀌었다 — 해소는 기록이지 개정이 아니다(재정 T66 ①)")
+    if not any(job["asset_id"] == "fig-03" for job in renderer.calls[0]):
+        pytest.fail("해소된 도면을 렌더하지 않았다")
+
+
+def test_resolution_requires_unique_number_and_matching_digest(law, run_root, tmp_path) -> None:
+    # 같은 번호 행이 둘이면 풀지 않는다 → 종전대로 누락 · escalate
+    _rename_source(run_root, "fig-03.png", "fig-03.jpg", extra_row=True)
+    outcome, _ = prepared(run_root, law)
+    if outcome["status"] != "escalate" or outcome["missing"] != ["FIG-3"]:
+        pytest.fail(f"비유일 일치가 해소되었다: {outcome['status']} {outcome['missing']}")
+    # 유일 일치이되 지문이 다르면 환경 오류(원천 변경 · P-U2)
+    run2 = make_run(os.path.join(str(tmp_path), "second"))
+    _rename_source(run2, "fig-03.png", "fig-03.jpg")
+    with open(os.path.join(run2, "00-source", "figures-raw", "fig-03.jpg"), "wb") as handle:
+        handle.write(make_png(3, 3, seed=7))
+    with pytest.raises(StageEnvironmentError, match="fig-03.jpg"):
+        prepared(run2, law)
+
+
+# ---------------------------------------------------------------------------
 # ⑺ 원천 지문 불일치 → 환경 오류 · ⑧ 렌더 환경 부재
 # ---------------------------------------------------------------------------
 

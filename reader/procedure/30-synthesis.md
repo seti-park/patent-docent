@@ -105,6 +105,7 @@
   "raw_path": "00-source/figures-raw/fig-02.png", "asset_path": null }
 ```
 
+- `raw_path`는 **추정하지 않는다** — 원천 도면 파일명은 요청서의 도면 등재 목록이 준 이름(확장자 포함)을 그대로 옮긴다. `fig-NN.png` 같은 규칙으로 이름을 만들어 적으면 하류 편집 단계가 파일을 찾지 못한다(2026-09-13 런 -3 실측: `fig-08.png`·`fig-19.png` 로 적혔으나 실물은 `fig-08-09.png`·`fig-19.jpg` · 재정 T66 ① 해소 규칙으로 처분). 목록에 파일명이 없으면 그 사실을 `what_it_shows_en` 에 EN 한 절로 남기고 이름을 지어내지 않는다(요청서에 파일명을 싣는 것은 `engine/lanes/plan.py#_figure_registry_block` 의 백로그 · HISTORY H-14).
 - `asset_path`는 **항상 `null`**이다. 도면↔자산 매핑의 정본은 편집 단계의 `manifest.json` 하나뿐이며, 동결본이 그 값을 들면 하류가 동결본을 고칠 수 있다는 뜻이 된다.
 - `figure_note` 항목은 "이 도면이 무엇을 보여주는가"를 EN 한 문장으로 적는다.
 

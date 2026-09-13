@@ -54,11 +54,27 @@ checks_on_entry:
     criterion: >-
       최신 동결본 실재 · sha256 == run.yaml#frozen[-1].spec_digest · 동결본 figures[].raw_path 가 가리키는
       00-source/figures-raw/ 의 각 실재 파일 sha256 이 00-source/source-report.json#figures[] 의 같은 파일명 행과
-      일치(원천 변경 감지 · 재정 P-U2). 실재하지 않는 원본은 여기서 결함이 아니라 extras.missing_raw 에 적고
-      figures.asset-completeness 가 판정한다(변경 감지와 누락은 다른 물음이다).
+      일치(원천 변경 감지 · 재정 P-U2). 실재하지 않는 원본은 먼저 아래 raw_path_resolution 규칙으로 풀어 보고,
+      풀리지 않으면 여기서 결함이 아니라 extras.missing_raw 에 적고 figures.asset-completeness 가 판정한다
+      (변경 감지와 누락은 다른 물음이다).
     implemented_by: engine/stages/__init__.py
     on_mismatch: environment-error
     note: "불일치는 품질 결함이 아니라 환경 오류다 — 즉시 중단+진단(재정 P-C). 원천이 바뀐 런의 처분은 새 런이다(P-U2)."
+    # ★ 재정 2026-09-13 T66 ① — 동결 재료의 **도면 포인터 결함** 해소 규칙(재료 무변경 · 헌장 D6 규율 ② 「재료 결함은
+    #   반려」의 포인터 한정 예외 · 이 재정이 연다). 실측 = 런 -3 동결본 v1 의 FIG-8 `fig-08.png`(실물 `fig-08-09.png`) ·
+    #   FIG-19 `fig-19.png`(실물 `fig-19.jpg`) — READ 레인이 파일명을 추정해 적었고 CP1 판독본은 파일명을 검토 표면에
+    #   올리지 않았다. 재료의 사실(도면 내용·청구항·함의)은 바뀌지 않으며 정답은 원천 지문표에 이미 있다(D7).
+    raw_path_resolution:
+      ruling: "재정 2026-09-13 T66 ①"
+      when: "동결본 figures[].raw_path 가 가리키는 파일이 실재하지 않을 때"
+      rule: >-
+        도면 id 의 번호(FIG-<n>)가 00-source/source-report.json#figures[].figure_number 와 **유일하게** 일치하는 행의
+        filename 으로 해소한다. 그 파일이 실재하고 sha256 이 행의 값과 같을 때만 쓴다. 유일 일치가 없거나 파일이
+        없으면 종전대로 누락(asset.source-missing)이고, 지문이 다르면 환경 오류(P-U2)다.
+      record: "manifest.items[].edits[] 에 {op: raw-path-resolved, from, to, basis: source-report#figures[figure_number]}"
+      material_unchanged: true
+      recurrence_prevention: "READ 절차 문서 — raw_path 는 source-report 의 filename 을 옮긴다(추정 금지)"
+      implemented_by: engine/stages/__init__.py#_resolve_raw_path · engine/stages/figures.py#_effective_raw
 
 inputs:
   - "00-source/figures-raw/"
