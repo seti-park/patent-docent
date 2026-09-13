@@ -76,6 +76,7 @@ from engine.paths import PathContractError, RunPaths, load_stage_contract, run_k
 from engine.stages import StageError, freeze as freeze_stage  # noqa: E402
 from engine.stages import compose as compose_stage  # noqa: E402
 from engine.stages import design as design_stage  # noqa: E402
+from engine.stages import gate as gate_stage  # noqa: E402
 from engine.stages import read as read_stage  # noqa: E402
 from engine.stages import source as source_stage  # noqa: E402
 from reader.lib.rules import Rules  # noqa: E402
@@ -110,7 +111,7 @@ APPROVAL_SCHEMA_REL = freeze_stage.APPROVAL_SCHEMA
 APPROVAL_NAME_RE = re.compile(r"^approval-v([1-9][0-9]*)\.md$")
 STDERR_TAIL_CHARS = 2000
 REVIEW_SECTION_LINES = 12
-COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal", "extend", "design", "compose")
+COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal", "extend", "design", "compose", "gate-l0", "strip")
 DESIGN_REENTRY_CAP = 4
 COMPOSE_REENTRY_CAP = 8          # 변주 3 × 재시도 2 를 담는다(T64 ③ · 발주문 §3.6)
 EXTENSION_SCHEMA_REL = ("contracts", "schemas", "extension-envelope.schema.json")
@@ -1109,7 +1110,7 @@ def cmd_freeze(ctx: Context, args: argparse.Namespace) -> int:
 
 
 def manifest_lines(ctx: Context) -> list[str]:
-    """`evidence/**` 전건(MANIFEST 자신 제외) + `10-read/*.json` + `15-frozen/*` + `20-design/**` + `40-compose/**` 의 sha256 · 경로."""
+    """`evidence/**` 전건(MANIFEST 자신 제외) + `10-read/*.json` + `15-frozen/*` + `20-design/**` + `40-compose/**` + `50-gate/**` 의 sha256 · 경로."""
     paths = ctx.paths()
     entries: list[tuple[str, str]] = []
     base = ctx.worktree if os.path.commonpath([ctx.worktree, ctx.run_root]) == ctx.worktree else os.path.dirname(ctx.run_root)
@@ -1140,6 +1141,10 @@ def manifest_lines(ctx: Context) -> list[str]:
                 add(os.path.join(dirpath, name))
     if os.path.isdir(paths.compose_root):
         for dirpath, _dirs, files in os.walk(paths.compose_root):
+            for name in files:
+                add(os.path.join(dirpath, name))
+    if os.path.isdir(paths.gate_root):
+        for dirpath, _dirs, files in os.walk(paths.gate_root):
             for name in files:
                 add(os.path.join(dirpath, name))
     entries.sort(key=lambda pair: pair[1])
@@ -1386,6 +1391,81 @@ def cmd_compose(ctx: Context, args: argparse.Namespace) -> int:
     raise DriverExit(EXIT_CALL_CAP, f"compose 재진입 상한 {COMPOSE_REENTRY_CAP} 도달")
 
 
+def _gate_precheck(ctx: Context, paths: RunPaths) -> list[str]:
+    """`gate-l0`·`strip` 공통 전제 — 종료선 순번 ≥ gate · 주석본 ≥ 1. 반환 = 주석본이 있는 변주."""
+    meta = _load_run_yaml(paths)
+    enum = _terminus_enum(ctx.law)
+    current = str(meta.get("partial_until", ""))
+    if meta.get("run_kind") == RUN_KIND and (current not in enum or enum.index(current) < enum.index("gate")):
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"종료선 — partial_until={current!r} 은 gate 앞이다 · `extend` 가 먼저다")
+    variants = [pen["variant"] for pen in compose_stage.registry.pens(ctx.law)]
+    present = [v for v in variants if os.path.isfile(paths.thread_annotated(v))]
+    if not present:
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"주석본이 없다 — `compose` 먼저다: {paths.compose_root}")
+    return present
+
+
+def _print_findings(ctx: Context, outcome: dict) -> None:
+    for variant, rows in (outcome.get("rows") or {}).items():
+        for row in rows:
+            for finding in getattr(row, "findings", []) or []:
+                ctx.out(f"  {variant}: {row.check_id}/{finding.rule}@{finding.locus}: {finding.message}")
+
+
+def cmd_gate_l0(ctx: Context, args: argparse.Namespace) -> int:
+    """gate 스테이지 L0 1회 구동(재정 T64 ② · 결정론 · 모델 호출 없음).
+
+    변주별 한 줄(`v1: l0 pass · defects 0 · advance`)을 인쇄한다. 종료 0 = 기록 완료(결함 유무 무관) · 13 = halt·StageError.
+    """
+    paths = ctx.paths()
+    _gate_precheck(ctx, paths)
+    wanted = list(args.variant or []) or None
+    if ctx.dry_run:
+        ctx.out(f"[dry-run] gate.run(run_root={ctx.run_root}, variants={wanted or '전 변주'}) — 결정론 · 모델 호출 없음")
+        return EXIT_OK
+    try:
+        outcome = gate_stage.run(run_root=ctx.run_root, repo=ctx.law, variants=wanted)
+    except OSError as exc:
+        raise DriverExit(EXIT_UNDECIDABLE, f"io_fault: gate 스테이지 {exc}") from exc
+    except StageError as exc:
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"gate 스테이지 정지: {exc}") from exc
+    _print_findings(ctx, outcome)
+    for variant, state in (outcome.get("variants") or {}).items():
+        if "skipped" in state:
+            ctx.out(f"{variant}: 건너뜀({state['skipped']})")
+            continue
+        by_rule = ", ".join(f"{rule}×{count}" for rule, count in sorted(state.get("defects_by_rule", {}).items()))
+        detail = f"({by_rule})" if by_rule else ""
+        ctx.out(f"{variant}: l0 {'pass' if state['l0_pass'] else 'fail'} · defects {state['defects']}{detail} · {state['decision']}"
+                + (" · 재진입(동일 지문)" if state.get("reentered") else ""))
+    return EXIT_OK
+
+
+def cmd_strip(ctx: Context, args: argparse.Namespace) -> int:
+    """파싱 오류 0 인 변주에 strip 산출 3종만(verdict 없이 · 열람 준비용). 종료 0/13."""
+    paths = ctx.paths()
+    _gate_precheck(ctx, paths)
+    wanted = list(args.variant or []) or None
+    if ctx.dry_run:
+        ctx.out(f"[dry-run] gate.run(strip_only=True, variants={wanted or '전 변주'})")
+        return EXIT_OK
+    try:
+        outcome = gate_stage.run(run_root=ctx.run_root, repo=ctx.law, variants=wanted, strip_only=True)
+    except OSError as exc:
+        raise DriverExit(EXIT_UNDECIDABLE, f"io_fault: strip {exc}") from exc
+    except StageError as exc:
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"strip 정지: {exc}") from exc
+    _print_findings(ctx, outcome)
+    for variant, state in (outcome.get("variants") or {}).items():
+        if "skipped" in state:
+            ctx.out(f"{variant}: 건너뜀({state['skipped']})")
+        elif state.get("stripped"):
+            ctx.out(f"{variant}: strip → {state['paths']['stripped']}")
+        else:
+            ctx.out(f"{variant}: 파싱 오류 {state.get('parse_errors')} — strip 하지 않음")
+    return EXIT_OK
+
+
 def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
     lines = manifest_lines(ctx)
     target = os.path.join(ctx.evidence, MANIFEST_BASENAME)
@@ -1405,7 +1485,7 @@ def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="drive_partial_read.py",
-        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계·펜(T64) — 재정 T60 집행. 명령 12 · 판단 없음.",
+        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계·펜·L0 게이트(T64) — 재정 T60 집행. 명령 14 · 판단 없음.",
     )
     parser.add_argument("--repo", help="정본 리포(기본 = 이 파일의 위치에서 추정)")
     parser.add_argument("--worktree-root", help="런 worktree 의 부모(기본 <repo>/.worktrees)")
@@ -1462,6 +1542,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("design", help="design 스테이지 1회 구동(재진입 상한 4 · 대기 좌표 호출) — 재정 T64 ②").add_argument("run_id")
     sub.add_parser("compose", help="compose 스테이지 1회 구동(변주 3 · 재진입 상한 8 · 좌표 순차 호출) — 재정 T64 ③").add_argument("run_id")
+    gate_l0 = sub.add_parser("gate-l0", help="gate 스테이지 L0 1회 구동(결정론 · 모델 호출 없음 · 변주별 verdict.json) — 재정 T64 ②")
+    gate_l0.add_argument("run_id")
+    gate_l0.add_argument("--variant", action="append", help="대상 변주(반복 가능 · 기본 = 주석본이 있는 전 변주)")
+    strip_cmd = sub.add_parser("strip", help="파싱 오류 0 인 변주에 strip 산출 3종만(verdict 없이 · 열람 준비용) — SPEC §3.3")
+    strip_cmd.add_argument("run_id")
+    strip_cmd.add_argument("--variant", action="append", help="대상 변주(반복 가능)")
     return parser
 
 
@@ -1478,6 +1564,8 @@ _COMMANDS = {
     "extend": cmd_extend,
     "design": cmd_design,
     "compose": cmd_compose,
+    "gate-l0": cmd_gate_l0,
+    "strip": cmd_strip,
 }
 
 

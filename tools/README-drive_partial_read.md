@@ -16,10 +16,12 @@ $PY tools/drive_partial_read.py [--repo R] [--worktree-root D] [--executor claud
 | `cp1` | — | 판독본 경로 · `review_requests` 건수 · §8-b 첫 12줄 · `--adjudicated` JSON 초안(verdict 비움) | 0 |
 | `approve` | `--quote-file <f> --adjudicated <json> [--decision approved\|rejected] [--manual-ack M1,M2] [--derived-ack ..] [--drop-decision go\|drop] [--directive ..]*` | `15-frozen/approval-v<N>.md`(N = 기존 최대 + 1) · 요청 target 차집합은 경고만 | 0 |
 | `freeze` | — | `freeze.run(spec_version = 최신 봉투 N)` — `approval-valid` 항 ④ 포함 | 0 |
-| `seal` | — | `evidence/MANIFEST-sha256.txt` = `evidence/**` + `10-read/*.json` + `15-frozen/*` + `20-design/**` + `40-compose/**` | 0 |
+| `seal` | — | `evidence/MANIFEST-sha256.txt` = `evidence/**` + `10-read/*.json` + `15-frozen/*` + `20-design/**` + `40-compose/**` + `50-gate/**` | 0 |
 | `extend` | `--quote-file <f> --until <stage> [--ruling <id>]* [--located-at] [--decided-at]` | 부분 런 종료선 연장 봉투 `15-frozen/extension-v<N>.md`(`extension-envelope/v0` · 재정 T64 ①) → `run.yaml#partial_until` 이동 + `extensions[]` 행. 전제 = `status: active` · `run_kind: partial` · `--until` 이 `terminates_at_enum` 안이고 현 종료선보다 뒤 · 법 트리(`--repo`)가 git 작업 트리이고 `runs/`·`evidence/`·`.worktrees/` 밖 변경 없음 | 0 · 위반 2 |
 | `design` | — | `design.run` 재진입(상한 4) → `LanePending` 좌표(`20-design/lanes/design/blueprint[/retry-1]/batch-0`)를 `call_lane` 으로 채움 → 재진입. 전제 = `partial_until` 순번 ≥ `design`(아니면 13 「종료선」) | 0 · 10(호출 실패) · 13(escalate/halt/StageError) · 14 · 15(재진입 상한) |
 | `compose` | — | `compose.run` 재진입(상한 8) → `LanePending` 좌표(`40-compose/lanes/compose/<v1\|v2\|v3>[/retry-<n>]/batch-0`)를 **순차** `call_lane` 으로 채움(한 번에 하나 · `--model claude-opus-5 --effort high\|xhigh\|max`) → 재진입. 좌표가 호출 상한 3 에 닿으면(15) 그 변주를 **결측**으로 러너에 신고하고 계속한다(생존 ≥ 1 → 0 · 토너먼트 결측 행). 전제 = `partial_until` 순번 ≥ `compose` · `20-design/blueprint.json` 실재(아니면 13 「design 먼저」) | 0(생존 ≥ 1) · 10(호출 실패) · 13(escalate/halt/reject-upstream · 사유 + 반려서 경로) · 14 · 15(재진입 상한) |
+| `gate-l0` | `[--variant v]*` | `gate.run`(L0 결정론 · 재정 T64 ②) — 변주별 `50-gate/<v>/{l0.json, verdict.json, thread.stripped.md, thread.json, annotation-index.json}` · 변주별 한 줄 인쇄(`v1: l0 pass · defects 0 · advance`) · 같은 `thread_digest` 면 재계산 없음. 전제 = `partial_until` 순번 ≥ `gate` · 주석본 ≥ 1. 모델 호출 없음 | 0(기록 완료 · 결함 유무 무관) · 13(halt·StageError) · 14 |
+| `strip` | `[--variant v]*` | 파싱 오류 0 인 변주에 strip 산출 3종(`50-gate/<v>/{thread.stripped.md, thread.json, annotation-index.json}`)만 · verdict 없이 · 열람 준비용(SPEC §3.3). 모델 호출 없음 | 0 · 13(종료선·주석본 없음·StageError) |
 
 **종료 코드** — 0 정상 · 10 대기 좌표 남음(다시 `step`/`design`) · 11 상신 축 미달(`continue` 가능) · 12 봉투 불가 대기(사람) · 13 종결 실패(엔진 halt/escalate) · 14 판정 불능(io_fault · `modelUsage` 부재 · 첫 좌표 관측 모델 ≠ 요청) · 15 좌표 호출 상한 3 초과 · 20 CP1 대기 · 2 인자·환경 오류(stdin 10 MB 초과 포함).
 

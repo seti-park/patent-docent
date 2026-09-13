@@ -1,0 +1,208 @@
+{
+  "by_material": {
+    "M1": [
+      {
+        "sentence": 1,
+        "tweet": 2
+      }
+    ],
+    "M2": [
+      {
+        "sentence": 2,
+        "tweet": 2
+      },
+      {
+        "sentence": 1,
+        "tweet": 3
+      }
+    ],
+    "M3": [
+      {
+        "sentence": 1,
+        "tweet": 4
+      }
+    ],
+    "M7": [
+      {
+        "sentence": 2,
+        "tweet": 1
+      },
+      {
+        "sentence": 2,
+        "tweet": 3
+      }
+    ],
+    "M8": [
+      {
+        "sentence": 2,
+        "tweet": 5
+      }
+    ],
+    "M9": [
+      {
+        "sentence": 2,
+        "tweet": 4
+      }
+    ]
+  },
+  "narrative_sentences": [
+    {
+      "sentence": 1,
+      "tweet": 1
+    },
+    {
+      "sentence": 1,
+      "tweet": 5
+    },
+    {
+      "sentence": 1,
+      "tweet": 6
+    },
+    {
+      "sentence": 2,
+      "tweet": 6
+    }
+  ],
+  "run_id": "example-xx0000000a1-cable-guide",
+  "schema": "annotation-index/v0",
+  "spec_version": 1,
+  "tweets": [
+    {
+      "n": 1,
+      "sentences": [
+        {
+          "citations": [],
+          "i": 1,
+          "narrative": true,
+          "text": "Every cable that runs into a sealed machine drags grit in with it, and the usual cure is a shutdown and a pair of tweezers.",
+          "text_raw": "Every cable that runs into a sealed machine drags grit in with it, and the usual cure is a shutdown and a pair of tweezers."
+        },
+        {
+          "citations": [
+            "M7"
+          ],
+          "i": 2,
+          "narrative": false,
+          "text": "This filing claims a way to make the grit stay outside.",
+          "text_raw": "This filing claims a way to make the grit stay outside."
+        }
+      ],
+      "slot": "hook"
+    },
+    {
+      "n": 2,
+      "sentences": [
+        {
+          "citations": [
+            "M1"
+          ],
+          "i": 1,
+          "narrative": false,
+          "text": "The housing does the ordinary thing here: it defines a guide channel that carries the cable through the wall of the enclosure.",
+          "text_raw": "The housing does the ordinary thing here: it defines a guide channel that carries the cable through the wall of the enclosure."
+        },
+        {
+          "citations": [
+            "M2"
+          ],
+          "i": 2,
+          "narrative": false,
+          "text": "What the claim adds sits at the mouth of that channel, a wiper collar that the cable has to pass through on its way in.",
+          "text_raw": "What the claim adds sits at the mouth of that channel, a wiper collar that the cable has to pass through on its way in."
+        }
+      ],
+      "slot": "stop"
+    },
+    {
+      "n": 3,
+      "sentences": [
+        {
+          "citations": [
+            "M2"
+          ],
+          "i": 1,
+          "narrative": false,
+          "text": "The collar is not a seal in the usual sense, because it never grips the cable and never has to be squeezed tight against it.",
+          "text_raw": "The collar is not a seal in the usual sense, because it never grips the cable and never has to be squeezed tight against it."
+        },
+        {
+          "citations": [
+            "M7"
+          ],
+          "i": 2,
+          "narrative": false,
+          "text": "It stands proud of the mouth instead, so the grit riding in on the cable is wiped off outside the wall rather than inside the box.",
+          "text_raw": "It stands proud of the mouth instead, so the grit riding in on the cable is wiped off outside the wall rather than inside the box."
+        }
+      ],
+      "slot": "stop"
+    },
+    {
+      "n": 4,
+      "sentences": [
+        {
+          "citations": [
+            "M3"
+          ],
+          "i": 1,
+          "narrative": false,
+          "text": "Here is the admission tucked into the dependent claim: the collar is an elastomeric sleeve, which is to say a part that is meant to wear.",
+          "text_raw": "Here is the admission tucked into the dependent claim: the collar is an elastomeric sleeve, which is to say a part that is meant to wear."
+        },
+        {
+          "citations": [
+            "M9"
+          ],
+          "i": 2,
+          "narrative": false,
+          "text": "The drawing puts that sleeve on the outer face, where a hand can reach it without opening the enclosure at all.",
+          "text_raw": "The drawing puts that sleeve on the outer face, where a hand can reach it without opening the enclosure at all."
+        }
+      ],
+      "slot": "pivot"
+    },
+    {
+      "n": 5,
+      "sentences": [
+        {
+          "citations": [],
+          "i": 1,
+          "narrative": true,
+          "text": "So the invention is smaller than the problem it answers, and more candid about itself than most.",
+          "text_raw": "So the invention is smaller than the problem it answers, and more candid about itself than most."
+        },
+        {
+          "citations": [
+            "M8"
+          ],
+          "i": 2,
+          "narrative": false,
+          "text": "It buys back the maintenance stop by admitting up front that one soft part is there to be replaced.",
+          "text_raw": "It buys back the maintenance stop by admitting up front that one soft part is there to be replaced."
+        }
+      ],
+      "slot": "landing"
+    },
+    {
+      "n": 6,
+      "sentences": [
+        {
+          "citations": [],
+          "i": 1,
+          "narrative": true,
+          "text": "The marked-up drawings and the reading notes for this thread live on the notes page.",
+          "text_raw": "The marked-up drawings and the reading notes for this thread live on the notes page."
+        },
+        {
+          "citations": [],
+          "i": 2,
+          "narrative": true,
+          "text": "Notes: https://example.com/docent-notes",
+          "text_raw": "Notes: https://example.com/docent-notes"
+        }
+      ],
+      "slot": "tail"
+    }
+  ],
+  "variant": "v2"
+}

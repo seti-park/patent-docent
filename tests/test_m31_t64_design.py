@@ -763,8 +763,9 @@ def test_driver_extend_then_design_then_seal(law, tmp_path) -> None:
         pytest.fail("gate → design 이 2 가 아니다")
 
 
-def test_help_lists_twelve_commands_including_extend_and_design() -> None:
+def test_help_lists_fourteen_commands_including_extend_and_design() -> None:
+    """명령 12 → 14(T64 집행 ③ · gate-l0 · strip 추가). extend·design 의 자리는 그대로다."""
     parser = drv.build_parser()
     listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
-    if listed != drv.COMMANDS or len(listed) != 12 or listed[-3:] != ("extend", "design", "compose"):
-        pytest.fail(f"명령 12 가 아니다: {listed}")
+    if listed != drv.COMMANDS or len(listed) != 14 or listed[-5:] != ("extend", "design", "compose", "gate-l0", "strip"):
+        pytest.fail(f"명령 14 가 아니다: {listed}")

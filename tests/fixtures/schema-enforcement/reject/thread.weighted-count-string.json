@@ -1,0 +1,100 @@
+{
+  "frontmatter": {
+    "pen": {
+      "effort": "max",
+      "model": "opus-5",
+      "vendor": "anthropic"
+    },
+    "run_id": "example-xx0000000a1-cable-guide",
+    "spec_digest": "sha256:1c89841ca8dc13e254e84e18e6b91c79111fa9135015248bf849aa27e3ad0043",
+    "spec_version": 1,
+    "variant": "v2"
+  },
+  "frontmatter_raw": "run_id: example-xx0000000a1-cable-guide\nvariant: v2\npen: { vendor: anthropic, model: opus-5, effort: max }\nspec_version: 1\nspec_digest: sha256:1c89841ca8dc13e254e84e18e6b91c79111fa9135015248bf849aa27e3ad0043\n",
+  "images": [
+    {
+      "asset_path": null,
+      "figure": "fig-01",
+      "tweet": 1
+    },
+    {
+      "asset_path": null,
+      "figure": "fig-02",
+      "tweet": 2
+    },
+    {
+      "asset_path": null,
+      "figure": "fig-03",
+      "tweet": 3
+    },
+    {
+      "asset_path": null,
+      "figure": "fig-03",
+      "tweet": 4
+    },
+    {
+      "asset_path": null,
+      "figure": "fig-01",
+      "tweet": 5
+    }
+  ],
+  "run_id": "example-xx0000000a1-cable-guide",
+  "schema": "thread/v0",
+  "spec_digest": "sha256:1c89841ca8dc13e254e84e18e6b91c79111fa9135015248bf849aa27e3ad0043",
+  "spec_version": 1,
+  "tweets": [
+    {
+      "figures": [
+        "fig-01"
+      ],
+      "n": 1,
+      "slot": "hook",
+      "text": "Every cable that runs into a sealed machine drags grit in with it, and the usual cure is a shutdown and a pair of tweezers.\nThis filing claims a way to make the grit stay outside.",
+      "weighted_char_count": "179"
+    },
+    {
+      "figures": [
+        "fig-02"
+      ],
+      "n": 2,
+      "slot": "stop",
+      "text": "The housing does the ordinary thing here: it defines a guide channel that carries the cable through the wall of the enclosure.\nWhat the claim adds sits at the mouth of that channel, a wiper collar that the cable has to pass through on its way in.",
+      "weighted_char_count": 246
+    },
+    {
+      "figures": [
+        "fig-03"
+      ],
+      "n": 3,
+      "slot": "stop",
+      "text": "The collar is not a seal in the usual sense, because it never grips the cable and never has to be squeezed tight against it.\nIt stands proud of the mouth instead, so the grit riding in on the cable is wiped off outside the wall rather than inside the box.",
+      "weighted_char_count": 255
+    },
+    {
+      "figures": [
+        "fig-03"
+      ],
+      "n": 4,
+      "slot": "pivot",
+      "text": "Here is the admission tucked into the dependent claim: the collar is an elastomeric sleeve, which is to say a part that is meant to wear.\nThe drawing puts that sleeve on the outer face, where a hand can reach it without opening the enclosure at all.",
+      "weighted_char_count": 249
+    },
+    {
+      "figures": [
+        "fig-01"
+      ],
+      "n": 5,
+      "slot": "landing",
+      "text": "So the invention is smaller than the problem it answers, and more candid about itself than most.\nIt buys back the maintenance stop by admitting up front that one soft part is there to be replaced.",
+      "weighted_char_count": 196
+    },
+    {
+      "figures": [],
+      "n": 6,
+      "slot": "tail",
+      "text": "The marked-up drawings and the reading notes for this thread live on the notes page.\nNotes: https://example.com/docent-notes",
+      "weighted_char_count": 115
+    }
+  ],
+  "variant": "v2"
+}

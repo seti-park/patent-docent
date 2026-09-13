@@ -30,6 +30,10 @@
 | `score-lint/v1` | `contracts/lexicon/score-lint.yaml` | 점수 금지 린트 패턴 |
 | `blueprint/v0` | `contracts/schemas/blueprint.schema.json` | 설계 산출 `20-design/blueprint.json`(재정 T64 ② · M5-a). 러너 6키 + 레인 필드 · 수치는 시트 포인터 |
 | `extension-envelope/v0` | `contracts/schemas/extension-envelope.schema.json` | 부분 런 종료선 연장 봉투 `15-frozen/extension-v<N>.md`(재정 T64 ① · 총괄 재량 — `approval-envelope/v0` 의 checkpoint enum 을 넓히지 않는다) |
+| `thread/v0` | `contracts/schemas/thread.schema.json` | 구조화 출하 객체 `50-gate/<v>/thread.json`(재정 T64 ② · M3/M4-a · SPEC §3.3). `frontmatter_raw` 정본 + `tweets[].{text, weighted_char_count}` + `images[]` |
+| `annotation-index/v0` | `contracts/schemas/annotation-index.schema.json` | 주석 인덱스 `50-gate/<v>/annotation-index.json`(재정 T64 ② · SPEC §3.3). 전 문장 + `by_material` 역인덱스 + `narrative_sentences` · `text_raw`(총괄 재량 ⓕ · optional) |
+| `annotation/v0` | `contracts/schemas/annotation.schema.json` | 파서 산출(`engine/annotation/parse.py#parse`)의 직렬화 서식(재정 T64 ② · SPEC §3.2 문법의 데이터 형태). 파일 산출물이 아니라 구조의 계약 |
+| `gate-report/v0` | `contracts/schemas/gate-report.schema.json` | 게이트 판정문 `50-gate/<v>/verdict.json`(재정 T64 ② · SPEC §4.3 전 필드 · memo 객체 §4.6 · `inactive_layers[]` 총괄 재량 ⓑ) |
 
 **버전 축의 구별**(혼동 지점이다).
 
@@ -89,6 +93,27 @@
 | `compose.spec-digest` | `engine/stages/compose.py` | 프런트매터 `spec_digest` 가 `run.yaml#frozen[-1]` 과 동결본 실측 둘 다와 일치하지 않음(재정 N11 → `halt`) |
 | `compose.annotation-syntax` | `engine/stages/compose.py` | `engine/annotation/parse.py#parse` 가 위반을 냄 — finding `rule` 은 §3.2 대응표의 `annotation.schema`·`annotation.missing-tag`, locus `T<n>/S<i>`. `retry(2)` → `escalate`(그 변주만) |
 | `compose.frontmatter` | `engine/stages/compose.py` | 프런트매터 5키 정확히 · `run_id`·`variant`·`pen`(계약 배정)·`spec_version`·`spec_digest` 형식 중 하나라도 어긋남(→ `halt` · spec-digest 행을 따른다) |
+| `gate.input-digest` | `engine/stages/__init__.py` | 최신 동결본·블루프린트가 부재·지문 불일치이거나 `40-compose/<v>/thread.annotated.md` 가 변주 1개도 없는 채로 게이트가 시작됨(재정 P-C · T64 ②) — 환경 오류. `30-figures/selection.json` 부재는 `extras.absent_inputs`(T64 ④) |
+| `run.publish-preconditions` | `engine/gate/l0/rules_run.py` | `run_kind: publish` 런이 `run-kinds.yaml#requirements` 3종(방어층 가동 · 도면 사용권 재정 · 템플릿 동결) 미충족인데 시작됨(재정 N10). partial·rehearsal 은 `checked 0`(`vacuous: empty-target`) |
+| `format.tweet-count` | `engine/gate/l0/rules_format.py` | 트윗 수가 시트 `tweet_count` 밖 |
+| `format.slot-count` | `engine/gate/l0/rules_format.py` | 시트 `slot_placement` 위반 — hook 수·위치 · landing 수 · tail 수·위치 · 나머지 슬롯이 `other.allowed` 밖(위반마다 결함 1) |
+| `format.body-length` | `engine/gate/l0/rules_format.py` | 슬롯별 **가중 글자 수**(`engine/gate/l0/weighted_length.py` · 시트 `weighted_length`)가 시트 `length_by_slot` 범위 밖(exempt 슬롯 제외 · `extras.weighted_char_counts`) |
+| `format.stop-shape` | `engine/gate/l0/rules_format.py` | stop·pivot 의 편집 자산(매니페스트 `edit_class ∈ counted_edit_classes`) < `edited_assets_min` 또는 문장 수(`engine/gate/sentence_count.py`) > `sentences_max`. **미가동**(T64 ④ 매니페스트 부재 → `checked 0` · `extras.inactive_reason`) — 매니페스트가 실재하면 가동 |
+| `format.hashtag-zero` | `engine/gate/l0/rules_format.py` | `#`+문자 토큰 수 > 시트 `hashtags_max`(URL 안의 `#` 은 토큰이 아니다) |
+| `format.no-link-in-body` | `engine/gate/l0/rules_format.py` | URL(`engine/stages/gate.py#URL_RE` 최소 어형 · 총괄 재량 ⓒ)이 시트 `link_isolation` 허용 슬롯 밖 트윗에 있음 |
+| `format.images-per-post` | `engine/gate/l0/rules_format.py` | 헤더 fig 항목 수 > 시트 `images_per_post_max` |
+| `annotation.schema` | `engine/gate/l0/rules_annotation.py` | 파서 `errors` 중 `annotation.schema` + 프런트매터 `spec_digest` ≠ 현재 동결본. 실패면 **나머지 L0 행을 내지 않는다**(§3.2 연쇄 오보 방지) |
+| `annotation.missing-tag` | `engine/gate/l0/rules_annotation.py` | 파서 `errors` 중 태그 없는 문장 |
+| `citation.resolve` | `engine/gate/l0/rules_citation.py` | 인용 M id 가 동결본에 없거나 `retracted`. `superseded` 는 결함이 아니라 flag(`origin: advisory-rule` · E3) |
+| `numeric.exhaustive` | `engine/gate/l0/rules_numeric.py` | 출하본 수치 토큰(`l0-format.yaml#numeric.tokenizers` 로드 · rank 순 소비)의 MATCH_KEY 가 정답지(active fact 전 origin ∪ `patent.number` ∪ `patent.dates.*` ∪ `run.yaml#numeric_whitelist[].pattern` fullmatch) 밖. 정규화는 `reader.lib.normalize` 재사용 + 날짜·통화·범위·특허번호(파일 문언). locus = 인덱스 문장 좌표 |
+| `numeric.unreviewed-use` | `engine/gate/l0/rules_numeric.py` | **거부권 없는 플래그**(veto: false · 재정 P-B). 출하본이 쓴 수치 키가 미참조 fact 에 속함 — 미참조 목록은 동결본에서 재계산(총괄 재량 ⓓ · `derivation.py#_numeric_inventory` 와 같은 규칙) |
+| `gate.l0-clean` | `engine/stages/gate.py` | `l0.json#defects[]` 가 비어 있지 않음 |
+| `gate.annotation-index` | `engine/annotation/index.py` · `engine/stages/gate.py` | 인덱스 문장 수 ≠ 초안 문장 수 · 인용 ID·narrative 가 초안과 다름 |
+| `gate.no-rewrite` | `engine/stages/gate.py` | 러너 자기 산출 `fix_directive` 에 따옴표 속 5토큰 이상 EN 문장(SPEC §4.7 기제 3 · 탐지 범위의 한계도 그 절). 레인 프롬프트 산출에 대한 같은 린트는 M6 |
+| `strip.roundtrip-forward` | `engine/annotation/strip.py` | `strip(annotated).stripped_md` 가 참조 구현(`_reference_strip` · 코드 공유 없음)과 바이트 다름 — strip 이 본문을 슬쩍 고침(SPEC §3.3 순방향 · id 는 총괄 재량 ⓔ) |
+| `strip.roundtrip-reverse` | `engine/annotation/reassemble.py` | `thread.json` + `annotation-index.json` 으로 재조립한 주석본이 원본과 바이트 다름 — 변환의 정보 손실(§3.3 역방향 · ⓔ) |
+| `strip.reassembly` | `engine/stages/gate.py` | `thread.json.tweets[].text` 를 이어붙인 것이 `thread.stripped.md` 와 바이트 다름 — 인간본·기계본 표류(§3.3 재조립 · ⓔ) |
+| `strip.residual-tag` | `engine/stages/gate.py` | 출하본에 `\[(M\d+\|narrative)` 잔존(§3.3 안전망 · ⓔ) |
 
 ### 2.2 계약에만 있고 아직 구현이 없는 것
 
@@ -96,10 +121,7 @@
 
 | 검사 id | 소관 | 정본 서술 |
 |---|---|---|
-| `run.publish-preconditions` | M4 | `contracts/run-kinds.yaml` · SPEC §4.4 |
-| `format.*` · `citation.*` · `numeric.exhaustive` · `annotation.*` | M4 | `contracts/l0-format.yaml` |
-| `numeric.unreviewed-use` | M4 | `contracts/l0-format.yaml` §7 · SPEC §4.4.4 — **거부권 없는 자문 플래그**다(재정 P-B). 전수 수확이 넓힌 정답지의 대가를 받는 짝 규칙이며, 미참조(미검토) 수치를 본문이 처음 인용하면 CP2 봉투에 플래그가 붙는다 |
-| `gate.no-rewrite` · `gate.final-eyes` | M4·M6 | SPEC §4.7·§1.10 |
+| `gate.no-rewrite`(레인 산출 대상) · `gate.final-eyes` | M6 | SPEC §4.7·§1.10 — `gate.no-rewrite` 의 **러너 자기 산출** 린트는 T64 ②(M3/M4-a)로 §2.1 에 올라갔다. 남은 것은 레인(L1·최종 심급)이 낸 `fix_directive` 에 대한 같은 린트와 최종 심급 자체다. `gate.l1-clean` · `gate.final-eyes-isolation` · `gate.final-eyes-scope` 도 같은 자리(계약 `gate.yaml#checks_before_exit` 에 `status: inactive` 로 있다) |
 | `gate.no-score` · `critique.no-score` | M4·M8 | `contracts/lexicon/score-lint.yaml` |
 | `critique.anchors-adjudicated-only` | M8 | SPEC §1.12 — `design.anchors-adjudicated-only` 는 T64(M5-a)로 §2.1 에 올라갔다 |
 | `probe.independence` · `probe.input-clean` · `probe.no-self-report` · `probe.target-coverage` · `probe.grader-separation` | M7 | SPEC §1.11 — **계기 5종.** ★ 2026-08-19 등재(누락 보수): SPEC §1.11이 이 다섯을 선언하는데 이 사전의 어느 절에도 없었다. 사전이 스스로 내건 갱신 규율("새 검사를 만들면 이 표에 등재한다")이 계기 계열에서만 지켜지지 않은 자리이며, 그 결과 §2.2 목록을 읽고 "M7에 무엇이 남았는가"를 세면 다섯이 빠졌다. **id 신설이 아니라 사전의 누락 보수다** — 이름은 SPEC이 이미 선언했고 여기 옮겨 적을 뿐이다. 정족수 판정 층(`engine/quorum.py`)은 구현되었으나 그것은 검사가 아니라 순수 함수이며 검사 id를 발행하지 않는다 |
@@ -182,6 +204,11 @@
 | `40-compose/lanes/` | `compose` | 펜 레인 왕복 기록(`compose/<v>[/retry-<n>]/batch-0/{request.json,request.md,response.json}`) |
 | `40-compose/compose-report.json` | `compose` | 판정 행 8키 배열(진입 1 + 린트 2×변주 + 검사 4×변주) · findings · `variants` 상태 · `pens` · `comparison_axis` · `lanes` · `law_commit` |
 | `40-compose/tournament-rows.jsonl` | `compose` | **런 안**의 토너먼트 행(append · 변주당 1행 · `outcome ∈ drafted\|missing\|material-defect` · `comparison_axis`·`taste_weight`). `ledgers/tournament.jsonl` 의 쓰기 소유자는 `ship` 뿐이므로(§1.17) 여기 쌓고 `ship` 이 옮긴다(총괄 재량 ⓐ · T64 집행 ②) |
+| `50-gate/<v>/l0.json` | `gate` | L0 판정 블록 `{pass, defects, flags, checks}` — `verdict.json#l0` 과 같은 객체를 따로 저장한 파일. **계약 라인 없음**(총괄 재량 ⓐ · T64 집행 ③) |
+| `50-gate/<v>/verdict.json` | `gate` | 판정문(`gate-report/v0`). L0 13 행 + `gate.input-digest` + strip 4 + `gate.l0-clean`·`gate.annotation-index`·`gate.no-rewrite` · `inactive_layers[]`(L1·L2·화행·최종 심급·`format.stop-shape`) · `decision` 은 가동 층만으로(총괄 재량 ⓑ) · `thread_digest` 로 재진입 판정 |
+| `50-gate/<v>/thread.stripped.md` | `gate` | 출하 후보 텍스트(strip §3.3 ①~⑤). 예행 종료선의 실물(`run-kinds.yaml#kinds.rehearsal.terminates_at_artifact`) · `ship` 은 복사만 |
+| `50-gate/<v>/thread.json` | `gate` | 구조화 출하 객체(`thread/v0`) — `frontmatter_raw` 정본 · `weighted_char_count` · `ship` 은 복사만(재감수 B-04) |
+| `50-gate/<v>/annotation-index.json` | `gate` | 주석 인덱스(`annotation-index/v0`) — 계기 국소화(D9)·L1 감사 표본이 소비. `text_raw` 가 역방향 round-trip 의 전제(재량 ⓕ) |
 
 **런 밖의 원장 하나**(위 표와 층이 다르므로 따로 적는다).
 

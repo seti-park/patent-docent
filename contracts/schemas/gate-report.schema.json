@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patent-docent.local/contracts/schemas/gate-report.schema.json",
+  "title": "gate-report/v0",
+  "$comment": "게이트 판정문 `50-gate/<variant>/verdict.json`(SPEC §4.3 예시 전 필드). ★ 규율: (1) 최상위·레코드·memo 전부 additionalProperties false — 새 필드를 몰래 못 넣는다(§4.6 기제 1). memo 객체의 속성은 전부 string 이며 number·integer 필드가 하나도 없다(기제 2 · 점수 발행 금지 D8·D15). (2) `checks[]` 의 행 서식 정본은 contracts/schemas/verdict-check-row.schema.json(verdict-check-row/v0)이다 — 여기서는 8키의 존재만 요구하고 파생 규칙(vacuous)·정합 규칙은 그 파일이 강제한다. 러너와 시험이 각 행을 그 스키마로 따로 검증한다(사본을 두면 두 진원이 생긴다). (3) `vacuous_pass[]` 는 checks[] 에서 파생되는 목록이며 손으로 채우지 않는다. (4) `decision` 은 가동 층만으로 정한다 — `inactive_layers[]`(총괄 재량 ⓑ · 필수)가 판정하지 않은 층을 명기하며, 미가동 층의 pass 는 null 이다(L1 미가동이면 l1.pass null). §4.3 enum 조건 `l0.pass && l1.pass` 를 null 에 그대로 쓰면 영원히 advance 가 없으므로 미가동 층은 판정에서 **제외**한다 — 게이트가 관대해진 것이 아니라 판정하지 않은 층을 판정한 것처럼 적지 않는 것이다(재정 N5 · run-kinds.yaml inactive_gates_enumerated). (5) `l0` 블록은 `50-gate/<variant>/l0.json` 과 같은 객체다(총괄 재량 ⓐ — l0.json 은 별도 계약 라인을 갖지 않는다). (6) `final_eyes.veto_reason ∈ {null, a, b, c}`(재정 R4) — 미가동이면 verdict 도 null. 신설 = 재정 2026-09-13 T64 ②(M3 · 계약 라인 gate-report/v0 · 0.x 미동결).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "run_id", "variant", "gate_version", "spec_version", "spec_digest", "thread_digest",
+    "l0", "l1", "l2", "checks", "legislated", "vacuous_pass", "advisory_measurements",
+    "final_eyes", "inactive_layers", "decision", "revision_round"
+  ],
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "locus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tweet", "sentence"],
+      "properties": {
+        "tweet": { "type": ["integer", "null"], "minimum": 1 },
+        "sentence": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
+    "defect": {
+      "$comment": "§4.2 defect — 공통 4키 + expected · observed · fix_directive(지시문 · 대체 문장 없음 · §4.7).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "layer", "rule", "locus", "expected", "observed", "fix_directive"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^d-l[01]-[0-9]{3}$" },
+        "layer": { "enum": ["l0", "l1"] },
+        "rule": { "type": "string", "minLength": 1 },
+        "locus": { "$ref": "#/$defs/locus" },
+        "expected": { "type": "string", "minLength": 1 },
+        "observed": { "type": "string" },
+        "fix_directive": { "type": "string", "minLength": 1 }
+      }
+    },
+    "flag": {
+      "$comment": "§4.2 flag — 거부권 없음. origin 3종 · votes 는 minority-vote·speech-act 에만 · predicate 는 speech-act 에만.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "layer", "rule", "locus", "note", "origin"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^f-l[01]-[0-9]{3}$" },
+        "layer": { "enum": ["l0", "l1"] },
+        "rule": { "type": "string", "minLength": 1 },
+        "locus": { "$ref": "#/$defs/locus" },
+        "note": { "type": "string", "minLength": 1 },
+        "origin": { "enum": ["minority-vote", "advisory-rule", "speech-act"] },
+        "votes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["k", "for", "against"],
+          "properties": {
+            "k": { "type": "integer", "minimum": 1 },
+            "for": { "type": "integer", "minimum": 0 },
+            "against": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "predicate": { "type": "string", "pattern": "^sa-0[1-3]$" }
+      }
+    },
+    "memo": {
+      "$comment": "§4.6 코드블록 그대로 — 전 속성 string · 숫자 필드 없음 · additionalProperties false.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "layer", "rule", "locus", "text"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^m-l2-[0-9]{3}$" },
+        "layer": { "const": "l2" },
+        "rule": { "type": "string" },
+        "locus": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tweet", "sentence"],
+          "properties": {
+            "tweet": { "type": ["integer", "null"] },
+            "sentence": { "type": ["integer", "null"] }
+          }
+        },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
+    "check_row": {
+      "$comment": "verdict-check-row/v0 의 8키 존재만 본다. 값·파생·정합 규칙의 정본은 verdict-check-row.schema.json 이며 러너·시험이 행마다 그 스키마로 따로 검증한다.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check_id", "ruleset", "ruleset_version", "ruleset_size", "checked", "violations", "status", "vacuous"],
+      "properties": {
+        "check_id": { "type": "string", "minLength": 1 },
+        "ruleset": { "type": ["string", "null"] },
+        "ruleset_version": { "type": ["string", "null"] },
+        "ruleset_size": { "type": ["integer", "null"] },
+        "checked": { "type": "integer", "minimum": 0 },
+        "violations": { "type": "integer", "minimum": 0 },
+        "status": { "enum": ["pass", "fail"] },
+        "vacuous": { "enum": ["none", "empty-ruleset", "empty-target"] }
+      }
+    },
+    "l0_block": {
+      "$comment": "총괄 재량 ⓐ — 50-gate/<variant>/l0.json 과 같은 객체. schema 키 없음.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pass", "defects", "flags", "checks"],
+      "properties": {
+        "pass": { "type": "boolean" },
+        "defects": { "type": "array", "items": { "$ref": "#/$defs/defect" } },
+        "flags": { "type": "array", "items": { "$ref": "#/$defs/flag" } },
+        "checks": { "type": "array", "items": { "$ref": "#/$defs/check_row" } }
+      }
+    }
+  },
+  "properties": {
+    "schema": { "const": "gate-report/v0" },
+    "run_id": { "type": "string", "pattern": "^[a-z0-9]+-[a-z0-9]+-[a-z0-9-]+$" },
+    "variant": { "type": "string", "pattern": "^v[1-9][0-9]*$" },
+    "gate_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "spec_version": { "type": "integer", "minimum": 1 },
+    "spec_digest": { "$ref": "#/$defs/digest" },
+    "thread_digest": { "$ref": "#/$defs/digest" },
+    "l0": { "$ref": "#/$defs/l0_block" },
+    "l1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pass", "k", "votes", "defects", "flags", "disagreement_log"],
+      "properties": {
+        "pass": { "type": ["boolean", "null"] },
+        "k": { "type": "integer", "minimum": 1 },
+        "votes": { "type": "array" },
+        "defects": { "type": "array", "items": { "$ref": "#/$defs/defect" } },
+        "flags": { "type": "array", "items": { "$ref": "#/$defs/flag" } },
+        "disagreement_log": { "type": "array" }
+      }
+    },
+    "l2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["memos"],
+      "properties": {
+        "memos": { "type": "array", "items": { "$ref": "#/$defs/memo" } }
+      }
+    },
+    "checks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/check_row" } },
+    "legislated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "defect_catalog_version", "defect_catalog_entries",
+        "speech_act_predicate_version", "speech_act_predicates",
+        "score_lint_version", "score_lint_patterns"
+      ],
+      "properties": {
+        "defect_catalog_version": { "type": "string" },
+        "defect_catalog_entries": { "type": "integer", "minimum": 0 },
+        "speech_act_predicate_version": { "type": "string" },
+        "speech_act_predicates": { "type": "integer", "minimum": 0 },
+        "score_lint_version": { "type": "string" },
+        "score_lint_patterns": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "vacuous_pass": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "advisory_measurements": {
+      "$comment": "거부권 없는 측정치(재정 R5). 어떤 값도 decision 을 바꾸지 못한다. 점수 린트 대상이 아니다(§4.6 not_targets).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_words", "extreme", "weighted_char_counts"],
+      "properties": {
+        "total_words": { "type": "integer", "minimum": 0 },
+        "extreme": { "type": "boolean" },
+        "weighted_char_counts": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+        "note": { "type": "string" }
+      }
+    },
+    "final_eyes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "veto_reason", "observations", "inputs_read"],
+      "properties": {
+        "verdict": { "enum": ["pass", "veto", null] },
+        "veto_reason": { "enum": [null, "a", "b", "c"] },
+        "observations": { "type": "array", "items": { "type": "string" } },
+        "inputs_read": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "digest"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "digest": { "$ref": "#/$defs/digest" }
+            }
+          }
+        }
+      }
+    },
+    "inactive_layers": {
+      "$comment": "총괄 재량 ⓑ — 판정하지 않은 층의 정직한 표기. 원천 = contracts/stages/gate.yaml#layers 의 status: inactive 항목.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["layer", "reason", "ruling"],
+        "properties": {
+          "layer": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 },
+          "ruling": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "decision": { "enum": ["advance", "revise", "escalate"] },
+    "revision_round": { "type": "integer", "minimum": 0, "maximum": 3 }
+  },
+  "allOf": [
+    {
+      "$comment": "L0 결함이 있으면 advance 일 수 없다(§4.3 decision enum — 가동 층 기준).",
+      "if": { "properties": { "l0": { "properties": { "pass": { "const": false } } } } },
+      "then": { "properties": { "decision": { "enum": ["revise", "escalate"] } } }
+    },
+    {
+      "$comment": "l0.pass ⟺ defects 빈 배열(gate.l0-clean 의 정의).",
+      "if": { "properties": { "l0": { "properties": { "pass": { "const": true } } } } },
+      "then": { "properties": { "l0": { "properties": { "defects": { "maxItems": 0 } } } } },
+      "else": { "properties": { "l0": { "properties": { "defects": { "minItems": 1 } } } } }
+    }
+  ]
+}

@@ -238,7 +238,7 @@ class RunPaths:
     어긋나는 순간을 조용히 넘기지 않기 위해서다.
     """
 
-    STAGES = ("source", "read", "freeze", "design", "compose")
+    STAGES = ("source", "read", "freeze", "design", "compose", "gate")
 
     def __init__(self, run_root: str, repo: str | None = None) -> None:
         self.run_root = os.path.abspath(run_root)
@@ -496,6 +496,37 @@ class RunPaths:
         """펜 레인 왕복 보관소 `40-compose/lanes/` — 계약 outputs 에 선언되어 있다."""
         return os.path.join(self.compose_root, LANES_DIRNAME)
 
+    # -- 50-gate ------------------------------------------------------------
+
+    def gate_dir(self, variant: str) -> str:
+        """`50-gate/<variant>/` — 변주별 판정·strip 산출 자리(재정 T64 ② · M3)."""
+        return os.path.dirname(self.verdict_json(variant))
+
+    def l0_json(self, variant: str) -> str:
+        """`50-gate/<variant>/l0.json` — verdict.json#l0 과 같은 객체(총괄 재량 ⓐ · 별도 계약 라인 없음)."""
+        return self._variant("l0.json", variant)
+
+    def verdict_json(self, variant: str) -> str:
+        """`50-gate/<variant>/verdict.json`(gate-report/v0)."""
+        return self._variant("verdict.json", variant)
+
+    def thread_stripped_md(self, variant: str) -> str:
+        """`50-gate/<variant>/thread.stripped.md` — 출하 후보 텍스트(strip 산출 · 예행 종료선의 실물)."""
+        return self._variant("thread.stripped.md", variant)
+
+    def thread_json(self, variant: str) -> str:
+        """`50-gate/<variant>/thread.json`(thread/v0) — 구조화 출하 객체(재감수 B-04 로 gate 산출)."""
+        return self._variant("thread.json", variant)
+
+    def annotation_index_json(self, variant: str) -> str:
+        """`50-gate/<variant>/annotation-index.json`(annotation-index/v0) — 계기 국소화(D9)가 소비한다."""
+        return self._variant("annotation-index.json", variant)
+
+    @property
+    def gate_root(self) -> str:
+        """`50-gate/` — 변주 디렉터리들의 부모."""
+        return os.path.dirname(self.gate_dir("v1"))
+
     # -- 생성 ---------------------------------------------------------------
 
     def ensure_source_dirs(self) -> None:
@@ -515,3 +546,7 @@ class RunPaths:
         os.makedirs(self.compose_lanes_dir, exist_ok=True)
         for variant in variants:
             os.makedirs(self.compose_dir(variant), exist_ok=True)
+
+    def ensure_gate_dirs(self, variants=()) -> None:
+        for variant in variants:
+            os.makedirs(self.gate_dir(variant), exist_ok=True)

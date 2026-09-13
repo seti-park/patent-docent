@@ -419,6 +419,90 @@
       "expect": "reject",
       "series": "T64 recorded_by 어휘 밖",
       "basis": "accept/extension-envelope.minimal.json 에서 recorded_by 만 orchestrator → lane 으로 바꾼 판. 작업 레인은 봉투를 쓰지 않는다(SPEC §1.2 C3)."
+    },
+    {
+      "file": "accept/thread.golden.json",
+      "schema": "contracts/schemas/thread.schema.json",
+      "expect": "accept",
+      "series": "T64 ② thread/v0 유효 대응쌍",
+      "basis": "golden rc-0001-numberless 를 게이트 러너로 돌린 실산출(50-gate/v2/thread.json). frontmatter_raw 원문 바이트 + tweets[] + images[](fig 항목 전개 · 매니페스트 부재라 asset_path null)."
+    },
+    {
+      "file": "reject/thread.no-frontmatter-raw.json",
+      "schema": "contracts/schemas/thread.schema.json",
+      "expect": "reject",
+      "series": "T64 ② frontmatter_raw 누락",
+      "basis": "accept/thread.golden.json 에서 frontmatter_raw 만 뺀 판. 원문 바이트가 없으면 역방향 round-trip 이 원리적으로 불가능하다(SPEC §3.3 · 재감수 B-04)."
+    },
+    {
+      "file": "reject/thread.weighted-count-string.json",
+      "schema": "contracts/schemas/thread.schema.json",
+      "expect": "reject",
+      "series": "T64 ② weighted_char_count 문자열",
+      "basis": "accept/thread.golden.json 에서 T1 의 weighted_char_count 를 문자열로 바꾼 판. 가중 글자 수는 정수 측정치다(재정 R5)."
+    },
+    {
+      "file": "accept/annotation-index.golden.json",
+      "schema": "contracts/schemas/annotation-index.schema.json",
+      "expect": "accept",
+      "series": "T64 ② annotation-index/v0 유효 대응쌍",
+      "basis": "같은 golden 실산출(50-gate/v2/annotation-index.json). 전 문장([narrative] 포함) · by_material 역인덱스 · narrative_sentences · text_raw(재량 ⓕ)."
+    },
+    {
+      "file": "reject/annotation-index.narrative-with-citation.json",
+      "schema": "contracts/schemas/annotation-index.schema.json",
+      "expect": "reject",
+      "series": "T64 ② narrative 문장에 인용",
+      "basis": "accept 에서 T1/S1 을 narrative true + citations [M12] 로 바꾼 판. 서사 신고와 인용은 배타다(§3.2 태그 문법)."
+    },
+    {
+      "file": "reject/annotation-index.by-material-bad-key.json",
+      "schema": "contracts/schemas/annotation-index.schema.json",
+      "expect": "reject",
+      "series": "T64 ② by_material 키 문법",
+      "basis": "accept 에서 by_material 키를 M id 문법 밖(X1)으로 바꾼 판. 역인덱스 키는 재료 항목 ID(^M[0-9]+$)다(glossary §3)."
+    },
+    {
+      "file": "accept/annotation.golden.json",
+      "schema": "contracts/schemas/annotation.schema.json",
+      "expect": "accept",
+      "series": "T64 ② annotation/v0 유효 대응쌍",
+      "basis": "golden 주석본을 engine/annotation/parse.py#parse 로 파싱한 산출의 직렬화(annotation_dict). 프런트매터 5키 + tweets[].{n,slot,figspec,figures,sentences}."
+    },
+    {
+      "file": "reject/annotation.frontmatter-six-keys.json",
+      "schema": "contracts/schemas/annotation.schema.json",
+      "expect": "reject",
+      "series": "T64 ② 프런트매터 6키",
+      "basis": "accept 에서 프런트매터에 키 하나를 더한 판. 5키 정확히 — 초과도 위반이다(SPEC §3.2)."
+    },
+    {
+      "file": "reject/annotation.sentence-without-tag.json",
+      "schema": "contracts/schemas/annotation.schema.json",
+      "expect": "reject",
+      "series": "T64 ② 태그 없는 문장",
+      "basis": "accept 에서 T1/S2 를 narrative false + citations [] 로 바꾼 판 — 태그 0개(annotation.missing-tag 의 데이터 형태). 문장마다 태그 정확히 1개다."
+    },
+    {
+      "file": "accept/gate-report.golden.json",
+      "schema": "contracts/schemas/gate-report.schema.json",
+      "expect": "accept",
+      "series": "T64 ② gate-report/v0 유효 대응쌍",
+      "basis": "같은 golden 실산출(50-gate/v2/verdict.json). L0 13 행 + 진입 1 + strip 4 + gate 3 · inactive_layers 5 · l1.pass null · decision advance."
+    },
+    {
+      "file": "reject/gate-report.pass-with-defects.json",
+      "schema": "contracts/schemas/gate-report.schema.json",
+      "expect": "reject",
+      "series": "T64 ② l0.pass true + defects 1",
+      "basis": "accept 에서 l0.defects 에 결함 1건을 넣고 pass 는 true 로 둔 판. pass ⟺ defects 빈 배열(gate.l0-clean 의 정의) — 결함을 세어 놓고 통과라고 적는 판정문은 거짓이다(재감수 B-03 계열)."
+    },
+    {
+      "file": "reject/gate-report.memo-with-score-field.json",
+      "schema": "contracts/schemas/gate-report.schema.json",
+      "expect": "reject",
+      "series": "T64 ② memo 객체에 숫자 필드",
+      "basis": "accept 에서 l2.memos 에 score: 7 을 가진 메모를 넣은 판. memo 는 additionalProperties false · 전 속성 string 이다(SPEC §4.6 기제 1·2 — 점수 발행 금지 D8·D15)."
     }
   ]
 }

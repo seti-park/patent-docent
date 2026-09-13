@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""스테이지 러너 5종(`source` · `read` · `freeze` · `design` · `compose`)과 그들이 공유하는 최소 도구.
+"""스테이지 러너 6종(`source` · `read` · `freeze` · `design` · `compose` · `gate`)과 그들이 공유하는 최소 도구.
 
 여기 있는 함수는 전부 **결정론**이며 판단하지 않는다. 판단은 레인(LLM)과 Owner 의 몫이고,
 러너는 계약이 정한 자리에 계약이 정한 형태로 산출물을 놓고 검사 결과를 그대로 보고한다.
@@ -488,12 +488,40 @@ def _entry_compose_input_digest(row: CheckRow, paths, entry: dict, inputs: dict)
     )
 
 
+def _entry_gate_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) -> None:
+    """`gate.input-digest` — 동결본·블루프린트(compose 진입 검사와 같은 대조) + 변주 주석본 실재(재정 T64 ② · P-C).
+
+    `inputs["variants"]` = 계약 변주 id 목록. 주석본이 **하나도** 없으면 판정 대상이 없으므로 환경 오류다.
+    반려서만 있는 변주는 정상(러너가 건너뛴다). `30-figures/selection.json` 은 SPEC §1.10 inputs 에 있으나
+    재정 T64 ④(도면 자산층 부재)로 이번 런에 없다 — 결함이 아니라 `extras.absent_inputs` 에 적는다.
+    """
+    _entry_compose_input_digest(row, paths, entry, inputs)
+    if row.findings:
+        return
+    check_id = str(entry.get("id"))
+    variants = [str(v) for v in inputs.get("variants") or []]
+    present = [v for v in variants if os.path.isfile(paths.thread_annotated(v))]
+    row.checked += 1
+    row.extras["variants_present"] = present
+    if not present:
+        row.add(
+            check_id, "40-compose/<variant>/thread.annotated.md", "(변주 0)", "주석본 1개 이상",
+            "판정할 주석본이 없다 — compose 가 먼저다(C7)",
+        )
+    absent: list[str] = []
+    selection = os.path.join(paths.run_root, "30-figures", "selection.json")
+    if not os.path.isfile(selection):
+        absent.append("30-figures/selection.json")
+    row.extras["absent_inputs"] = absent
+
+
 _ENTRY_CHECKS = {
     "read.input-digest": _entry_read_input_digest,
     "source.input-digest": _entry_source_input_digest,
     "freeze.input-digest": _entry_freeze_input_digest,
     "design.input-digest": _entry_design_input_digest,
     "compose.input-digest": _entry_compose_input_digest,
+    "gate.input-digest": _entry_gate_input_digest,
 }
 
 

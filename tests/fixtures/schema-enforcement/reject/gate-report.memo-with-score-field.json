@@ -1,0 +1,444 @@
+{
+  "advisory_measurements": {
+    "extreme": false,
+    "note": "[가설] weighted_char_counts 의 이모지 그래핌 클러스터는 표준 라이브러리 근사다(unicodedata 범주 So + 이모지 블록 · ZWJ·VS16·키캡·피부색·태그 결합 · 지역 표시자 쌍). twitter-text 의 정규식 전체와 갈릴 수 있다 — engine/gate/l0/weighted_length.py",
+    "total_words": 234,
+    "weighted_char_counts": [
+      179,
+      246,
+      255,
+      249,
+      196,
+      115
+    ]
+  },
+  "checks": [
+    {
+      "check_id": "gate.input-digest",
+      "checked": 6,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "run.publish-preconditions",
+      "checked": 0,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "empty-target",
+      "violations": 0
+    },
+    {
+      "check_id": "format.tweet-count",
+      "checked": 6,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.slot-count",
+      "checked": 6,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.body-length",
+      "checked": 5,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.stop-shape",
+      "checked": 0,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "empty-target",
+      "violations": 0
+    },
+    {
+      "check_id": "format.hashtag-zero",
+      "checked": 6,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.no-link-in-body",
+      "checked": 5,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.images-per-post",
+      "checked": 6,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "annotation.schema",
+      "checked": 13,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "annotation.missing-tag",
+      "checked": 12,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "citation.resolve",
+      "checked": 8,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "numeric.exhaustive",
+      "checked": 0,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "empty-target",
+      "violations": 0
+    },
+    {
+      "check_id": "numeric.unreviewed-use",
+      "checked": 0,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "empty-target",
+      "violations": 0
+    },
+    {
+      "check_id": "strip.roundtrip-forward",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "strip.roundtrip-reverse",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "strip.reassembly",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "strip.residual-tag",
+      "checked": 6,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "gate.annotation-index",
+      "checked": 12,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "gate.l0-clean",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "gate.no-rewrite",
+      "checked": 0,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "empty-target",
+      "violations": 0
+    }
+  ],
+  "decision": "advance",
+  "final_eyes": {
+    "inputs_read": [],
+    "observations": [],
+    "verdict": null,
+    "veto_reason": null
+  },
+  "gate_version": "0.1.0",
+  "inactive_layers": [
+    {
+      "layer": "l1",
+      "reason": "재정 T64 ② — 첫 초안 범위 밖 · 소관 M6·M8",
+      "ruling": "재정 2026-09-13 T64 ②"
+    },
+    {
+      "layer": "l2",
+      "reason": "재정 T64 ② — 첫 초안 범위 밖 · 소관 M6·M8",
+      "ruling": "재정 2026-09-13 T64 ②"
+    },
+    {
+      "layer": "speech_act_flag",
+      "reason": "재정 T64 ② — 첫 초안 범위 밖 · 소관 M6·M8",
+      "ruling": "재정 2026-09-13 T64 ②"
+    },
+    {
+      "layer": "final_eyes",
+      "reason": "재정 T64 ② — 첫 초안 범위 밖 · 소관 M6·M8",
+      "ruling": "재정 2026-09-13 T64 ②"
+    },
+    {
+      "layer": "format.stop-shape",
+      "reason": "재정 T64 ④ 도면 자산층 부재",
+      "ruling": "재정 2026-09-13 T64 ④"
+    }
+  ],
+  "l0": {
+    "checks": [
+      {
+        "check_id": "run.publish-preconditions",
+        "checked": 0,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "empty-target",
+        "violations": 0
+      },
+      {
+        "check_id": "format.tweet-count",
+        "checked": 6,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.slot-count",
+        "checked": 6,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.body-length",
+        "checked": 5,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.stop-shape",
+        "checked": 0,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "empty-target",
+        "violations": 0
+      },
+      {
+        "check_id": "format.hashtag-zero",
+        "checked": 6,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.no-link-in-body",
+        "checked": 5,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.images-per-post",
+        "checked": 6,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "annotation.schema",
+        "checked": 13,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "annotation.missing-tag",
+        "checked": 12,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "citation.resolve",
+        "checked": 8,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "numeric.exhaustive",
+        "checked": 0,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "empty-target",
+        "violations": 0
+      },
+      {
+        "check_id": "numeric.unreviewed-use",
+        "checked": 0,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "empty-target",
+        "violations": 0
+      }
+    ],
+    "defects": [],
+    "flags": [],
+    "pass": true
+  },
+  "l1": {
+    "defects": [],
+    "disagreement_log": [],
+    "flags": [],
+    "k": 3,
+    "pass": null,
+    "votes": []
+  },
+  "l2": {
+    "memos": [
+      {
+        "id": "m-l2-001",
+        "layer": "l2",
+        "locus": {
+          "sentence": null,
+          "tweet": null
+        },
+        "rule": "l2.pacing",
+        "score": 7,
+        "text": "pacing observation"
+      }
+    ]
+  },
+  "legislated": {
+    "defect_catalog_entries": 0,
+    "defect_catalog_version": "0",
+    "score_lint_patterns": 4,
+    "score_lint_version": "1.0",
+    "speech_act_predicate_version": "1.0",
+    "speech_act_predicates": 3
+  },
+  "revision_round": 0,
+  "run_id": "example-xx0000000a1-cable-guide",
+  "schema": "gate-report/v0",
+  "spec_digest": "sha256:1c89841ca8dc13e254e84e18e6b91c79111fa9135015248bf849aa27e3ad0043",
+  "spec_version": 1,
+  "thread_digest": "sha256:943acaf90307129ca773587c8e2f7f8b91bcfc34909f3533ef5840e966aa7c9e",
+  "vacuous_pass": [
+    "run.publish-preconditions",
+    "format.stop-shape",
+    "numeric.exhaustive",
+    "numeric.unreviewed-use",
+    "gate.no-rewrite"
+  ],
+  "variant": "v2"
+}

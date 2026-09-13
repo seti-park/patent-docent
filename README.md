@@ -7,7 +7,7 @@
 - **재정 원장(상류)**: [`docs/decisions/RULINGS-LEDGER.md`](docs/decisions/RULINGS-LEDGER.md) — 재정 → 원장 → 문서 순서이며 원장이 헌장·스펙의 상류다
 - **작업 규약**: [`CLAUDE.md`](CLAUDE.md)
 
-상태: **M1(READ 모듈) 완료** — 문서·계약 14종에 더해 **결정론 검사 10종의 실구현**(`reader/lib/`)과 **READ 실행 경로**(`engine/`, CP1 KR 표면 렌더까지)가 실물로 있다. 파이프라인의 나머지(주석층·게이트·펜·계기)는 미구현이다. 무엇이 실물이고 무엇이 예정인지의 정본은 [`docs/SPEC.md` §6.7](docs/SPEC.md)과 [`contracts/glossary.md`](contracts/glossary.md) §2이며, 커밋 전 검사기가 그 표와 리포 실물을 대조한다.
+상태: **M1(READ 모듈) 완료** — 문서·계약 14종에 더해 **결정론 검사 10종의 실구현**(`reader/lib/`)과 **READ 실행 경로**(`engine/`, CP1 KR 표면 렌더까지)가 실물로 있다. T64(2026-09-13)로 **설계·펜·L0 게이트**(`design` · `compose` · `gate` 의 L0 층 + strip + round-trip · 구동기 `design`·`compose`·`gate-l0`·`strip`)가 더해졌다. 파이프라인의 나머지(L1·L2·화행 플래그·최종 심급·도면·계기·소견·출하)는 미구현이며, 게이트 판정문은 그 미가동 층을 `inactive_layers[]` 로 명기한다. 무엇이 실물이고 무엇이 예정인지의 정본은 [`docs/SPEC.md` §6.7](docs/SPEC.md)과 [`contracts/glossary.md`](contracts/glossary.md) §2이며, 커밋 전 검사기가 그 표와 리포 실물을 대조한다.
 
 첫 런은 **예행 런**(비게시)이며, 게시 런은 전 방어층 가동·도면 사용권 재정·템플릿 동결이 충족될 때 열린다.
 

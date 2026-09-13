@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patent-docent.local/contracts/schemas/thread.schema.json",
+  "title": "thread/v0",
+  "$comment": "구조화 출하 객체 `50-gate/<variant>/thread.json`(SPEC §3.3 예시 그대로 · 재감수 B-04 로 gate 산출). ★ 규율: (1) `frontmatter_raw` 가 정본이고 `frontmatter` 는 파생 사본이다 — 둘이 어긋나면 raw 가 이긴다(§3.3). raw 는 `---` 사이 원문 바이트 그대로(구분선 제외 · 끝 개행 포함)이며 요약·정규화·재직렬화하지 않는다. (2) `tweets[].text` 는 strip 5단계 산출(태그 제거 · 이스케이프 복원 · 문장 줄 유지)이고 `\"\\n\\n\".join(text) + \"\\n\"` 이 thread.stripped.md 와 바이트 동일해야 한다(strip.reassembly). (3) `weighted_char_count` 는 코드포인트 수가 아니라 시트 `weighted_length` 의 X 가중 글자 수다(재정 R5). (4) `images[]` 는 헤더 fig 항목의 전개이며 `asset_path` 는 도면 자산 매니페스트가 실재할 때만 채운다 — 부재(T64 ④)면 null. 신설 = 재정 2026-09-13 T64 ②(M3 · 계약 라인 thread/v0 · 0.x 미동결).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "variant", "spec_version", "spec_digest", "frontmatter_raw", "frontmatter", "tweets", "images"],
+  "properties": {
+    "schema": { "const": "thread/v0" },
+    "run_id": { "type": "string", "pattern": "^[a-z0-9]+-[a-z0-9]+-[a-z0-9-]+$" },
+    "variant": { "type": "string", "pattern": "^v[1-9][0-9]*$" },
+    "spec_version": { "type": "integer", "minimum": 1 },
+    "spec_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "frontmatter_raw": { "type": "string", "minLength": 1 },
+    "frontmatter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["run_id", "variant", "pen", "spec_version", "spec_digest"],
+      "properties": {
+        "run_id": { "type": "string" },
+        "variant": { "type": "string" },
+        "pen": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["vendor", "model", "effort"],
+          "properties": {
+            "vendor": { "type": "string" },
+            "model": { "type": "string" },
+            "effort": { "type": "string" }
+          }
+        },
+        "spec_version": { "type": "integer" },
+        "spec_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "tweets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["n", "slot", "figures", "text", "weighted_char_count"],
+        "properties": {
+          "n": { "type": "integer", "minimum": 1 },
+          "slot": { "type": "string", "minLength": 1 },
+          "figures": { "type": "array", "items": { "type": "string", "pattern": "^fig-[0-9]{2}$" } },
+          "text": { "type": "string", "minLength": 1 },
+          "weighted_char_count": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["figure", "asset_path", "tweet"],
+        "properties": {
+          "figure": { "type": "string", "pattern": "^fig-[0-9]{2}$" },
+          "asset_path": { "type": ["string", "null"] },
+          "tweet": { "type": "integer", "minimum": 1 }
+        }
+      }
+    }
+  }
+}

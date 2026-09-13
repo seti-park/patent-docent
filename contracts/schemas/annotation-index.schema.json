@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patent-docent.local/contracts/schemas/annotation-index.schema.json",
+  "title": "annotation-index/v0",
+  "$comment": "주석 인덱스 `50-gate/<variant>/annotation-index.json`(SPEC §3.3 예시). 계기 국소화(D9)와 L1 감사 표본(§3.4 narrative_sentences)이 소비한다. ★ 규율: (1) 좌표계 `{tweet, sentence}` 는 게이트 레코드(§4.2)와 동일하다. (2) 모든 문장이 인덱스에 든다 — `[narrative]` 문장도 citations [] · narrative true 로 등재하며, 문장 수는 초안의 문장 수와 일치해야 한다(gate.annotation-index). (3) `by_material` 은 역인덱스다 — 인용된 M id 마다 등장 좌표 목록. (4) `text_raw` 는 총괄 재량 ⓕ(§3.3 예시에 없는 키) — 이스케이프 `\\[` 를 **복원하기 전** 원문이다. 이것이 없으면 역방향 round-trip(§3.3)이 원리적으로 성립하지 않는다(어느 `[` 가 원래 이스케이프였는지 알 수 없다). optional 로 두며 재조립기는 있으면 이것을, 없으면 text 를 쓴다. 신설 = 재정 2026-09-13 T64 ②(M3 · 계약 라인 annotation-index/v0 · 0.x 미동결).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "variant", "spec_version", "tweets", "by_material", "narrative_sentences"],
+  "$defs": {
+    "locus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tweet", "sentence"],
+      "properties": {
+        "tweet": { "type": "integer", "minimum": 1 },
+        "sentence": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "properties": {
+    "schema": { "const": "annotation-index/v0" },
+    "run_id": { "type": "string", "pattern": "^[a-z0-9]+-[a-z0-9]+-[a-z0-9-]+$" },
+    "variant": { "type": "string", "pattern": "^v[1-9][0-9]*$" },
+    "spec_version": { "type": "integer", "minimum": 1 },
+    "tweets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["n", "slot", "sentences"],
+        "properties": {
+          "n": { "type": "integer", "minimum": 1 },
+          "slot": { "type": "string", "minLength": 1 },
+          "sentences": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["i", "text", "citations", "narrative"],
+              "properties": {
+                "i": { "type": "integer", "minimum": 1 },
+                "text": { "type": "string" },
+                "text_raw": { "type": "string" },
+                "citations": { "type": "array", "items": { "type": "string", "pattern": "^M[0-9]+$" } },
+                "narrative": { "type": "boolean" }
+              },
+              "allOf": [
+                {
+                  "$comment": "서사 신고와 인용은 배타다 — [narrative] 문장은 citations 가 비고, 인용 문장은 narrative 가 false 다(§3.2 태그 문법).",
+                  "if": { "properties": { "narrative": { "const": true } } },
+                  "then": { "properties": { "citations": { "maxItems": 0 } } },
+                  "else": { "properties": { "citations": { "minItems": 1 } } }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "by_material": {
+      "type": "object",
+      "propertyNames": { "pattern": "^M[0-9]+$" },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "items": { "$ref": "#/$defs/locus" }
+      }
+    },
+    "narrative_sentences": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/locus" }
+    }
+  }
+}

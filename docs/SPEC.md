@@ -3754,18 +3754,18 @@ patent-docent/
       freeze.yaml            # ★현행 (M1) — 동결 3동작·봉투 검증
       design.yaml            # ★현행 (M5-a · T64) — 설계 레인·검사 6·실패표   figures.yaml (M9)
       compose.yaml           # ★현행 (M5-b · T64) — 펜 변주 3(effort 사다리)·검사 4·린트·실패표 6+1
-      gate.yaml              # (M4 예정)   probe.yaml (M7)     critique.yaml (M8)
+      gate.yaml              # ★현행 (M3/M4-a · T64 ②) — L0 13 · strip 검사 4 · 미가동 층 명기(layers)   probe.yaml (M7)     critique.yaml (M8)
       ship.yaml              # (M10 예정)  feedback.yaml (M10)
     schemas/                 # docent 전용 스키마 (JSON Schema draft 2020-12)
       approval-envelope.schema.json  # ★현행 (재정 R8, 재감수 M-03·B-07 + 재정 N9)
       metrics-row.schema.json        # ★현행 (재정 R12, 재감수 M-05)
       verdict-check-row.schema.json  # ★현행. 게이트 판정 행 서식 (재정 N5)
-      annotation.schema.json         # (M3 예정)
-      annotation-index.schema.json   # (M3 예정)
-      thread.schema.json             # (M3 예정)
+      annotation.schema.json         # ★현행 (M3/M4-a · T64 ②). 파서 산출 직렬화 annotation/v0
+      annotation-index.schema.json   # ★현행 (M3/M4-a · T64 ②). 주석 인덱스 annotation-index/v0
+      thread.schema.json             # ★현행 (M3/M4-a · T64 ②). 구조화 출하 객체 thread/v0
       blueprint.schema.json          # ★현행 (M5-a · T64). 블루프린트 계약 blueprint/v0
       extension-envelope.schema.json # ★현행 (M5-a · T64). 부분 런 종료선 연장 봉투 extension-envelope/v0
-      gate-report.schema.json        # (M4 예정)
+      gate-report.schema.json        # ★현행 (M3/M4-a · T64 ②). 판정문 gate-report/v0
       probe-report.schema.json       # (M7 예정)
       probe-score.schema.json        # (M7 예정)
       convergence.schema.json        # ★현행 (M1). READ 검사 보고서 — 판정 행 배열(재정 N5)
@@ -3786,12 +3786,13 @@ patent-docent/
     lib/                     # ★현행 (M1). 결정론 검사 유틸 — 검사 12종의 구현
                              #   + 전수 수치 수확기 harvest.py (M1.5, 재정 P-B — 검사가 아니라 생산)
   engine/                    # docent 전용 러너·게이트·strip·프로브
-    stages/                  # ★현행 (M1): source.py · read.py · freeze.py · ★현행 (M5-a): design.py · ★현행 (M5-b): compose.py
+    stages/                  # ★현행 (M1): source.py · read.py · freeze.py · ★현행 (M5-a): design.py · ★현행 (M5-b): compose.py · ★현행 (M3/M4-a): gate.py(L0 부분)
     render/                  # ★현행 (M1): material_spec_md.py (CP1 KR 표면 렌더) · ★현행 (M5-a): blueprint_md.py
     lanes/                   # ★현행 (M1): 독해 LLM 레인 호출 구조
     procedure/               # ★현행 (M5-a): design.md — 설계 레인 절차 문서
     pens/                    # ★현행 (M5-b): registry.py(변주→펜 배정 · 계약에서 읽음) · prompt-template.md(긍정형 템플릿) · lint.py(compose.prompt-lint)
-    annotation/              # ★현행 (M5-b): parse.py — §3.2 문법 파서(compose.annotation-syntax · L0 · strip 의 유일한 파서)
+    annotation/              # ★현행 (M5-b): parse.py — §3.2 문법 파서(compose.annotation-syntax · L0 · strip 의 유일한 파서) · ★현행 (M3/M4-a): strip.py(§3.3 ①~⑤ + 참조 구현) · index.py(annotation-index · thread · annotation 직렬화) · reassemble.py(역방향 round-trip)
+    gate/                    # ★현행 (M3/M4-a · T64 ②): l0/ — 로더(l0-format.yaml#rules[] · retired 거부 · veto 는 항목에서) · rules_{format,annotation,citation,numeric,run}.py · weighted_length.py(시트 weighted_length) · sentence_count.py(sentence_counting)
   studio/                    # 도면 렌더 (HTML/CSS/SVG + 헤드리스 Chromium)
     templates/
     tokens/
@@ -4133,17 +4134,17 @@ effective_from: gate_version 1.3
 | `contracts/stages/design.yaml` | 현행 | M5-a(T64) |
 | `contracts/stages/figures.yaml` | 예정 | M9 |
 | `contracts/stages/compose.yaml` | 현행 | M5-b(T64) |
-| `contracts/stages/gate.yaml` | 예정 | M4 |
+| `contracts/stages/gate.yaml` | 현행 | M3/M4-a(T64) |
 | `contracts/stages/probe.yaml` | 예정 | M7 |
 | `contracts/stages/critique.yaml` | 예정 | M8 |
 | `contracts/stages/ship.yaml` | 예정 | M10 |
 | `contracts/stages/feedback.yaml` | 예정 | M10 |
-| `contracts/schemas/annotation.schema.json` | 예정 | M3 |
-| `contracts/schemas/annotation-index.schema.json` | 예정 | M3 |
-| `contracts/schemas/thread.schema.json` | 예정 | M3 |
+| `contracts/schemas/annotation.schema.json` | 현행 | M3/M4-a(T64) |
+| `contracts/schemas/annotation-index.schema.json` | 현행 | M3/M4-a(T64) |
+| `contracts/schemas/thread.schema.json` | 현행 | M3/M4-a(T64) |
 | `contracts/schemas/blueprint.schema.json` | 현행 | M5-a(T64) |
 | `contracts/schemas/extension-envelope.schema.json` | 현행 | M5-a(T64) |
-| `contracts/schemas/gate-report.schema.json` | 예정 | M4 |
+| `contracts/schemas/gate-report.schema.json` | 현행 | M3/M4-a(T64) |
 | `contracts/schemas/probe-report.schema.json` | 예정 | M7 |
 | `contracts/schemas/probe-score.schema.json` | 예정 | M7 |
 | `contracts/schemas/run.schema.json` | 예정 | M12 |
@@ -4151,7 +4152,7 @@ effective_from: gate_version 1.3
 
 글로브(`*`)를 포함한 행은 존재 검사에서 제외하고 부모 디렉터리만 확인한다. **M1에서 `contracts/stages/*.yaml` 글로브 행은 스테이지별 실경로 행으로 분해되었다** — 세 스테이지(`source`·`read`·`freeze`)가 실물이 되면서 글로브 하나로는 "만든 것"과 "만들 것"을 구별할 수 없게 되었기 때문이다. K2는 `현행` 행의 실재와 `예정` 행의 부재를 각각 대조하므로, 분해하지 않으면 나머지 여덟 스테이지가 이미 존재한다는 잘못된 인상이 표에 남는다.
 
-`현행` 파일이 선언하는 계약 라인은 `material-spec/v0` · `l0-format/v0` · `parameters/v0` · `speech-acts/v1` · `defect-catalog/v0` · `approval-envelope/v0` · `metrics-row/v0` · `format-parameters/v0` · `run-kinds/v0` · `score-lint/v1` · `verdict-check-row/v0` · `reader-rules/v0` · `stage-contract/v0` · `convergence/v0` **열넷**이다(M0.5의 7종 + M0.6의 4종 + **M1의 3종**). K3가 문서의 언급과 파일의 선언(`title` 또는 `properties.schema.const`, YAML은 최상위 `schema`)을 **양방향**으로 대조하므로, 파일에만 있는 계약도 문서에만 있는 계약도 결함으로 잡힌다. T64(M5-a)가 `blueprint/v0` · `extension-envelope/v0` 둘을 더해 **열여섯**이다.
+`현행` 파일이 선언하는 계약 라인은 `material-spec/v0` · `l0-format/v0` · `parameters/v0` · `speech-acts/v1` · `defect-catalog/v0` · `approval-envelope/v0` · `metrics-row/v0` · `format-parameters/v0` · `run-kinds/v0` · `score-lint/v1` · `verdict-check-row/v0` · `reader-rules/v0` · `stage-contract/v0` · `convergence/v0` **열넷**이다(M0.5의 7종 + M0.6의 4종 + **M1의 3종**). K3가 문서의 언급과 파일의 선언(`title` 또는 `properties.schema.const`, YAML은 최상위 `schema`)을 **양방향**으로 대조하므로, 파일에만 있는 계약도 문서에만 있는 계약도 결함으로 잡힌다. T64(M5-a)가 `blueprint/v0` · `extension-envelope/v0` 둘을 더해 열여섯이 되었고, T64 ②(M3/M4-a · L0 게이트)가 `thread/v0` · `annotation-index/v0` · `annotation/v0` · `gate-report/v0` 넷을 더해 **스물**이다.
 
 M1이 신설한 계약 3종의 자리는 §6.2의 배치 예시 표가 판별과 함께 싣는다.
 
