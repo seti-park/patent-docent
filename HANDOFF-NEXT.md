@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(177차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(178차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 178차 — **결정 브리핑 T66 발행** `https://claude.ai/code/artifact/ce9294b6-67ec-4b80-995a-b6cad2f372ce`(추기 146): ① 동결본 raw_path 2건 처분(A 해소 규칙 추천) · ② select 좌석 결정론 추인 · ③ rc-0008 과광화 유보. **지금 할 일 = Owner `T66: ① _ / ② _ / ③ _` 대기 → 재정문 `ruling-20260913-11-T66.md` + 원장 행 → ① A 면 `figures.yaml` 해소 규칙 + `engine/stages/figures.py` 분기 + 시험 2(총괄 직접) → `figures.sh` → `compose-r2.sh`(opus xhigh) → `gate.sh`(--variant v2) → 도면 시안 브리핑 T67(R11).** 살아 있는 배경 = 없음.**
+
+> [정정 2026-09-13 · 178차] 177차의 「T66 발행」은 됐다 — 재정 대기.
 
 **★ 09-13 177차 — **④ 병합(`b8d3a9f` · M3 누계 $63.62) → 런 -3 `figures` = escalate**(추기 145): 동결본 v1 의 `raw_path` 2건(FIG-8 `fig-08.png` ↔ 실물 `fig-08-09.png` · FIG-19 `fig-19.png` ↔ `fig-19.jpg`)이 어긋나 자산층이 서지 않음 — 재료 참조 결함 · 처분은 재정. **지금 할 일 = 결정 브리핑 T66 발행(① raw_path 처분 A 해소 규칙/B READ 반려/C 종결 · 추천 A · ② select 좌석 결정론 추인 · ③ rc-0008 과광화 유보) → 재정 → A 면 `figures.yaml` 규칙 + 러너 수정(총괄 직접 · 소규모) → `figures` → `compose --variant v2 --round 2` → `gate-l0 --variant v2` → 도면 시안 브리핑 T67(사용권 R11).** 살아 있는 배경 = 없음. 스크립트 = `pd-lanes/t65-figures/{figures,compose-r2,gate}.sh`.**
 
