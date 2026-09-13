@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(159차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(160차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 160차 — 구동기 병합(`07403cb` · `tools/drive_partial_read.py` · 시험 M30 13 · 전체 937) · 프로브 실측으로 **`--bare` 제거**(로그인 풀림 · 함정 S · 대체 `--setting-sources project` + 중립 cwd + `--disable-slash-commands --strict-mcp-config`) · 구조화 출력 = `structured_output` · 추기 122. **지금 할 일 = READ 부분 런 2 실런 기동**(Owner 에게 한 줄 알림 뒤 · 이 대화창이 명령 단위로): `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B tools/drive_partial_read.py init gdm-wo2026128750a1-agent-memory-2 --source ~/projects/workspaces/docent-rehearsal-01-source/input-raw/WO2026-128750A1.txt --figures ~/projects/workspaces/docent-rehearsal-01-source/figures-normalized-20 --patent-meta <09-01 run.yaml#patent 에서 추출> --expect-sha256 0c207938…` → `step`(분해 2 · fable low · 좌표당 ≤15분 · 첫 좌표 실호출 검증) → 상신 축 미달이면 Owner 「계속」 → `continue` → `step`(접지 ≤9 · opus low) → `step`(통합 1) → **CP1(exit 20)** → `cp1` 출력 + `10-read/material-spec.md`(§8-b) 를 Owner 께(아티팩트 · 감시 없음) → Owner 육성 + `review_adjudicated[]` → `approve` → `freeze` → `seal` → 기록(추기 · HANDOFF · 회계). 실런 중 배경 = 없음(구동기는 전경 명령 · 각 `step` 은 레인 수 × ≤15분이라 Bash 10분 상한을 넘을 수 있음 → `step` 은 `setsid nohup` + STATUS + Monitor 로 띄운다 · 함정 A). Owner 재정 대기 = 없음.**
+
+> [정정 2026-09-13 · 160차] 159차의 「구동기 M3 회수 대기」는 끝났다(추기 122).
 
 **★ 09-13 159차 — 구동 설계 `docs/decisions/D-20260913-03-read-run-2-driver.md`(`da831d8` · READ **부분 런** `partial/freeze` · 런 ID `gdm-wo2026128750a1-agent-memory-2` · 명령 8 · CLI 레인 규격) → **구동기 M3 레인 기동**(추기 121 · worktree `~/projects/workspaces/pd-m3-t60-driver` · 레인 `pd-lanes/fable-m3-t60-driver/` · fable low). **지금 할 일 = 회수 대기** → 재현(새 시험 M30 · 전체 시험 · 관문 · `--dry-run`) → 병합 → Owner 에게 실런 기동 한 줄 알림 → `init` → `step` 반복(분해 2 → 접지 ≤9 → 통합 1) → CP1(exit 20) → 판독본 + §8-b 를 Owner 께 → `approve` → `freeze` → `seal` → 기록. Owner 재정 대기 = 없음. 살아 있는 배경 = 구동기 M3 레인 1 + `/tmp` 감시 Monitor 1.**
 

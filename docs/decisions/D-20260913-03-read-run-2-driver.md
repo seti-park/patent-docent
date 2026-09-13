@@ -37,13 +37,13 @@
 
 ```
 env MEMORY_HOOKS=off CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000 \
-claude -p --bare --model <api-id> --effort <effort> \
+claude -p --setting-sources project --disable-slash-commands --strict-mcp-config --model <api-id> --effort <effort> \
   --output-format json --json-schema <wrapper-schema.json> \
   --permission-mode dontAsk --permission-prompts none --tools "" \
   < <lane_dir>/request.md > <evidence>/calls/<lane_id>.raw.json
 ```
 
-- **`--bare`** — 훅·스킬·서브에이전트·플러그인·MCP·자동 메모리·CLAUDE.md 를 읽지 않는다(공식 문서: *"useful for CI and scripts where you need the same result on every machine"*). 레인은 요청서 하나만 본다(요청서 밖 파일 접근 금지 · 도구 0).
+- **~~`--bare`~~ → `--setting-sources project` + 중립 cwd + `--disable-slash-commands --strict-mcp-config`** [정정 2026-09-13 13:5x · 실측] — `--bare` 는 키체인 읽기도 건너뛰어 구독 로그인이 풀린다(`Not logged in` · LANE-RUNTIME 함정 S). 대체 조합의 실측(stream-json `system/init`) = 훅 0 · 플러그인 0 · MCP 0 · 스킬 0 · 도구 0 · 자동 메모리 = 중립 cwd 의 빈 디렉터리. 레인은 요청서 하나만 본다(요청서 밖 파일 접근 금지 · 도구 0). 구조화 출력 자리 = json 결과의 `structured_output`(실측).
 - **모델 ID** = 계약 라벨의 첫 alias(`read.yaml#lane.model_identity.labels`: `fable-5.1 → claude-fable-5-1` · `opus-5 → claude-opus-5`). effort = `sub_lanes[].effort`. 둘 다 **플래그로만** 지정(프롬프트 문구 금지 · SPEC §1.4 레인 규약 1).
 - **`--json-schema`** = 응답 봉투 `{lane_id, model, effort, input_digest, payload}` 에 `engine/lanes/plan.py` 의 해당 작업 payload 스키마를 넣은 것(구동기가 좌표마다 생성). CLI 층에서 형태를 강제하고 엔진 검증은 그대로 둔다(이중).
 - **응답 파일 작성 = 구동기**(레인이 파일을 쓰지 않는다 · 도구 0). `payload` 와 `input_digest` 는 레인 출력 그대로 옮긴다(지문은 레인이 요청서 표에서 옮겨 적은 값 — P-12 시점 결속 유지). **`model` 은 CLI 출력 `modelUsage` 의 주 키(출력 토큰 최대)**로 쓴다 — 레인의 자기 신고보다 등급이 높은 관측(공식 문서: json 결과의 per-model 비용 분해 · `system/init.model`). 요청 ID 와 다르면 그 값을 그대로 적어 러너가 `mismatch` 로 남기게 한다(조용한 대체 금지). **`effort` 는 요청 플래그 값**(출력에 노출되지 않음 — 문서·실측 일치 · `read.yaml#lane.effort_evidence` 대로 구동기가 권위 원천).

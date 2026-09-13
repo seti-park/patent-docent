@@ -137,8 +137,14 @@ def claude_executor(argv: list[str], stdin: bytes, env: dict, timeout: int) -> E
     """실제 CLI 호출. 벽시계 상한을 넘기면 프로세스를 죽이고 `timed_out` 으로 돌려준다."""
     started = _dt.datetime.now(_dt.timezone.utc)
     try:
+        # `_LANE_CWD` = 중립 작업 디렉터리(프로젝트 `.claude/`·CLAUDE.md 가 없는 빈 곳) — 환경 변수가 아니라
+        # 실행기 전달 인자이며 자식 프로세스 환경에서는 뺀다. 스텁 실행기는 무시한다.
+        env = dict(env)
+        cwd = env.pop("_LANE_CWD", None)
+        if cwd:
+            os.makedirs(cwd, exist_ok=True)
         proc = subprocess.run(
-            argv, input=stdin, env=env, capture_output=True, timeout=timeout, check=False
+            argv, input=stdin, env=env, capture_output=True, timeout=timeout, check=False, cwd=cwd
         )
     except subprocess.TimeoutExpired as exc:
         elapsed = _dt.datetime.now(_dt.timezone.utc) - started
@@ -319,10 +325,16 @@ def api_id_for_label(law: str, label: str) -> str:
 
 def lane_argv(api_id: str, effort: str, schema_path: str) -> list[str]:
     """설계 §4 의 플래그 전건 · 순서 고정."""
+    # `--bare` 는 키체인 읽기도 건너뛰어 구독 로그인이 풀린다(LANE-RUNTIME 함정 S · 2026-09-13 실측).
+    # 대체 = 설정 원천을 project 로 한정 + 중립 cwd(`_LANE_CWD`) + 슬래시 명령·MCP 차단 —
+    # 실측(system/init): 훅 0 · 플러그인 0 · MCP 0 · 스킬 0 · 자동 메모리 = 중립 cwd 의 빈 디렉터리.
     return [
         "claude",
         "-p",
-        "--bare",
+        "--setting-sources",
+        "project",
+        "--disable-slash-commands",
+        "--strict-mcp-config",
         "--model",
         api_id,
         "--effort",
@@ -486,7 +498,9 @@ def call_lane(ctx: Context, lanes_root: str, lane_id: str) -> CallOutcome:
     _write_bytes(schema_path, _json_bytes(wrapper_schema(task)))
 
     started_at = _now_iso()
-    result = ctx.executor(argv, stdin, lane_env(), WALL_CLOCK_SECONDS)
+    env = lane_env()
+    env["_LANE_CWD"] = os.path.join(ctx.evidence, "lane-cwd")  # 중립 cwd(설계 §4 정정 · 함정 S)
+    result = ctx.executor(argv, stdin, env, WALL_CLOCK_SECONDS)
     ended_at = _now_iso()
     _write_bytes(_raw_path(ctx, lane_id), result.stdout)
 

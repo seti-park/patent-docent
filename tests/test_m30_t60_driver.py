@@ -197,7 +197,7 @@ def test_lane_command_line_has_every_flag_in_order(tmp_path) -> None:
     ctx.dry_run = True
     drv.call_lane(ctx, lanes, request.lane_id)
     schema = os.path.join(ctx.schemas_dir, "read-a__decompose__batch-0.json")
-    expected = ["claude", "-p", "--bare", "--model", "claude-fable-5-1", "--effort", "low",
+    expected = ["claude", "-p", "--setting-sources", "project", "--disable-slash-commands", "--strict-mcp-config", "--model", "claude-fable-5-1", "--effort", "low",
                 "--output-format", "json", "--json-schema", schema, "--permission-mode", "dontAsk",
                 "--permission-prompts", "none", "--tools", ""]
     if drv.lane_argv("claude-fable-5-1", "low", schema) != expected:
@@ -332,7 +332,8 @@ def test_fixture_request_round_trip_is_consumed_by_load_response(tmp_path) -> No
     consumed = load_response(request, outcome.response_path)
     if consumed.payload != payload or consumed.mismatches(request):
         pytest.fail("러너가 응답을 소비하지 못했거나 mismatch 로 본다")
-    if ctx.executor.calls[0][4] != "claude-opus-5" or ctx.executor.calls[0][6] != fixture["effort"]:
+    _argv = ctx.executor.calls[0]
+    if _argv[_argv.index("--model") + 1] != "claude-opus-5" or _argv[_argv.index("--effort") + 1] != fixture["effort"]:
         pytest.fail(f"픽스처 좌표의 요청 플래그가 다르다: {ctx.executor.calls[0]}")
 
 
@@ -355,7 +356,7 @@ def test_full_flow_init_step_cp1_approve_freeze_seal(tmp_path) -> None:
     code = h.run("step", h.run_id, executor=stub)
     if code != drv.EXIT_CP1_WAIT:
         pytest.fail(f"step 이 CP1 대기(20)가 아니다: {code} · {h.lines}")
-    tasks = sorted({call[4] for call in stub.calls})
+    tasks = sorted({call[call.index("--model") + 1] for call in stub.calls})
     if tasks != ["claude-fable-5-1", "claude-opus-5"]:
         pytest.fail(f"호출 모델이 계약 좌석과 다르다: {tasks}")
     calls_before = len(stub.calls)
@@ -459,7 +460,7 @@ def test_step_stops_with_pending_when_a_lane_fails_and_dry_run_writes_nothing(tm
     after = {os.path.join(d, f) for d, _, fs in os.walk(h.worktree) for f in fs if ".git" not in d}
     if after != snapshot or len(failing.calls) != 1:
         pytest.fail("dry-run 이 파일을 썼거나 실행기를 불렀다")
-    if not all(line.startswith("[dry-run] read-") and "--bare" in line for line in h.lines):
+    if not all(line.startswith("[dry-run] read-") and "--setting-sources project" in line for line in h.lines):
         pytest.fail(f"dry-run 출력이 명령줄이 아니다: {h.lines}")
     # 같은 좌표를 다시 부른다 · 성공하면 계속 간다
     good = Stub({"read-a": m2.payload_set(), "read-b": m2.payload_set()})

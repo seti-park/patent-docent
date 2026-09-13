@@ -22,7 +22,7 @@ $PY tools/drive_partial_read.py [--repo R] [--worktree-root D] [--executor claud
 
 **레인 호출 한 줄**(좌표마다 · 순차 · 벽시계 900초):
 ```
-env MEMORY_HOOKS=off CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000 claude -p --bare --model <aliases[0]> --effort <effort> \
+env MEMORY_HOOKS=off CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000 claude -p --setting-sources project --disable-slash-commands --strict-mcp-config --model <aliases[0]> --effort <effort> \
   --output-format json --json-schema <evidence>/schemas/<lane>.json --permission-mode dontAsk --permission-prompts none --tools "" < request.md
 ```
 응답 파일 `response.json` = `{lane_id, model, effort, input_digest, payload}` · `model` = CLI `modelUsage` 의 출력 토큰 최대 키 · `effort` = 요청 플래그 값 · 나머지 = 레인 출력 그대로. 레인 자기 신고는 영수증에만 남는다.
