@@ -83,6 +83,12 @@
 | `design.figure-budget` | `engine/stages/design.py` | 도면 참조가 해소되지 않음(매니페스트 있으면 그것 · 없으면 동결본 `figures[].id` — 재량 ⓐ · `extras.resolution_source`) · 트윗별 도면 수 > `images_per_post_max` · `figure_plan` ↔ `slots` 불일치 · 훅 도면이 T1 밖 |
 | `design.spec-digest` | `engine/stages/design.py` | 블루프린트의 `spec_version`·`spec_digest` 가 현재 동결본과 다름(재정 N11). 재진입 시 기존 `blueprint.json` 에도 대조한다 |
 | `design.anchors-adjudicated-only` | `engine/stages/design.py` | 레인에 제공된 앵커 목록(`20-design/anchors-provided.json`)에 미재정 항목이 섞임(재정 R12). 제공 0건은 `vacuous: empty-target` 이다 |
+| `compose.input-digest` | `engine/stages/__init__.py` | 최신 동결본이 부재·지문 불일치이거나 `20-design/blueprint.json` 이 부재·다른 재료 판 위에 선 채로 펜이 시작됨(재정 P-C · T64 ③) — 환경 오류 |
+| `compose.prompt-lint` | `engine/pens/lint.py` | (진입 시) 펜 프롬프트(템플릿 + 응답 계약 + 지시 블록 · 원천 조각·블루프린트 요약 제외)에 부정 명령형 `PROMPT_NEGATION_RE` 또는 화행 술어·결함 카탈로그 리터럴이 있음(D8). 판정 행 2 — `ruleset: prompt-negation` · `speech-acts+defect-catalog`(카탈로그 0항이면 `extras.defect_catalog.vacuous = empty-ruleset`). 1건 = `halt` |
+| `compose.lane-verified` | `engine/stages/compose.py` | 변주 응답의 `model` 이 `read.yaml#model_identity` 의 `opus-5` 수용 집합 밖이거나 `effort` 가 계약 배정과 다름(재정 R10 · 토너먼트 기입 자격 없음 → `halt`). `extras.effort_evidence = requested-flag` |
+| `compose.spec-digest` | `engine/stages/compose.py` | 프런트매터 `spec_digest` 가 `run.yaml#frozen[-1]` 과 동결본 실측 둘 다와 일치하지 않음(재정 N11 → `halt`) |
+| `compose.annotation-syntax` | `engine/stages/compose.py` | `engine/annotation/parse.py#parse` 가 위반을 냄 — finding `rule` 은 §3.2 대응표의 `annotation.schema`·`annotation.missing-tag`, locus `T<n>/S<i>`. `retry(2)` → `escalate`(그 변주만) |
+| `compose.frontmatter` | `engine/stages/compose.py` | 프런트매터 5키 정확히 · `run_id`·`variant`·`pen`(계약 배정)·`spec_version`·`spec_digest` 형식 중 하나라도 어긋남(→ `halt` · spec-digest 행을 따른다) |
 
 ### 2.2 계약에만 있고 아직 구현이 없는 것
 
@@ -95,7 +101,6 @@
 | `numeric.unreviewed-use` | M4 | `contracts/l0-format.yaml` §7 · SPEC §4.4.4 — **거부권 없는 자문 플래그**다(재정 P-B). 전수 수확이 넓힌 정답지의 대가를 받는 짝 규칙이며, 미참조(미검토) 수치를 본문이 처음 인용하면 CP2 봉투에 플래그가 붙는다 |
 | `gate.no-rewrite` · `gate.final-eyes` | M4·M6 | SPEC §4.7·§1.10 |
 | `gate.no-score` · `critique.no-score` | M4·M8 | `contracts/lexicon/score-lint.yaml` |
-| `compose.spec-digest` | M5 | SPEC §7.3 (재정 N11) — `design.spec-digest` 는 T64(M5-a)로 §2.1 에 올라갔다 |
 | `critique.anchors-adjudicated-only` | M8 | SPEC §1.12 — `design.anchors-adjudicated-only` 는 T64(M5-a)로 §2.1 에 올라갔다 |
 | `probe.independence` · `probe.input-clean` · `probe.no-self-report` · `probe.target-coverage` · `probe.grader-separation` | M7 | SPEC §1.11 — **계기 5종.** ★ 2026-08-19 등재(누락 보수): SPEC §1.11이 이 다섯을 선언하는데 이 사전의 어느 절에도 없었다. 사전이 스스로 내건 갱신 규율("새 검사를 만들면 이 표에 등재한다")이 계기 계열에서만 지켜지지 않은 자리이며, 그 결과 §2.2 목록을 읽고 "M7에 무엇이 남았는가"를 세면 다섯이 빠졌다. **id 신설이 아니라 사전의 누락 보수다** — 이름은 SPEC이 이미 선언했고 여기 옮겨 적을 뿐이다. 정족수 판정 층(`engine/quorum.py`)은 구현되었으나 그것은 검사가 아니라 순수 함수이며 검사 id를 발행하지 않는다 |
 | `feedback.window` · `feedback.row-consistency` · `feedback.corrects-resolve` | M10 | SPEC §1.15 |
@@ -172,6 +177,11 @@
 | `20-design/lanes/` | `design` | 설계 레인 왕복 기록(`design/blueprint[/retry-1]/batch-0/{request.json,request.md,response.json}`) |
 | `20-design/escalation.json` | `design` | (선택) 상신 기록 — 레인의 `escalation` 또는 재시도 소진. 실재하면 러너는 재진입을 거부한다 |
 | `20-design/anchors-provided.json` | `design` | (선택) 레인에 제공된 재정 앵커 목록 + 차단 건수 — `design.anchors-adjudicated-only` 의 대상 |
+| `40-compose/<v>/thread.annotated.md` | `compose` | 변주 `v` 의 **확정 초안**(주석층 · §3.2). 레인 바이트 그대로(끝 개행 하나만 정규화) · 검사 4 전건 통과 뒤에만 쓴다 · 전 변주 해소 뒤에 함께 쓴다(순서 효과 차단) |
+| `40-compose/<v>/material-defect.md` | `compose` | (선택) 재료 반려서 — YAML 프런트매터 4필드(`material_ids`·`defect_kind`·`evidence`·`blocked_slots`) + 본문 evidence. 실재 = 그 변주 `reject-upstream`(→ `read`) |
+| `40-compose/lanes/` | `compose` | 펜 레인 왕복 기록(`compose/<v>[/retry-<n>]/batch-0/{request.json,request.md,response.json}`) |
+| `40-compose/compose-report.json` | `compose` | 판정 행 8키 배열(진입 1 + 린트 2×변주 + 검사 4×변주) · findings · `variants` 상태 · `pens` · `comparison_axis` · `lanes` · `law_commit` |
+| `40-compose/tournament-rows.jsonl` | `compose` | **런 안**의 토너먼트 행(append · 변주당 1행 · `outcome ∈ drafted\|missing\|material-defect` · `comparison_axis`·`taste_weight`). `ledgers/tournament.jsonl` 의 쓰기 소유자는 `ship` 뿐이므로(§1.17) 여기 쌓고 `ship` 이 옮긴다(총괄 재량 ⓐ · T64 집행 ②) |
 
 **런 밖의 원장 하나**(위 표와 층이 다르므로 따로 적는다).
 

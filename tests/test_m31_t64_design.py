@@ -185,7 +185,7 @@ def test_contract_loads_and_paths_declare_design_outputs(law) -> None:
     if contract["lane"]["model"] != "fable-5.1" or contract["lane"]["effort"] != "high":
         pytest.fail("설계 좌석이 fable-5.1 high 가 아니다(T64 재량)")
     paths = RunPaths("/nonexistent/run", law)
-    if paths.STAGES != ("source", "read", "freeze", "design"):
+    if paths.STAGES[:4] != ("source", "read", "freeze", "design"):
         pytest.fail(f"STAGES 가 다르다: {paths.STAGES}")
     if not paths.blueprint_json.endswith("20-design/blueprint.json") or not paths.blueprint_md.endswith("20-design/blueprint.md"):
         pytest.fail("blueprint.json·blueprint.md 선언이 없다")
@@ -763,8 +763,8 @@ def test_driver_extend_then_design_then_seal(law, tmp_path) -> None:
         pytest.fail("gate → design 이 2 가 아니다")
 
 
-def test_help_lists_eleven_commands_including_extend_and_design() -> None:
+def test_help_lists_twelve_commands_including_extend_and_design() -> None:
     parser = drv.build_parser()
     listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
-    if listed != drv.COMMANDS or len(listed) != 11 or listed[-2:] != ("extend", "design"):
-        pytest.fail(f"명령 11 이 아니다: {listed}")
+    if listed != drv.COMMANDS or len(listed) != 12 or listed[-3:] != ("extend", "design", "compose"):
+        pytest.fail(f"명령 12 가 아니다: {listed}")

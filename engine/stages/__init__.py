@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""스테이지 러너 4종(`source` · `read` · `freeze` · `design`)과 그들이 공유하는 최소 도구.
+"""스테이지 러너 5종(`source` · `read` · `freeze` · `design` · `compose`)과 그들이 공유하는 최소 도구.
 
 여기 있는 함수는 전부 **결정론**이며 판단하지 않는다. 판단은 레인(LLM)과 Owner 의 몫이고,
 러너는 계약이 정한 자리에 계약이 정한 형태로 산출물을 놓고 검사 결과를 그대로 보고한다.
@@ -453,11 +453,47 @@ def _entry_design_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) 
         )
 
 
+def _entry_compose_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) -> None:
+    """`compose.input-digest` — 최신 동결본 실재·지문 + 블루프린트 실재·같은 지문(재정 T64 ③ · P-C).
+
+    설계 진입 검사와 같은 격이되 대상이 둘이다: 펜이 서는 재료(동결본)와 레시피(블루프린트)가 **같은
+    재료 판**을 가리켜야 한다(재정 N11 — 하류 산출물은 자기가 선 재료 버전을 기록하고 정합을 검사한다).
+    블루프린트가 다른 판 위에 서 있으면 세 변주가 같은 재료를 받는다는 D10 의 전제가 서지 않는다.
+    """
+    _entry_design_input_digest(row, paths, entry, inputs)
+    if row.findings:
+        return
+    check_id = str(entry.get("id"))
+    version = inputs.get("spec_version")
+    rows = [
+        entry_row
+        for entry_row in (load_yaml(paths.run_yaml).get("frozen") or [])
+        if isinstance(entry_row, dict) and entry_row.get("spec_version") == version
+    ]
+    recorded = str(rows[-1].get("spec_digest", ""))
+    if not _require_file(row, check_id, paths.blueprint_json, "20-design/blueprint.json"):
+        return
+    row.checked += 1
+    blueprint = load_json(paths.blueprint_json)
+    _compare(
+        row, check_id, "20-design/blueprint.json#spec_version",
+        str(blueprint.get("spec_version")), str(version),
+        "블루프린트가 선 재료 버전이 최신 동결본과 다르다 — 재료 개정으로 무효화된 블루프린트다(재정 N11)",
+    )
+    row.checked += 1
+    _compare(
+        row, check_id, "20-design/blueprint.json#spec_digest",
+        str(blueprint.get("spec_digest", "")), recorded,
+        "블루프린트의 spec_digest 가 최신 동결본 기록과 다르다 — 펜은 그 위에 서지 않는다(재정 N11)",
+    )
+
+
 _ENTRY_CHECKS = {
     "read.input-digest": _entry_read_input_digest,
     "source.input-digest": _entry_source_input_digest,
     "freeze.input-digest": _entry_freeze_input_digest,
     "design.input-digest": _entry_design_input_digest,
+    "compose.input-digest": _entry_compose_input_digest,
 }
 
 

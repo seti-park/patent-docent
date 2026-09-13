@@ -238,7 +238,7 @@ class RunPaths:
     어긋나는 순간을 조용히 넘기지 않기 위해서다.
     """
 
-    STAGES = ("source", "read", "freeze", "design")
+    STAGES = ("source", "read", "freeze", "design", "compose")
 
     def __init__(self, run_root: str, repo: str | None = None) -> None:
         self.run_root = os.path.abspath(run_root)
@@ -457,6 +457,45 @@ class RunPaths:
         """`30-figures/assets/manifest.json`(design 계약의 선언 입력 · 선행 실행된 경우에만 실재)."""
         return self.path("manifest.json")
 
+    # -- 40-compose ---------------------------------------------------------
+
+    def _variant(self, basename_pattern: str, variant: str) -> str:
+        """`<variant>` 자리를 변주 id 로 채운다. 패턴 자체는 계약(`compose.yaml`)이 들고 있다."""
+        declared = self.declared(basename_pattern)
+        if "<variant>" not in declared:
+            raise PathContractError(f"계약의 {basename_pattern} 선언에 <variant> 자리가 없다: {declared}")
+        return self.absolute(declared.replace("<variant>", variant))
+
+    def thread_annotated(self, variant: str) -> str:
+        """`40-compose/<variant>/thread.annotated.md` — 변주의 확정 초안(검사 4 통과 뒤에만 쓴다)."""
+        return self._variant("thread.annotated.md", variant)
+
+    def material_defect(self, variant: str) -> str:
+        """`40-compose/<variant>/material-defect.md`(`optional_outputs`) — 재료 반려서(D6 규율 ②)."""
+        return self._variant("material-defect.md", variant)
+
+    def compose_dir(self, variant: str) -> str:
+        return os.path.dirname(self.thread_annotated(variant))
+
+    @property
+    def compose_root(self) -> str:
+        """`40-compose/` — 변주 디렉터리들의 부모."""
+        return os.path.dirname(self.compose_report_json)
+
+    @property
+    def compose_report_json(self) -> str:
+        return self.path("compose-report.json")
+
+    @property
+    def tournament_rows_jsonl(self) -> str:
+        """`40-compose/tournament-rows.jsonl` — 런 안의 토너먼트 행(총괄 재량 ⓐ · `ship` 이 원장에 옮긴다)."""
+        return self.path("tournament-rows.jsonl")
+
+    @property
+    def compose_lanes_dir(self) -> str:
+        """펜 레인 왕복 보관소 `40-compose/lanes/` — 계약 outputs 에 선언되어 있다."""
+        return os.path.join(self.compose_root, LANES_DIRNAME)
+
     # -- 생성 ---------------------------------------------------------------
 
     def ensure_source_dirs(self) -> None:
@@ -471,3 +510,8 @@ class RunPaths:
 
     def ensure_design_dirs(self) -> None:
         os.makedirs(self.design_lanes_dir, exist_ok=True)
+
+    def ensure_compose_dirs(self, variants=()) -> None:
+        os.makedirs(self.compose_lanes_dir, exist_ok=True)
+        for variant in variants:
+            os.makedirs(self.compose_dir(variant), exist_ok=True)

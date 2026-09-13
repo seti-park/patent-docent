@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""READ 부분 런 구동기 — `run_kind: partial` · `partial_until: freeze` (재정 T60 집행) + 런 -3 연장·설계(재정 T64).
+"""READ 부분 런 구동기 — `run_kind: partial` · `partial_until: freeze` (재정 T60 집행) + 런 -3 연장·설계·펜(재정 T64).
 
-설계 정본 = `docs/decisions/D-20260913-03-read-run-2-driver.md`(§3 명령 11 · §4 레인 호출 규격 ·
+설계 정본 = `docs/decisions/D-20260913-03-read-run-2-driver.md`(§3 명령 11 + T64 ①②③ 의 extend·design·compose · §4 레인 호출 규격 ·
 §5 순서 · §9 성공 판정). 재정 좌표 = T60(구동 = M1a 직접 · 전 레인 CLI · 결정론 파이썬) ·
 T58 ②(좌석) · T59(봉투 `review_adjudicated[]`) · T64 ①②(연장 봉투 `extend` · 설계 스테이지 `design`).
 
@@ -32,7 +32,8 @@ T58 ②(좌석) · T59(봉투 `review_adjudicated[]`) · T64 ①②(연장 봉�
 
 `extend` 는 `15-frozen/extension-v<N>.md`(extension-envelope/v0)를 쓰고 `run.yaml#partial_until` 을
 옮긴다 · `design` 은 `engine/stages/design.py#run` 을 재진입(상한 4)하며 대기 좌표를 같은 `call_lane`
-으로 채운다(0 · 10 · 13 · 14 · 15).
+으로 채운다(0 · 10 · 13 · 14 · 15) · `compose` 는 `engine/stages/compose.py#run` 을 재진입(상한 8)하며 변주 좌표를
+**순차** 호출하고, 호출 상한에 닿은 좌표는 결측으로 러너에 신고한다(0 · 10 · 13 · 14 · 15).
 
 실행기는 주입 가능한 호출체다. 기본 = 실제 `claude` 서브프로세스. 시험은 스텁을 넣는다.
 이 모듈은 표준 라이브러리와 리포 모듈만 쓴다.
@@ -73,6 +74,7 @@ from engine.lanes.file_adapter import FileLaneAdapter  # noqa: E402
 from engine.lanes.plan import RESPONSE_SCHEMAS  # noqa: E402
 from engine.paths import PathContractError, RunPaths, load_stage_contract, run_kinds_contract  # noqa: E402
 from engine.stages import StageError, freeze as freeze_stage  # noqa: E402
+from engine.stages import compose as compose_stage  # noqa: E402
 from engine.stages import design as design_stage  # noqa: E402
 from engine.stages import read as read_stage  # noqa: E402
 from engine.stages import source as source_stage  # noqa: E402
@@ -108,14 +110,15 @@ APPROVAL_SCHEMA_REL = freeze_stage.APPROVAL_SCHEMA
 APPROVAL_NAME_RE = re.compile(r"^approval-v([1-9][0-9]*)\.md$")
 STDERR_TAIL_CHARS = 2000
 REVIEW_SECTION_LINES = 12
-COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal", "extend", "design")
+COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal", "extend", "design", "compose")
 DESIGN_REENTRY_CAP = 4
+COMPOSE_REENTRY_CAP = 8          # 변주 3 × 재시도 2 를 담는다(T64 ③ · 발주문 §3.6)
 EXTENSION_SCHEMA_REL = ("contracts", "schemas", "extension-envelope.schema.json")
 EXTENSION_NAME_RE = re.compile(r"^extension-v([1-9][0-9]*)\.md$")
 # 법 트리 더러움 판정에서 제외하는 접두(런 작업장 · 영수증 · 결박 worktree — 결박 기제 자신의 생성물).
 LAW_DIRTY_EXEMPT_PREFIXES = ("runs/", "evidence/", ".worktrees/")
-# 작업 스키마 조회 사전 — plan.py(READ 4 작업) + design.py(설계 1 작업). 값은 각 모듈의 상수 그대로(복사 아님).
-TASK_SCHEMAS = {**RESPONSE_SCHEMAS, **design_stage.RESPONSE_SCHEMAS}
+# 작업 스키마 조회 사전 — plan.py(READ 4 작업) + design.py(설계 1 작업) + compose.py(변주 3 · 같은 스키마). 값은 각 모듈의 상수 그대로(복사 아님).
+TASK_SCHEMAS = {**RESPONSE_SCHEMAS, **design_stage.RESPONSE_SCHEMAS, **compose_stage.RESPONSE_SCHEMAS}
 MANIFEST_BASENAME = "MANIFEST-sha256.txt"
 
 
@@ -376,9 +379,9 @@ def lane_env() -> dict:
 
 
 def wrapper_schema(task: str) -> dict:
-    """응답 봉투 스키마 — `payload` 에 plan.py·design.py 의 작업 스키마를 그대로 품는다(복사 아님)."""
+    """응답 봉투 스키마 — `payload` 에 plan.py·design.py·compose.py 의 작업 스키마를 그대로 품는다(복사 아님)."""
     if task not in TASK_SCHEMAS:
-        raise DriverExit(EXIT_USAGE, f"plan.py·design.py 가 모르는 작업이다: {task!r}")
+        raise DriverExit(EXIT_USAGE, f"plan.py·design.py·compose.py 가 모르는 작업이다: {task!r}")
     return {
         "type": "object",
         "required": ["lane_id", "model", "effort", "input_digest", "payload"],
@@ -877,7 +880,7 @@ def cmd_rewrap(ctx: Context, args: argparse.Namespace) -> int:
 
 def cmd_lanes(ctx: Context, args: argparse.Namespace) -> int:
     paths = ctx.paths()
-    rows = lane_inventory(paths.lanes_dir) + lane_inventory(paths.design_lanes_dir)
+    rows = lane_inventory(paths.lanes_dir) + lane_inventory(paths.design_lanes_dir) + lane_inventory(paths.compose_lanes_dir)
     if not rows:
         ctx.out("요청 좌표 없음")
     for row in rows:
@@ -1106,7 +1109,7 @@ def cmd_freeze(ctx: Context, args: argparse.Namespace) -> int:
 
 
 def manifest_lines(ctx: Context) -> list[str]:
-    """`evidence/**` 전건(MANIFEST 자신 제외) + `10-read/*.json` + `15-frozen/*` 의 sha256 · 경로."""
+    """`evidence/**` 전건(MANIFEST 자신 제외) + `10-read/*.json` + `15-frozen/*` + `20-design/**` + `40-compose/**` 의 sha256 · 경로."""
     paths = ctx.paths()
     entries: list[tuple[str, str]] = []
     base = ctx.worktree if os.path.commonpath([ctx.worktree, ctx.run_root]) == ctx.worktree else os.path.dirname(ctx.run_root)
@@ -1133,6 +1136,10 @@ def manifest_lines(ctx: Context) -> list[str]:
                 add(full)
     if os.path.isdir(paths.design_dir):
         for dirpath, _dirs, files in os.walk(paths.design_dir):
+            for name in files:
+                add(os.path.join(dirpath, name))
+    if os.path.isdir(paths.compose_root):
+        for dirpath, _dirs, files in os.walk(paths.compose_root):
             for name in files:
                 add(os.path.join(dirpath, name))
     entries.sort(key=lambda pair: pair[1])
@@ -1313,6 +1320,72 @@ def cmd_design(ctx: Context, args: argparse.Namespace) -> int:
     raise DriverExit(EXIT_CALL_CAP, f"design 재진입 상한 {DESIGN_REENTRY_CAP} 도달")
 
 
+def cmd_compose(ctx: Context, args: argparse.Namespace) -> int:
+    """compose 스테이지 1회 구동 — `compose.run` 재진입(상한 8) + 대기 좌표 **순차** 호출(재정 T64 ③).
+
+    변주 좌표(`compose/v1/batch-0` → v2 → v3 · 재시도는 `retry-<n>`)를 한 번에 하나씩 부른다(RAM 함정).
+    좌표가 호출 상한(3)에 닿아 `DriverExit 15` 가 나면 그 변주를 **결측**으로 러너에 신고한다 — 러너는
+    토너먼트 결측 행을 쓰고 생존 변주 ≥ 1 이면 계속한다(조용한 대체 없음 · R10). 실호출 검증은 변주마다
+    러너 검사 `compose.lane-verified` 가 응답 파일의 model 로 본다(첫 좌표 검증은 design 영수증이 있으면 건너뛴다).
+    """
+    paths = ctx.paths()
+    meta = _load_run_yaml(paths)
+    enum = _terminus_enum(ctx.law)
+    current = str(meta.get("partial_until", ""))
+    if meta.get("run_kind") == RUN_KIND and (current not in enum or enum.index(current) < enum.index("compose")):
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"종료선 — partial_until={current!r} 은 compose 앞이다 · `extend` 가 먼저다")
+    if not os.path.isfile(paths.blueprint_json):
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"블루프린트가 없다 — `design` 먼저다: {paths.blueprint_json}")
+    lanes_root = paths.compose_lanes_dir
+    if ctx.dry_run:
+        pending = [row["lane_id"] for row in lane_inventory(lanes_root) if not row["response"]]
+        if not pending:
+            ctx.out(f"[dry-run] compose.run(run_root={ctx.run_root}) — 대기 좌표 없음(요청은 실행 시 생긴다)")
+            return EXIT_OK
+        for lane_id in pending:
+            call_lane(ctx, lanes_root, lane_id)
+        return EXIT_PENDING
+    missing: dict[str, str] = {}
+    for _round in range(COMPOSE_REENTRY_CAP):
+        try:
+            outcome = compose_stage.run(run_root=ctx.run_root, repo=ctx.law, missing=missing)
+        except OSError as exc:
+            raise DriverExit(EXIT_UNDECIDABLE, f"io_fault: compose 스테이지 {exc}") from exc
+        except StageError as exc:
+            raise DriverExit(EXIT_TERMINAL_FAIL, f"compose 스테이지 정지: {exc}") from exc
+        for row in outcome.get("rows") or []:
+            for finding in getattr(row, "findings", []) or []:
+                ctx.out(f"  {row.check_id}/{finding.rule}@{finding.locus}: {finding.message}")
+        status = str(outcome.get("status"))
+        if status == "pending":
+            lane_ids = list(outcome.get("pending") or [])
+            ctx.out(f"대기 좌표 {len(lane_ids)}건: {', '.join(lane_ids)}")
+            failed: list[str] = []
+            for lane_id in lane_ids:
+                try:
+                    result = call_lane(ctx, lanes_root, lane_id)
+                except DriverExit as exc:
+                    if exc.code != EXIT_CALL_CAP:
+                        raise
+                    variant = lane_id.split("/")[1]
+                    missing[variant] = exc.reason
+                    ctx.out(f"  {lane_id}: 결측 신고 — {exc.reason}")
+                    continue
+                ctx.out(f"  {lane_id}: {result.reason}")
+                if not result.ok:
+                    failed.append(lane_id)
+            if failed:
+                raise DriverExit(EXIT_PENDING, f"호출 실패 좌표 {len(failed)}건 — 다음 compose 가 다시 대기로 낸다: {', '.join(failed)}")
+            continue
+        variants = outcome.get("variants") or {}
+        summary = ", ".join(f"{variant}={state.get('status')}" for variant, state in variants.items())
+        if status == "ok":
+            ctx.out(f"초안: {summary} · {outcome.get('reason_label') or '전 변주 확정'}")
+            return EXIT_OK
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"compose 판정 {status}: {outcome.get('reason_label')} ({summary})")
+    raise DriverExit(EXIT_CALL_CAP, f"compose 재진입 상한 {COMPOSE_REENTRY_CAP} 도달")
+
+
 def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
     lines = manifest_lines(ctx)
     target = os.path.join(ctx.evidence, MANIFEST_BASENAME)
@@ -1332,7 +1405,7 @@ def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="drive_partial_read.py",
-        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계(T64) — 재정 T60 집행. 명령 11 · 판단 없음.",
+        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계·펜(T64) — 재정 T60 집행. 명령 12 · 판단 없음.",
     )
     parser.add_argument("--repo", help="정본 리포(기본 = 이 파일의 위치에서 추정)")
     parser.add_argument("--worktree-root", help="런 worktree 의 부모(기본 <repo>/.worktrees)")
@@ -1388,6 +1461,7 @@ def build_parser() -> argparse.ArgumentParser:
     extend.add_argument("--decided-at", help="ISO-8601 UTC(기본 지금)")
 
     sub.add_parser("design", help="design 스테이지 1회 구동(재진입 상한 4 · 대기 좌표 호출) — 재정 T64 ②").add_argument("run_id")
+    sub.add_parser("compose", help="compose 스테이지 1회 구동(변주 3 · 재진입 상한 8 · 좌표 순차 호출) — 재정 T64 ③").add_argument("run_id")
     return parser
 
 
@@ -1403,6 +1477,7 @@ _COMMANDS = {
     "seal": cmd_seal,
     "extend": cmd_extend,
     "design": cmd_design,
+    "compose": cmd_compose,
 }
 
 

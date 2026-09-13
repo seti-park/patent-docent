@@ -1,0 +1,158 @@
+# 스테이지 I/O 계약 — `compose`
+#
+# 정본 서술 = docs/SPEC.md §1.9. 이 파일은 그 서술의 기계 판독본이며, 어긋나면 SPEC 이 이긴다.
+# 서식 = SPEC §1.2 고정 서식 + `schema` 키 + 서식 확장 3 `checks_on_entry`(재정 P-C).
+# 실물화 = 재정 2026-09-13 T64 ③(펜 = Opus 5 high·xhigh·max 3판 · 변주 v1·v2·v3 · R10 규약 ①~④) ·
+#   ④(첫 초안은 fig: none) · 재량(펜 프롬프트 = 긍정형만 · may_read = 동결본 + blueprint + glossary).
+#
+# ★ 공통 규칙 — 런은 시작 시점 git 커밋에 결박된다(재정 P-U1). 계약·스키마·검증기·러너가
+#   함께 고정되므로, 런 도중 리포가 개정되어도 이 런의 법은 run.yaml#engine.commit 하나다.
+
+schema: stage-contract/v0
+id: compose
+
+lane:
+  kind: llm
+  model: opus-5               # 티어 라벨 · API 식별자 = read.yaml#lane.model_identity aliases[0] (= claude-opus-5)
+  effort: ladder              # 변주별 값은 아래 variants 가 정본이다(effort 사다리 · 재정 R10 · T64 ③)
+  variants:                   # 1호 런 = 같은 모델의 effort 사다리 3판. 재료·블루프린트·템플릿은 셋이 바이트 동일하다(D10)
+    - { variant: v1, vendor: anthropic, model: opus-5, effort: high  }
+    - { variant: v2, vendor: anthropic, model: opus-5, effort: xhigh }
+    - { variant: v3, vendor: anthropic, model: opus-5, effort: max   }
+  comparison_axis: effort     # 토너먼트 행의 비교 축(R10 규약 4). 2호 런부터 model
+  lane_id_vocabulary:
+    form: "compose/<variant>[/retry-<n>]/batch-0"
+    pattern: "^(?P<read_run>[a-z0-9]+(?:-[a-z0-9]+)*)/(?P<task>[a-z0-9]+(?:-[a-z0-9]+)*)(?:/retry-(?P<retry>[1-9][0-9]*))?/batch-(?P<batch>0|[1-9][0-9]*)$"
+    membership: {run: [compose], task: [v1, v2, v3]}
+    enforced_by: engine/stages/compose.py#ComposeLaneRequest
+  effort_evidence:
+    lane_self_report: echo
+    authoritative_source: "구동기 영수증 requested.effort(요청 플래그 값) · CLI 출력은 effort 를 노출하지 않는다(2026-09-13 실측)"
+  # 펜은 원천을 보지 않는다(D6 · C7 · must_not_read 의 물리 집행) — 요청서에 00-source/** · 10-read/** ·
+  # 다른 변주 산출 · 화행 술어 · 결함 카탈로그의 내용을 싣지 않고, 구동기는 `--tools ""` 로 레인의
+  # 파일 열람 자체를 막는다.
+  lane_discipline:
+    - "모델·effort 는 API 레벨 하드 지정한다. 프롬프트 문구로 소프트 지정하지 않는다(R10 규약 1)."
+    - "세 변주의 요청서는 effort · lane_id · variant 표지만 다르고 나머지는 바이트 동일하다(D10 · R10)."
+    - "변주마다 응답 파일의 model 이 opus-5 수용 집합에 들고 effort 가 배정과 같은지 러너가 본다(R10 규약 2 · compose.lane-verified)."
+    - "펜 프롬프트는 긍정형만 담는다. 그 사실은 compose.prompt-lint 가 진입 시 집행한다(D8)."
+
+checks_on_entry:
+  - id: compose.input-digest
+    criterion: >-
+      최신 동결본 실재 · sha256 == run.yaml#frozen[-1].spec_digest · 20-design/blueprint.json 실재 ·
+      그 spec_digest == 같은 값
+    implemented_by: engine/stages/__init__.py
+    on_mismatch: environment-error
+    note: "불일치는 품질 결함이 아니라 환경 오류다 — 즉시 중단+진단(재정 P-C)."
+  - id: compose.prompt-lint
+    criterion: "(진입 시) 펜 프롬프트에 부정 명령형·화행 술어·결함 카탈로그 리터럴 부재"
+    implemented_by: engine/pens/lint.py
+    on_mismatch: halt
+    note: >-
+      대상 = 템플릿 본문 + 응답 계약 + 지시 블록(렌더된 요청서에서 「원천 조각」 절과 블루프린트
+      요약 표를 뺀 나머지 — 둘은 데이터다). 집행 자리 = engine/stages/compose.py#run 진입.
+      조치가 halt 이고 판정 행 2(ruleset prompt-negation · speech-acts+defect-catalog)를 보고에
+      남겨야 하므로 verify_declared_inputs(환경 오류 경로) 밖에서 돈다.
+
+inputs:
+  - "15-frozen/material-spec.v<N>.json"
+  - 20-design/blueprint.json
+  # 30-figures/selection.json · 30-figures/assets/manifest.json 은 SPEC §1.9 inputs 에 있으나 이번 런에는
+  # 없다(재정 T64 ④ — 첫 초안은 글만 · 도면은 다음 판). may_read 에만 두고 inputs 에서 뺀다 —
+  # inputs 에 두면 verify_declared_inputs 가 부재를 환경 오류로 세운다.
+
+may_read:
+  - "15-frozen/material-spec.v<N>.json"
+  - 20-design/blueprint.json
+  - 30-figures/selection.json
+  - 30-figures/assets/manifest.json
+  - contracts/glossary.md
+
+must_not_read:
+  - "00-source/**"
+  - "10-read/**"
+  - "40-compose/<other-variant>/**"
+  - "50-gate/**"                        # 자기 변주의 현 라운드 지시 제외
+  - "65-critique/**"
+  - contracts/lexicon/speech-acts.yaml
+  - contracts/lexicon/defect-catalog.yaml
+  - ledgers/metrics.jsonl                # 재정 R12 — 환류는 재정을 거쳐서만 생성계에 닿는다
+
+outputs:
+  - "40-compose/<variant>/thread.annotated.md"
+  - "40-compose/lanes/"
+  - 40-compose/compose-report.json
+  - 40-compose/tournament-rows.jsonl     # 총괄 재량 ⓐ — ledgers/tournament.jsonl 의 W 는 ship 에만 있다(§1.17). 런 안에 쌓고 ship 이 옮긴다
+
+optional_outputs:
+  - "40-compose/<variant>/material-defect.md"
+
+checks_before_exit:
+  - id: compose.lane-verified
+    criterion: "변주별 실호출 model·effort 가 run.yaml 의 펜 배정과 일치(transcript grep 검증, 재정 R10)"
+    implemented_by: engine/stages/compose.py
+    note: >-
+      model = 응답 파일의 model(구동기가 CLI modelUsage 주 키로 쓴다) ∈ read.yaml#model_identity 의
+      opus-5 수용 집합 · effort = 응답 파일의 effort(요청 플래그 값) == 배정. extras.effort_evidence
+      = requested-flag.
+  - id: compose.spec-digest
+    criterion: "프런트매터 spec_digest 가 현재 동결본과 일치"
+    implemented_by: engine/stages/compose.py
+  - id: compose.annotation-syntax
+    criterion: "주석 문법 파싱 성공(§3), 모든 문장에 태그 정확히 1개"
+    implemented_by: engine/stages/compose.py
+    note: "파서 = engine/annotation/parse.py#parse. finding.rule 은 SPEC §3.2 대응표의 L0 규칙 id(annotation.schema · annotation.missing-tag)."
+  - id: compose.frontmatter
+    criterion: "run_id·variant·pen·spec_version·spec_digest 전부 존재"
+    implemented_by: engine/stages/compose.py
+    note: "5키 정확히 · run_id == run.yaml · variant == 좌표 · pen == 계약 배정 · spec_version == 최신 · spec_digest 형식."
+
+report_format: contracts/schemas/verdict-check-row.schema.json
+
+# 조치 어휘 = SPEC §1.2 C6. 6행 = SPEC §1.9 실패표 글자 그대로 + 1행(종료선).
+failure:
+  - condition: "compose.annotation-syntax 실패"
+    action: retry(2)
+    then: escalate
+    note: "그 변주만 재시도한다(compose/<v>/retry-<n>/batch-0 · 결함 표 동봉). 다른 변주는 기다린다."
+  - condition: "compose.spec-digest 불일치"
+    action: halt
+    note: >-
+      동결본이 바뀐 채로 쓰인 판은 폐기. compose.frontmatter 실패도 이 행을 따른다(총괄 재량 —
+      프런트매터가 깨진 판은 어느 재료 위에 섰는지 증명하지 못한다).
+  - condition: "compose.prompt-lint 실패"
+    action: halt
+    note: "프롬프트 수정 후 재개(D8 위반은 재시도로 해소되지 않는다)"
+  - condition: "펜이 재료 결함 발견"
+    action: reject-upstream
+    to: read
+    note: "material-defect.md 첨부"
+  - condition: "펜 레인 사망·응답 불가"
+    action: retry(1)
+    then: halt
+    note: >-
+      조용한 대체 없음. 40-compose/tournament-rows.jsonl 에 outcome: "missing" + missing_reason 행을
+      기록하고, 생존 변주 ≥ 1이면 런을 계속(CP2 상정)한다. 0이면 런 중단·진단(재정 R10) — then 의
+      halt 는 그 0 의 경우다.
+  - condition: "compose.lane-verified 실패(라벨 ≠ 실호출)"
+    action: halt
+    note: "실호출이 다른 배치는 토너먼트 기입 자격이 없다(재정 R10)"
+  - condition: "partial_until 종료선이 compose 앞(run-kinds.yaml#kinds.partial.terminates_at_enum 순서)"
+    action: halt
+    note: "종료선 초과 실행 차단(T40 ③ G-12 의 부분 집행)"
+
+# 재료 개정 시 하류 산출물은 전량 무효·재생성이다(재정 N11). 집행 = compose.spec-digest.
+downstream_invalidation:
+  on: "spec_version 증가"
+  effect: "변주 초안 전량 무효 · 재생성"
+  enforced_by: "compose.spec-digest(진입 재검 + 출구 검사)"
+
+# 주석(계약 키 아님 · SPEC §1.2 「위 키 밖의 항목은 주석」).
+figures_absent:
+  tag: "[주석]"
+  basis: "재정 T64 ④ · 총괄 재량 ⓑ"
+  note: >-
+    이번 초안의 모든 헤더 fig 는 none 이다 — 도면은 다음 판에서 붙는다. compose.annotation-syntax 는
+    fig 문법만 본다. 자산 해소는 L0 format.images-per-post · format.stop-shape 의 몫이며 후자는 T64 ④ 로
+    미가동이다.

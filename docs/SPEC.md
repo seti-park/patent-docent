@@ -2706,8 +2706,8 @@ spec_digest: sha256:...
 ---
 
 ## T1 {slot: hook, fig: fig-03}
-Sentence one of the hook. [M12]
-A framing sentence with no factual load. [narrative]
+Sentence one of the hook.[M12]
+A framing sentence with no factual load.[narrative]
 
 ## T2 {slot: stop, fig: fig-07}
 ...
@@ -3752,7 +3752,8 @@ patent-docent/
       source.yaml            # ★현행 (M1) — 조기 보고·전시물 후보 산정식(잠정)
       read.yaml              # ★현행 (M1) — D5 5단계·레인 배정·CP1 부착
       freeze.yaml            # ★현행 (M1) — 동결 3동작·봉투 검증
-      design.yaml            # ★현행 (M5-a · T64) — 설계 레인·검사 6·실패표   compose.yaml (M5)   figures.yaml (M9)
+      design.yaml            # ★현행 (M5-a · T64) — 설계 레인·검사 6·실패표   figures.yaml (M9)
+      compose.yaml           # ★현행 (M5-b · T64) — 펜 변주 3(effort 사다리)·검사 4·린트·실패표 6+1
       gate.yaml              # (M4 예정)   probe.yaml (M7)     critique.yaml (M8)
       ship.yaml              # (M10 예정)  feedback.yaml (M10)
     schemas/                 # docent 전용 스키마 (JSON Schema draft 2020-12)
@@ -3785,10 +3786,12 @@ patent-docent/
     lib/                     # ★현행 (M1). 결정론 검사 유틸 — 검사 12종의 구현
                              #   + 전수 수치 수확기 harvest.py (M1.5, 재정 P-B — 검사가 아니라 생산)
   engine/                    # docent 전용 러너·게이트·strip·프로브
-    stages/                  # ★현행 (M1): source.py · read.py · freeze.py · ★현행 (M5-a): design.py
+    stages/                  # ★현행 (M1): source.py · read.py · freeze.py · ★현행 (M5-a): design.py · ★현행 (M5-b): compose.py
     render/                  # ★현행 (M1): material_spec_md.py (CP1 KR 표면 렌더) · ★현행 (M5-a): blueprint_md.py
     lanes/                   # ★현행 (M1): 독해 LLM 레인 호출 구조
     procedure/               # ★현행 (M5-a): design.md — 설계 레인 절차 문서
+    pens/                    # ★현행 (M5-b): registry.py(변주→펜 배정 · 계약에서 읽음) · prompt-template.md(긍정형 템플릿) · lint.py(compose.prompt-lint)
+    annotation/              # ★현행 (M5-b): parse.py — §3.2 문법 파서(compose.annotation-syntax · L0 · strip 의 유일한 파서)
   studio/                    # 도면 렌더 (HTML/CSS/SVG + 헤드리스 Chromium)
     templates/
     tokens/
@@ -4129,7 +4132,7 @@ effective_from: gate_version 1.3
 | `contracts/pipeline.yaml` | 예정 | M12 |
 | `contracts/stages/design.yaml` | 현행 | M5-a(T64) |
 | `contracts/stages/figures.yaml` | 예정 | M9 |
-| `contracts/stages/compose.yaml` | 예정 | M5 |
+| `contracts/stages/compose.yaml` | 현행 | M5-b(T64) |
 | `contracts/stages/gate.yaml` | 예정 | M4 |
 | `contracts/stages/probe.yaml` | 예정 | M7 |
 | `contracts/stages/critique.yaml` | 예정 | M8 |
