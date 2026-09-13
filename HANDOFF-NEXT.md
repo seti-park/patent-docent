@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(185차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(186차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 186차 — **재정 T68 전건 추천대로 → CP2 봉투 작성·반입 — 런 -3 첫 도슨트 글(v2 · 도면 8 · L0·L1 통과)이 Owner 체크포인트 2 를 통과했다**(추기 155 · `ruling-20260913-13-T68.md` · 봉투 `runs/gdm-wo2026128750a1-agent-memory-3/70-ship/checkpoint2.md` · 출하 후보 `50-gate/v2/thread.stripped.md` · 자산 `30-figures/assets/`). **게시는 아니다**(partial 런 · ship M10 미구현 · 결번 4 = L2·계기·소견·최종 심급). 런 -3 총 $35.33 · M3 구현 5 발주 $83.32 · 시험 1082. **지금 할 일 = 없음 — 다음은 Owner 지시**(후보 = M6-b 최종 심급 / M8 L2·소견 / M7 계기 / M10 ship / 다른 특허 새 런 `partial_until: ship_approval`). 백로그 5(추기 155 끝). 살아 있는 배경 = 없음. 맥락 접두 83만 — `/compact` 권고.**
+
+> [정정 2026-09-13 · 186차] 185차의 「T68 대기」는 끝났다(전건 추천대로 · 봉투 작성).
 
 **★ 09-13 185차 — **v2 수정 라운드 1 = advance(결함 0 · 소수 의견 2) · 반입 `98ce4e7` · CP2 브리핑 T68 발행** `https://claude.ai/code/artifact/d0583f86-1bf2-4dfd-ad4d-87bc91653d8a`(추기 154): ① 승인(A 추천 · 게시 아님) · ② 플래그 4(accept 추천) · ③ 도면 유지. **지금 할 일 = Owner `T68:` 대기 → 재정문 `ruling-20260913-13-T68.md` + 원장 행 → 육성을 `--quote-file` 로 · 플래그 판정을 cp2 초안 JSON 에 채워 `approve-ship gdm-wo2026128750a1-agent-memory-3 --quote-file <f> --selected v2 --flags <json>`(`--repo 정본 --run-root <worktree>/runs/… --evidence-dir <worktree>/evidence`) → `70-ship/checkpoint2.md` 반입 커밋 → 추기 → 다음 발주는 별도 상신(M6-b 최종 심급 · L2 · 계기 · ship / 다른 특허 런).** 살아 있는 배경 = 없음. 맥락 접두 82만 — `/compact` 권고.**
 

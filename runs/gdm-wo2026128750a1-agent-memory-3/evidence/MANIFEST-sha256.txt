@@ -174,3 +174,4 @@ b865813559e61c76aa074da3a0d7cfc7ef3ca41ab57b78d7e1fc01aba92b0890  runs/gdm-wo202
 cf98742853f76c5cc701877e4a4f6de994a123bdfc5babb740933df9636bb501  runs/gdm-wo2026128750a1-agent-memory-3/50-gate/v3/thread.json
 6d71d28875139ea8f89d4f6407e8a259421c329763ecc72a63f82a8afcbe9219  runs/gdm-wo2026128750a1-agent-memory-3/50-gate/v3/thread.stripped.md
 1a4f77be60607824f17ef1cd4e357493126a44f1a5c171f99d7b01a75f5c0a0c  runs/gdm-wo2026128750a1-agent-memory-3/50-gate/v3/verdict.json
+67302cc4002466faf601930d1de2412f0900cdac0bc1ac9d921551d9010c9faf  runs/gdm-wo2026128750a1-agent-memory-3/70-ship/checkpoint2.md
