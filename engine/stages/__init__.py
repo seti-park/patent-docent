@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""스테이지 러너 3종(`source` · `read` · `freeze`)과 그들이 공유하는 최소 도구.
+"""스테이지 러너 4종(`source` · `read` · `freeze` · `design`)과 그들이 공유하는 최소 도구.
 
 여기 있는 함수는 전부 **결정론**이며 판단하지 않는다. 판단은 레인(LLM)과 Owner 의 몫이고,
 러너는 계약이 정한 자리에 계약이 정한 형태로 산출물을 놓고 검사 결과를 그대로 보고한다.
@@ -404,10 +404,60 @@ def _entry_freeze_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) 
     #   (본 해석기 = `engine/stages/freeze.py#parse_envelope`).
 
 
+def _entry_design_input_digest(row: CheckRow, paths, entry: dict, inputs: dict) -> None:
+    """`design.input-digest` — 최신 동결본의 실재 · 지문 · 쓰기 불가(재정 T64 ② · P-C).
+
+    `inputs["spec_version"]` = 러너가 `run.yaml#frozen[]` 에서 고른 최대 판. 그 행의
+    `spec_digest` 와 파일 실측이 다르면 **환경 오류**다(재료가 동결 뒤 바뀐 런) — 품질 결함이
+    아니므로 재시도 루프에 넣지 않는다. 쓰기 가능한 동결본도 같은 격이다: 「동결」이 이름뿐인
+    상태에서 설계를 시작하면 그 뒤의 spec_digest 대조가 무엇을 보증하는지 말할 수 없다.
+    """
+    check_id = str(entry.get("id"))
+    if not _require_file(row, check_id, paths.run_yaml, "run.yaml"):
+        return
+    row.checked += 1
+    version = inputs.get("spec_version")
+    rows = [
+        entry_row
+        for entry_row in (load_yaml(paths.run_yaml).get("frozen") or [])
+        if isinstance(entry_row, dict) and entry_row.get("spec_version") == version
+    ]
+    if version is None or not rows:
+        row.add(
+            check_id,
+            "run.yaml#frozen[]",
+            "(행 없음)" if version is not None else "(spec_version 미지정)",
+            f"spec_version {version} 행",
+            "동결 기록이 없는 재료 위에서는 설계를 시작하지 않는다 — 동결이 먼저다(C7)",
+        )
+        return
+    recorded = str(rows[-1].get("spec_digest", ""))
+    frozen_path = paths.frozen_spec(int(version))
+    label = os.path.relpath(frozen_path, paths.run_root).replace(os.sep, "/")
+    if not _require_file(row, check_id, frozen_path, label):
+        return
+    row.checked += 1
+    _compare(
+        row, check_id, f"run.yaml#frozen[spec_version={version}].spec_digest",
+        sha256_file(frozen_path), recorded,
+        "동결본의 실측 지문이 run.yaml 기록과 다르다 — 동결 뒤 재료가 바뀐 런이다(재정 N11 · P-C)",
+    )
+    row.checked += 1
+    import stat as _stat  # noqa: PLC0415 - 이 검사만 쓴다
+
+    mode = _stat.S_IMODE(os.stat(frozen_path).st_mode)
+    if mode & (_stat.S_IWUSR | _stat.S_IWGRP | _stat.S_IWOTH):
+        row.add(
+            check_id, label, oct(mode), "쓰기 불가(0444)",
+            "동결본이 쓰기 가능하다 — 물리적 불변이 서지 않은 재료 위에서는 설계하지 않는다",
+        )
+
+
 _ENTRY_CHECKS = {
     "read.input-digest": _entry_read_input_digest,
     "source.input-digest": _entry_source_input_digest,
     "freeze.input-digest": _entry_freeze_input_digest,
+    "design.input-digest": _entry_design_input_digest,
 }
 
 

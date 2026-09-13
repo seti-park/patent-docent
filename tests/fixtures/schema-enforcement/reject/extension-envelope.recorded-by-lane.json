@@ -1,0 +1,20 @@
+{
+  "schema": "extension-envelope/v0",
+  "kind": "partial_until_extension",
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "from": "freeze",
+  "to": "gate",
+  "owner_quote": "C. 이 특허로 한번 도슨트 글까지 가보자",
+  "quote_provenance": {
+    "located_at": "세션 대화창 · 결정 브리핑 T64 회신",
+    "decided_at": "2026-09-13T12:00:00Z"
+  },
+  "recorded_by": "lane",
+  "rulings": [
+    "T64"
+  ],
+  "engine": {
+    "commit_at_start": "eb884936425687c5053cb40556f39a49a5f29952",
+    "law_commit": "a7effc6f5416a2276ed618989a083f5195b33674"
+  }
+}

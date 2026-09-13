@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patent-docent.local/contracts/schemas/extension-envelope.schema.json",
+  "title": "extension-envelope/v0",
+  "$comment": "부분 런 종료선 연장 봉투. 근거 = 재정 2026-09-13 T64 ①(런 -3 의 partial_until 을 Owner 육성 봉투로 gate 까지 연장) + 총괄 재량 「연장 봉투 별도 계약 라인」. 봉투 실물은 md 파일(15-frozen/extension-v<N>.md)이며 그 YAML 프런트매터가 이 스키마의 대상이다. ★ 규율: (1) approval-envelope/v0 의 checkpoint enum 을 넓히지 않는다 — 연장은 산출물 승인이 아니라 런 종료선의 이동이며 값 공간이 다르다(규율 11). (2) owner_quote 는 Owner 가 실제로 타이핑한 원문이다. (3) from·to 의 값 공간은 여기 복사하지 않는다 — 정본은 contracts/run-kinds.yaml#kinds.partial.terminates_at_enum 이며 구동기 `extend` 가 그 순서(to 가 from 보다 뒤)를 대조한다. (4) engine.commit_at_start 는 run.yaml#engine.commit(런 결박 · 재정 P-U1)의 사본이고 law_commit 은 봉투를 쓴 시점의 법 트리 HEAD 다 — 둘이 다르면 연장이 어느 법 아래 결정됐는지가 봉투에 남는다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "kind", "run_id", "from", "to", "owner_quote", "quote_provenance", "recorded_by", "rulings", "engine"],
+  "properties": {
+    "schema": { "const": "extension-envelope/v0" },
+    "kind": { "const": "partial_until_extension" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "from": { "type": "string", "minLength": 1 },
+    "to": { "type": "string", "minLength": 1 },
+    "owner_quote": { "type": "string", "minLength": 1 },
+    "quote_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["located_at", "decided_at"],
+      "properties": {
+        "located_at": { "type": "string", "minLength": 1 },
+        "decided_at": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "recorded_by": { "const": "orchestrator" },
+    "rulings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit_at_start", "law_commit"],
+      "properties": {
+        "commit_at_start": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "law_commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      }
+    }
+  },
+  "$defs": {
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:[.][0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    }
+  }
+}

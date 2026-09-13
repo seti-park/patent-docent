@@ -1,0 +1,152 @@
+# 스테이지 I/O 계약 — `design`
+#
+# 정본 서술 = docs/SPEC.md §1.7. 이 파일은 그 서술의 기계 판독본이며, 어긋나면 SPEC 이 이긴다.
+# 서식 = SPEC §1.2 고정 서식 + `schema` 키 + 서식 확장 3 `checks_on_entry`(재정 P-C).
+# 실물화 = 재정 2026-09-13 T64 ②(설계 러너 + 스키마 + 검사) · 좌석 = T64 재량 「설계 좌석 = fable high 1판」.
+#
+# ★ 공통 규칙 — 런은 시작 시점 git 커밋에 결박된다(재정 P-U1). 계약·스키마·검증기·러너가
+#   함께 고정되므로, 런 도중 리포가 개정되어도 이 런의 법은 run.yaml#engine.commit 하나다.
+
+schema: stage-contract/v0
+id: design
+
+lane:
+  kind: llm
+  model: fable-5.1          # 티어 라벨 · API 식별자는 read.yaml#lane.model_identity 의 aliases[0] (= claude-fable-5-1)
+  effort: high              # 재정 T64 재량 「설계 좌석 = fable high 1판」
+  instances: 1
+  lane_id_vocabulary:
+    form: "design/blueprint[/retry-<n>]/batch-0"
+    pattern: "^(?P<read_run>[a-z0-9]+(?:-[a-z0-9]+)*)/(?P<task>[a-z0-9]+(?:-[a-z0-9]+)*)(?:/retry-(?P<retry>[1-9][0-9]*))?/batch-(?P<batch>0|[1-9][0-9]*)$"
+    membership: {run: [design], task: [blueprint]}
+    enforced_by: engine/stages/design.py#DesignLaneRequest
+  # 설계 레인은 원천을 보지 않는다(C7 · must_not_read 의 물리 집행) — 요청서에 00-source/** ·
+  # 10-read/** 의 내용을 싣지 않고, 구동기는 `--tools ""` 로 레인의 파일 열람 자체를 막는다.
+  lane_discipline:
+    - "모델·effort 는 API 레벨 하드 지정한다. 프롬프트 문구로 소프트 지정하지 않는다."
+    - "요청서는 동결본 전문 · 시트 값 · 헌장 발췌 · 재정된 앵커만 싣는다(원천 조각 절 = 동결본)."
+    - "첫 좌표 완료 직후 실호출 model·effort 를 영수증으로 확인한 뒤 계속한다."
+
+checks_on_entry:
+  - id: design.input-digest
+    criterion: >-
+      run.yaml#frozen[] 의 최신 spec_version 동결본이 실재하고 sha256 이 그 행의 spec_digest 와
+      일치 · 권한이 쓰기 불가
+    implemented_by: engine/stages/__init__.py
+    on_mismatch: environment-error
+    note: "불일치는 품질 결함이 아니라 환경 오류다 — 즉시 중단+진단(재정 P-C)."
+
+inputs:
+  - "15-frozen/material-spec.v<N>.json"
+  - 30-figures/assets/manifest.json     # 선행 실행된 경우에만 실재(SPEC §1.7 inputs) — 부재는 정상(재량 ⓐ)
+
+may_read:
+  - "15-frozen/**"
+  - 30-figures/assets/manifest.json
+  - docs/CHARTER.md
+  - "ledgers/anchors/**"                # 재정된 앵커만 — 러너가 필터해 제공한다(SPEC §1.7 · 재정 R12)
+
+must_not_read:
+  - "00-source/**"
+  - "10-read/**"                        # 작업본
+  - "40-compose/**"
+  - "ledgers/anchors/ 의 미재정 항목(provisional·proposed)과 fade 제안"
+
+outputs:
+  - 20-design/blueprint.json
+  - 20-design/blueprint.md              # KR 요약(KR 틀 · EN 값)
+  - 20-design/design-report.json
+  - "20-design/lanes/"
+
+optional_outputs:
+  - 20-design/escalation.json           # 상신 기록 — 실재하면 러너는 재진입을 거부한다(사람이 본다)
+  - 20-design/anchors-provided.json     # 레인에 제공된 앵커 목록(design.anchors-adjudicated-only 의 대상)
+
+checks_before_exit:
+  - id: design.schema
+    criterion: "blueprint.schema.json 검증 통과"
+    implemented_by: engine/stages/design.py
+  - id: design.targets-resolve
+    criterion: "transmission_targets[] 의 모든 ID 가 동결본에 active 상태로 존재"
+    implemented_by: engine/stages/design.py
+    note: >-
+      총괄 재량 ⓑ — 같은 행에서 slots[].exhibit.material_ids[] 도 대조하되 좌표(locus)를
+      transmission_targets[i] / slots[n].exhibit.material_ids[i] 로 갈라 적는다(M5 DoD §8.4
+      「모든 재료 ID 참조가 동결본에서 해소」). 해소 = items[].id 에 존재 그리고 status == "active".
+  - id: design.slot-count
+    criterion: >-
+      slots[] 길이가 시트의 tweet_count 범위 안 그리고 슬롯 배치 규칙 충족 — hook 정확히 1개이며
+      T1 위치, landing 정확히 1개, tail 은 있으면 마지막, 나머지 전부 stop|pivot(D11, 재정 R6).
+      판정 수치 정본 = contracts/format-parameters.yaml 의 tweet_count·slot_placement, 규칙 등재 =
+      contracts/l0-format.yaml
+    implemented_by: engine/stages/design.py
+  - id: design.figure-budget
+    criterion: >-
+      트윗별 도면 수가 시트의 images_per_post_max 이하, figure_plan 의 모든 도면이
+      assets/manifest.json 에 존재
+    implemented_by: engine/stages/design.py
+    note: >-
+      총괄 재량 ⓐ — 매니페스트는 선행 실행된 경우에만 실재하므로 부재는 정상이다. 있으면 그 파일에
+      해소하고, 없으면 동결본 figures[].id 에 해소한다. 판정 행 extras.resolution_source ∈
+      {assets-manifest, frozen-figures} 로 어느 쪽이었는지 남기고 blueprint.md 에 「도면 자산층
+      부재 — 도면은 지정만(T64 ④)」 표지를 적는다. 도면 수 상한은 두 갈래 공통.
+  - id: design.spec-digest
+    criterion: >-
+      blueprint.json 의 spec_version·spec_digest 가 현재 동결본과 일치(재정 N11 — 하류 산출물은
+      자기가 선 재료 버전을 기록하고 게이트가 정합을 검사한다)
+    implemented_by: engine/stages/design.py
+  - id: design.anchors-adjudicated-only
+    criterion: >-
+      설계 레인에 제공된 앵커 목록이 state == "active" 그리고 adjudicated_in 이 채워진 항목뿐임.
+      provisional·proposed·fade 제안이 1건이라도 섞이면 실패(재감수 B-06, 재정 R12)
+    implemented_by: engine/stages/design.py
+
+report_format: contracts/schemas/verdict-check-row.schema.json
+
+# 조치 어휘 = SPEC §1.2 C6. `retry(1)` 의 `then` 은 재시도 뒤에도 같은 검사가 실패할 때의 종단이다.
+failure:
+  - condition: "스키마·슬롯·표적 해소 실패"
+    action: retry(1)
+    then: escalate
+  - condition: "transmission_targets 가 retracted/superseded 항목을 지목"
+    action: retry(1)
+    then: escalate
+    note: "개정본 기준으로 재작성"
+  - condition: "재료로 훅이 서지 않음(안도감 착지 불가 판단)"
+    action: escalate
+    note: "D4 의 drop 재검토 사안이며 설계 레인이 단독 결정하지 않는다"
+  - condition: "강한 전시물이 시트의 tweet_count.max 초과"
+    action: escalate
+    note: "overflow_proposal 첨부. 선별인지 시리즈 분할인지는 Owner 결정이다(재정 R5)"
+  - condition: "design.anchors-adjudicated-only 실패"
+    action: halt
+    note: "미재정 신호가 생성계에 닿은 런은 환류 가드가 깨진 런이다(재정 R12)"
+  - condition: "spec_version·spec_digest 불일치"
+    action: halt
+    note: "재료 개정으로 무효화된 블루프린트다(재정 N11)"
+  - condition: "partial_until 종료선이 design 앞(run-kinds.yaml#kinds.partial.terminates_at_enum 순서)"
+    action: halt
+    note: "종료선 초과 실행 차단(T40 ③ G-12 의 부분 집행)"
+  - condition: "design.figure-budget 실패"
+    action: retry(1)
+    then: escalate
+    note: >-
+      총괄 재량(T64 집행 ①) — SPEC §1.7 실패표에 이 검사의 행이 없다. 레인이 고칠 수 있는
+      결함이므로 스키마·슬롯·표적 행과 같은 격으로 둔다. 재정으로 확정되기 전까지 잠정.
+
+# 재료 개정 시 하류 산출물은 전량 무효·재생성이다(재정 N11). 집행 = design.spec-digest.
+downstream_invalidation:
+  on: "spec_version 증가"
+  effect: "블루프린트 무효 · 재생성"
+  enforced_by: "design.spec-digest(진입 재검 + 출구 검사)"
+
+# 주석(계약 키 아님 · SPEC §1.2 「위 키 밖의 항목은 주석」). 런 -3 연장 봉투의 자리.
+extension_envelope:
+  tag: "[주석]"
+  basis: "재정 T64 ① · 총괄 재량 「연장 봉투 별도 계약 라인」"
+  path: "15-frozen/extension-v<N>.md"
+  schema: contracts/schemas/extension-envelope.schema.json
+  written_by: orchestrator
+  note: >-
+    approval-envelope/v0 의 checkpoint enum 을 넓히지 않는다(값 공간 불변). 봉투는 구동기 `extend` 가
+    쓰며 run.yaml#partial_until 을 그 `to` 로 옮기고 run.yaml#extensions[] 에 행을 남긴다.

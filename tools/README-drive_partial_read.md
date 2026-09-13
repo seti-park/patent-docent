@@ -1,6 +1,6 @@
-# `tools/drive_partial_read.py` — READ 부분 런 구동기 (재정 T60 · 설계 D-20260913-03)
+# `tools/drive_partial_read.py` — READ 부분 런 구동기 (재정 T60 · 설계 D-20260913-03) + 연장·설계 (재정 T64)
 
-`run_kind: partial` · `partial_until: freeze` 런을 명령 단위로 굴린다. 엔진이 이끌고 구동기는 대기 좌표를 `claude -p` 한 번씩으로 채운다. 판단하지 않는다. 실제 모델 호출은 `step` 만 한다.
+`run_kind: partial` · `partial_until: freeze` 런을 명령 단위로 굴린다. 엔진이 이끌고 구동기는 대기 좌표를 `claude -p` 한 번씩으로 채운다. 판단하지 않는다. 실제 모델 호출은 `step` 과 `design` 만 한다.
 
 ```
 PY="PYTHONDONTWRITEBYTECODE=1 /home/laptop/projects/patent-docent/.venv/bin/python -B"
@@ -16,9 +16,11 @@ $PY tools/drive_partial_read.py [--repo R] [--worktree-root D] [--executor claud
 | `cp1` | — | 판독본 경로 · `review_requests` 건수 · §8-b 첫 12줄 · `--adjudicated` JSON 초안(verdict 비움) | 0 |
 | `approve` | `--quote-file <f> --adjudicated <json> [--decision approved\|rejected] [--manual-ack M1,M2] [--derived-ack ..] [--drop-decision go\|drop] [--directive ..]*` | `15-frozen/approval-v<N>.md`(N = 기존 최대 + 1) · 요청 target 차집합은 경고만 | 0 |
 | `freeze` | — | `freeze.run(spec_version = 최신 봉투 N)` — `approval-valid` 항 ④ 포함 | 0 |
-| `seal` | — | `evidence/MANIFEST-sha256.txt` = `evidence/**` + `10-read/*.json` + `15-frozen/*` | 0 |
+| `seal` | — | `evidence/MANIFEST-sha256.txt` = `evidence/**` + `10-read/*.json` + `15-frozen/*` + `20-design/**` | 0 |
+| `extend` | `--quote-file <f> --until <stage> [--ruling <id>]* [--located-at] [--decided-at]` | 부분 런 종료선 연장 봉투 `15-frozen/extension-v<N>.md`(`extension-envelope/v0` · 재정 T64 ①) → `run.yaml#partial_until` 이동 + `extensions[]` 행. 전제 = `status: active` · `run_kind: partial` · `--until` 이 `terminates_at_enum` 안이고 현 종료선보다 뒤 · 법 트리(`--repo`)가 git 작업 트리이고 `runs/`·`evidence/`·`.worktrees/` 밖 변경 없음 | 0 · 위반 2 |
+| `design` | — | `design.run` 재진입(상한 4) → `LanePending` 좌표(`20-design/lanes/design/blueprint[/retry-1]/batch-0`)를 `call_lane` 으로 채움 → 재진입. 전제 = `partial_until` 순번 ≥ `design`(아니면 13 「종료선」) | 0 · 10(호출 실패) · 13(escalate/halt/StageError) · 14 · 15(재진입 상한) |
 
-**종료 코드** — 0 정상 · 10 대기 좌표 남음(다시 `step`) · 11 상신 축 미달(`continue` 가능) · 12 봉투 불가 대기(사람) · 13 종결 실패(엔진 halt/escalate) · 14 판정 불능(io_fault · `modelUsage` 부재 · 첫 좌표 관측 모델 ≠ 요청) · 15 좌표 호출 상한 3 초과 · 20 CP1 대기 · 2 인자·환경 오류(stdin 10 MB 초과 포함).
+**종료 코드** — 0 정상 · 10 대기 좌표 남음(다시 `step`/`design`) · 11 상신 축 미달(`continue` 가능) · 12 봉투 불가 대기(사람) · 13 종결 실패(엔진 halt/escalate) · 14 판정 불능(io_fault · `modelUsage` 부재 · 첫 좌표 관측 모델 ≠ 요청) · 15 좌표 호출 상한 3 초과 · 20 CP1 대기 · 2 인자·환경 오류(stdin 10 MB 초과 포함).
 
 **레인 호출 한 줄**(좌표마다 · 순차 · 벽시계 900초):
 ```

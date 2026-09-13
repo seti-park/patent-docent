@@ -493,11 +493,11 @@ def test_continue_envelope_binds_verdict_and_unblocks_grounding(tmp_path) -> Non
         pytest.fail(f"게이트가 봉투로 진입하지 않았다: {gate}")
 
 
-def test_help_lists_nine_commands() -> None:
+def test_help_lists_eleven_commands() -> None:
     parser = drv.build_parser()
     listed = parser._subparsers._group_actions[0].choices  # noqa: SLF001 - 명령 집합 대조
-    if tuple(listed) != drv.COMMANDS:
-        pytest.fail(f"명령 8 이 아니다: {tuple(listed)}")
+    if tuple(listed) != drv.COMMANDS or len(drv.COMMANDS) != 11:
+        pytest.fail(f"명령 11 이 아니다: {tuple(listed)}")
 
 
 def _echo_stub(lane_id_echo: str, digest_echo: str):

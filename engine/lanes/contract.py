@@ -38,7 +38,7 @@ import json
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Protocol, runtime_checkable
+from typing import ClassVar, Protocol, runtime_checkable
 
 from jsonschema import Draft202012Validator
 
@@ -101,21 +101,63 @@ class LaneContractError(Exception):
     """요청·응답이 계약을 어겼다(필수 필드 부재·스키마 위반·lane_id 불일치)."""
 
 
-def _check_lane_id_vocabulary(lane_id: str) -> re.Match[str]:
-    """`lane_id`의 계약 형태와 read_run·task 정본 집합 소속을 검사한다."""
+# ★ 어휘 등록부(재정 T64 · 총괄 재량 「어휘 고리」). 키 = 스테이지 이름, 값 = (run 집합, task 집합).
+#   READ 어휘는 여기 기본으로 등록되고, 다른 스테이지(예: design)는 자기 모듈이 import 될 때
+#   `register_lane_vocabulary` 로 더한다. **경로 조립**(`lane_dir`·`lane_file`)은 등록된 어휘
+#   전부를 받아들이고, **요청**(`LaneRequest`)은 자기 클래스의 `RUNS`·`TASKS` 하나만 받아들인다 —
+#   기본 `LaneRequest` 의 어휘는 READ 그대로다(바이트 동일 · `test_m27_*` 가 증거).
+LANE_VOCABULARIES: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
+    "read": (READ_RUNS, LANE_TASKS),
+}
+
+
+def register_lane_vocabulary(name: str, runs: tuple[str, ...], tasks: tuple[str, ...]) -> None:
+    """스테이지 어휘 1건을 등록한다(같은 이름의 재등록은 같은 값일 때만 조용히 지나간다)."""
+    entry = (tuple(runs), tuple(tasks))
+    if name in LANE_VOCABULARIES and LANE_VOCABULARIES[name] != entry:
+        raise LaneContractError(
+            f"레인 어휘 {name!r} 가 이미 다른 값으로 등록되어 있다: {LANE_VOCABULARIES[name]} ≠ {entry}"
+        )
+    LANE_VOCABULARIES[name] = entry
+
+
+def _check_lane_id_vocabulary(
+    lane_id: str,
+    *,
+    runs: tuple[str, ...] = READ_RUNS,
+    tasks: tuple[str, ...] = LANE_TASKS,
+) -> re.Match[str]:
+    """`lane_id`의 계약 형태와 run·task 정본 집합 소속을 검사한다.
+
+    `runs`·`tasks` 를 주지 않으면 READ 어휘(구 동작과 바이트 동일)다. 하위 스테이지는 자기
+    집합을 인자로 넘긴다(재정 T64 · 어휘 고리).
+    """
     match = LANE_ID_PATTERN.fullmatch(lane_id) if isinstance(lane_id, str) else None
     if match is None:
         raise LaneContractError(
             "lane_id 가 계약 어휘(read.yaml#lane.lane_id_vocabulary.form)를 벗어난다 — "
             f"어휘 위반(형태) · 재정 T4 · lane_id={lane_id!r}"
         )
-    if match["read_run"] not in READ_RUNS or match["task"] not in LANE_TASKS:
+    if match["read_run"] not in runs or match["task"] not in tasks:
         raise LaneContractError(
             "lane_id 가 계약 어휘의 정본 집합을 벗어난다 — 어휘 위반(소속) · "
             "read_run/task 가 정본 집합 밖 · 재정 T4 · "
             f"lane_id={lane_id!r} · read_run={match['read_run']!r} · task={match['task']!r}"
         )
     return match
+
+
+def _check_lane_id_any_vocabulary(lane_id: str) -> re.Match[str]:
+    """경로 조립용 — 등록된 어휘 **어느 하나**에 속하면 통과한다(형태 검사는 동일)."""
+    last: LaneContractError | None = None
+    for runs, tasks in LANE_VOCABULARIES.values():
+        try:
+            return _check_lane_id_vocabulary(lane_id, runs=runs, tasks=tasks)
+        except LaneContractError as exc:
+            last = exc
+            if "어휘 위반(형태)" in str(exc):
+                raise
+    raise last if last is not None else LaneContractError(f"등록된 레인 어휘가 없다: {lane_id!r}")
 
 
 class LaneStaleResponseError(LaneContractError):
@@ -175,6 +217,10 @@ class LaneRequest:
     지문이 나오는 것이 옳은 동작이다(지문은 본문의 함수이지 경로의 함수가 아니다).
     """
 
+    # ★ 이 요청 클래스가 받아들이는 어휘(재정 T64 · 어휘 고리). 하위 클래스가 덮어쓴다.
+    RUNS: ClassVar[tuple[str, ...]] = READ_RUNS
+    TASKS: ClassVar[tuple[str, ...]] = LANE_TASKS
+
     lane_id: str
     read_run: str
     task: str
@@ -216,7 +262,7 @@ class LaneRequest:
             )
         if not isinstance(self.batch, int) or self.batch < 0:
             raise LaneContractError(f"레인 요청 {self.lane_id} 의 batch 가 음수·비정수다")
-        _check_lane_id_vocabulary(self.lane_id)
+        _check_lane_id_vocabulary(self.lane_id, runs=self.RUNS, tasks=self.TASKS)
 
     def _request_json_body(self) -> dict:
         """`request.json` 본문 그대로(`REQUEST_JSON_FIELDS` 순서)."""
@@ -453,8 +499,12 @@ def render_request_md(request: LaneRequest, repo_root: str | None = None) -> str
 
 
 def lane_dir(root: str, lane_id: str) -> str:
-    """T4 어휘·디렉터리 포함을 강제한다. 구 판은 맨 `os.path.join`이었다."""
-    _check_lane_id_vocabulary(lane_id)
+    """T4 어휘·디렉터리 포함을 강제한다. 구 판은 맨 `os.path.join`이었다.
+
+    소속 검사는 **등록된 어휘 전부**를 본다(재정 T64) — 경로 조립은 스테이지를 모르며, READ
+    좌표에 대한 판정은 구 동작과 같다.
+    """
+    _check_lane_id_any_vocabulary(lane_id)
     path = os.path.join(root, *lane_id.split("/"))
     root_real = os.path.realpath(root)
     if not os.path.realpath(path).startswith(root_real + os.sep):

@@ -28,6 +28,8 @@
 | `speech-acts/v1` | `contracts/lexicon/speech-acts.yaml` | 화행 술어 3종 |
 | `defect-catalog/v0` | `contracts/lexicon/defect-catalog.yaml` | 결함 카탈로그 |
 | `score-lint/v1` | `contracts/lexicon/score-lint.yaml` | 점수 금지 린트 패턴 |
+| `blueprint/v0` | `contracts/schemas/blueprint.schema.json` | 설계 산출 `20-design/blueprint.json`(재정 T64 ② · M5-a). 러너 6키 + 레인 필드 · 수치는 시트 포인터 |
+| `extension-envelope/v0` | `contracts/schemas/extension-envelope.schema.json` | 부분 런 종료선 연장 봉투 `15-frozen/extension-v<N>.md`(재정 T64 ① · 총괄 재량 — `approval-envelope/v0` 의 checkpoint enum 을 넓히지 않는다) |
 
 **버전 축의 구별**(혼동 지점이다).
 
@@ -74,6 +76,13 @@
 | `freeze.digest-match` | `engine/stages/freeze.py` | 원천 다이제스트 불일치 |
 | `freeze.readonly` | `engine/stages/freeze.py` | 동결본이 쓰기 가능 |
 | `freeze.render-parity` | `engine/stages/freeze.py` | **CP1 판독본이 항목의 EN 값을 빠뜨림** — 검사 대상은 항목 ID 의 존재가 아니라 **값의 바이트 존재**다(재정 P-U5). ID 만 보면 값이 요약·번역으로 바뀌어도 통과한다 |
+| `design.input-digest` | `engine/stages/__init__.py` | 최신 동결본이 부재·지문 불일치·쓰기 가능인 채로 설계가 시작됨(재정 P-C · T64 ②) — 환경 오류 |
+| `design.schema` | `engine/stages/design.py` | 블루프린트가 `blueprint/v0` 밖. 실패면 나머지 다섯은 평가하지 않는다(연쇄 오보 방지) |
+| `design.targets-resolve` | `engine/stages/design.py` | `transmission_targets[]`·`slots[].exhibit.material_ids[]`(재량 ⓑ · 좌표 분리)가 동결본에 없거나 `active` 가 아님 |
+| `design.slot-count` | `engine/stages/design.py` | 트윗 수가 시트 `tweet_count` 밖 · 슬롯 배치가 시트 `slot_placement`·`slot_enum` 을 어김 · `n` 불연속. 값은 전부 시트에서 읽는다 |
+| `design.figure-budget` | `engine/stages/design.py` | 도면 참조가 해소되지 않음(매니페스트 있으면 그것 · 없으면 동결본 `figures[].id` — 재량 ⓐ · `extras.resolution_source`) · 트윗별 도면 수 > `images_per_post_max` · `figure_plan` ↔ `slots` 불일치 · 훅 도면이 T1 밖 |
+| `design.spec-digest` | `engine/stages/design.py` | 블루프린트의 `spec_version`·`spec_digest` 가 현재 동결본과 다름(재정 N11). 재진입 시 기존 `blueprint.json` 에도 대조한다 |
+| `design.anchors-adjudicated-only` | `engine/stages/design.py` | 레인에 제공된 앵커 목록(`20-design/anchors-provided.json`)에 미재정 항목이 섞임(재정 R12). 제공 0건은 `vacuous: empty-target` 이다 |
 
 ### 2.2 계약에만 있고 아직 구현이 없는 것
 
@@ -86,8 +95,8 @@
 | `numeric.unreviewed-use` | M4 | `contracts/l0-format.yaml` §7 · SPEC §4.4.4 — **거부권 없는 자문 플래그**다(재정 P-B). 전수 수확이 넓힌 정답지의 대가를 받는 짝 규칙이며, 미참조(미검토) 수치를 본문이 처음 인용하면 CP2 봉투에 플래그가 붙는다 |
 | `gate.no-rewrite` · `gate.final-eyes` | M4·M6 | SPEC §4.7·§1.10 |
 | `gate.no-score` · `critique.no-score` | M4·M8 | `contracts/lexicon/score-lint.yaml` |
-| `design.spec-digest` · `compose.spec-digest` | M5 | SPEC §7.3 (재정 N11) |
-| `design.anchors-adjudicated-only` · `critique.anchors-adjudicated-only` | M5·M8 | SPEC §1.7·§1.12 |
+| `compose.spec-digest` | M5 | SPEC §7.3 (재정 N11) — `design.spec-digest` 는 T64(M5-a)로 §2.1 에 올라갔다 |
+| `critique.anchors-adjudicated-only` | M8 | SPEC §1.12 — `design.anchors-adjudicated-only` 는 T64(M5-a)로 §2.1 에 올라갔다 |
 | `probe.independence` · `probe.input-clean` · `probe.no-self-report` · `probe.target-coverage` · `probe.grader-separation` | M7 | SPEC §1.11 — **계기 5종.** ★ 2026-08-19 등재(누락 보수): SPEC §1.11이 이 다섯을 선언하는데 이 사전의 어느 절에도 없었다. 사전이 스스로 내건 갱신 규율("새 검사를 만들면 이 표에 등재한다")이 계기 계열에서만 지켜지지 않은 자리이며, 그 결과 §2.2 목록을 읽고 "M7에 무엇이 남았는가"를 세면 다섯이 빠졌다. **id 신설이 아니라 사전의 누락 보수다** — 이름은 SPEC이 이미 선언했고 여기 옮겨 적을 뿐이다. 정족수 판정 층(`engine/quorum.py`)은 구현되었으나 그것은 검사가 아니라 순수 함수이며 검사 id를 발행하지 않는다 |
 | `feedback.window` · `feedback.row-consistency` · `feedback.corrects-resolve` | M10 | SPEC §1.15 |
 
@@ -156,6 +165,13 @@
 | `10-read/lanes/` | `read` | 레인 왕복 기록(지시·응답). `read.lane-log-shape` 가 이 형태를 판정한다 |
 | `15-frozen/material-spec.v<N>.json` | `freeze` | **동결본.** 0444. 하류가 읽는 유일한 재료 |
 | `15-frozen/approval-v<N>.md` | 오케스트레이터 | 승인 봉투. **작업 레인은 쓰지 않는다**(SPEC §1.2 C3) |
+| `15-frozen/extension-v<N>.md` | 오케스트레이터 | 부분 런 종료선 연장 봉투(`extension-envelope/v0` · 재정 T64 ①). 구동기 `extend` 가 쓰고 `run.yaml#partial_until`·`extensions[]` 를 함께 옮긴다. 계약 미선언 경로 — `engine/paths.py#RunPaths.extension` 이 `15-frozen/` 안에서 파생시킨다 |
+| `20-design/blueprint.json` | `design` | **블루프린트**(`blueprint/v0`). 러너 6키(`schema`·`run_id`·`spec_version`·`spec_digest`·`lane`·`law_commit`) + 레인 필드. 검사 6종 전건 통과 뒤에만 쓴다 |
+| `20-design/blueprint.md` | `design` | `.json` 의 **결정론 렌더**(KR 틀 · EN 값) + 판정 행 표 + 「미가동·부재」 절(T64 ④) |
+| `20-design/design-report.json` | `design` | 판정 행 8키 배열 · findings · `lane`(model·effort·mismatch) · `law_commit` |
+| `20-design/lanes/` | `design` | 설계 레인 왕복 기록(`design/blueprint[/retry-1]/batch-0/{request.json,request.md,response.json}`) |
+| `20-design/escalation.json` | `design` | (선택) 상신 기록 — 레인의 `escalation` 또는 재시도 소진. 실재하면 러너는 재진입을 거부한다 |
+| `20-design/anchors-provided.json` | `design` | (선택) 레인에 제공된 재정 앵커 목록 + 차단 건수 — `design.anchors-adjudicated-only` 의 대상 |
 
 **런 밖의 원장 하나**(위 표와 층이 다르므로 따로 적는다).
 

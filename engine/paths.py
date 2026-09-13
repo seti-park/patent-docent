@@ -238,7 +238,7 @@ class RunPaths:
     어긋나는 순간을 조용히 넘기지 않기 위해서다.
     """
 
-    STAGES = ("source", "read", "freeze")
+    STAGES = ("source", "read", "freeze", "design")
 
     def __init__(self, run_root: str, repo: str | None = None) -> None:
         self.run_root = os.path.abspath(run_root)
@@ -410,6 +410,53 @@ class RunPaths:
     def frozen_dir(self) -> str:
         return os.path.dirname(self.frozen_spec(1))
 
+    def extension(self, version: int) -> str:
+        """런 -3 연장 봉투 `15-frozen/extension-v<N>.md`(재정 T64 ① · 계약 라인 extension-envelope/v0).
+
+        계약 미선언 — 오케스트레이터(구동기 `extend`)가 쓰는 봉투이며 `15-frozen/` 안에 산다.
+        `freeze.yaml` 의 outputs 는 손대지 않는다(동결 스테이지의 산출이 아니다). 자리를 동결 봉투
+        옆으로 둔 이유는 성질이 같기 때문이다 — 둘 다 Owner 육성을 담은 봉투이고 작업 레인은 쓰지 않는다.
+        """
+        return os.path.join(self.frozen_dir, f"extension-v{version}.md")
+
+    # -- 20-design ----------------------------------------------------------
+
+    @property
+    def blueprint_json(self) -> str:
+        return self.path("blueprint.json")
+
+    @property
+    def blueprint_md(self) -> str:
+        return self.path("blueprint.md")
+
+    @property
+    def design_report_json(self) -> str:
+        return self.path("design-report.json")
+
+    @property
+    def design_escalation_json(self) -> str:
+        """설계 상신 기록(`optional_outputs`). 실재 = 상신 미처분 · 사람이 본다."""
+        return self.path("escalation.json")
+
+    @property
+    def anchors_provided_json(self) -> str:
+        """설계 레인에 **제공된** 앵커 목록(`optional_outputs`) — `design.anchors-adjudicated-only` 의 대상."""
+        return self.path("anchors-provided.json")
+
+    @property
+    def design_dir(self) -> str:
+        return os.path.dirname(self.blueprint_json)
+
+    @property
+    def design_lanes_dir(self) -> str:
+        """설계 레인 왕복 보관소. `10-read/lanes/` 와 같은 성질의 러너 산출물이며 `20-design/` 안이다."""
+        return os.path.join(self.design_dir, LANES_DIRNAME)
+
+    @property
+    def figures_manifest_json(self) -> str:
+        """`30-figures/assets/manifest.json`(design 계약의 선언 입력 · 선행 실행된 경우에만 실재)."""
+        return self.path("manifest.json")
+
     # -- 생성 ---------------------------------------------------------------
 
     def ensure_source_dirs(self) -> None:
@@ -421,3 +468,6 @@ class RunPaths:
 
     def ensure_frozen_dir(self) -> None:
         os.makedirs(self.frozen_dir, exist_ok=True)
+
+    def ensure_design_dirs(self) -> None:
+        os.makedirs(self.design_lanes_dir, exist_ok=True)

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""READ 부분 런 구동기 — `run_kind: partial` · `partial_until: freeze` (재정 T60 집행).
+"""READ 부분 런 구동기 — `run_kind: partial` · `partial_until: freeze` (재정 T60 집행) + 런 -3 연장·설계(재정 T64).
 
-설계 정본 = `docs/decisions/D-20260913-03-read-run-2-driver.md`(§3 명령 8 · §4 레인 호출 규격 ·
+설계 정본 = `docs/decisions/D-20260913-03-read-run-2-driver.md`(§3 명령 11 · §4 레인 호출 규격 ·
 §5 순서 · §9 성공 판정). 재정 좌표 = T60(구동 = M1a 직접 · 전 레인 CLI · 결정론 파이썬) ·
-T58 ②(좌석) · T59(봉투 `review_adjudicated[]`).
+T58 ②(좌석) · T59(봉투 `review_adjudicated[]`) · T64 ①②(연장 봉투 `extend` · 설계 스테이지 `design`).
 
 역할 경계.
 
@@ -29,6 +29,10 @@ T58 ②(좌석) · T59(봉투 `review_adjudicated[]`).
 | 15 | 좌표 호출 상한 초과 |
 | 20 | CP1 대기 — `cp1` · `approve` 차례 |
 | 2 | 인자 · 환경 오류 |
+
+`extend` 는 `15-frozen/extension-v<N>.md`(extension-envelope/v0)를 쓰고 `run.yaml#partial_until` 을
+옮긴다 · `design` 은 `engine/stages/design.py#run` 을 재진입(상한 4)하며 대기 좌표를 같은 `call_lane`
+으로 채운다(0 · 10 · 13 · 14 · 15).
 
 실행기는 주입 가능한 호출체다. 기본 = 실제 `claude` 서브프로세스. 시험은 스텁을 넣는다.
 이 모듈은 표준 라이브러리와 리포 모듈만 쓴다.
@@ -67,8 +71,9 @@ from engine.lanes.contract import (  # noqa: E402
 )
 from engine.lanes.file_adapter import FileLaneAdapter  # noqa: E402
 from engine.lanes.plan import RESPONSE_SCHEMAS  # noqa: E402
-from engine.paths import PathContractError, RunPaths, load_stage_contract  # noqa: E402
+from engine.paths import PathContractError, RunPaths, load_stage_contract, run_kinds_contract  # noqa: E402
 from engine.stages import StageError, freeze as freeze_stage  # noqa: E402
+from engine.stages import design as design_stage  # noqa: E402
 from engine.stages import read as read_stage  # noqa: E402
 from engine.stages import source as source_stage  # noqa: E402
 from reader.lib.rules import Rules  # noqa: E402
@@ -103,7 +108,14 @@ APPROVAL_SCHEMA_REL = freeze_stage.APPROVAL_SCHEMA
 APPROVAL_NAME_RE = re.compile(r"^approval-v([1-9][0-9]*)\.md$")
 STDERR_TAIL_CHARS = 2000
 REVIEW_SECTION_LINES = 12
-COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal")
+COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal", "extend", "design")
+DESIGN_REENTRY_CAP = 4
+EXTENSION_SCHEMA_REL = ("contracts", "schemas", "extension-envelope.schema.json")
+EXTENSION_NAME_RE = re.compile(r"^extension-v([1-9][0-9]*)\.md$")
+# 법 트리 더러움 판정에서 제외하는 접두(런 작업장 · 영수증 · 결박 worktree — 결박 기제 자신의 생성물).
+LAW_DIRTY_EXEMPT_PREFIXES = ("runs/", "evidence/", ".worktrees/")
+# 작업 스키마 조회 사전 — plan.py(READ 4 작업) + design.py(설계 1 작업). 값은 각 모듈의 상수 그대로(복사 아님).
+TASK_SCHEMAS = {**RESPONSE_SCHEMAS, **design_stage.RESPONSE_SCHEMAS}
 MANIFEST_BASENAME = "MANIFEST-sha256.txt"
 
 
@@ -364,9 +376,9 @@ def lane_env() -> dict:
 
 
 def wrapper_schema(task: str) -> dict:
-    """응답 봉투 스키마 — `payload` 에 plan.py 의 작업 스키마를 그대로 품는다(복사 아님)."""
-    if task not in RESPONSE_SCHEMAS:
-        raise DriverExit(EXIT_USAGE, f"plan.py 가 모르는 작업이다: {task!r}")
+    """응답 봉투 스키마 — `payload` 에 plan.py·design.py 의 작업 스키마를 그대로 품는다(복사 아님)."""
+    if task not in TASK_SCHEMAS:
+        raise DriverExit(EXIT_USAGE, f"plan.py·design.py 가 모르는 작업이다: {task!r}")
     return {
         "type": "object",
         "required": ["lane_id", "model", "effort", "input_digest", "payload"],
@@ -375,7 +387,7 @@ def wrapper_schema(task: str) -> dict:
             "model": {"type": "string"},
             "effort": {"type": "string"},
             "input_digest": {"type": "string"},
-            "payload": RESPONSE_SCHEMAS[task],
+            "payload": TASK_SCHEMAS[task],
         },
     }
 
@@ -865,7 +877,7 @@ def cmd_rewrap(ctx: Context, args: argparse.Namespace) -> int:
 
 def cmd_lanes(ctx: Context, args: argparse.Namespace) -> int:
     paths = ctx.paths()
-    rows = lane_inventory(paths.lanes_dir)
+    rows = lane_inventory(paths.lanes_dir) + lane_inventory(paths.design_lanes_dir)
     if not rows:
         ctx.out("요청 좌표 없음")
     for row in rows:
@@ -1119,8 +1131,186 @@ def manifest_lines(ctx: Context) -> list[str]:
             full = os.path.join(paths.frozen_dir, name)
             if os.path.isfile(full):
                 add(full)
+    if os.path.isdir(paths.design_dir):
+        for dirpath, _dirs, files in os.walk(paths.design_dir):
+            for name in files:
+                add(os.path.join(dirpath, name))
     entries.sort(key=lambda pair: pair[1])
     return [f"{digest}  {rel}" for digest, rel in entries]
+
+
+# ---------------------------------------------------------------------------
+# extend · design (재정 T64 ①②)
+# ---------------------------------------------------------------------------
+
+
+def _terminus_enum(law: str) -> list[str]:
+    kinds = run_kinds_contract(law).get("kinds") or {}
+    enum = (kinds.get("partial") or {}).get("terminates_at_enum") or []
+    if not enum:
+        raise DriverExit(EXIT_USAGE, "run-kinds.yaml#kinds.partial.terminates_at_enum 이 비어 있다")
+    return [str(value) for value in enum]
+
+
+def _law_dirty_entries(law: str) -> list[str]:
+    """법 트리의 `git status --porcelain` 중 결박 기제 자신의 생성물 밖 변경 목록. git 트리가 아니면 2."""
+    proc = gitpin.run_git(law, ["status", "--porcelain"])
+    if proc.returncode != 0:
+        raise DriverExit(EXIT_USAGE, f"법 트리가 git 작업 트리가 아니다: {law}")
+    dirty: list[str] = []
+    for line in proc.stdout.splitlines():
+        if len(line) < 4:
+            continue
+        path = line[3:].split(" -> ")[-1].strip().strip('"')
+        if path.startswith(LAW_DIRTY_EXEMPT_PREFIXES):
+            continue
+        dirty.append(line.rstrip())
+    return dirty
+
+
+def _next_extension_version(paths: RunPaths) -> int:
+    highest = 0
+    if os.path.isdir(paths.frozen_dir):
+        for name in os.listdir(paths.frozen_dir):
+            match = EXTENSION_NAME_RE.match(name)
+            if match:
+                highest = max(highest, int(match.group(1)))
+    return highest + 1
+
+
+def _load_run_yaml(paths: RunPaths) -> dict:
+    try:
+        with open(paths.run_yaml, encoding="utf-8") as handle:
+            meta = yaml.safe_load(handle) or {}
+    except (OSError, yaml.YAMLError) as exc:
+        raise DriverExit(EXIT_USAGE, f"run.yaml 을 읽을 수 없다: {paths.run_yaml}: {exc}") from exc
+    if not isinstance(meta, dict):
+        raise DriverExit(EXIT_USAGE, "run.yaml 최상위가 매핑이 아니다")
+    return meta
+
+
+def cmd_extend(ctx: Context, args: argparse.Namespace) -> int:
+    """부분 런 종료선 연장 봉투 — `15-frozen/extension-v<N>.md` + `run.yaml#partial_until` 이동(재정 T64 ①)."""
+    paths = ctx.paths()
+    meta = _load_run_yaml(paths)
+    if meta.get("status") != "active":
+        raise DriverExit(EXIT_USAGE, f"연장은 active 런에만 — 지금 status={meta.get('status')!r}")
+    if meta.get("run_kind") != RUN_KIND:
+        raise DriverExit(EXIT_USAGE, f"연장은 partial 런에만 — 지금 run_kind={meta.get('run_kind')!r}")
+    enum = _terminus_enum(ctx.law)
+    current = str(meta.get("partial_until", ""))
+    if current not in enum:
+        raise DriverExit(EXIT_USAGE, f"run.yaml#partial_until={current!r} 이 terminates_at_enum 밖이다")
+    if args.until not in enum:
+        raise DriverExit(EXIT_USAGE, f"--until {args.until!r} 이 terminates_at_enum 밖이다: {enum}")
+    if enum.index(args.until) <= enum.index(current):
+        raise DriverExit(
+            EXIT_USAGE, f"--until {args.until!r} 은 현재 종료선 {current!r} 보다 뒤가 아니다(순서 = {enum})"
+        )
+    dirty = _law_dirty_entries(ctx.law)
+    if dirty:
+        raise DriverExit(
+            EXIT_USAGE, "법 트리가 더럽다 — 연장은 커밋된 법 아래에서만 기록한다: " + " / ".join(dirty)
+        )
+    law_commit = gitpin.run_git(ctx.law, ["rev-parse", "HEAD"]).stdout.strip()
+    quote = _read_quote(args.quote_file)
+    decided_at = args.decided_at or _now_iso()
+    envelope = {
+        "schema": "extension-envelope/v0",
+        "kind": "partial_until_extension",
+        "run_id": str(meta.get("run_id", "")),
+        "from": current,
+        "to": args.until,
+        "owner_quote": quote,
+        "quote_provenance": {"located_at": args.located_at, "decided_at": decided_at},
+        "recorded_by": "orchestrator",
+        "rulings": list(args.ruling or []),
+        "engine": {
+            "commit_at_start": str((meta.get("engine") or {}).get("commit", "")),
+            "law_commit": law_commit,
+        },
+    }
+    schema = _load_json(os.path.join(ctx.law, *EXTENSION_SCHEMA_REL))
+    errors = sorted(Draft202012Validator(schema).iter_errors(envelope), key=lambda err: list(err.absolute_path))
+    if errors:
+        first = errors[0]
+        locus = "/".join(str(step) for step in first.absolute_path) or "$"
+        raise DriverExit(EXIT_USAGE, f"연장 봉투가 extension-envelope/v0 를 위반한다(@{locus}): {first.message}")
+    version = _next_extension_version(paths)
+    target = paths.extension(version)
+    text = _envelope_text(envelope, f"# Owner 「연장」 — partial_until {current} → {args.until}(재정 T64 ①)") + "\n" + quote
+    if not text.endswith("\n"):
+        text += "\n"
+    if ctx.dry_run:
+        ctx.out(f"[dry-run] 연장 봉투 → {target} · run.yaml partial_until {current} → {args.until}")
+        return EXIT_OK
+    _write_bytes(target, text.encode("utf-8"))
+    meta["partial_until"] = args.until
+    extensions = meta.get("extensions")
+    if not isinstance(extensions, list):
+        extensions = []
+    extensions.append(
+        {
+            "path": os.path.relpath(target, paths.run_root).replace(os.sep, "/"),
+            "from": current,
+            "to": args.until,
+            "law_commit": law_commit,
+            "decided_at": decided_at,
+        }
+    )
+    meta["extensions"] = extensions
+    from engine.stages import dump_yaml  # noqa: PLC0415 - 러너와 같은 직렬화로 쓴다
+
+    dump_yaml(paths.run_yaml, meta)
+    ctx.out(f"연장 봉투 작성: {target} · partial_until {current} → {args.until}")
+    return EXIT_OK
+
+
+def cmd_design(ctx: Context, args: argparse.Namespace) -> int:
+    """설계 스테이지 1회 구동 — `design.run` 재진입(상한 4) + 대기 좌표 호출(재정 T64 ②)."""
+    paths = ctx.paths()
+    meta = _load_run_yaml(paths)
+    enum = _terminus_enum(ctx.law)
+    current = str(meta.get("partial_until", ""))
+    if meta.get("run_kind") == RUN_KIND and (current not in enum or enum.index(current) < enum.index("design")):
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"종료선 — partial_until={current!r} 은 design 앞이다 · `extend` 가 먼저다")
+    lanes_root = paths.design_lanes_dir
+    if ctx.dry_run:
+        pending = [row["lane_id"] for row in lane_inventory(lanes_root) if not row["response"]]
+        if not pending:
+            ctx.out(f"[dry-run] design.run(run_root={ctx.run_root}) — 대기 좌표 없음(요청은 실행 시 생긴다)")
+            return EXIT_OK
+        for lane_id in pending:
+            call_lane(ctx, lanes_root, lane_id)
+        return EXIT_PENDING
+    for _round in range(DESIGN_REENTRY_CAP):
+        try:
+            outcome = design_stage.run(run_root=ctx.run_root, repo=ctx.law)
+        except OSError as exc:
+            raise DriverExit(EXIT_UNDECIDABLE, f"io_fault: design 스테이지 {exc}") from exc
+        except StageError as exc:
+            raise DriverExit(EXIT_TERMINAL_FAIL, f"design 스테이지 정지: {exc}") from exc
+        for row in outcome.get("rows") or []:
+            for finding in getattr(row, "findings", []) or []:
+                ctx.out(f"  {row.check_id}/{finding.rule}@{finding.locus}: {finding.message}")
+        status = str(outcome.get("status"))
+        if status == "pending":
+            lane_ids = list(outcome.get("pending") or [])
+            ctx.out(f"대기 좌표 {len(lane_ids)}건: {', '.join(lane_ids)}")
+            failed: list[str] = []
+            for lane_id in lane_ids:
+                result = call_lane(ctx, lanes_root, lane_id)
+                ctx.out(f"  {lane_id}: {result.reason}")
+                if not result.ok:
+                    failed.append(lane_id)
+            if failed:
+                raise DriverExit(EXIT_PENDING, f"호출 실패 좌표 {len(failed)}건 — 다음 design 이 다시 대기로 낸다: {', '.join(failed)}")
+            continue
+        if status == "ok":
+            ctx.out(f"설계: {outcome.get('path')} digest={outcome.get('digest')}")
+            return EXIT_OK
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"design 판정 {status}: {outcome.get('reason_label')}")
+    raise DriverExit(EXIT_CALL_CAP, f"design 재진입 상한 {DESIGN_REENTRY_CAP} 도달")
 
 
 def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
@@ -1142,7 +1332,7 @@ def cmd_seal(ctx: Context, args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="drive_partial_read.py",
-        description="READ 부분 런 구동기(partial · partial_until=freeze) — 재정 T60 집행. 명령 8 · 판단 없음.",
+        description="READ 부분 런 구동기(partial · partial_until=freeze) + 연장·설계(T64) — 재정 T60 집행. 명령 11 · 판단 없음.",
     )
     parser.add_argument("--repo", help="정본 리포(기본 = 이 파일의 위치에서 추정)")
     parser.add_argument("--worktree-root", help="런 worktree 의 부모(기본 <repo>/.worktrees)")
@@ -1188,6 +1378,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("freeze", help="freeze 스테이지 1회 — partial_until 도달 = 종결").add_argument("run_id")
     sub.add_parser("seal", help="evidence/MANIFEST-sha256.txt").add_argument("run_id")
+
+    extend = sub.add_parser("extend", help="부분 런 종료선 연장 봉투 15-frozen/extension-v<N>.md(재정 T64 ①)")
+    extend.add_argument("run_id")
+    extend.add_argument("--quote-file", required=True)
+    extend.add_argument("--until", required=True, help="새 종료선(run-kinds.yaml#kinds.partial.terminates_at_enum 의 값 · 현 종료선보다 뒤)")
+    extend.add_argument("--ruling", action="append", help="근거 재정 id(반복 가능)")
+    extend.add_argument("--located-at", default="세션 대화창 · Owner 「연장」")
+    extend.add_argument("--decided-at", help="ISO-8601 UTC(기본 지금)")
+
+    sub.add_parser("design", help="design 스테이지 1회 구동(재진입 상한 4 · 대기 좌표 호출) — 재정 T64 ②").add_argument("run_id")
     return parser
 
 
@@ -1201,6 +1401,8 @@ _COMMANDS = {
     "approve": cmd_approve,
     "freeze": cmd_freeze,
     "seal": cmd_seal,
+    "extend": cmd_extend,
+    "design": cmd_design,
 }
 
 

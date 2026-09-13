@@ -356,6 +356,69 @@
       "expect": "reject",
       "series": "T23 reported_by 필수",
       "basis": "재정 2026-09-01 T23. accept/convergence.unclassified-text-absent.json 에서 reported_by 키만 삭제한 판. 새 산출의 미분류 신고는 실행 귀속을 반드시 든다."
+    },
+    {
+      "file": "accept/blueprint.minimal.json",
+      "schema": "contracts/schemas/blueprint.schema.json",
+      "expect": "accept",
+      "series": "T64 블루프린트 유효 대응쌍",
+      "basis": "재정 2026-09-13 T64 ②. 러너 6키 + 레인 필드를 갖춘 정상 형태 · escalation·overflow_proposal 둘 다 null. 아래 reject 5판은 전부 여기서 한 곳만 바꾼 판이다. 슬롯 수·도면 수 같은 시트 값은 스키마 관할이 아니므로(재정 N-D11) 이 판은 3슬롯으로도 통과한다 — 그 판정은 design.slot-count 의 몫이다."
+    },
+    {
+      "file": "reject/blueprint.missing-hook.json",
+      "schema": "contracts/schemas/blueprint.schema.json",
+      "expect": "reject",
+      "series": "T64 hook 누락",
+      "basis": "accept/blueprint.minimal.json 에서 hook 키만 삭제한 판. 훅은 스레드의 성패 그 자체(D11 ③)이며 없는 블루프린트는 펜이 소비할 수 없다."
+    },
+    {
+      "file": "reject/blueprint.slot-outside-enum.json",
+      "schema": "contracts/schemas/blueprint.schema.json",
+      "expect": "reject",
+      "series": "T64 slot enum 밖",
+      "basis": "accept/blueprint.minimal.json 에서 slots[1].slot 만 stop → bridge 로 바꾼 판. enum 의 정본은 format-parameters.yaml#slot_enum 이며 tests/test_m31_t64_design.py 가 스키마 enum 과 시트의 상등을 대조한다."
+    },
+    {
+      "file": "reject/blueprint.spec-digest-format.json",
+      "schema": "contracts/schemas/blueprint.schema.json",
+      "expect": "reject",
+      "series": "T64 spec_digest 형식",
+      "basis": "accept/blueprint.minimal.json 에서 spec_digest 의 sha256: 접두만 뗀 판. 하류 산출물의 spec_digest 는 run.yaml#frozen[].spec_digest 와 같은 표기여야 대조가 성립한다(재정 N11)."
+    },
+    {
+      "file": "reject/blueprint.overflow-without-proposal.json",
+      "schema": "contracts/schemas/blueprint.schema.json",
+      "expect": "reject",
+      "series": "T64 결합 규칙 ① escalation exhibit-overflow + overflow_proposal null",
+      "basis": "accept/blueprint.minimal.json 에서 escalation 만 {reason: exhibit-overflow} 로 채운 판(overflow_proposal 은 null 그대로). 상한 초과 상신에는 제안이 붙어야 Owner 가 선별/분할을 결정한다(재정 R5)."
+    },
+    {
+      "file": "reject/blueprint.empty-targets.json",
+      "schema": "contracts/schemas/blueprint.schema.json",
+      "expect": "reject",
+      "series": "T64 transmission_targets 빈 배열",
+      "basis": "accept/blueprint.minimal.json 에서 transmission_targets 만 [] 로 비운 판. 전달 표적은 계기 질문의 유일한 파생원이므로(D9) 비면 계기가 설 수 없다."
+    },
+    {
+      "file": "accept/extension-envelope.minimal.json",
+      "schema": "contracts/schemas/extension-envelope.schema.json",
+      "expect": "accept",
+      "series": "T64 연장 봉투 유효 대응쌍",
+      "basis": "재정 2026-09-13 T64 ① 런 -3 연장(freeze → gate). Owner 육성·출처·재정 id·결박 커밋 2종을 갖춘 정상 형태."
+    },
+    {
+      "file": "reject/extension-envelope.empty-owner-quote.json",
+      "schema": "contracts/schemas/extension-envelope.schema.json",
+      "expect": "reject",
+      "series": "T64 owner_quote 빈 문자열",
+      "basis": "accept/extension-envelope.minimal.json 에서 owner_quote 만 빈 문자열로 바꾼 판. 육성 인용이 없는 봉투는 연장이 아니다(approval-envelope/v0 규율 (2)와 같은 취지)."
+    },
+    {
+      "file": "reject/extension-envelope.recorded-by-lane.json",
+      "schema": "contracts/schemas/extension-envelope.schema.json",
+      "expect": "reject",
+      "series": "T64 recorded_by 어휘 밖",
+      "basis": "accept/extension-envelope.minimal.json 에서 recorded_by 만 orchestrator → lane 으로 바꾼 판. 작업 레인은 봉투를 쓰지 않는다(SPEC §1.2 C3)."
     }
   ]
 }

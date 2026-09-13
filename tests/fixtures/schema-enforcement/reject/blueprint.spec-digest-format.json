@@ -1,0 +1,98 @@
+{
+  "schema": "blueprint/v0",
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "spec_version": 1,
+  "spec_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "lane": {
+    "model": "claude-fable-5-1",
+    "effort": "high",
+    "lane_id": "design/blueprint/batch-0"
+  },
+  "law_commit": "a7effc6f5416a2276ed618989a083f5195b33674",
+  "hook": {
+    "question_en": "Is the moat real?",
+    "figure": "FIG-1",
+    "thesis_en": "The memory datastore is the moat.",
+    "rationale_kr": "투자자 질문에 최강 도면으로 답한다."
+  },
+  "slots": [
+    {
+      "n": 1,
+      "slot": "hook",
+      "exhibit": {
+        "material_ids": [
+          "M1"
+        ],
+        "point_en": "Ask the question."
+      },
+      "figures": [
+        "FIG-1"
+      ]
+    },
+    {
+      "n": 2,
+      "slot": "stop",
+      "exhibit": {
+        "material_ids": [
+          "M2"
+        ],
+        "point_en": "Show one component."
+      },
+      "figures": [
+        "FIG-2"
+      ]
+    },
+    {
+      "n": 3,
+      "slot": "landing",
+      "exhibit": {
+        "material_ids": [
+          "M1",
+          "M2"
+        ],
+        "point_en": "Land the answer."
+      },
+      "figures": []
+    }
+  ],
+  "transmission_targets": [
+    "M1",
+    "M2"
+  ],
+  "new_terms": [
+    {
+      "term_en": "datastore",
+      "tweet": 2,
+      "gloss_en": "where memories live"
+    }
+  ],
+  "figure_plan": [
+    {
+      "tweet": 1,
+      "figures": [
+        "FIG-1"
+      ],
+      "intent_kr": "훅 도면"
+    },
+    {
+      "tweet": 2,
+      "figures": [
+        "FIG-2"
+      ],
+      "intent_kr": "구성요소 하나"
+    },
+    {
+      "tweet": 3,
+      "figures": [],
+      "intent_kr": "착지는 글만"
+    }
+  ],
+  "numeric_whitelist": [
+    {
+      "pattern": "^\\d{1,2}/\\d{1,2}$",
+      "rationale": "thread ordinal n/N"
+    }
+  ],
+  "overflow_proposal": null,
+  "escalation": null
+}
