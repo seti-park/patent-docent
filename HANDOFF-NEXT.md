@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(172차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(173차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 173차 — **런 -3 펜 3판 완주**(추기 140 · `83942b3`): v1 high $1.30/270s · v2 xhigh $1.72/404s · v3 max $3.04/733s(900초 안 완주) · 종료 검사 전건 pass · 초안 `runs/gdm-wo2026128750a1-agent-memory-3/40-compose/v{1,2,3}/thread.annotated.md`. **지금 할 일 = ③ 레인 회수(`pd-lanes/fable-m3-t64-gate/STATUS`) → 재현·병합 → 런 -3 `gate-l0` → 세 판 열람 브리핑(`/decision-brief` · 결정 = 변주 선택 + 자잘 2).** 살아 있는 배경 = ③ 레인 1(Monitor `byzvp5xb3`).**
+
+> [정정 2026-09-13 · 173차] 172차의 「compose 기동」은 완주했다.
 
 **★ 09-13 172차 — **② 병합(`ea28832`) · ③ 기동 18:17:52**(추기 139): compose 러너 · 긍정형 템플릿 · 린트 · 파서(`engine/annotation/parse.py`) · 구동기 `compose`(명령 12) 실물. **지금 할 일 = 런 -3 `compose`(opus high/xhigh/max 순차 · `pd-lanes/t64-run3/compose.sh`) 를 RAM 여유 확인 뒤 기동 → ③ 레인 회수(`pd-lanes/fable-m3-t64-gate/STATUS`) → 재현·병합 → 런 -3 `gate-l0` → 세 판 열람 브리핑.** 살아 있는 배경 = ③ 레인 1(Monitor `byzvp5xb3`).**
 
