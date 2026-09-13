@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(184차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(185차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 185차 — **v2 수정 라운드 1 = advance(결함 0 · 소수 의견 2) · 반입 `98ce4e7` · CP2 브리핑 T68 발행** `https://claude.ai/code/artifact/d0583f86-1bf2-4dfd-ad4d-87bc91653d8a`(추기 154): ① 승인(A 추천 · 게시 아님) · ② 플래그 4(accept 추천) · ③ 도면 유지. **지금 할 일 = Owner `T68:` 대기 → 재정문 `ruling-20260913-13-T68.md` + 원장 행 → 육성을 `--quote-file` 로 · 플래그 판정을 cp2 초안 JSON 에 채워 `approve-ship gdm-wo2026128750a1-agent-memory-3 --quote-file <f> --selected v2 --flags <json>`(`--repo 정본 --run-root <worktree>/runs/… --evidence-dir <worktree>/evidence`) → `70-ship/checkpoint2.md` 반입 커밋 → 추기 → 다음 발주는 별도 상신(M6-b 최종 심급 · L2 · 계기 · ship / 다른 특허 런).** 살아 있는 배경 = 없음. 맥락 접두 82만 — `/compact` 권고.**
+
+> [정정 2026-09-13 · 185차] 184차의 「라운드 회수」는 됐다(advance) — CP2 재정 대기.
 
 **★ 09-13 184차 — **L1 결함 2(만장일치 · T5/S2 인과 접합 · T7/S1 절대 부정) → 수정 라운드 1 기동 22:35**(추기 153 · `revise.sh`). **지금 할 일 = 라운드 회수(`STATUS-revise` · 영수증 `compose-r3__v2` + `gate-l1__v2__retry-1__batch-*` 류) → decision 확인(advance 면 `cp2 $R --variant v2` → CP2 브리핑 T68 · revise 면 라운드 2·3 · escalate 면 상신) → 반입 커밋.** 살아 있는 배경 = revise 1(Monitor). 맥락 접두 80만 — `/compact` 권고.**
 
