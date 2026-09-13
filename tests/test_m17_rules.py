@@ -359,30 +359,33 @@ def test_markush_forms_were_not_widened() -> None:
 
 
 # ---------------------------------------------------------------------------
-# ④ 판 0.8.0 — 검사 판정 기준이 바뀌면 판을 올린다(재정 N15)
+# ④ 판 0.8.0 → 0.9.0 — 검사 판정 기준·필수 필드가 바뀌면 판을 올린다(재정 N15)
+#   현행 판 = 0.9.0(재정 2026-09-13 T59 ① — review_requests[] 최상위 필수 신설). 0.8.0 의
+#   변경 기록은 이력으로 남아 있어야 한다(추가 전용).
 # ---------------------------------------------------------------------------
 
 
-def test_reader_version_is_0_8_0_and_contract_line_stays_v0() -> None:
+def test_reader_version_is_0_9_0_and_contract_line_stays_v0() -> None:
     """판을 올리지 않으면 "무엇이 언제 바뀌었는가"가 사라지고, 라인을 올리면 0.x 미동결 규율이 깨진다."""
     version = read_text(VERSION_PATH).strip()
-    if version != "0.8.0":
-        pytest.fail(f"READER-VERSION={version!r} (기대 '0.8.0')")
+    if version != "0.9.0":
+        pytest.fail(f"READER-VERSION={version!r} (기대 '0.9.0')")
 
     line = SCHEMA["properties"]["schema"]["const"]
     if line != "material-spec/v0":
         pytest.fail(f"계약 라인이 승격됐다: {line} — 0.x 미동결 구간의 minor 상향이다(재정 N15)")
 
     root_comment = SCHEMA["$comment"]
-    if "reader_version = 0.8.0" not in root_comment:
-        pytest.fail("스키마 루트 $comment 가 현재 판을 0.8.0 으로 적지 않았다")
-    if "판 0.8.0" not in root_comment:
-        pytest.fail("판 0.8.0 이 바꾼 것의 기록이 스키마에 없다 — 0.x 의 자유는 기록 없는 자유가 아니다")
+    if "reader_version = 0.9.0" not in root_comment:
+        pytest.fail("스키마 루트 $comment 가 현재 판을 0.9.0 으로 적지 않았다")
+    if "판 0.9.0" not in root_comment:
+        pytest.fail("판 0.9.0 이 바꾼 것의 기록이 스키마에 없다 — 0.x 의 자유는 기록 없는 자유가 아니다")
     # 구 판의 기록이 지워지면 이력이 사라진다 — 판 이력은 추가 전용이다.
-    if "판 0.7.0" not in root_comment:
-        pytest.fail("구 판 0.7.0 의 변경 기록이 스키마에서 사라졌다 — 이력은 덮어쓰는 것이 아니라 쌓는 것이다")
+    for old in ("판 0.8.0", "판 0.7.0"):
+        if old not in root_comment:
+            pytest.fail(f"구 {old} 의 변경 기록이 스키마에서 사라졌다 — 이력은 덮어쓰는 것이 아니라 쌓는 것이다")
     property_comment = SCHEMA["properties"]["reader_version"]["$comment"]
-    if '"0.8.0"' not in property_comment:
+    if '"0.9.0"' not in property_comment:
         pytest.fail(f"reader_version property 의 $comment 가 낡았다: {property_comment}")
 
 

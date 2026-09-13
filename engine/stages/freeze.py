@@ -10,6 +10,12 @@
    CP1 한 곳이다: 재정 P-A)
 ② `derived_fact_ack[]` 집합 == `origin: "derived"` 항목 집합 (부분집합이 아니라 **정확히 일치**)
 ③ `manual_verification_ack[]` 집합 == `origin: "figure-sourced"` 항목 집합
+④ ★ Owner 판독 요청 전건 덮기(재정 2026-09-13 T59 ②) — `convergence.json#review_requests[]` 가
+   비어 있지 않으면 **결정과 무관하게** 봉투 `review_adjudicated[].target` 집합 == 요청 `target`
+   집합(빠짐·유령 각각 별도 결함). `defect` 가 하나라도 있는데 `decision == approved` 면 실패
+   (이진 결정 · 조건부 승인 없음). `undecided` 채 `approved` 는 통과한다(재정 T59 ④). 이 항은
+   자기 신고의 **내용**이 아니라 **답의 유무**를 본다 — `review_requests` 를 읽는 검사는 이것
+   하나뿐이며 유령 target 도 여기서 잡지 않는다(D9 · SPEC §9.34 · 규율 6).
 
 대조 없는 목록은 승인이 아니라 **서명**이다 — 빈 목록도 유령 ID 도 통과하던 자리가 여기였다.
 빠진 id 와 유령 id 는 각각 별도 결함으로 낸다(수정 지시가 무엇을 지목해야 하는지 다르다).
@@ -134,6 +140,68 @@ def _compare_ack(
             phantom,
             f"origin `{origin}` 항목 집합",
             f"{field} 의 {phantom} 은 재료에 그런 origin 의 항목이 아니다(유령 ID)",
+        )
+
+
+def _review_requests_of_run(paths: RunPaths) -> list[dict]:
+    """`10-read/convergence.json#review_requests[]` — 없으면 빈 배열(구 런 · 행위시법 P-U1)."""
+    if not os.path.isfile(paths.convergence_json):
+        return []
+    try:
+        payload = load_json(paths.convergence_json)
+    except Exception:  # noqa: BLE001 - 판정서 파싱 불능은 이 항의 관할이 아니다(read.schema 몫)
+        return []
+    raw = (payload or {}).get("review_requests")
+    return [entry for entry in raw if isinstance(entry, dict)] if isinstance(raw, list) else []
+
+
+def _compare_review_adjudication(row: CheckRow, *, envelope: dict, requests: list[dict]) -> None:
+    """요청 target 집합 ↔ 봉투 `review_adjudicated[].target` 집합 (재정 2026-09-13 T59 ②).
+
+    요청이 비어 있으면 아무것도 요구하지 않는다(봉투에 배열이 있어도 유령만 본다). 요청이 있으면
+    결정(`approved`/`rejected`)과 **무관하게** 전건을 덮어야 한다 — 빠짐과 유령을 각각 별도
+    결함으로 내고 사유에 차집합을 적는다. `defect` 판정이 있는 `approved` 봉투는 이진 결정을
+    깬 것이므로 실패한다. `undecided` 는 실제 값이며 승인을 막지 않는다(재정 T59 ④).
+    """
+    expected_set = {str(entry.get("target")) for entry in requests}
+    declared = envelope.get("review_adjudicated") or []
+    declared_set = {str(entry.get("target")) for entry in declared if isinstance(entry, dict)}
+    if expected_set:
+        missing = sorted(expected_set - declared_set)
+        if missing:
+            row.add(
+                "approval.review-complete",
+                "review_adjudicated",
+                f"판정 {sorted(declared_set)}",
+                f"요청 {sorted(expected_set)}",
+                "Owner 판독 요청 전건에 답하지 않은 봉투다 — 답 없는 요청 "
+                + ", ".join(missing)
+                + " (요청 target 집합 = 판정 target 집합 · 재정 T59 ②)",
+            )
+    phantom = sorted(declared_set - expected_set)
+    if phantom:
+        row.add(
+            "approval.review-no-phantom",
+            "review_adjudicated",
+            ", ".join(phantom),
+            f"요청 {sorted(expected_set)}",
+            "review_adjudicated 의 "
+            + ", ".join(phantom)
+            + " 은 이 런의 판독 요청에 없는 target 이다(유령 판정 · 재정 T59 ②)",
+        )
+    defects = sorted(
+        str(entry.get("target"))
+        for entry in declared
+        if isinstance(entry, dict) and entry.get("verdict") == "defect"
+    )
+    if defects and envelope.get("decision") == "approved":
+        row.add(
+            "approval.review-defect-approved",
+            "decision",
+            "approved",
+            "rejected + directives[]",
+            "defect 판정이 있는 재료를 승인할 수는 없다 — 이진 결정이며 조건부 승인 제도는 없다"
+            f"(defect: {', '.join(defects)} · 재정 T59 ②)",
         )
 
 
@@ -411,6 +479,14 @@ def run(
         declared=envelope.get("manual_verification_ack") or [],
         expected=_facts_by_origin(spec, "figure-sourced"),
         origin="figure-sourced",
+    )
+    # ④ Owner 판독 요청 전건 덮기(재정 T59 ②). 요청은 최종 판정서에서 읽는다 — 전 레인 합집합이
+    #   거기 산다(정본 재료에는 정본 실행분만 있다). 판정서가 없거나 키가 없는 구 런(행위시법)은
+    #   요청 0 건으로 본다.
+    _compare_review_adjudication(
+        approval_row,
+        envelope=envelope,
+        requests=_review_requests_of_run(paths),
     )
     rows.append(approval_row)
     if approval_row.status == "fail":

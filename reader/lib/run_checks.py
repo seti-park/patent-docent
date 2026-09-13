@@ -120,6 +120,7 @@ def to_convergence_payload(
     canonical_read_run: str | None = None,
     screening_memos=(),
     skipped_tokens=(),
+    review_requests=(),
 ) -> dict:
     """`10-read/convergence.json` 본문을 만든다.
 
@@ -144,6 +145,10 @@ def to_convergence_payload(
       `screening_memos`     맹검 메모 2건(재정 P-A·P-U4). 러너가 레인 응답에서 모은다.
       `skipped_tokens`      수확에서 건너뛴 토큰. 주지 않으면 `read.value-derivation` 행이
                             남긴 것을 쓴다.
+      `review_requests`     Owner 판독 요청의 전 레인 합집합(재정 2026-09-13 T59 ①). 원소는
+                            `{target, reason, refs?, read_run, task}` 이며 러너가 레인 응답에서
+                            모아 `read_run`·`task` 를 붙인다. **어떤 검사의 입력도 아니다** —
+                            이 함수는 그대로 싣기만 한다(비어 있어도 필드를 생략하지 않는다).
 
     ★ `phase == "early"` 에 접지·수확 산물이 실려 있으면 계약이 그것을 거부한다. 이 함수가
     값을 지워서 맞추지 않는 이유가 그것이다 — 순서가 무너진 사실은 산출물에 남아야 한다.
@@ -202,6 +207,7 @@ def to_convergence_payload(
             "skipped": list(skipped_tokens),
         },
         "screening_memos": [dict(memo) for memo in screening_memos],
+        "review_requests": [dict(entry) for entry in review_requests],
         "fact_classification": {
             "quoted_span": {"count": 0, "material_ids": []},
             "bibliographic_ids": [],

@@ -45,5 +45,6 @@
     "text_status": "absent"
   }],
   "numeric_inventory": {"total": 0, "referenced": [], "unreferenced": [], "skipped": []},
-  "screening_memos": []
+  "screening_memos": [],
+  "review_requests": []
 }

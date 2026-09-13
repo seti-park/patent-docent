@@ -117,7 +117,9 @@ DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema"
 # K8 대상은 이 파일 하나다 — 프로젝트 간 계약의 유일한 진원(CLAUDE.md §5).
 MATERIAL_SPEC_REL = "reader/schemas/material-spec.schema.json"
 
-# 공유 코어 10키. 두 프로젝트(docent·historian)가 같은 의미로 읽는 사실면.
+# 공유 코어 11키. 두 프로젝트(docent·historian)가 같은 의미로 읽는 사실면.
+# ★ 11번째 `review_requests` 는 재정 2026-09-13 T59 ①(레인 자기 신고 · 최상위 필수 배열)의
+#   집행이다 — 코어 표면의 변경은 눈에 보이는 행위여야 하므로 이 줄이 그 흔적이다.
 CORE_TOP_KEYS: tuple[str, ...] = (
     "schema",
     "reader_version",
@@ -129,6 +131,7 @@ CORE_TOP_KEYS: tuple[str, ...] = (
     "figures",
     "items",
     "provenance",
+    "review_requests",
 )
 # 확장 블록의 최상위 키. 코어와 나란히 서지만 코어가 아니다.
 EXTENSIONS_KEY = "extensions"
@@ -174,7 +177,7 @@ EPILOG = """\
   K5  폐지 토큰 부재   tools/retired-tokens.yaml 에 등재된 폐지 토큰의 부재
   K6  계약 파일 파싱   contracts/**·reader/*.yaml·reader/schemas/** 의 JSON·YAML 파싱
   K7  스키마 메타 검증 $schema 선언이 draft 2020-12 이고 check_schema() 통과
-  K8  코어·확장 경계   material-spec 의 공유 코어 10키 / 프로젝트 확장 블록 층 분리 (재정 P-2)
+  K8  코어·확장 경계   material-spec 의 공유 코어 11키 / 프로젝트 확장 블록 층 분리 (재정 P-2)
                        판정 8항 — 최상위 required·properties 집합 · 층 표지($comment) ·
                        네임스페이스 선택성·화이트리스트 · 코어에서 확장 전용 키 도달 불능 ·
                        **코어 표면 폐쇄 대조**(reader/core-surface.yaml 과 실측 표면의 동일성)
@@ -924,7 +927,7 @@ def iter_declared_property_names(
 
 
 def measure_core_surface(properties: dict[str, Any], defs: dict[str, Any]) -> list[str]:
-    """공유 코어 10키에서 **도달 가능한** property 경로 전량(정렬·중복 제거).
+    """공유 코어 11키에서 **도달 가능한** property 경로 전량(정렬·중복 제거).
 
     순회는 판정 7 과 **같은 함수**(`iter_declared_property_names`)를 쓴다. 도달 가능성의
     정의가 두 벌이 되면 한 벌은 반드시 낡고, 그 순간 판정 7 이 보는 코어와 판정 8 이 재는
@@ -997,7 +1000,7 @@ def check_k8(repo: str, parsed: dict[str, Any], declared_surface: list[str]) -> 
     properties = data.get("properties") if isinstance(data.get("properties"), dict) else None
     expected_top = set(CORE_TOP_KEYS) | {EXTENSIONS_KEY}
 
-    # --- 판정 1: 최상위 required == 공유 코어 10키 + extensions ---
+    # --- 판정 1: 최상위 required == 공유 코어 11키 + extensions ---
     raw_required = data.get("required")
     required_set: set[str] | None = None
     if not isinstance(raw_required, list):
@@ -1022,7 +1025,7 @@ def check_k8(repo: str, parsed: dict[str, Any], declared_surface: list[str]) -> 
                     path=rel,
                     line=0,
                     found=f"required={sorted(required_set)}",
-                    expected=f"공유 코어 10키 + `{EXTENSIONS_KEY}` = {sorted(expected_top)}",
+                    expected=f"공유 코어 {len(CORE_TOP_KEYS)}키 + `{EXTENSIONS_KEY}` = {sorted(expected_top)}",
                     message=(
                         "최상위 필수 집합이 층 분리와 다르다 — "
                         f"누락 {missing or '없음'} · 잉여 {extra or '없음'} (재정 P-2)"
@@ -1030,7 +1033,7 @@ def check_k8(repo: str, parsed: dict[str, Any], declared_surface: list[str]) -> 
                 )
             )
         else:
-            result.resolved.append(f"{rel}  판정1 최상위 required = 코어 10키 + extensions")
+            result.resolved.append(f"{rel}  판정1 최상위 required = 코어 {len(CORE_TOP_KEYS)}키 + extensions")
 
     # --- 판정 2: 최상위 properties 키 집합 == required 집합 (잉여 최상위 키 금지) ---
     if properties is None:

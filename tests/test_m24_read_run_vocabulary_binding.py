@@ -55,14 +55,15 @@ def test_reported_by_enum_matches_default_read_runs_in_order() -> None:
 
 
 def test_read_run_has_one_definition_three_references_and_one_literal() -> None:
-    """T35 — 단일 진원과 세 사용처가 다시 서로 다른 값 공간으로 늙지 않게 한다."""
+    """T35 — 단일 진원과 네 사용처(T59 로 하나 늘었다)가 다시 서로 다른 값 공간으로 늙지 않게 한다."""
     text, schema = load_schema()
     expected_ref = {"$ref": "#/$defs/read_run"}
     expected_definition = {
         "enum": ["read-a", "read-b"],
         "$comment": (
             "재정 2026-09-02 T32 · 2026-09-05 T35 — 독해 실행 식별자의 단일 진원 · "
-            "`reported_by.items` · `canonical_selection.read_run` · `screening_memos[].read_run` 셋이 참조한다"
+            "`reported_by.items` · `canonical_selection.read_run` · `screening_memos[].read_run` · "
+            "`review_requests[].read_run`(재정 T59) 넷이 참조한다"
         ),
     }
     if schema["$defs"].get("read_run") != expected_definition:
@@ -100,8 +101,12 @@ def test_read_run_has_one_definition_three_references_and_one_literal() -> None:
                 collect_refs(value)
 
     collect_refs(schema)
-    if len(refs) != 3:
-        pytest.fail(f"$defs.read_run 참조 기대 3곳, 실제 {len(refs)}곳")
+    # 재정 2026-09-13 T59 ① 이 넷째 참조(`review_requests[].read_run`)를 더했다.
+    if len(refs) != 4:
+        pytest.fail(f"$defs.read_run 참조 기대 4곳, 실제 {len(refs)}곳")
+    review_read_run = schema["properties"]["review_requests"]["items"]["properties"]["read_run"]
+    if review_read_run.get("$ref") != expected_ref["$ref"]:
+        pytest.fail(f"review_requests[].read_run 이 단일 진원을 참조하지 않는다: {review_read_run}")
     literal_count = text.count('"read-a"')
     if literal_count != 1:
         pytest.fail(f'스키마의 "read-a" 리터럴 기대 1회, 실제 {literal_count}회')

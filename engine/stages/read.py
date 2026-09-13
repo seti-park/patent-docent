@@ -409,6 +409,78 @@ def renumber_items(lane_payloads: list[tuple[str, dict]]) -> tuple[list[dict], d
     return items, id_map
 
 
+# ---------------------------------------------------------------------------
+# Owner 판독 요청 — 레인 자기 신고의 수집 (재정 2026-09-13 T59 ①)
+# ---------------------------------------------------------------------------
+
+REVIEW_REQUEST_FIELDS = ("target", "reason", "refs")
+
+
+def lane_review_requests(payload: dict | None) -> list[dict]:
+    """레인 응답 하나의 `review_requests[]` → 정규화 사본. **값을 만들지 않는다.**
+
+    필드가 없거나 배열이 아니면 **빈 배열**이다 — 응답 거부 사유가 아니다(재정 T59 · 메모 §7 E).
+    원소는 `{target, reason, refs?}` 만 남기고 그대로 옮긴다(형태의 판정은 최종 재료 스키마
+    `$defs.review_request` 의 몫이며 여기서 고치거나 걸러 내지 않는다 — 조립은 결함도 결함
+    그대로 옮긴다).
+    """
+    raw = (payload or {}).get("review_requests")
+    if not isinstance(raw, list):
+        return []
+    entries: list[dict] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        entry = {key: copy.deepcopy(item[key]) for key in REVIEW_REQUEST_FIELDS if key in item}
+        entries.append(entry)
+    return entries
+
+
+def review_requests_with_lanes(
+    *,
+    read_run: str,
+    decompose: dict,
+    groundings: list[dict],
+    synthesis: dict,
+    harvest: dict | None = None,
+    grounding_tasks: list[str] | None = None,
+) -> list[dict]:
+    """한 독해 실행의 전 레인 자기 신고 — `read_run`·`task` 를 붙인 합집합(재정 T59 ①).
+
+    `M<n>` target 은 그 레인의 재번호 표(`renumber_items`)로 최종 ID 에 옮긴다 — 자기 신고도
+    참조이고, 재번호의 계약은 "참조가 가리키던 대상의 보존"이다. 표에 없는 target 은 **그대로
+    남긴다**(유령 target 은 검사가 아니라 렌더가 「해소 불가」로 표기한다). 청구항 경로는
+    재번호 대상이 아니므로 손대지 않는다.
+
+    접지 레인의 `task` 는 `grounding_tasks[position]`(계획 순서 = 응답 순서)에서 온다. 표가
+    없으면(임시 조립본) 접지 신고는 싣지 않는다 — 소속 레인을 지어내지 않기 위해서다.
+    """
+    payloads = lane_payloads(decompose, groundings or [], synthesis, harvest)
+    _, id_map = renumber_items(payloads)
+    collected: list[dict] = []
+    for lane_key, payload in payloads:
+        if lane_key == HARVEST_LANE:
+            continue
+        if lane_key == DECOMPOSE_LANE:
+            task = DECOMPOSE_LANE
+        elif lane_key == SYNTHESIS_LANE:
+            task = SYNTHESIS_LANE
+        else:
+            position = int(lane_key[len("grounding[") : -1])
+            if grounding_tasks is None or position >= len(grounding_tasks):
+                continue
+            task = str(grounding_tasks[position])
+        mapping = id_map.get(lane_key) or {}
+        for entry in lane_review_requests(payload):
+            target = entry.get("target")
+            if isinstance(target, str) and target in mapping:
+                entry["target"] = mapping[target]
+            entry["read_run"] = read_run
+            entry["task"] = task
+            collected.append(entry)
+    return collected
+
+
 class _Renumbering:
     """재번호 표 + 참조 재작성. 재번호의 계약은 **참조가 가리키던 대상의 보존**이다.
 
@@ -536,6 +608,7 @@ def assemble_spec(
     repo: str | None,
     source_digest: str,
     harvest: dict | None = None,
+    grounding_tasks: list[str] | None = None,
 ) -> dict:
     """레인 산출 → 재료 명세 초안. 조립은 결정론이며 값을 만들지 않는다.
 
@@ -556,6 +629,20 @@ def assemble_spec(
     renumbering.rewrite_claims(claims)
 
     engine_block = run_meta.get("engine") or {}
+    # ★ Owner 판독 요청(재정 T59 ①). 정본 재료에는 **이 실행**의 신고만 싣고 `read_run`·`task`
+    #   는 떼어 낸다 — 정본 재료의 원소는 `{target, reason, refs?}` 이고, 레인 귀속을 든
+    #   전 레인 합집합은 `convergence.json#review_requests[]` 의 자리다.
+    review_requests = [
+        {key: entry[key] for key in REVIEW_REQUEST_FIELDS if key in entry}
+        for entry in review_requests_with_lanes(
+            read_run=read_runs[0],
+            decompose=decompose,
+            groundings=groundings or [],
+            synthesis=synthesis,
+            harvest=harvest,
+            grounding_tasks=grounding_tasks,
+        )
+    ]
     return {
         "schema": "material-spec/v0",
         "reader_version": reader_version(repo),
@@ -581,6 +668,7 @@ def assemble_spec(
             "produced_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "engine_commit": str(engine_block.get("commit", "")),
         },
+        "review_requests": review_requests,
     }
 
 
@@ -947,6 +1035,9 @@ def _execute_canonical_tail(
     groundings = [
         response.payload for response in _dispatch(adapter, grounding_requests, journal)
     ]
+    # 접지 응답의 소속 레인(ground-independent · ground-dependent) — 자기 신고의 `task` 귀속용
+    # (재정 T59 ①). 계획 순서 = 응답 순서이므로 위치로 잇는다.
+    grounding_tasks = [str(request.task) for request in grounding_requests]
 
     # 수확은 조립된 명세 위에서 돈다 — 수확기가 보는 것은 원천 파일이 아니라 **접지 스팬**이다.
     # 여기서 만드는 임시 조립본은 통합 전 단계의 것이며 산출물로 남지 않는다.
@@ -985,6 +1076,7 @@ def _execute_canonical_tail(
     return {
         "decompose": decompose,
         "groundings": groundings,
+        "grounding_tasks": grounding_tasks,
         "harvest": {"items": harvested},
         "skipped": skipped,
         "synthesis": synthesis,
@@ -1806,6 +1898,14 @@ def run(
                 phase="early",
                 canonical_read_run=canonical_run,
                 screening_memos=memos,
+                # 조기 국면의 자기 신고 = 두 분해 실행분(재정 T59 ①). 합치지 않고 병기한다.
+                review_requests=[
+                    entry
+                    for name in read_runs
+                    for entry in review_requests_with_lanes(
+                        read_run=name, decompose=decomposes[name], groundings=[], synthesis={}
+                    )
+                ],
             )
             if early_payload["convergence_detail"]["executed"]:
                 early_payload["convergence_detail"]["attempt"] = early_convergence_attempt
@@ -1963,6 +2063,7 @@ def run(
                 repo=repo,
                 source_digest=actual_digest,
                 harvest=tail["harvest"],
+                grounding_tasks=tail["grounding_tasks"],
             )
             # 재번호 표는 레인 응답과 최종 명세를 잇는 **유일한 좌표**다. 남기지 않으면
             # "레인이 답한 M2065 가 명세의 어느 항목인가"를 사후에 되짚을 길이 끊긴다.
@@ -2069,6 +2170,24 @@ def run(
             ),
         ]
 
+        # ★ 자기 신고의 전 레인 합집합(재정 T59 ①) — 정본 실행의 분해·접지·통합 + 비교 실행의
+        #   분해. 두 분해가 다르게 신고하면 합치지 않고 나란히 싣는다(재정 P-U4 의 원리).
+        review_union = review_requests_with_lanes(
+            read_run=canonical_run,
+            decompose=tail["decompose"],
+            groundings=tail["groundings"],
+            synthesis=tail["synthesis"],
+            harvest=tail["harvest"],
+            grounding_tasks=tail["grounding_tasks"],
+        )
+        for name in read_runs:
+            if name == canonical_run:
+                continue
+            review_union.extend(
+                review_requests_with_lanes(
+                    read_run=name, decompose=decomposes[name], groundings=[], synthesis={}
+                )
+            )
         payload = to_convergence_payload(
             rows,
             canonical,
@@ -2076,6 +2195,7 @@ def run(
             canonical_read_run=canonical_run,
             screening_memos=memos,
             skipped_tokens=tail["skipped"],
+            review_requests=review_union,
         )
         if payload["convergence_detail"]["executed"]:
             # 재정 T16: 전역 예산 소진량이 아니라 정본 후속 판정점의 실행 회차다.

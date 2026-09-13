@@ -84,6 +84,10 @@ checks_before_exit:
           drop 의 확정 재정 자리는 CP1 한 곳이다: 재정 P-A)
       ② derived_fact_ack[] 가 재료의 origin == "derived" 항목 집합과 **정확히 일치**
       ③ manual_verification_ack[] 가 origin == "figure-sourced" 항목 집합과 **정확히 일치**
+      ④ [재정 2026-09-13 T59 ②] 10-read/convergence.json#review_requests[] 가 비어 있지 않으면
+         결정과 무관하게 review_adjudicated[].target 집합이 요청 target 집합과 **정확히 일치**
+         (빠짐·유령 별도 결함). defect 판정이 있는 approved 봉투는 실패(이진 결정).
+         undecided 채 approved 는 통과(재정 T59 ④). 자기 신고의 내용이 아니라 답의 유무만 본다.
       ★★ 더해 봉투의 **신원** 4항을 본다(sol 재감수 B-02 처분):
       ④ checkpoint == read 계약의 owner_checkpoint.id(= material_approval).
          CP2 봉투(ship_approval)로 재료를 동결할 수 없다.

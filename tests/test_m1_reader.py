@@ -450,6 +450,8 @@ def _base_spec() -> dict:
             "produced_at": "2026-02-01T00:00:00Z",
             "engine_commit": "0000000",
         },
+        # 판 0.9.0(재정 T59 ①) — 최상위 필수 배열. 이 골든은 요청이 없는 재료다(빈 배열 = 「없음」).
+        "review_requests": [],
     }
 
 

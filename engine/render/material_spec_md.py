@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 
 from ..paths import load_stage_contract, repo_root
 
@@ -98,6 +99,284 @@ def _has_duplicate_values(values: list) -> bool:
     return any(value in values[:index] for index, value in enumerate(values))
 
 
+# ---------------------------------------------------------------------------
+# 8-b. Owner 판독 요청 — 레인 자기 신고 (재정 T58 ③ · 2026-09-13 T59)
+#
+# 여섯 조각(설계 메모 D-20260913-02 §3): ① 머리 ② 항목 문장(EN verbatim) ③ 레인의 이유(KR)
+# ④ 관련 원문 조각 ⑤ 두 실행의 차이(분해 target 에 한함) ⑥ 답 자리. 정렬 = 청구항 경로 →
+# 항목 ID. 같은 target 의 신고는 한 블록에 묶되 **합치지 않는다**(각자 read_run/task 를 든다).
+# 유령 target 은 검사가 아니라 여기서 「해소 불가」로 표기한다(재정 T59 ①).
+# ---------------------------------------------------------------------------
+
+REVIEW_SECTION_TITLE = "## 8-b. ★ Owner 판독 요청 — 레인 자기 신고 (재정 T58 ③)"
+REVIEW_EMPTY_TEXT = (
+    "_요청 0 건 — 레인이 판독을 요청한 자리가 없다. 「확신 있음」의 증거가 아니다"
+    "(자기 신고는 반향이다 · SPEC §9.34). §7·§8·§10 은 그대로 본다._"
+)
+
+_CLAIM_PATH = re.compile(r"^CL-(\d+)(?:/(.+))?$")
+_ITEM_ID = re.compile(r"^M(\d+)$")
+
+
+def _target_sort_key(target: str) -> tuple:
+    """청구항 경로(CL-n → 요소 → 부가) 먼저, 그다음 항목 ID 순, 마지막에 그 밖의 문자열."""
+    claim = _CLAIM_PATH.match(target)
+    if claim:
+        tail = claim.group(2) or ""
+        # 요소 경로(e…)가 부가(a…)보다 앞선다. 숫자는 수로 비교한다.
+        rank = 0 if not tail else (1 if tail.startswith("e") else 2)
+        numbers = tuple(int(part) for part in re.findall(r"\d+", tail))
+        return (0, int(claim.group(1)), rank, numbers, target)
+    item = _ITEM_ID.match(target)
+    if item:
+        return (1, int(item.group(1)), 0, (), target)
+    return (2, 0, 0, (), target)
+
+
+def _group_by_target(requests: list) -> list[tuple[str, list[dict]]]:
+    groups: dict[str, list[dict]] = {}
+    for entry in requests:
+        if not isinstance(entry, dict):
+            continue
+        groups.setdefault(str(entry.get("target", "")), []).append(entry)
+    ordered = sorted(groups, key=_target_sort_key)
+    return [
+        (
+            target,
+            sorted(
+                groups[target],
+                key=lambda e: (str(e.get("read_run", "")), str(e.get("task", ""))),
+            ),
+        )
+        for target in ordered
+    ]
+
+
+def _walk_elements(elements: list, found: dict) -> None:
+    for element in elements or []:
+        found[str(element.get("id"))] = element
+        _walk_elements(element.get("children") or [], found)
+
+
+def _claim_node(spec: dict, target: str) -> tuple[str, dict, dict] | None:
+    """청구항 경로 → (종류, 노드, 소속 청구항). 없으면 None."""
+    claims = spec.get("claims") or {}
+    claim_id = target.split("/", 1)[0]
+    for claim in claims.get("independent") or []:
+        if str(claim.get("id")) == claim_id:
+            if target == claim_id:
+                return ("independent", claim, claim)
+            elements: dict = {}
+            _walk_elements(claim.get("elements") or [], elements)
+            node = elements.get(target)
+            return ("element", node, claim) if node is not None else None
+    for claim in claims.get("dependents") or []:
+        if str(claim.get("id")) == claim_id:
+            if target == claim_id:
+                return ("dependent", claim, claim)
+            for addition in claim.get("additions") or []:
+                if str(addition.get("id")) == target:
+                    return ("addition", addition, claim)
+            return None
+    return None
+
+
+def _describe_target(spec: dict, target: str) -> str:
+    """머리 — kind · 청구항 좌표 · label_en. 재료에 없는 target 은 해소 불가로 표기한다."""
+    index = _item_by_id(spec)
+    if _CLAIM_PATH.match(target):
+        resolved = _claim_node(spec, target)
+        if resolved is None:
+            return "해소 불가 — 재료의 청구항 골격에 이 경로가 없다(검사로 잡지 않는다 · 재정 T59 ①)"
+        kind, node, claim = resolved
+        if kind == "independent":
+            return "independent"
+        if kind == "dependent":
+            depends = ", ".join(str(x) for x in node.get("depends_on") or [])
+            return f"dependent · `{node.get('dependency_type', '')}` · depends_on {depends or '_없음_'}"
+        if kind == "element":
+            component = index.get(str(node.get("material_id"))) or {}
+            return (
+                f"element · `{claim.get('id')}` · **{node.get('material_id')}** · "
+                f"{component.get('label_en', '')}"
+            )
+        component = index.get(str(node.get("material_id"))) or {}
+        return (
+            f"addition · `{claim.get('id')}` · attaches_to `{node.get('attaches_to')}` · "
+            f"**{node.get('material_id')}** · {component.get('label_en', '')}"
+        )
+    item = index.get(target)
+    if item is None:
+        return "해소 불가 — 재료에 이 항목 ID 가 없다(검사로 잡지 않는다 · 재정 T59 ①)"
+    kind = str(item.get("kind", ""))
+    if kind == "component":
+        return f"component · `{item.get('claim_ref', '')}` · {item.get('label_en', '')}"
+    if kind == "grounding":
+        component = index.get(str(item.get("component"))) or {}
+        state = item.get("anchor_state") or {}
+        return (
+            f"grounding · 대상 **{item.get('component')}** (`{component.get('claim_ref', '')}` · "
+            f"{component.get('label_en', '')}) · 명세서 `{state.get('spec')}` · 도면 `{state.get('figure')}`"
+        )
+    if kind == "implication":
+        return f"implication · basis `{item.get('basis', '')}` · confidence `{item.get('confidence', '')}`"
+    if kind == "positioning":
+        return "positioning"
+    if kind == "figure_note":
+        return f"figure_note · `{item.get('figure', '')}`"
+    if kind == "fact":
+        return f"fact · origin `{item.get('origin', '')}` · {item.get('label_en', '')}"
+    return kind or "(kind 없음)"
+
+
+def _target_sentence(spec: dict, target: str) -> str:
+    """항목 문장 — EN verbatim. 번역·요약하지 않는다(재정 P-U5)."""
+    index = _item_by_id(spec)
+    if _CLAIM_PATH.match(target):
+        resolved = _claim_node(spec, target)
+        if resolved is None:
+            return "(문장 없음 — 해소 불가)"
+        _, node, _ = resolved
+        return str(node.get("text_verbatim", ""))
+    item = index.get(target)
+    if item is None:
+        return "(문장 없음 — 해소 불가)"
+    kind = item.get("kind")
+    if kind == "grounding":
+        component = index.get(str(item.get("component"))) or {}
+        return str(component.get("text_verbatim", ""))
+    if kind == "component":
+        return str(item.get("text_verbatim", ""))
+    if kind == "implication":
+        return str(item.get("statement_en", ""))
+    if kind == "positioning":
+        return str(item.get("asserted_effect", ""))
+    if kind == "figure_note":
+        return str(item.get("what_it_shows_en", ""))
+    if kind == "fact":
+        return f"{item.get('label_en', '')} · `{item.get('value_raw', '')}`"
+    return ""
+
+
+def _related_quotes(spec: dict, target: str, group: list[dict]) -> list[str]:
+    """관련 원문 조각 — 접지 인용·도면·함의 근거·종속항 문언·레인이 붙인 refs[]."""
+    index = _item_by_id(spec)
+    lines: list[str] = []
+    if _CLAIM_PATH.match(target):
+        resolved = _claim_node(spec, target)
+        if resolved is not None:
+            kind, node, claim = resolved
+            if kind == "addition":
+                lines.append(f"- 종속항 `{claim.get('id')}` 전문: “{claim.get('text_verbatim', '')}”")
+                lines.append(f"- 부착점 `{node.get('attaches_to')}` · 부가 문언: “{node.get('text_verbatim', '')}”")
+            elif kind == "dependent":
+                for addition in node.get("additions") or []:
+                    lines.append(
+                        f"- 부가 `{addition.get('id')}` (부착 `{addition.get('attaches_to')}`): "
+                        f"“{addition.get('text_verbatim', '')}”"
+                    )
+    else:
+        item = index.get(target) or {}
+        kind = item.get("kind")
+        if kind == "grounding":
+            for ref in item.get("spec_refs") or []:
+                lines.append(f"- 명세서 `{ref.get('locator', '')}`: “{ref.get('quote', '')}”")
+            for ref in item.get("figure_refs") or []:
+                numerals = ", ".join(ref.get("numerals") or [])
+                lines.append(f"- 도면 `{ref.get('figure')}` (도면부호 {numerals}): “{ref.get('caption_quote', '')}”")
+            if item.get("search_note"):
+                lines.append(f"- 탐색 기록: {item.get('search_note')}")
+        elif kind == "implication":
+            for quote in item.get("evidence_quotes") or []:
+                lines.append(f"- 근거 인용: “{quote}”")
+            sources = [
+                f"**{ref}** ({(index.get(ref) or {}).get('label_en', '')})"
+                if (index.get(ref) or {}).get("label_en")
+                else f"**{ref}**"
+                for ref in item.get("derived_from") or []
+            ]
+            if sources:
+                lines.append(f"- 파생 원천: {' · '.join(sources)}")
+        elif kind == "positioning":
+            for quote in item.get("quotes") or []:
+                lines.append(f"- 인용: “{quote}”")
+        elif kind == "fact":
+            source = item.get("source") or {}
+            if source.get("quote"):
+                lines.append(f"- 원천 `{source.get('locator', '')}`: “{source.get('quote', '')}”")
+            derivation = item.get("derivation") or {}
+            if derivation.get("formula"):
+                lines.append(f"- 산식: `{derivation.get('formula')}`")
+        elif kind == "figure_note":
+            numerals = ", ".join(item.get("numerals") or [])
+            lines.append(f"- 도면 `{item.get('figure', '')}` · 도면부호 {numerals or '_없음_'}")
+    for entry in group:
+        for ref in entry.get("refs") or []:
+            if isinstance(ref, dict):
+                lines.append(
+                    f"- 레인이 가리킨 원문 `{ref.get('locator', '')}`: “{ref.get('quote', '')}”"
+                )
+    return lines
+
+
+def _normalize_text(text: str) -> str:
+    return " ".join(str(text).split())
+
+
+def _divergence_lines(convergence: dict, spec: dict, target: str) -> list[str]:
+    """두 실행의 차이 — 분해 target(청구항 경로)에 한해, 같은 문언을 든 갈린 항목을 옮긴다."""
+    if not _CLAIM_PATH.match(target):
+        return []
+    sentence = _normalize_text(_target_sentence(spec, target))
+    if not sentence or sentence.startswith("(문장 없음"):
+        return []
+    report = convergence.get("convergence_report") or {}
+    lines: list[str] = []
+    for entry in report.get("divergences") or []:
+        hits: dict[str, list[str]] = {"only_in_canonical": [], "only_in_peer": []}
+        for side in hits:
+            for value in entry.get(side) or []:
+                candidate = _normalize_text(str(value).rstrip(" …"))
+                probe = candidate[:60]
+                if candidate and (
+                    candidate in sentence or sentence in candidate or (len(probe) >= 24 and probe in sentence)
+                ):
+                    hits[side].append(str(value))
+        if hits["only_in_canonical"] or hits["only_in_peer"]:
+            parts = []
+            if hits["only_in_canonical"]:
+                parts.append("정본에만 " + " / ".join(f"`{v}`" for v in hits["only_in_canonical"]))
+            if hits["only_in_peer"]:
+                parts.append("비교본에만 " + " / ".join(f"`{v}`" for v in hits["only_in_peer"]))
+            lines.append(f"- 두 실행의 차이: `{entry.get('axis', '')}` 축 — " + ", ".join(parts))
+    return lines
+
+
+def _also_in(target: str, convergence: dict) -> str:
+    """같은 target 이 §7·§8·§10 기계 목록에도 있으면 포인터만 단다(합치지 않는다)."""
+    sections: list[str] = []
+    if any(str(e.get("material_id")) == target for e in convergence.get("manual_verification_required") or []):
+        sections.append("§7")
+    if any(
+        target in (str(e.get("material_id")), str(e.get("component")))
+        for e in convergence.get("grounding_exceptions") or []
+    ):
+        sections.append("§8")
+    if any(str(e.get("claim")) == target for e in convergence.get("unclassified_dependents") or []):
+        sections.append("§10")
+    return f" ({'·'.join(sections)} 에도 있음)" if sections else ""
+
+
+def _review_requests_of(spec: dict, convergence: dict) -> list[dict]:
+    """전 레인 합집합(convergence)이 정본. 그 키가 없는 구 판 산출은 재료의 배열로, 그것도
+    없으면(09-01 런 · 행위시법) 빈 배열이다."""
+    if isinstance(convergence.get("review_requests"), list):
+        return [e for e in convergence["review_requests"] if isinstance(e, dict)]
+    if isinstance(spec.get("review_requests"), list):
+        return [e for e in spec["review_requests"] if isinstance(e, dict)]
+    return []
+
+
 def render(
     spec: dict,
     convergence: dict | None = None,
@@ -147,6 +426,8 @@ def render(
     out("- 결정은 이진이다 — `approved` / `rejected`. **조건부 승인 제도는 없다.**")
     out("- `manual_verification_ack[]` 는 아래 §7 목록과, `derived_fact_ack[]` 는 §6.2 목록과")
     out("  **정확히 일치**해야 한다(`freeze.approval-valid`). 빈 목록·유령 ID 는 승인이 아니라 서명이다.")
+    out("- §8-b 요청은 `review_adjudicated[]` 로 **전건** 답한다 — 요청 target 집합 = 판정 target 집합")
+    out("  (`freeze.approval-valid` · 재정 T59 ②). `defect` 가 있으면 결정은 `rejected` 다. `undecided` 채 승인은 허용된다(재정 T59 ④).")
     out("- **작업 레인은 봉투를 쓰지 않는다.** 봉투는 오케스트레이터가 Owner 응답 후 기록한다(SPEC §1.2 C3).")
     out("- 무응답은 무기한 대기다. 시간 초과 자동 진행 경로는 없다(재정 R8).")
     out()
@@ -418,6 +699,31 @@ def render(
         )
         out(f"  - 탐색 기록: {entry.get('search_note', '')}")
     out()
+
+    # -- 8-b. Owner 판독 요청 (재정 T58 ③ · T59) ----------------------------
+    requests = _review_requests_of(spec, convergence)
+    out(REVIEW_SECTION_TITLE)
+    out()
+    out("레인이 스스로 확신이 서지 않는다고 가리킨 자리다. **자기 신고는 반향이다**(SPEC §9.34) —")
+    out("여기 없다고 확실한 것이 아니고, 여기 있다고 틀린 것이 아니다. 봉투 `review_adjudicated[]` 로 전건 답한다.")
+    out()
+    if not requests:
+        out(REVIEW_EMPTY_TEXT)
+        out()
+    for target, group in _group_by_target(requests):
+        out(f"### `{target}` — {_describe_target(spec, target)}{_also_in(target, convergence)}")
+        out(f"> {_target_sentence(spec, target)}")
+        for entry in group:
+            lane = "/".join(
+                str(entry[key]) for key in ("read_run", "task") if entry.get(key)
+            ) or "정본 재료"
+            out(f"- **{lane}** 의 이유: {entry.get('reason', '')}")
+        for line in _related_quotes(spec, target, group):
+            out(line)
+        for line in _divergence_lines(convergence, spec, target):
+            out(line)
+        out(f"- 답 자리: `{{target: {target}, verdict: confirmed|defect|undecided}}`")
+        out()
 
     # -- 9. drop 신호 -------------------------------------------------------
     # ★ 경로 정정(재정 P-2 ⓑ): drop 은 사실이 아니라 편집 판단이므로 공유 코어가 아니라

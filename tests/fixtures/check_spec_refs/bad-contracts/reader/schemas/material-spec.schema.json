@@ -14,7 +14,8 @@
     "figures",
     "items",
     "provenance",
-    "extensions"
+    "extensions",
+    "review_requests"
   ],
   "properties": {
     "schema": {
@@ -57,6 +58,10 @@
     "provenance": {
       "$comment": "[공유 코어] provenance — 층 분리 표지(재정 P-2 ⓑ).",
       "type": "string"
+    },
+    "review_requests": {
+      "$comment": "[공유 코어] review_requests — 레인 자기 신고(재정 T59 ①).",
+      "type": "array"
     },
     "extensions": {
       "$comment": "프로젝트 확장 블록의 네임스페이스 맵(재정 P-2 ⓑ).",

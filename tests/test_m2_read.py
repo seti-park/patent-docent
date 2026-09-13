@@ -771,6 +771,7 @@ def approval_envelope(
     target_path: str = "10-read/material-spec.json",
     digest: str | None = None,
     owner_quote: str = "이 재료로 CP1 승인한다. 파생 300 cm3 은 계산값으로 이해했다.",
+    review_adjudicated=None,
 ) -> str:
     """승인 봉투 md 를 쓴다. 봉투는 **오케스트레이터가** 쓴다는 규율의 시험용 대역이다.
 
@@ -803,6 +804,9 @@ def approval_envelope(
         frontmatter["directives"] = ["파생 수치의 산식을 다시 적어라."]
     if drop_decision is not None:
         frontmatter["drop_decision"] = drop_decision
+    if review_adjudicated is not None:
+        # 재정 T59 ② — Owner 판독 요청에 대한 항목별 판정. 요청이 있는 런의 봉투만 든다.
+        frontmatter["review_adjudicated"] = review_adjudicated
     path = paths.approval(1)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     body = yaml.safe_dump(frontmatter, allow_unicode=True, sort_keys=False)
