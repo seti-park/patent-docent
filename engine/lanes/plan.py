@@ -120,6 +120,10 @@ DECOMPOSE_SCHEMA: dict = {
         },
         "items": {"type": "array", "minItems": 1, "items": _ITEM},
         "screening_memo": _SCREENING_MEMO,
+        # ★ Owner 판독 요청(재정 T58 ③ · T59 ①). required 에 넣지 않는다 — 필드 없는 응답은
+        #   거부 사유가 아니라 빈 배열로 정규화된다(러너 `read.py#lane_review_requests`).
+        #   원소의 형태는 최종 재료 스키마($defs.review_request)가 본다.
+        "review_requests": {"type": "array"},
     },
 }
 
@@ -134,7 +138,9 @@ GROUNDING_SCHEMA: dict = {
             "items": {
                 "allOf": [_ITEM, {"properties": {"kind": {"const": "grounding"}}}]
             },
-        }
+        },
+        # Owner 판독 요청(재정 T59 ①) — optional · 위 DECOMPOSE_SCHEMA 의 주석과 같다.
+        "review_requests": {"type": "array"},
     },
 }
 
@@ -214,6 +220,8 @@ SYNTHESIS_SCHEMA: dict = {
         "drop_signal": {
             "allOf": [_DROP_SIGNAL, {"properties": {"stage": {"const": "final"}}}]
         },
+        # Owner 판독 요청(재정 T59 ①) — optional · 위 DECOMPOSE_SCHEMA 의 주석과 같다.
+        "review_requests": {"type": "array"},
     },
 }
 

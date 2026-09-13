@@ -33,7 +33,8 @@
   },
   "items": [ { "id": "M1", "kind": "component", "status": "active", "superseded_by": null,
                "claim_ref": "CL-1/e1", "label_en": "…", "text_verbatim": "…" } ],
-  "screening_memo": { "direction": "clear", "reason": "…KR…" }
+  "screening_memo": { "direction": "clear", "reason": "…KR…" },
+  "review_requests": [ { "target": "CL-5/a1", "reason": "…KR — 무엇이 확실치 않고 무엇을 보면 판가름나는가…" } ]
 }
 ```
 
@@ -47,7 +48,8 @@
                "anchor_state": { "spec": "found", "figure": "not-depicted" },
                "spec_refs": [ { "locator": "[0042]", "quote": "…" } ],
                "figure_refs": [],
-               "search_note": "…KR…" } ] }
+               "search_note": "…KR…" } ],
+  "review_requests": [ { "target": "M4", "reason": "…KR — 무엇이 확실치 않고 무엇을 보면 판가름나는가…" } ] }
 ```
 
 배열의 모든 원소는 `kind: "grounding"`이다. 다른 kind를 섞으면 응답이 거부된다.
@@ -62,9 +64,12 @@
              { "id": "M8", "kind": "figure_note", "…": "…" } ],
   "figures": [ { "id": "FIG-2", "numerals": ["210"], "caption_quote": "…",
                  "raw_path": "00-source/figures-raw/fig-02.png", "asset_path": null } ],
-  "drop_signal": { "stage": "final", "verdict": "go", "reason": "…KR…" }
+  "drop_signal": { "stage": "final", "verdict": "go", "reason": "…KR…" },
+  "review_requests": []
 }
 ```
+
+`review_requests` 는 세 작업 공통의 Owner 판독 요청 배열이다(재정 T58 ③ · T59 — 각 절차 문서의 「Owner 판독 요청」 절). 원소 = `{ "target", "reason"(KR), "refs"?: [ { "locator", "quote" } ] }`. 요청이 없으면 위처럼 **빈 배열**로 낸다.
 
 ★ 이 레인이 만들 수 있는 `fact` 의 `origin` 은 **`derived` · `figure-sourced` 둘뿐**이다(재정 P-B). `quoted` · `bibliographic` 은 엔진의 수확기가 전수로 만들며, 네가 만들면 `value.harvest-parity` 가 실패시킨다. `implication` · `positioning` 은 **`numeric_refs` 가 필수**이며(빈 배열 허용) 수확 목록의 ID 만 가리킨다.
 

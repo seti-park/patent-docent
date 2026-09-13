@@ -85,6 +85,20 @@
     "drop_decision": {
       "$comment": "CP1 전용 선택 필드. drop 제안에 대한 Owner 처분(go = 계속, drop = 중단).",
       "enum": ["go", "drop"]
+    },
+    "review_adjudicated": {
+      "$comment": "CP1 §8-b 요청에 대한 Owner 항목별 판정(재정 2026-09-13 T59 ②). 원소 = {target, verdict ∈ {confirmed, defect, undecided}, note?(KR 선택)} — CP2 의 flags_adjudicated[] 와 같은 꼴. 요청 전건 덮기 조건(checkpoint == material_approval 이고 convergence.json#review_requests 가 비어 있지 않으면 결정과 무관하게 요청 target 집합 == 이 배열의 target 집합)은 두 파일을 읽어야 하므로 스키마 밖이며 freeze.approval-valid 의 몫이다(규율 (8) 과 같은 구조). defect 가 하나라도 있으면 이진 결정상 rejected + directives[] 이며(freeze.approval-valid 가 approved 를 거부한다), undecided 채 approved 는 허용한다(재정 T59 ④ — 승인은 Owner 재정 · D9). 이것은 신고의 내용이 아니라 **답의 유무**를 보는 대조이며, review_requests 를 읽는 검사는 이 대조 하나뿐이다.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target", "verdict"],
+        "properties": {
+          "target": { "type": "string", "minLength": 1 },
+          "verdict": { "enum": ["confirmed", "defect", "undecided"] },
+          "note": { "type": "string" }
+        }
+      }
     }
   },
   "allOf": [

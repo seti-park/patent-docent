@@ -65,6 +65,11 @@ def _load_run() -> tuple[dict, str]:
             pytest.fail(f"실특허 런 산출이 없다: {path} — 감수 재현의 피검체가 사라졌다")
     with open(RUN_SPEC, encoding="utf-8") as handle:
         spec = json.load(handle)
+    # ★ 행위시법(재정 P-U1 · T59 ①). 이 런은 판 0.9.0 이 `review_requests[]` 를 최상위 필수로
+    #   만들기 전의 산출이라 그 키가 없다. runs/** 는 소급 개정하지 않으므로 **시험 하네스가**
+    #   메모리 사본에만 빈 배열을 채운다 — 이 파일이 재현하는 것은 서지 검사이지 스키마 판이
+    #   아니다. 디스크의 산출물은 그대로다.
+    spec.setdefault("review_requests", [])
     with open(RUN_SOURCE, encoding="utf-8") as handle:
         source = handle.read()
     return spec, source

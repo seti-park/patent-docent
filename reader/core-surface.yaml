@@ -1,7 +1,7 @@
 # 공유 코어 표면 승인 목록 (K8 판정 8 의 참조 데이터 — 재정 2026-08-18 P-2 ⓑ)
 #
 # ── 이 파일이 왜 있는가 ────────────────────────────────────────────────────────
-# `reader/schemas/material-spec.schema.json` 의 공유 코어(10키)는 patent-docent 와
+# `reader/schemas/material-spec.schema.json` 의 공유 코어(11키)는 patent-docent 와
 # patent-historian 이 **같은 의미로 읽는 계약면**이다. 재정 P-2 ⓑ 는 그 계약면에 한 줄을
 # 그었다 — "공유 필수 필드는 프로젝트 간 동일 의미, 프로젝트 고유 판단은 확장 블록에만."
 #
@@ -18,8 +18,8 @@
 # 일어나서는 안 된다는 것 — 그것이 이 목록의 전부다.
 #
 # ── 무엇이 적혀 있는가 ────────────────────────────────────────────────────────
-# 공유 코어 10키(schema·reader_version·spec_version·status·run_id·patent·claims·figures·
-# items·provenance)에서 **도달 가능한** property 경로 전량이다. `$ref` 는 해소해서 따라가고
+# 공유 코어 11키(schema·reader_version·spec_version·status·run_id·patent·claims·figures·
+# items·provenance·review_requests — 11번째는 재정 2026-09-13 T59 ①)에서 **도달 가능한** property 경로 전량이다. `$ref` 는 해소해서 따라가고
 # (`-> $defs/x`), 순환은 끊는다. `required[x]` 항목도 표면의 일부다 — 필수 여부의 변경 역시
 # 계약면의 변경이기 때문이다. 확장 블록(`extensions`)은 **대상이 아니다**: 그 면은 프로젝트가
 # 자기 판단을 늘리는 자리이므로 늘어나는 것이 정상이고, 그 규율은 K8 판정 4·5·6 이 본다.
@@ -433,3 +433,17 @@ paths:
 - properties.provenance -> $defs/provenance.required[engine_commit]
 - properties.provenance -> $defs/provenance.required[produced_at]
 - properties.provenance -> $defs/provenance.required[read_runs]
+- properties.review_requests.items -> $defs/review_request.properties.reason
+- properties.review_requests.items -> $defs/review_request.properties.refs
+- properties.review_requests.items -> $defs/review_request.properties.refs.items -> $defs/quote_ref.properties.locator
+- properties.review_requests.items -> $defs/review_request.properties.refs.items -> $defs/quote_ref.properties.quote
+- properties.review_requests.items -> $defs/review_request.properties.refs.items -> $defs/quote_ref.properties.span
+- properties.review_requests.items -> $defs/review_request.properties.refs.items -> $defs/quote_ref.properties.span -> $defs/span.properties.end
+- properties.review_requests.items -> $defs/review_request.properties.refs.items -> $defs/quote_ref.properties.span -> $defs/span.properties.start
+- properties.review_requests.items -> $defs/review_request.properties.refs.items -> $defs/quote_ref.properties.span -> $defs/span.required[end]
+- properties.review_requests.items -> $defs/review_request.properties.refs.items -> $defs/quote_ref.properties.span -> $defs/span.required[start]
+- properties.review_requests.items -> $defs/review_request.properties.refs.items -> $defs/quote_ref.required[locator]
+- properties.review_requests.items -> $defs/review_request.properties.refs.items -> $defs/quote_ref.required[quote]
+- properties.review_requests.items -> $defs/review_request.properties.target
+- properties.review_requests.items -> $defs/review_request.required[reason]
+- properties.review_requests.items -> $defs/review_request.required[target]
