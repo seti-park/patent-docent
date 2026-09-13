@@ -206,3 +206,4 @@
 | T59 | 2026-09-13 | Owner 판독 요청 절(판정지) 설계 넷 | **① A 재료 명세 최상위 `review_requests[]`(KR 자유문 · 검사 입력 아님) · ② A 봉투 `review_adjudicated[]`(confirmed/defect/undecided) + 요청 전건 답 의무(`freeze.approval-valid`) · ③ A refs 인용 verbatim 검사에 넣지 않음 · ④ A undecided 채 approved 허용** · 판독본 §8-b · 스키마 0.9.0 · 집행 M3 | `ruling-20260913-04-T59.md` |
 | T60 | 2026-09-13 | 예행 런 2 구동 좌석·레인 호출 경로·구동기 | **A · M1a 직접 · 전 레인 CLI 직접 호출 · 결정론 파이썬 구동기**(T40 구동기 골격 · 검수원 미사용) | `ruling-20260913-05-T60.md` |
 | T61 | 2026-09-13 | READ 부분 런 2 조기 수렴 상신 축 미달(0.714 · 「wherein」 경계 · 부착점) 뒤 진행 | **① A 「계속」** — read-a 정본으로 접지 진입 · `convergence_continue` 봉투(육성 인용) · 백로그 = 축의 문자열 민감성(재정 필요) | `ruling-20260913-06-T61.md` |
+| T62 | 2026-09-13 | READ 부분 런 3 CP1 판독 요청 14종(§8-b) · 재료 승인 | **approved · confirmed 12 · undecided 2(M99·M102 — 실물은 FIG-18 · 절차 규칙 재정으로 상신) · defect 0 · drop go** · 봉투 `approval-v1.md` · 동결 `material-spec.v1.json` | `ruling-20260913-07-T62.md` |

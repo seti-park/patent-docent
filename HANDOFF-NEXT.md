@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(163차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(164차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 164차 — **재정 T62 도착**(`ruling-20260913-07-T62.md` · 전건 추천대로 · confirmed 12 · undecided M99·M102 · 승인 「CP1 재료 승인」) → `approve`(봉투 `15-frozen/approval-v1.md`) → `freeze`(`material-spec.v1.json` `66ece496…` · partial_until 도달 · **런 -3 종결**) → `seal`(MANIFEST 36행) 전부 exit 0 → 산출 `runs/gdm-wo2026128750a1-agent-memory-3/**`(+ `evidence/` 영수증 · 도면 원본 제외) 정본 반입 커밋 · 추기 131. **READ 부분 런은 완주했다**(T40 ③ · 런 -3 $18.19 · 3 런 누계 $25.50). **지금 할 일 = 백로그 재정 브리핑 1건**(ⓐ 접지 절차 「범주항 도면 조응 = 장치 블록도의 메모리·명령 부호」 · ⓓ 조기 수렴 element-set·tree-edges 문자열 정규화(T61 부기) · ⓔ 접지 복수 인용 허용 — 셋 다 값 공간 변경 · 규율 11) → 재정 뒤 M3 적용 → 그 다음 단계(예행 런 strip 까지)는 Owner 지시. 살아 있는 배경 = 없음.**
+
+> [정정 2026-09-13 · 164차] 163차의 「Owner T62 한 줄 대기」는 끝났다(재정 도착 · 봉투·동결·봉인 완료).
 
 **★ 09-13 163차 — **런 `-3` step 1 = EXIT 20(CP1 대기 · 14:41:04 · 21분 · $18.19 · 호출 10)**: 조기 수렴 **전부 pass**(element-set·tree-edges 1.0 · 「계속」 봉투 불요) → 접지 3(opus low) → 통합(fable low)이 **결정론 검사 `value.harvest-parity` 에 걸려 재시도 1회**(도면 부호 50·53·60·63 을 수치로 실음 · 검사기가 되돌려 자기 수리) → `cp1` 판독본 **§8-b 요청 18건 · target 14종** → **결정 브리핑 T62 「CP1 판독 열넷」 발행** `https://claude.ai/code/artifact/13d4ff8b-5741-40f9-bbae-69d7c7ae83c8`(홈 사본 `patent-docent-session-drafts/OWNER-BRIEF-T62-cp1-20260913.html` · 추기 130). 총괄 실물 대조로 **M99 의 FIG-19 는 틀리고 FIG-18(메모리 52·명령 54)이 맞다** — 추천 = 12 confirmed + M99·M102 undecided(절차 수리 재정으로 상신 예정) · 대안 defect = 반려 재런. **지금 할 일 = Owner `T62:` 한 줄 대기 → 육성을 `--quote-file` 로 · 14 target 을 `--adjudicated` JSON 으로 → `approve gdm-wo2026128750a1-agent-memory-3 --quote-file <f> --adjudicated <json> --drop-decision go` → `freeze` → `seal` → 결과 커밋(worktree `runs/**` · `evidence/calls/` 10 영수증 · 원장 행은 이미 동반) · 추기 131.** 살아 있는 배경 = 없음(step Monitor 종료 · `/tmp` 감시 Monitor 는 Owner 가 정지). 런 -3 worktree `/home/laptop/projects/patent-docent/.worktrees/gdm-wo2026128750a1-agent-memory-3` @ `eb88493` · 레인 로그 `~/projects/workspaces/pd-lanes/read-run-3/`.**
 
