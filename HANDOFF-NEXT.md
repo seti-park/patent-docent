@@ -1,11 +1,15 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-13(160차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-13(161차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-13 161차 — READ 부분 런 2 진행 중: `init` ok · step 1 실패(`--json-schema` 문자열 · 수리 `11a5f14`) · **step 2 = EXIT 11**(분해 2 좌표 fable low 완료 · 첫 실호출 검증 통과 · $3.31 · 6분 44초 · 조기 수렴 상신 축 element-set·tree-edges 0.714 미달 · 레인 자기 신고 10건 · 추기 125). **지금 할 일 = Owner 「계속」 여부 대기**(T17 · 회신 한 줄 → `--quote-file` 에 원문 저장 → `tools/drive_partial_read.py continue gdm-wo2026128750a1-agent-memory-2 --quote-file <f>` → `pd-lanes/read-run-2/step.sh`(STATUS-step-3 · 접지 ≤9 좌표 · opus low) → step(통합) → CP1(20) → `cp1` → 판독본 + §8-b(자기 신고 10+) Owner 께). 레인 좌표 = worktree `.worktrees/gdm-wo2026128750a1-agent-memory-2`(@ `bff8978`) · 영수증 `evidence/calls/` · 구동 로그 `pd-lanes/read-run-2/step-N.log`. **재정 전 `continue`·`step` 금지.** 살아 있는 배경 = `/tmp` 감시 Monitor 1.**
+
+> [정정 2026-09-13 · 161차] 160차의 「실런 기동」은 됐고 조기 수렴 재정 대기로 바뀌었다(추기 123~125).
 
 **★ 09-13 160차 — 구동기 병합(`07403cb` · `tools/drive_partial_read.py` · 시험 M30 13 · 전체 937) · 프로브 실측으로 **`--bare` 제거**(로그인 풀림 · 함정 S · 대체 `--setting-sources project` + 중립 cwd + `--disable-slash-commands --strict-mcp-config`) · 구조화 출력 = `structured_output` · 추기 122. **지금 할 일 = READ 부분 런 2 실런 기동**(Owner 에게 한 줄 알림 뒤 · 이 대화창이 명령 단위로): `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B tools/drive_partial_read.py init gdm-wo2026128750a1-agent-memory-2 --source ~/projects/workspaces/docent-rehearsal-01-source/input-raw/WO2026-128750A1.txt --figures ~/projects/workspaces/docent-rehearsal-01-source/figures-normalized-20 --patent-meta <09-01 run.yaml#patent 에서 추출> --expect-sha256 0c207938…` → `step`(분해 2 · fable low · 좌표당 ≤15분 · 첫 좌표 실호출 검증) → 상신 축 미달이면 Owner 「계속」 → `continue` → `step`(접지 ≤9 · opus low) → `step`(통합 1) → **CP1(exit 20)** → `cp1` 출력 + `10-read/material-spec.md`(§8-b) 를 Owner 께(아티팩트 · 감시 없음) → Owner 육성 + `review_adjudicated[]` → `approve` → `freeze` → `seal` → 기록(추기 · HANDOFF · 회계). 실런 중 배경 = 없음(구동기는 전경 명령 · 각 `step` 은 레인 수 × ≤15분이라 Bash 10분 상한을 넘을 수 있음 → `step` 은 `setsid nohup` + STATUS + Monitor 로 띄운다 · 함정 A). Owner 재정 대기 = 없음.**
 
