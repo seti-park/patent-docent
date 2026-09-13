@@ -1,31 +1,18 @@
 {
   "comparison_axis": "effort",
   "extras": {
+    "-:compose.input-digest": {
+      "figures_present": true
+    },
     "-:compose.prompt-lint": {
       "defect_catalog": {
         "ruleset_size": 0,
         "vacuous": "empty-ruleset"
       },
-      "lane_id": "compose/v3/batch-0"
-    },
-    "v1:compose.annotation-syntax": {
-      "variant": "v1"
-    },
-    "v1:compose.frontmatter": {
-      "variant": "v1"
-    },
-    "v1:compose.lane-verified": {
-      "effort_evidence": "requested-flag",
-      "observed": {
-        "effort": "high",
-        "model": "claude-opus-5"
-      },
-      "variant": "v1"
-    },
-    "v1:compose.spec-digest": {
-      "variant": "v1"
+      "lane_id": "compose-r2/v2/batch-0"
     },
     "v2:compose.annotation-syntax": {
+      "fig_selection_mismatch": [],
       "variant": "v2"
     },
     "v2:compose.frontmatter": {
@@ -41,50 +28,20 @@
     },
     "v2:compose.spec-digest": {
       "variant": "v2"
-    },
-    "v3:compose.annotation-syntax": {
-      "variant": "v3"
-    },
-    "v3:compose.frontmatter": {
-      "variant": "v3"
-    },
-    "v3:compose.lane-verified": {
-      "effort_evidence": "requested-flag",
-      "observed": {
-        "effort": "max",
-        "model": "claude-opus-5"
-      },
-      "variant": "v3"
-    },
-    "v3:compose.spec-digest": {
-      "variant": "v3"
     }
   },
+  "figures_attached": true,
   "findings": [],
   "lanes": {
-    "v1": {
-      "effort": "high",
-      "lane_id": "compose/v1/batch-0",
-      "mismatch": false,
-      "model": "claude-opus-5",
-      "response_digest": "0f9834f21739eca2bcff4a71a044323de77256b76110404cbe67ae727b700271"
-    },
     "v2": {
       "effort": "xhigh",
-      "lane_id": "compose/v2/batch-0",
+      "lane_id": "compose-r2/v2/batch-0",
       "mismatch": false,
       "model": "claude-opus-5",
-      "response_digest": "4020f6aae2b37ad8097c1a9ed9128e9965f4b3c68d2589be8fe8e0d6bf8b9038"
-    },
-    "v3": {
-      "effort": "max",
-      "lane_id": "compose/v3/batch-0",
-      "mismatch": false,
-      "model": "claude-opus-5",
-      "response_digest": "0217fd5ad96223521865e35933240d7d3bf70098662293c0cafe8ceb7a4af988"
+      "response_digest": "f257e907351aefed68aaf4fbbf65fc952ed2f1981538a19dba242f7d635ca213"
     }
   },
-  "law_commit": "4594bef2cb0688ab3f6e97fd9ae949a6fa44ceff",
+  "law_commit": "bef7f17ec0e3ba20d8d6bb90e70bc2484dff9ee2",
   "pens": [
     {
       "effort": "high",
@@ -105,10 +62,14 @@
       "vendor": "anthropic"
     }
   ],
+  "round": 2,
+  "rounds": {
+    "v2": 2
+  },
   "rows": [
     {
       "check_id": "compose.input-digest",
-      "checked": 5,
+      "checked": 6,
       "ruleset": null,
       "ruleset_size": null,
       "ruleset_version": null,
@@ -118,7 +79,7 @@
     },
     {
       "check_id": "compose.prompt-lint",
-      "checked": 195,
+      "checked": 213,
       "ruleset": "prompt-negation",
       "ruleset_size": 1,
       "ruleset_version": "SPEC-1.9",
@@ -128,47 +89,7 @@
     },
     {
       "check_id": "compose.prompt-lint",
-      "checked": 195,
-      "ruleset": "speech-acts+defect-catalog",
-      "ruleset_size": 24,
-      "ruleset_version": "1.0+0",
-      "status": "pass",
-      "vacuous": "none",
-      "violations": 0
-    },
-    {
-      "check_id": "compose.prompt-lint",
-      "checked": 195,
-      "ruleset": "prompt-negation",
-      "ruleset_size": 1,
-      "ruleset_version": "SPEC-1.9",
-      "status": "pass",
-      "vacuous": "none",
-      "violations": 0
-    },
-    {
-      "check_id": "compose.prompt-lint",
-      "checked": 195,
-      "ruleset": "speech-acts+defect-catalog",
-      "ruleset_size": 24,
-      "ruleset_version": "1.0+0",
-      "status": "pass",
-      "vacuous": "none",
-      "violations": 0
-    },
-    {
-      "check_id": "compose.prompt-lint",
-      "checked": 195,
-      "ruleset": "prompt-negation",
-      "ruleset_size": 1,
-      "ruleset_version": "SPEC-1.9",
-      "status": "pass",
-      "vacuous": "none",
-      "violations": 0
-    },
-    {
-      "check_id": "compose.prompt-lint",
-      "checked": 195,
+      "checked": 213,
       "ruleset": "speech-acts+defect-catalog",
       "ruleset_size": 24,
       "ruleset_version": "1.0+0",
@@ -198,87 +119,7 @@
     },
     {
       "check_id": "compose.annotation-syntax",
-      "checked": 26,
-      "ruleset": null,
-      "ruleset_size": null,
-      "ruleset_version": null,
-      "status": "pass",
-      "vacuous": "none",
-      "violations": 0
-    },
-    {
-      "check_id": "compose.lane-verified",
-      "checked": 2,
-      "ruleset": null,
-      "ruleset_size": null,
-      "ruleset_version": null,
-      "status": "pass",
-      "vacuous": "none",
-      "violations": 0
-    },
-    {
-      "check_id": "compose.frontmatter",
-      "checked": 5,
-      "ruleset": null,
-      "ruleset_size": null,
-      "ruleset_version": null,
-      "status": "pass",
-      "vacuous": "none",
-      "violations": 0
-    },
-    {
-      "check_id": "compose.spec-digest",
-      "checked": 2,
-      "ruleset": null,
-      "ruleset_size": null,
-      "ruleset_version": null,
-      "status": "pass",
-      "vacuous": "none",
-      "violations": 0
-    },
-    {
-      "check_id": "compose.annotation-syntax",
-      "checked": 29,
-      "ruleset": null,
-      "ruleset_size": null,
-      "ruleset_version": null,
-      "status": "pass",
-      "vacuous": "none",
-      "violations": 0
-    },
-    {
-      "check_id": "compose.lane-verified",
-      "checked": 2,
-      "ruleset": null,
-      "ruleset_size": null,
-      "ruleset_version": null,
-      "status": "pass",
-      "vacuous": "none",
-      "violations": 0
-    },
-    {
-      "check_id": "compose.frontmatter",
-      "checked": 5,
-      "ruleset": null,
-      "ruleset_size": null,
-      "ruleset_version": null,
-      "status": "pass",
-      "vacuous": "none",
-      "violations": 0
-    },
-    {
-      "check_id": "compose.spec-digest",
-      "checked": 2,
-      "ruleset": null,
-      "ruleset_size": null,
-      "ruleset_version": null,
-      "status": "pass",
-      "vacuous": "none",
-      "violations": 0
-    },
-    {
-      "check_id": "compose.annotation-syntax",
-      "checked": 28,
+      "checked": 19,
       "ruleset": null,
       "ruleset_size": null,
       "ruleset_version": null,
@@ -309,9 +150,11 @@
     },
     "v2": {
       "attempt": 0,
-      "digest": "sha256:585c15f6f2a9eec13fd49321d02873c07daef84a3729c0af1ac52480262c99d5",
-      "lane_id": "compose/v2/batch-0",
+      "digest": "sha256:065f6c5c59594de1d1dc4bfa869ad8ce72022e433fbc8cd9c586a0f06a2c5727",
+      "lane_id": "compose-r2/v2/batch-0",
       "path": "/home/laptop/projects/patent-docent/.worktrees/gdm-wo2026128750a1-agent-memory-3/runs/gdm-wo2026128750a1-agent-memory-3/40-compose/v2/thread.annotated.md",
+      "preserved_previous": "/home/laptop/projects/patent-docent/.worktrees/gdm-wo2026128750a1-agent-memory-3/runs/gdm-wo2026128750a1-agent-memory-3/40-compose/v2/rounds/r1",
+      "round": 2,
       "status": "ok"
     },
     "v3": {

@@ -2,23 +2,23 @@
   "advisory_measurements": {
     "extreme": false,
     "note": "[가설] weighted_char_counts 의 이모지 그래핌 클러스터는 표준 라이브러리 근사다(unicodedata 범주 So + 이모지 블록 · ZWJ·VS16·키캡·피부색·태그 결합 · 지역 표시자 쌍). twitter-text 의 정규식 전체와 갈릴 수 있다 — engine/gate/l0/weighted_length.py",
-    "total_words": 369,
+    "total_words": 350,
     "weighted_char_counts": [
-      257,
-      242,
-      252,
-      255,
-      254,
-      253,
       245,
+      246,
+      251,
+      250,
       247,
-      146
+      251,
+      249,
+      231,
+      125
     ]
   },
   "checks": [
     {
       "check_id": "gate.input-digest",
-      "checked": 6,
+      "checked": 7,
       "ruleset": null,
       "ruleset_size": null,
       "ruleset_version": null,
@@ -68,12 +68,12 @@
     },
     {
       "check_id": "format.stop-shape",
-      "checked": 0,
+      "checked": 6,
       "ruleset": null,
       "ruleset_size": null,
       "ruleset_version": null,
       "status": "pass",
-      "vacuous": "empty-target",
+      "vacuous": "none",
       "violations": 0
     },
     {
@@ -108,7 +108,7 @@
     },
     {
       "check_id": "annotation.schema",
-      "checked": 30,
+      "checked": 20,
       "ruleset": null,
       "ruleset_size": null,
       "ruleset_version": null,
@@ -118,7 +118,7 @@
     },
     {
       "check_id": "annotation.missing-tag",
-      "checked": 29,
+      "checked": 19,
       "ruleset": null,
       "ruleset_size": null,
       "ruleset_version": null,
@@ -128,7 +128,7 @@
     },
     {
       "check_id": "citation.resolve",
-      "checked": 76,
+      "checked": 72,
       "ruleset": null,
       "ruleset_size": null,
       "ruleset_version": null,
@@ -198,7 +198,7 @@
     },
     {
       "check_id": "gate.annotation-index",
-      "checked": 29,
+      "checked": 19,
       "ruleset": null,
       "ruleset_size": null,
       "ruleset_version": null,
@@ -255,11 +255,6 @@
       "layer": "final_eyes",
       "reason": "재정 T64 ② — 첫 초안 범위 밖 · 소관 M6·M8",
       "ruling": "재정 2026-09-13 T64 ②"
-    },
-    {
-      "layer": "format.stop-shape",
-      "reason": "재정 T64 ④ 도면 자산층 부재",
-      "ruling": "재정 2026-09-13 T64 ④"
     }
   ],
   "l0": {
@@ -306,12 +301,12 @@
       },
       {
         "check_id": "format.stop-shape",
-        "checked": 0,
+        "checked": 6,
         "ruleset": null,
         "ruleset_size": null,
         "ruleset_version": null,
         "status": "pass",
-        "vacuous": "empty-target",
+        "vacuous": "none",
         "violations": 0
       },
       {
@@ -346,7 +341,7 @@
       },
       {
         "check_id": "annotation.schema",
-        "checked": 30,
+        "checked": 20,
         "ruleset": null,
         "ruleset_size": null,
         "ruleset_version": null,
@@ -356,7 +351,7 @@
       },
       {
         "check_id": "annotation.missing-tag",
-        "checked": 29,
+        "checked": 19,
         "ruleset": null,
         "ruleset_size": null,
         "ruleset_version": null,
@@ -366,7 +361,7 @@
       },
       {
         "check_id": "citation.resolve",
-        "checked": 76,
+        "checked": 72,
         "ruleset": null,
         "ruleset_size": null,
         "ruleset_version": null,
@@ -404,7 +399,7 @@
           "sentence": 1,
           "tweet": 9
         },
-        "note": "미검토 수치 사용 — T9/S1 의 2026-06-18| 는 M106 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
+        "note": "미검토 수치 사용 — T9/S1 의 2024-12-11| 는 M104 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
         "origin": "advisory-rule",
         "rule": "numeric.unreviewed-use"
       },
@@ -415,7 +410,7 @@
           "sentence": 1,
           "tweet": 9
         },
-        "note": "미검토 수치 사용 — T9/S1 의 2024-12-11| 는 M104 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
+        "note": "미검토 수치 사용 — T9/S1 의 2026-06-18| 는 M106 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
         "origin": "advisory-rule",
         "rule": "numeric.unreviewed-use"
       }
@@ -446,10 +441,9 @@
   "schema": "gate-report/v0",
   "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
   "spec_version": 1,
-  "thread_digest": "sha256:585c15f6f2a9eec13fd49321d02873c07daef84a3729c0af1ac52480262c99d5",
+  "thread_digest": "sha256:065f6c5c59594de1d1dc4bfa869ad8ce72022e433fbc8cd9c586a0f06a2c5727",
   "vacuous_pass": [
     "run.publish-preconditions",
-    "format.stop-shape",
     "gate.no-rewrite"
   ],
   "variant": "v2"

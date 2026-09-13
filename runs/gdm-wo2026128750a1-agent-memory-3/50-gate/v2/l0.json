@@ -42,12 +42,12 @@
     },
     {
       "check_id": "format.stop-shape",
-      "checked": 0,
+      "checked": 6,
       "ruleset": null,
       "ruleset_size": null,
       "ruleset_version": null,
       "status": "pass",
-      "vacuous": "empty-target",
+      "vacuous": "none",
       "violations": 0
     },
     {
@@ -82,7 +82,7 @@
     },
     {
       "check_id": "annotation.schema",
-      "checked": 30,
+      "checked": 20,
       "ruleset": null,
       "ruleset_size": null,
       "ruleset_version": null,
@@ -92,7 +92,7 @@
     },
     {
       "check_id": "annotation.missing-tag",
-      "checked": 29,
+      "checked": 19,
       "ruleset": null,
       "ruleset_size": null,
       "ruleset_version": null,
@@ -102,7 +102,7 @@
     },
     {
       "check_id": "citation.resolve",
-      "checked": 76,
+      "checked": 72,
       "ruleset": null,
       "ruleset_size": null,
       "ruleset_version": null,
@@ -140,7 +140,7 @@
         "sentence": 1,
         "tweet": 9
       },
-      "note": "미검토 수치 사용 — T9/S1 의 2026-06-18| 는 M106 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
+      "note": "미검토 수치 사용 — T9/S1 의 2024-12-11| 는 M104 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
       "origin": "advisory-rule",
       "rule": "numeric.unreviewed-use"
     },
@@ -151,7 +151,7 @@
         "sentence": 1,
         "tweet": 9
       },
-      "note": "미검토 수치 사용 — T9/S1 의 2024-12-11| 는 M104 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
+      "note": "미검토 수치 사용 — T9/S1 의 2026-06-18| 는 M106 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
       "origin": "advisory-rule",
       "rule": "numeric.unreviewed-use"
     }

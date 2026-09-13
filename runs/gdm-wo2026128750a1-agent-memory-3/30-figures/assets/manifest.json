@@ -1,0 +1,222 @@
+{
+  "items": [
+    {
+      "asset_id": "fig-01",
+      "asset_path": "30-figures/assets/fig-01.png",
+      "edit_class": "crop-only",
+      "edits": [
+        {
+          "note": "전장 프레이밍 · 오버레이 없음",
+          "op": "crop-only-framing",
+          "template": "crop-only/v0"
+        }
+      ],
+      "fallback": true,
+      "figure_id": "FIG-1",
+      "publishable": true,
+      "rendered_at": "2026-09-13T11:52:14Z",
+      "renderer": "playwright-chromium-1148",
+      "sha256": "sha256:08ab5032979456b5ba5b0726f3be6d081b3de139d4b6c6b45b864d78c45c287a",
+      "source_raw_path": "00-source/figures-raw/fig-01.png",
+      "source_sha256": "sha256:7fae4a6d92c033d248834e953ef85f2862a74d324ce9500c4fb7bad1e08104d5",
+      "template": "crop-only/v0"
+    },
+    {
+      "asset_id": "fig-02",
+      "asset_path": "30-figures/assets/fig-02.png",
+      "edit_class": "crop-only",
+      "edits": [
+        {
+          "note": "전장 프레이밍 · 오버레이 없음",
+          "op": "crop-only-framing",
+          "template": "crop-only/v0"
+        }
+      ],
+      "fallback": true,
+      "figure_id": "FIG-2",
+      "publishable": true,
+      "rendered_at": "2026-09-13T11:52:14Z",
+      "renderer": "playwright-chromium-1148",
+      "sha256": "sha256:9dfe4df527048d0c2d8a5f543d9fd7787f4b0d8ffbd5b6c66b4d3085a5ad3aff",
+      "source_raw_path": "00-source/figures-raw/fig-02.png",
+      "source_sha256": "sha256:882555daab66d95f1273e6d2edb3e651b3c8b3b903eef2fa94d8f4dffb0f90fd",
+      "template": "crop-only/v0"
+    },
+    {
+      "asset_id": "fig-03",
+      "asset_path": "30-figures/assets/fig-03.png",
+      "edit_class": "crop-only",
+      "edits": [
+        {
+          "note": "전장 프레이밍 · 오버레이 없음",
+          "op": "crop-only-framing",
+          "template": "crop-only/v0"
+        }
+      ],
+      "fallback": true,
+      "figure_id": "FIG-3",
+      "publishable": true,
+      "rendered_at": "2026-09-13T11:52:14Z",
+      "renderer": "playwright-chromium-1148",
+      "sha256": "sha256:42985156c2600589250c5fd7acb78e2fa88e2d44896a3cba3b8ff403582debb7",
+      "source_raw_path": "00-source/figures-raw/fig-03.png",
+      "source_sha256": "sha256:9e69b8df96a278ee6372bfd6359d6b389d4f640d2fa04c216f4295f29f842955",
+      "template": "crop-only/v0"
+    },
+    {
+      "asset_id": "fig-07",
+      "asset_path": "30-figures/assets/fig-07.png",
+      "edit_class": "crop-only",
+      "edits": [
+        {
+          "note": "전장 프레이밍 · 오버레이 없음",
+          "op": "crop-only-framing",
+          "template": "crop-only/v0"
+        }
+      ],
+      "fallback": true,
+      "figure_id": "FIG-7",
+      "publishable": true,
+      "rendered_at": "2026-09-13T11:52:14Z",
+      "renderer": "playwright-chromium-1148",
+      "sha256": "sha256:c8664d29c24aa55c975fcde31159a3b1b9faf3ae874c4df2f294cec59dc3e394",
+      "source_raw_path": "00-source/figures-raw/fig-07.png",
+      "source_sha256": "sha256:ddfc822e61182c1e0db9bfc687eda089a746e3b5a43503d7f69b64e98c0af5ec",
+      "template": "crop-only/v0"
+    },
+    {
+      "asset_id": "fig-08",
+      "asset_path": "30-figures/assets/fig-08.png",
+      "edit_class": "crop-only",
+      "edits": [
+        {
+          "note": "전장 프레이밍 · 오버레이 없음",
+          "op": "crop-only-framing",
+          "template": "crop-only/v0"
+        },
+        {
+          "basis": "source-report#figures[figure_number]",
+          "from": "00-source/figures-raw/fig-08.png",
+          "note": "동결본 raw_path 가 실재하지 않아 source-report 도면 번호 유일 일치 파일로 해소(재정 T66 ①) · 재료 무변경",
+          "op": "raw-path-resolved",
+          "to": "00-source/figures-raw/fig-08-09.png"
+        }
+      ],
+      "fallback": true,
+      "figure_id": "FIG-8",
+      "publishable": true,
+      "rendered_at": "2026-09-13T12:12:39Z",
+      "renderer": "playwright-chromium-1148",
+      "sha256": "sha256:5849f47075f6bcdac8fd33b91a2cc9177d594b7664b1deab5d816b95e006e979",
+      "source_raw_path": "00-source/figures-raw/fig-08-09.png",
+      "source_sha256": "sha256:d024d979092ae9be39735040104a242b0e6e9da26622825b880d87f28df402f3",
+      "template": "crop-only/v0"
+    },
+    {
+      "asset_id": "fig-10",
+      "asset_path": "30-figures/assets/fig-10.png",
+      "edit_class": "crop-only",
+      "edits": [
+        {
+          "note": "전장 프레이밍 · 오버레이 없음",
+          "op": "crop-only-framing",
+          "template": "crop-only/v0"
+        }
+      ],
+      "fallback": true,
+      "figure_id": "FIG-10",
+      "publishable": true,
+      "rendered_at": "2026-09-13T11:52:14Z",
+      "renderer": "playwright-chromium-1148",
+      "sha256": "sha256:eb13c1461a1ed83408ed8fbd41868b582dc3dc85d2a7b08e0805bcae40d2623e",
+      "source_raw_path": "00-source/figures-raw/fig-10.png",
+      "source_sha256": "sha256:2e795a6783df746ae1b6633d91ebfc9bbf77c172d9c20fb2c3be38a8de120046",
+      "template": "crop-only/v0"
+    },
+    {
+      "asset_id": "fig-13",
+      "asset_path": "30-figures/assets/fig-13.png",
+      "edit_class": "crop-only",
+      "edits": [
+        {
+          "note": "전장 프레이밍 · 오버레이 없음",
+          "op": "crop-only-framing",
+          "template": "crop-only/v0"
+        }
+      ],
+      "fallback": true,
+      "figure_id": "FIG-13",
+      "publishable": true,
+      "rendered_at": "2026-09-13T11:52:14Z",
+      "renderer": "playwright-chromium-1148",
+      "sha256": "sha256:081e0d63ba3fa94d291ae6ff5f1db83a3c64ab5181ce35a4bf1f1ff1f12f1fb2",
+      "source_raw_path": "00-source/figures-raw/fig-13.png",
+      "source_sha256": "sha256:2d74c5f3ea43d45d288b9e45e90ce13c0f8a87deb38a1c8639f7a4a9bcc982be",
+      "template": "crop-only/v0"
+    },
+    {
+      "asset_id": "fig-19",
+      "asset_path": "30-figures/assets/fig-19.png",
+      "edit_class": "crop-only",
+      "edits": [
+        {
+          "note": "전장 프레이밍 · 오버레이 없음",
+          "op": "crop-only-framing",
+          "template": "crop-only/v0"
+        },
+        {
+          "basis": "source-report#figures[figure_number]",
+          "from": "00-source/figures-raw/fig-19.png",
+          "note": "동결본 raw_path 가 실재하지 않아 source-report 도면 번호 유일 일치 파일로 해소(재정 T66 ①) · 재료 무변경",
+          "op": "raw-path-resolved",
+          "to": "00-source/figures-raw/fig-19.jpg"
+        }
+      ],
+      "fallback": true,
+      "figure_id": "FIG-19",
+      "publishable": true,
+      "rendered_at": "2026-09-13T12:12:39Z",
+      "renderer": "playwright-chromium-1148",
+      "sha256": "sha256:e405072e8c2c249316fc86f8c79c0057419b65c6c78007a71a5dcfdf91a58b21",
+      "source_raw_path": "00-source/figures-raw/fig-19.jpg",
+      "source_sha256": "sha256:6ffd5fe3e3c2b1e900c729cb6dfac9b9f0fb62fd559ab150a69e2d727d1f2816",
+      "template": "crop-only/v0"
+    },
+    {
+      "asset_id": "fig-21",
+      "asset_path": "30-figures/assets/fig-21.png",
+      "edit_class": "crop-only",
+      "edits": [
+        {
+          "note": "전장 프레이밍 · 오버레이 없음",
+          "op": "crop-only-framing",
+          "template": "crop-only/v0"
+        }
+      ],
+      "fallback": true,
+      "figure_id": "FIG-21",
+      "publishable": true,
+      "rendered_at": "2026-09-13T11:52:14Z",
+      "renderer": "playwright-chromium-1148",
+      "sha256": "sha256:868d84a1657f28e83c36b5e68edefb17c8edd51bea8571dcddfcfbcb71d4fc5b",
+      "source_raw_path": "00-source/figures-raw/fig-21.png",
+      "source_sha256": "sha256:da7888f92b14ed91ca48df927b034b1b7103e06f0a1790a395ec08227e6f417c",
+      "template": "crop-only/v0"
+    }
+  ],
+  "renderer": {
+    "browser": "chromium-1148",
+    "channel": "chromium",
+    "device_scale_factor": 2,
+    "engine": "playwright-chromium",
+    "playwright": "1.49.1",
+    "viewport": [
+      1200,
+      675
+    ]
+  },
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "schema": "figures-manifest/v0",
+  "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+  "spec_version": 1
+}

@@ -1,0 +1,329 @@
+{
+  "findings": [],
+  "rows": [
+    {
+      "check_id": "figures.input-digest",
+      "checked": 13,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "figures.asset-completeness",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "figures.render-spec",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "figures.manifest-parity",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "figures.input-digest",
+      "checked": 13,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "figures.selection-resolve",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "figures.no-copy",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "figures.publish-gate",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    }
+  ],
+  "stage": "figures",
+  "status": "ok",
+  "steps": {
+    "figures.prepare": {
+      "attempts": 1,
+      "extras": {
+        "figures.asset-completeness": {
+          "missing": []
+        },
+        "figures.input-digest": {
+          "missing_raw": [],
+          "resolved_raw": {
+            "FIG-19": {
+              "basis": "source-report#figures[figure_number]",
+              "from": "00-source/figures-raw/fig-19.png",
+              "to": "00-source/figures-raw/fig-19.jpg"
+            },
+            "FIG-8": {
+              "basis": "source-report#figures[figure_number]",
+              "from": "00-source/figures-raw/fig-08.png",
+              "to": "00-source/figures-raw/fig-08-09.png"
+            }
+          },
+          "verified_raw": {
+            "fig-01.png": "sha256:7fae4a6d92c033d248834e953ef85f2862a74d324ce9500c4fb7bad1e08104d5",
+            "fig-02.png": "sha256:882555daab66d95f1273e6d2edb3e651b3c8b3b903eef2fa94d8f4dffb0f90fd",
+            "fig-03.png": "sha256:9e69b8df96a278ee6372bfd6359d6b389d4f640d2fa04c216f4295f29f842955",
+            "fig-07.png": "sha256:ddfc822e61182c1e0db9bfc687eda089a746e3b5a43503d7f69b64e98c0af5ec",
+            "fig-08-09.png": "sha256:d024d979092ae9be39735040104a242b0e6e9da26622825b880d87f28df402f3",
+            "fig-10.png": "sha256:2e795a6783df746ae1b6633d91ebfc9bbf77c172d9c20fb2c3be38a8de120046",
+            "fig-13.png": "sha256:2d74c5f3ea43d45d288b9e45e90ce13c0f8a87deb38a1c8639f7a4a9bcc982be",
+            "fig-19.jpg": "sha256:6ffd5fe3e3c2b1e900c729cb6dfac9b9f0fb62fd559ab150a69e2d727d1f2816",
+            "fig-21.png": "sha256:da7888f92b14ed91ca48df927b034b1b7103e06f0a1790a395ec08227e6f417c"
+          }
+        },
+        "figures.render-spec": {
+          "expected": [
+            2400,
+            1350
+          ],
+          "sizes": {
+            "fig-01.png": [
+              2400,
+              1350
+            ],
+            "fig-02.png": [
+              2400,
+              1350
+            ],
+            "fig-03.png": [
+              2400,
+              1350
+            ],
+            "fig-07.png": [
+              2400,
+              1350
+            ],
+            "fig-08.png": [
+              2400,
+              1350
+            ],
+            "fig-10.png": [
+              2400,
+              1350
+            ],
+            "fig-13.png": [
+              2400,
+              1350
+            ],
+            "fig-19.png": [
+              2400,
+              1350
+            ],
+            "fig-21.png": [
+              2400,
+              1350
+            ]
+          }
+        }
+      },
+      "findings": [],
+      "reentered": false,
+      "render_failed": [],
+      "rendered": [
+        "fig-08",
+        "fig-19"
+      ],
+      "renderer_environment": {
+        "browser": "chromium-1148",
+        "browser_dir": "/home/laptop/.cache/ms-playwright/chromium-1148",
+        "channel": "chromium",
+        "device_scale_factor": 2,
+        "engine": "playwright-chromium",
+        "missing": [],
+        "node": "v22.23.1",
+        "package": "1.49.1",
+        "playwright_pin": "1.49.1",
+        "viewport": [
+          1200,
+          675
+        ]
+      },
+      "rows": [
+        {
+          "check_id": "figures.input-digest",
+          "checked": 13,
+          "ruleset": null,
+          "ruleset_size": null,
+          "ruleset_version": null,
+          "status": "pass",
+          "vacuous": "none",
+          "violations": 0
+        },
+        {
+          "check_id": "figures.asset-completeness",
+          "checked": 9,
+          "ruleset": null,
+          "ruleset_size": null,
+          "ruleset_version": null,
+          "status": "pass",
+          "vacuous": "none",
+          "violations": 0
+        },
+        {
+          "check_id": "figures.render-spec",
+          "checked": 9,
+          "ruleset": null,
+          "ruleset_size": null,
+          "ruleset_version": null,
+          "status": "pass",
+          "vacuous": "none",
+          "violations": 0
+        },
+        {
+          "check_id": "figures.manifest-parity",
+          "checked": 9,
+          "ruleset": null,
+          "ruleset_size": null,
+          "ruleset_version": null,
+          "status": "pass",
+          "vacuous": "none",
+          "violations": 0
+        }
+      ],
+      "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+      "spec_version": 1,
+      "status": "ok"
+    },
+    "figures.select": {
+      "extras": {
+        "figures.input-digest": {
+          "missing_raw": [],
+          "resolved_raw": {
+            "FIG-19": {
+              "basis": "source-report#figures[figure_number]",
+              "from": "00-source/figures-raw/fig-19.png",
+              "to": "00-source/figures-raw/fig-19.jpg"
+            },
+            "FIG-8": {
+              "basis": "source-report#figures[figure_number]",
+              "from": "00-source/figures-raw/fig-08.png",
+              "to": "00-source/figures-raw/fig-08-09.png"
+            }
+          },
+          "verified_raw": {
+            "fig-01.png": "sha256:7fae4a6d92c033d248834e953ef85f2862a74d324ce9500c4fb7bad1e08104d5",
+            "fig-02.png": "sha256:882555daab66d95f1273e6d2edb3e651b3c8b3b903eef2fa94d8f4dffb0f90fd",
+            "fig-03.png": "sha256:9e69b8df96a278ee6372bfd6359d6b389d4f640d2fa04c216f4295f29f842955",
+            "fig-07.png": "sha256:ddfc822e61182c1e0db9bfc687eda089a746e3b5a43503d7f69b64e98c0af5ec",
+            "fig-08-09.png": "sha256:d024d979092ae9be39735040104a242b0e6e9da26622825b880d87f28df402f3",
+            "fig-10.png": "sha256:2e795a6783df746ae1b6633d91ebfc9bbf77c172d9c20fb2c3be38a8de120046",
+            "fig-13.png": "sha256:2d74c5f3ea43d45d288b9e45e90ce13c0f8a87deb38a1c8639f7a4a9bcc982be",
+            "fig-19.jpg": "sha256:6ffd5fe3e3c2b1e900c729cb6dfac9b9f0fb62fd559ab150a69e2d727d1f2816",
+            "fig-21.png": "sha256:da7888f92b14ed91ca48df927b034b1b7103e06f0a1790a395ec08227e6f417c"
+          }
+        },
+        "figures.publish-gate": {
+          "branch": "①",
+          "run_kind": "partial"
+        },
+        "figures.selection-resolve": {
+          "per_tweet": {
+            "T1": 1,
+            "T2": 1,
+            "T3": 2,
+            "T4": 1,
+            "T5": 1,
+            "T6": 1,
+            "T7": 1,
+            "T8": 1
+          }
+        }
+      },
+      "findings": [],
+      "images_per_post_max": 4,
+      "rows": [
+        {
+          "check_id": "figures.input-digest",
+          "checked": 13,
+          "ruleset": null,
+          "ruleset_size": null,
+          "ruleset_version": null,
+          "status": "pass",
+          "vacuous": "none",
+          "violations": 0
+        },
+        {
+          "check_id": "figures.selection-resolve",
+          "checked": 9,
+          "ruleset": null,
+          "ruleset_size": null,
+          "ruleset_version": null,
+          "status": "pass",
+          "vacuous": "none",
+          "violations": 0
+        },
+        {
+          "check_id": "figures.no-copy",
+          "checked": 9,
+          "ruleset": null,
+          "ruleset_size": null,
+          "ruleset_version": null,
+          "status": "pass",
+          "vacuous": "none",
+          "violations": 0
+        },
+        {
+          "check_id": "figures.publish-gate",
+          "checked": 9,
+          "ruleset": null,
+          "ruleset_size": null,
+          "ruleset_version": null,
+          "status": "pass",
+          "vacuous": "none",
+          "violations": 0
+        }
+      ],
+      "slots": 9,
+      "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+      "spec_version": 1,
+      "status": "ok",
+      "unresolved": []
+    }
+  }
+}
