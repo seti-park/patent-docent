@@ -1,0 +1,85 @@
+{
+  "frontmatter": {
+    "pen": {
+      "effort": "max",
+      "model": "opus-5",
+      "vendor": "anthropic"
+    },
+    "run_id": "gdm-wo2026128750a1-agent-memory-3",
+    "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+    "spec_version": 1,
+    "variant": "v3"
+  },
+  "frontmatter_raw": "run_id: gdm-wo2026128750a1-agent-memory-3\nvariant: v3\npen: { vendor: anthropic, model: opus-5, effort: max }\nspec_version: 1\nspec_digest: sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407\n",
+  "images": [],
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "schema": "thread/v0",
+  "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+  "spec_version": 1,
+  "tweets": [
+    {
+      "figures": [],
+      "n": 1,
+      "slot": "hook",
+      "text": "When an AI agent says it \"remembers\" you, is that architecture or a marketing word?\nThis filing answers with a five-step loop, and step two reads a per-user store of memory objects built from your prior chats.\nThat store is drawn as a box of its own.",
+      "weighted_char_count": 250
+    },
+    {
+      "figures": [],
+      "n": 2,
+      "slot": "stop",
+      "text": "What the datastore holds is not a transcript.\nIts unit is the memory object, a container holding one or more memory values: strings, images, or audio.\nBeside each value sits metadata: a timestamp, the trigger that stored it, a summary of the interaction.",
+      "weighted_char_count": 254
+    },
+    {
+      "figures": [],
+      "n": 3,
+      "slot": "stop",
+      "text": "Who decides what the agent keeps?\nA model does.\nIn a memory update cycle, cached inputs go to the model, which predicts what to remember, extracts it, and writes it as a memory object.\nSaying \"remember this\" is one trigger, and the write can run offline.",
+      "weighted_char_count": 254
+    },
+    {
+      "figures": [],
+      "n": 4,
+      "slot": "stop",
+      "text": "Recall is not a reread of everything.\nIn the recall cycle, the agent scores stored objects against the query, comparing embeddings by a measure like cosine similarity.\nOnly a top subset comes back, ordered by timestamp so the model sees what is recent.",
+      "weighted_char_count": 252
+    },
+    {
+      "figures": [],
+      "n": 5,
+      "slot": "stop",
+      "text": "Memories can be corrected.\nNew input arrives with a timestamp, is matched to a prior memory object, and either replaces it or updates it.\nAligned objects can be consolidated into one, so new information refines a memory instead of noisily overwriting it.",
+      "weighted_char_count": 254
+    },
+    {
+      "figures": [],
+      "n": 6,
+      "slot": "pivot",
+      "text": "Forgetting is claimed, not just remembering.\n\"Forget that\" deletes the specified information from the datastore.\n\"Forget this after three months\" queues it for deletion.\nExpired objects are swept in maintenance, and the same chat erases what it built.",
+      "weighted_char_count": 251
+    },
+    {
+      "figures": [],
+      "n": 7,
+      "slot": "stop",
+      "text": "Before answering, the model can analyze your query against the recalled memory.\nThat analysis is not shown on screen.\nThe response itself can be an API call that makes a device act, so memory shapes what the agent does, not only what it says.",
+      "weighted_char_count": 242
+    },
+    {
+      "figures": [],
+      "n": 8,
+      "slot": "landing",
+      "text": "There are no benchmark numbers here.\nThe claimed difference is structural: memory objects made from your own interactions, retrieved by relevance, corrected over time, and deleted when you ask.\nThat is an architecture you can read, not a slogan.",
+      "weighted_char_count": 245
+    },
+    {
+      "figures": [],
+      "n": 9,
+      "slot": "tail",
+      "text": "The filing is WO2026-128750A1, with a 2024 priority and a 2026 publication.\nFollow along for the next patent walk-through.",
+      "weighted_char_count": 122
+    }
+  ],
+  "variant": "v3"
+}

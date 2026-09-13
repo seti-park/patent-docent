@@ -3,7 +3,7 @@ run_id: example-xx0000000a1-cable-guide
 variant: v2
 pen: { vendor: anthropic, model: opus-5, effort: max }
 spec_version: 1
-spec_digest: sha256:722c204eed4bd0f2cc2dfe4623abb833d36f524e95b39b4f9a49632877d41592
+spec_digest: sha256:1c89841ca8dc13e254e84e18e6b91c79111fa9135015248bf849aa27e3ad0043
 ---
 
 ## T1 {slot: hook, fig: fig-01}

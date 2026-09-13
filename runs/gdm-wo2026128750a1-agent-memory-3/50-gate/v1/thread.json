@@ -1,0 +1,85 @@
+{
+  "frontmatter": {
+    "pen": {
+      "effort": "high",
+      "model": "opus-5",
+      "vendor": "anthropic"
+    },
+    "run_id": "gdm-wo2026128750a1-agent-memory-3",
+    "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+    "spec_version": 1,
+    "variant": "v1"
+  },
+  "frontmatter_raw": "run_id: gdm-wo2026128750a1-agent-memory-3\nvariant: v1\npen: { vendor: anthropic, model: opus-5, effort: high }\nspec_version: 1\nspec_digest: sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407\n",
+  "images": [],
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "schema": "thread/v0",
+  "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+  "spec_version": 1,
+  "tweets": [
+    {
+      "figures": [],
+      "n": 1,
+      "slot": "hook",
+      "text": "An AI agent that \"remembers\" you: architecture, or marketing?\nThe filing answers with a loop: a query arrives, memory data is pulled from a datastore of your past interactions, and both go into a sequence model.\nThe model's output becomes the response.",
+      "weighted_char_count": 252
+    },
+    {
+      "figures": [],
+      "n": 2,
+      "slot": "stop",
+      "text": "So what is in that box?\nNot a transcript: each memory object is a container holding memory values — a string, an image, audio — plus metadata.\nThe metadata can carry a timestamp, the trigger that stored it, and a summary of the interaction it came from.",
+      "weighted_char_count": 253
+    },
+    {
+      "figures": [],
+      "n": 3,
+      "slot": "stop",
+      "text": "Who decides what is stored?\nA model does: it reads cached inputs, predicts whether anything is worth keeping, extracts that portion, and stores it as a memory object.\n\"Remember this\" is one trigger, and the write can happen offline, not at query time.",
+      "weighted_char_count": 251
+    },
+    {
+      "figures": [],
+      "n": 4,
+      "slot": "stop",
+      "text": "At query time the agent does not reread everything.\nIt scores stored objects against the query by embedding distance, such as cosine similarity, and returns a top subset.\nThe values it returns are ordered by timestamp, so the model sees what is recent.",
+      "weighted_char_count": 252
+    },
+    {
+      "figures": [],
+      "n": 5,
+      "slot": "stop",
+      "text": "Memories can also be corrected.\nNew timestamped input is matched to a prior memory object, then either replaces it or updates it.\nObjects that align can be consolidated into one, so a contradiction refines a memory instead of noisily overwriting it.",
+      "weighted_char_count": 249
+    },
+    {
+      "figures": [],
+      "n": 6,
+      "slot": "pivot",
+      "text": "The decisive part: forgetting is claimed.\n\"Forget that\" deletes information from the datastore; \"forget this after three months\" queues it for deletion.\nExpired objects are deleted during maintenance cycles, and the same chat is the surface for erasing it.",
+      "weighted_char_count": 256
+    },
+    {
+      "figures": [],
+      "n": 7,
+      "slot": "stop",
+      "text": "What is the memory for?\nFirst the model generates an analysis of the query against the memory data, never shown on screen.\nThe final response can itself be an API call that makes a device act, so memory shapes what the agent does, not only what it says.",
+      "weighted_char_count": 253
+    },
+    {
+      "figures": [],
+      "n": 8,
+      "slot": "landing",
+      "text": "No benchmark numbers are claimed.\nWhat is claimed is structural: memory objects made from your own interactions, retrieved by relevance, corrected over time, erased on request.\nThat is an architecture on paper, not a slogan.",
+      "weighted_char_count": 224
+    },
+    {
+      "figures": [],
+      "n": 9,
+      "slot": "tail",
+      "text": "Publication: WO2026-128750A1, priority 2024, published 2026.\nFollow for the next patent walk-through.",
+      "weighted_char_count": 101
+    }
+  ],
+  "variant": "v1"
+}
