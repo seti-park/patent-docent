@@ -46,9 +46,12 @@ env MEMORY_HOOKS=off CLAUDE_CODE_MAX_OUTPUT_TOKENS=128000 claude -p --setting-so
 ## T69 ⑦ · 소견부터 출하까지
 
 `critique <run> --variant v2`는 Fable high 소견 1회와 재시도 1회를 구동한다. 레인 장애는 결번으로 기록한다.
-`final-eyes <run> --variant v2`는 L0·round-trip 재실행 뒤 opus-5 max × parameters.yaml#gate.l1.k를 새 세션으로 순차 호출한다.
+`final-eyes <run> --variant v2`는 L0·round-trip 재실행 뒤 계약 좌석 × parameters.yaml#gate.l1.k를 새 세션으로 순차 호출한다.
 최종 심급의 원천은 최종 초안 2파일·동결본·루프 전 발췌본뿐이다. 생성 경계나 핀이 다르면 halt한다.
 거부는 revise(캡 안)로 돌아가며 수정 후 probe·critique·final-eyes를 다시 거쳐 CP2를 재상신한다.
+캡이 소진되면 escalate로 멈추고 Owner에게 올린다. 거부를 무를 수 있는 것은 Owner뿐이며, 재정이 오면
+`waive-final-eyes <run> --variant v2 --quote-file <f>`가 거부를 관할 밖 소견으로 강등한다 — 심급이 쓴 결함
+문언은 한 글자도 바꾸지 않고 observations로 옮겨 CP2 표면에 실리고, 강등 사실은 verdict.json#final_eyes.waived에 남는다.
 `cp2`는 후보 전량·selection·flags·L2·score·소견 첫 20줄·최종 판정과 숫자 화이트리스트를 출력한다.
 `approve-ship` 봉투 뒤 `ship <run>`은 텍스트와 자산을 바이트 복사하고 리포 루트 원장에 이관한다.
 `seal`은 65-critique/**와 70-ship/**도 포함한다. partial은 앵커에 편입하지 않으며 게시 자체는 Owner가 한다.

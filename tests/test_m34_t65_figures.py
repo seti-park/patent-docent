@@ -917,8 +917,8 @@ def _drive(law: str, run_root: str, evidence: str, *argv: str, executor=None, dr
 
 def test_driver_figures_and_compose_round_two(law, run_root, tmp_path, monkeypatch) -> None:
     evidence = os.path.join(str(tmp_path), "evidence")
-    if len(drv.COMMANDS) != 25 or drv.COMMANDS[11:15] != ("figures", "compose", "gate-l0", "strip"):
-        pytest.fail(f"명령 25 가 아니다: {drv.COMMANDS}")
+    if len(drv.COMMANDS) != 26 or drv.COMMANDS[11:15] != ("figures", "compose", "gate-l0", "strip"):
+        pytest.fail(f"명령 26 가 아니다: {drv.COMMANDS}")
     parser = drv.build_parser()
     listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
     if listed != drv.COMMANDS:

@@ -131,7 +131,7 @@ APPROVAL_NAME_RE = re.compile(r"^approval-v([1-9][0-9]*)\.md$")
 STDERR_TAIL_CHARS = 2000
 REVIEW_SECTION_LINES = 12
 COMMANDS = ("init", "step", "lanes", "rewrap", "continue", "cp1", "approve", "freeze", "seal", "extend", "design", "figures", "compose", "gate-l0", "strip",
-            "gate-l1", "revise", "cp2", "approve-ship", "gate-l2", "revise-free", "probe", "critique", "final-eyes", "ship")
+            "gate-l1", "revise", "cp2", "approve-ship", "gate-l2", "revise-free", "probe", "critique", "final-eyes", "waive-final-eyes", "ship")
 GATE_L1_REENTRY_CAP = 4          # 요청 k 건 → 호출 → 재진입 1 회면 족하다 · 여유 2
 REVISE_REENTRY_CAP = 8           # 펜 1 + L1 k 재진입
 GATE_L2_REENTRY_CAP = 3          # 요청 1 → 호출 → 재진입 1
@@ -1703,6 +1703,23 @@ def cmd_revise(ctx: Context, args: argparse.Namespace) -> int:
     raise DriverExit(EXIT_CALL_CAP, f"revise 재진입 상한 {REVISE_REENTRY_CAP} 도달")
 
 
+def cmd_waive_final_eyes(ctx: Context, args: argparse.Namespace) -> int:
+    """최종 심급 거부를 Owner 재정으로 관할 밖 소견으로 강등한다(계약 gate.yaml#layers.final_eyes.waiver).
+
+    캡 소진 뒤의 에스컬레이션에만 쓴다. 심급이 쓴 결함 문언은 그대로 observations 로 옮겨 CP2 표면에 실린다.
+    """
+    quote = _read_quote(args.quote_file)
+    variant = str(args.variant or "v2")
+    try:
+        outcome = final_eyes_mod.waive(run_root=ctx.run_root, repo=ctx.law, variant=variant,
+                                       owner_quote=quote, located_at=args.located_at)
+    except StageError as exc:
+        raise DriverExit(EXIT_TERMINAL_FAIL, f"강등 거부: {exc}") from exc
+    ctx.out(f"{variant}: 최종 심급 거부를 소견으로 강등 · 이관 {outcome['carried']}건 · decision {outcome['decision']}")
+    ctx.out("강등 사실은 verdict.json#final_eyes.waived 와 CP2 표면에 남는다.")
+    return EXIT_OK
+
+
 def cmd_cp2(ctx: Context, args: argparse.Namespace) -> int:
     """CP2 표면 조회(무변경) — 실재 표면 · 결번 표 · 봉투 초안 JSON(`approve-ship --flags` 인자용)."""
     paths = ctx.paths()
@@ -2082,6 +2099,11 @@ def build_parser() -> argparse.ArgumentParser:
         command = sub.add_parser(name, help="소견 또는 최종 심급 — 독립 레인 순차 호출")
         command.add_argument("run_id")
         command.add_argument("--variant", required=True)
+    waive = sub.add_parser("waive-final-eyes", help="최종 심급 거부를 Owner 재정으로 소견 강등(캡 소진 뒤에만 · 결함 문언은 표면으로 이관)")
+    waive.add_argument("run_id")
+    waive.add_argument("--variant", default="v2", help="대상 변주(기본 v2)")
+    waive.add_argument("--quote-file", required=True, help="Owner 육성 인용 파일")
+    waive.add_argument("--located-at", default="세션 대화창 · 에스컬레이션 응답")
     shipping = sub.add_parser("ship", help="승인본 복사 · 이미지 · 출하 원장 · 게시물 패키지")
     shipping.add_argument("run_id")
     return parser
@@ -2105,6 +2127,7 @@ _COMMANDS = {
     "strip": cmd_strip,
     "gate-l1": cmd_gate_l1,
     "revise": cmd_revise,
+    "waive-final-eyes": cmd_waive_final_eyes,
     "cp2": cmd_cp2,
     "approve-ship": cmd_approve_ship,
     "gate-l2": cmd_gate_l2,

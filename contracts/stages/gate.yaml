@@ -83,10 +83,20 @@ layers:
     note: "거부권 없음 · origin speech-act · predicate · votes 기록 · 다수결이어도 defect 승격 없음(재정 R7 · SPEC §4.4.2)"
   final_eyes:
     status: active
-    ruling: "재정 2026-09-14 T69 ⑦"
-    lane: {kind: llm, model: opus-5, effort: max, k: parameters.yaml#gate.l1.k, session: fresh}
+    ruling: "재정 2026-09-14 T69 ⑦ · 좌석은 Owner 재정 2026-09-14(opus-5 max → gpt-6-astra high)"
+    lane: {kind: llm, model: gpt-6-astra, effort: high, k: parameters.yaml#gate.l1.k, session: fresh}
     procedure: engine/gate/final-eyes-procedure.md
     pending_reason: "최종 심급 미실행 — final-eyes가 채운다"
+    waiver:
+      # 거부를 무를 수 있는 것은 Owner 뿐이다(재정 R4 — 관할 밖 발견의 판정자는 Owner · D8·D15).
+      # 캡 소진 뒤 에스컬레이션에서 Owner 가 「체크포인트로 두자」고 재정하면, 거부 사유를 지우지 않고
+      # **관할 밖 소견으로 강등**해 CP2 표면에 싣는다. 결함 문언은 한 글자도 바꾸지 않는다.
+      ruling: "Owner 재정 2026-09-14 — 런 -3 v2 최종 심급 4회 거부 · 상류 결함(T5 에 정정 경로 둘이 겹침)"
+      recorded_by: owner
+      requires: [owner_quote, located_at, escalation_present]
+      effect: "final_eyes.verdict veto → pass · veto_reason → null · defects[] 를 observations[] 로 문언 그대로 이관 · waived 블록 기록 · decision escalate|revise → advance"
+      surface: "CP2 표면의 verdict.final_eyes 에 waived 블록이 함께 실린다 — 강등 사실을 표면에서 숨기지 않는다"
+      enforced_by: engine/gate/final_eyes.py#waive
     lane_id_vocabulary:
       form: "final-eyes/<variant>/batch-<i>"
       membership: {run: [final-eyes], task: [v1, v2, v3]}
@@ -104,7 +114,7 @@ layers:
 # 넘지 않기 위해 여기 둔다. 값 이동은 재정 사항이다(규율 11).
 loop:
   tag: "[주석]"
-  revision_cap: 3
+  revision_cap: 5   # 재정 2026-09-14 T70 ① — 3 → 4 → 5(Owner 「진행해」 09-14 · 지시문 수리가 3차에 작동해 결함 2→1 · 수렴 근거)
   free_revision: 1                        # L2 메모 1회 → 펜 자유 리비전 1회 → 위상 봉쇄(재정 T69 ⑥ · SPEC §1.10 판단 경로 · D8)
   free_revision_dir: "50-gate/<variant>/revisions/free-r1/"   # memo.json(메모 = 데이터) + thread.annotated.md(결과 사본) + round.json
   basis: "D8 · SPEC §4.3"

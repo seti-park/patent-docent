@@ -767,5 +767,5 @@ def test_help_lists_fourteen_commands_including_extend_and_design() -> None:
     """명령 12 → 14(T64 집행 ③ · gate-l0 · strip 추가). extend·design 의 자리는 그대로다."""
     parser = drv.build_parser()
     listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
-    if listed != drv.COMMANDS or len(listed) != 25 or listed[9:15] != ("extend", "design", "figures", "compose", "gate-l0", "strip"):
-        pytest.fail(f"명령 25 가 아니다: {listed}")
+    if listed != drv.COMMANDS or len(listed) != 26 or listed[9:15] != ("extend", "design", "figures", "compose", "gate-l0", "strip"):
+        pytest.fail(f"명령 26 가 아니다: {listed}")

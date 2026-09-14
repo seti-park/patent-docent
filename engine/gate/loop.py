@@ -179,6 +179,11 @@ def revise(*, run_root: str, repo: str | None = None, variant: str, adapter=None
     round_no = open_round(paths, variant)
     if round_no is None:
         # 새 라운드 — 전제 = decision revise · round < cap · 판정문이 현 주석본의 것.
+        if verdict.get("decision") == gate_stage.DECISION_ESCALATE and int(verdict.get("revision_round", 0)) < cap:
+            # 소진은 캡에 대한 상태이지 영구 판정이 아니다. 재정으로 캡이 늘면 풀린다(재정 2026-09-14 T70 ①).
+            # `escalation.json` 은 지우지 않는다 — 그 시점의 진단은 사료로 남는다.
+            verdict["decision"] = gate_stage.DECISION_REVISE
+            write_json(verdict_path, verdict)
         if verdict.get("decision") != gate_stage.DECISION_REVISE:
             raise StageError(f"decision 이 revise 가 아니다({verdict.get('decision')}) — 수정 라운드를 열지 않는다")
         if int(verdict.get("revision_round", 0)) >= cap:

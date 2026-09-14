@@ -209,7 +209,10 @@
       }
     },
     "decision": { "enum": ["advance", "revise", "escalate"] },
-    "revision_round": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "revision_round": {
+      "$comment": "상한은 gate.yaml#loop.revision_cap 과 같아야 한다 — 두 곳이 어긋나면 캡 안의 마지막 라운드가 스키마에서 거부된다(재정 2026-09-14 T70 ① 로 3→4→5 · 시험 test_revision_cap_matches_schema_maximum 이 상등을 대조한다). 0.x 미동결 개정.",
+      "type": "integer", "minimum": 0, "maximum": 5
+    },
     "free_revision_used": {
       "$comment": "L2 메모 1회에 대한 펜 자유 리비전 1회가 이미 소비되었는가(재정 T69 ⑥ · SPEC §1.10 판단 경로 · D8 위상 봉쇄). true 면 run_l2 재호출은 halt 다. revision_round(결함 루프 계수)와 다른 축이며 그 값을 올리지 않는다. 선택 필드인 이유 = L2 전의 판정문에는 이 축이 없다. 0.x 미동결 개정(가산).",
       "type": "boolean"

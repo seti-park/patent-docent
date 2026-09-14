@@ -579,6 +579,18 @@ def test_revise_rejects_changes_outside_directive_loci(run_root, law) -> None:
         pytest.fail("실패 라운드가 캡에 계수되지 않았다")
 
 
+def test_revision_cap_matches_schema_maximum(law) -> None:
+    """캡은 두 곳에 있다 — 계약 `gate.yaml#loop.revision_cap` 과 판정문 스키마의 `revision_round.maximum`.
+
+    어긋나면 캡 안의 마지막 라운드가 스키마에서 거부된다(재정 T70 ① 로 캡을 3→4 로 늘렸을 때 실측).
+    """
+    cap = gate_stage.revision_cap(load_stage_contract("gate", law))
+    schema = read_json(os.path.join(SCHEMAS, "gate-report.schema.json"))
+    maximum = schema["properties"]["revision_round"]["maximum"]
+    if maximum != cap:
+        pytest.fail(f"스키마 상한 {maximum} 과 계약 캡 {cap} 이 다르다 — 캡 안의 라운드가 거부된다")
+
+
 def test_revise_cap_escalates_after_three_rounds(run_root, law) -> None:
     _l1_defect_state(run_root, law)
     cap = gate_stage.revision_cap(load_stage_contract("gate", law))
@@ -736,8 +748,8 @@ def _drive(law: str, run_root: str, evidence: str, *argv: str, executor=None):
 
 def test_driver_gate_l1_cp2_approve_ship_and_seal(run_root, law, tmp_path) -> None:
     evidence = os.path.join(str(tmp_path), "evidence")
-    if len(drv.COMMANDS) != 25 or drv.COMMANDS[15:19] != ("gate-l1", "revise", "cp2", "approve-ship"):
-        pytest.fail(f"명령 25 가 아니다: {drv.COMMANDS}")
+    if len(drv.COMMANDS) != 26 or drv.COMMANDS[15:19] != ("gate-l1", "revise", "cp2", "approve-ship"):
+        pytest.fail(f"명령 26 가 아니다: {drv.COMMANDS}")
     parser = drv.build_parser()
     listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
     if listed != drv.COMMANDS:

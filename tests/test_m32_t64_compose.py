@@ -764,8 +764,8 @@ def test_help_lists_fourteen_commands_with_compose_before_gate() -> None:
     """명령 12 → 14(T64 집행 ③ · gate-l0 · strip 이 compose 뒤에 온다)."""
     parser = drv.build_parser()
     listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
-    if listed != drv.COMMANDS or len(listed) != 25 or listed[12:15] != ("compose", "gate-l0", "strip"):
-        pytest.fail(f"명령 25 가 아니다: {listed}")
+    if listed != drv.COMMANDS or len(listed) != 26 or listed[12:15] != ("compose", "gate-l0", "strip"):
+        pytest.fail(f"명령 26 가 아니다: {listed}")
     wrapper = drv.wrapper_schema("v2")
     if wrapper["properties"]["payload"] is not compose_stage.RESPONSE_SCHEMAS["v2"] or compose_stage.RESPONSE_SCHEMAS["v1"] is not compose_stage.RESPONSE_SCHEMAS["v3"]:
         pytest.fail("구동기 래퍼가 compose.RESPONSE_SCHEMAS 상수를 품지 않거나 세 변주의 스키마가 다른 객체다")

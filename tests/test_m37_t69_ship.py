@@ -183,10 +183,57 @@ def test_final_four_inputs_and_fingerprints(setup):
         require(len(request.slices) == 4)
         require(not any(p.startswith("contracts/") for p in request.slices))
         require("revisions/" not in render_request_md(request, law))
-        require(request.effort == "max")
+        require(request.effort == "high")
     require({r["path"] for r in outcome["final_eyes"]["inputs_read"]} == set(adapter.requests[0].slices))
     schema = load_json(str(Path(law) / "contracts/schemas/gate-report.schema.json"))
     require(not list(Draft202012Validator(schema).iter_errors(load_json(paths.verdict_json(VARIANT)))))
+
+
+def test_final_eyes_waiver_carries_defects_to_observations(setup):
+    """거부를 무를 수 있는 것은 Owner 뿐이고, 무르더라도 결함 문언은 표면으로 옮겨 간다(계약 waiver)."""
+    paths, law = setup
+    from engine.gate import final_eyes as fe
+
+    # 전제 — 거부 판정과 에스컬레이션 기록
+    v = load_json(paths.verdict_json(VARIANT))
+    v["final_eyes"] = {"verdict": "veto", "veto_reason": "b", "observations": ["기존 소견"],
+                       "inputs_read": v.get("final_eyes", {}).get("inputs_read", [])}
+    v["l1"] = {**v["l1"], "defects": [{"id": "d-l1-001", "layer": "l1", "rule": "l1.citation-mismatch",
+                                       "locus": {"tweet": 5, "sentence": 2}, "expected": "조건 유지",
+                                       "observed": "조건 없이 단정한다", "fix_directive": "바로잡는다"}]}
+    v["decision"] = "escalate"
+    write_json(paths.verdict_json(VARIANT), v)
+
+    # 에스컬레이션 기록이 없으면 거부한다
+    try:
+        fe.waive(run_root=paths.run_root, repo=law, variant=VARIANT, owner_quote="체크포인트로 두자", located_at="세션")
+        require(False, "에스컬레이션 없이 강등됐다")
+    except StageError:
+        pass
+    write_json(paths.gate_escalation_json(VARIANT), {"revision_round": 5, "reason": "cap"})
+
+    # 육성 인용이 비면 거부한다
+    try:
+        fe.waive(run_root=paths.run_root, repo=law, variant=VARIANT, owner_quote="   ", located_at="세션")
+        require(False, "인용 없이 강등됐다")
+    except StageError:
+        pass
+
+    out = fe.waive(run_root=paths.run_root, repo=law, variant=VARIANT, owner_quote="체크포인트로 두자", located_at="세션")
+    require(out["carried"] == 1, str(out))
+    after = load_json(paths.verdict_json(VARIANT))["final_eyes"]
+    require(after["verdict"] == "pass" and after["veto_reason"] is None, str(after))
+    require(after["waived"]["quote"] == "체크포인트로 두자" and after["waived"]["by"] == "owner", str(after["waived"]))
+    joined = "\n".join(after["observations"])
+    require("조건 없이 단정한다" in joined and "T5/S2" in joined, joined)
+    require(after["observations"][-1] == "기존 소견", joined)
+
+    # 거부 상태가 아니면 강등할 것이 없다
+    try:
+        fe.waive(run_root=paths.run_root, repo=law, variant=VARIANT, owner_quote="또", located_at="세션")
+        require(False, "통과본을 강등했다")
+    except StageError:
+        pass
 
 
 @pytest.mark.parametrize("mutation", ["extra", "frozen-swap", "pin", "open"])
@@ -259,7 +306,7 @@ def test_final_scope_and_model(setup):
     paths, law = setup
     require(final_eyes.scope_row({"verdict": "veto", "veto_reason": "d"}).status == "fail")
     with pytest.raises(StageHaltError, match="lane-verified"):
-        final_eyes.run(paths.run_root, law, VARIANT, Adapter(final_payload(paths), model="fable-5.1"))
+        final_eyes.run(paths.run_root, law, VARIANT, Adapter(final_payload(paths), model="opus-5"))
 
 
 def test_cp2_all_surfaces(setup):
@@ -347,7 +394,7 @@ def test_driver_commands_and_seal(setup, tmp_path):
         rc = drv.main(["--repo", law, "--run-root", paths.run_root, "--evidence-dir", evidence, *args], executor=stub, out=lines.append)
         require(rc == 0, str((rc, lines)))
         return lines
-    require(len(drv.COMMANDS) == 25)
+    require(len(drv.COMMANDS) == 26)
     drive("critique", RUN_ID, "--variant", VARIANT)
     drive("final-eyes", RUN_ID, "--variant", VARIANT)
     lines = drive("cp2", RUN_ID, "--variant", VARIANT)
@@ -357,7 +404,7 @@ def test_driver_commands_and_seal(setup, tmp_path):
     drive("seal", RUN_ID)
     manifest = Path(evidence, "MANIFEST-sha256.txt").read_text()
     require("65-critique/" in manifest and "70-ship/SHIP.md" in manifest)
-    require([e for lane, e, _ in calls if lane.startswith("final-eyes/")] == ["max"] * gate.l1_k(law))
+    require([e for lane, e, _ in calls if lane.startswith("final-eyes/")] == ["high"] * gate.l1_k(law))
     require(all("--resume" not in argv and "--continue" not in argv for _, _, argv in calls))
 
 

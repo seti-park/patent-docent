@@ -54,6 +54,62 @@ def input_records(paths, files):
     return [{"path": os.path.relpath(p, paths.run_root), "digest": sha256_file(p)} for p in files]
 
 
+def _fix_directive(defect: dict) -> str:
+    """최종 심급 결함의 수정 지시문 — 레인이 쓴 `expected`(정합 조건)·`observed`(발견 사실)에서 만든다.
+
+    재정 2026-09-14 T70 ①. 고정 문구(「해당 좌표의 인용 재료 정합과 narrative 신고를 바로잡는다」)를 넘기면
+    펜이 좌표만 받고 **무엇이 왜 어긋나는지** 모른다 — 런 -3 에서 같은 결함(T6/S2)이 두 회차 연속 남았고,
+    구체적 지시문을 받은 게이트 L1 의 결함은 한 라운드에 고쳐졌다. `expected`·`observed` 는 조건과 사실이지
+    고쳐 쓴 문장이 아니므로 D8 규율 3 에 저촉되지 않으며, 지시문은 `gate.no-rewrite` 검사를 그대로 받는다.
+    """
+    expected = str(defect.get("expected") or "").strip()
+    observed = str(defect.get("observed") or "").strip()
+    parts = [t for t in (expected, observed) if t]
+    if not parts:
+        return "해당 좌표의 인용 재료 정합과 narrative 신고를 바로잡는다."
+    body = " / ".join(parts)
+    return f"{body} — 이 좌표의 인용 재료 정합과 narrative 신고를 그에 맞게 바로잡는다."
+
+
+def waive(*, run_root: str, repo: str | None = None, variant: str, owner_quote: str, located_at: str) -> dict:
+    """최종 심급의 거부를 **Owner 재정으로 관할 밖 소견으로 강등**한다(계약 `gate.yaml#layers.final_eyes.waiver`).
+
+    거부권을 무를 수 있는 것은 Owner 뿐이다(재정 R4 — 관할 밖 발견의 판정자는 Owner · D8·D15). 캡이 소진된
+    뒤의 에스컬레이션에서 「체크포인트로 두자」는 재정이 오면, 심급이 쓴 결함 문언을 **한 글자도 바꾸지 않고**
+    `observations[]` 로 옮겨 CP2 표면에 싣는다. 강등 사실은 `waived` 블록으로 남아 표면에서 숨겨지지 않는다.
+    """
+    repo = repo or repo_root()
+    paths = RunPaths(run_root, repo)
+    verdict_path = paths.verdict_json(variant)
+    if not os.path.isfile(verdict_path):
+        raise StageError(f"verdict.json 이 없다: {verdict_path}")
+    verdict = load_json(verdict_path)
+    block = verdict.get("final_eyes") or {}
+    if block.get("verdict") != "veto":
+        raise StageError(f"최종 심급이 거부 상태가 아니다({block.get('verdict')}) — 강등할 것이 없다")
+    if not os.path.isfile(paths.gate_escalation_json(variant)):
+        raise StageError("에스컬레이션 기록이 없다 — 캡 소진 뒤의 재정에만 쓴다")
+    quote = (owner_quote or "").strip()
+    if not quote:
+        raise StageError("Owner 육성 인용이 비었다 — 강등은 재정으로만 한다")
+    defects = [dict(d) for d in ((verdict.get("l1") or {}).get("defects") or []) if d.get("layer") == "l1" or True]
+    carried = [
+        f"[강등된 최종 심급 결함] {d.get('rule')} · T{d['locus']['tweet']}/S{d['locus']['sentence']} — {d.get('observed')}"
+        for d in defects if d.get("locus")
+    ]
+    block["observations"] = carried + [o for o in (block.get("observations") or [])]
+    block["verdict"] = "pass"
+    block["veto_reason"] = None
+    block["waived"] = {
+        "by": "owner", "quote": quote, "located_at": located_at, "recorded_at": gate_stage._now_iso(),
+        "defect_count": len(carried), "escalation": "50-gate/%s/escalation.json" % variant,
+    }
+    verdict["final_eyes"] = block
+    verdict["decision"] = gate_stage.DECISION_ADVANCE
+    write_json(verdict_path, verdict)
+    return {"status": "waived", "carried": len(carried), "decision": verdict["decision"]}
+
+
 def isolation_row(paths, files, inputs_read, brief, frozen_row=None):
     """N1 = 루프 전/후를 **생성 시점·출처**로 기계 판별한다(SPEC §1.10).
 
@@ -165,7 +221,11 @@ def run(run_root, repo=None, variant=None, adapter=None):
     verified = CheckRow(check_id="gate.final-eyes-lane-verified", checked=0)
     if reason is None:
         # 재판정은 별도 저장 공간이다. 레인에는 수정 라운드를 제공하지 않는다.
-        root = os.path.join(paths.gate_lanes_dir(variant), "final-sessions", str(verdict.get("revision_round", 0)))
+        # 자리를 가르는 키는 수정 회차 **와 요청 지문**이다 — 절차 문서를 고치면 요청이 바뀌고, 그때 옛 자리에
+        # 남은 응답은 새 요청의 답이 될 수 없다(레인 결속). 회차만으로 가르면 러너가 매 회 그 응답을 만나 멈춘다.
+        probe = build_requests(paths, repo, variant, files, 1, session="probe")[0]
+        session_key = f"{verdict.get('revision_round', 0)}-{str(probe.input_digest).split(':')[-1][:12]}"
+        root = os.path.join(paths.gate_lanes_dir(variant), "final-sessions", session_key)
         session_path = os.path.join(root, "session.json")
         if os.path.isfile(session_path):
             session = load_json(session_path)["id"]
@@ -194,9 +254,18 @@ def run(run_root, repo=None, variant=None, adapter=None):
             if {(r["locus"]["tweet"], r["locus"]["sentence"]) for r in recheck["narrative_audit"]} != narrative:
                 raise StageHaltError("최종 심급 narrative 감사 목록 불일치")
             prose = json.dumps(response.payload, ensure_ascii=False)
-            if hits(prose, load_patterns(repo)) or gate_stage.no_rewrite_violations(prose):
+            # 등급 어휘는 낱말 검사이므로 직렬화 문자열에 걸어도 된다. 그러나 **대체 문장 검사는 저자가 쓴
+            # 따옴표를 본다** — 직렬화 문자열에 걸면 JSON 문법의 따옴표가 필드 값 전체를 「인용」으로 만들고,
+            # 한국어 서술 안의 재료 ID 나열(M12·M26·M63·M77)이 영어 낱말 다섯으로 세어져 오탐이 난다.
+            # 런 -3 실측 = 전체 직렬화 3건 위반 · 필드별 0건(저자가 쓴 따옴표 인용은 하나도 없었다).
+            written = [str(t) for t in response.payload.get("observations", [])]
+            for item in recheck["defects"]:
+                written += [str(item.get("expected", "")), str(item.get("observed", ""))]
+            for item in recheck["narrative_audit"]:
+                written.append(str(item.get("observation", "")))
+            if hits(prose, load_patterns(repo)) or any(gate_stage.no_rewrite_violations(t) for t in written):
                 raise StageHaltError("최종 심급 점수 또는 대체 문장 금지")
-            payloads.append({"defects": [{**d, "fix_directive": "해당 좌표의 인용 재료 정합과 narrative 신고를 바로잡는다."} for d in recheck["defects"]]})
+            payloads.append({"defects": [{**d, "fix_directive": _fix_directive(d)} for d in recheck["defects"]]})
             observations.extend(response.payload["observations"])
         if verified.status == "fail":
             verdict["checks"] = gate_stage._replace_rows(verdict["checks"], [verified])
