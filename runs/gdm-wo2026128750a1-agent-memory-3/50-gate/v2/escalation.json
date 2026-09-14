@@ -1,0 +1,38 @@
+{
+  "final_eyes": {
+    "inputs_read": [
+      {
+        "digest": "sha256:e8b0dac840ad174434fd9d5f7979c762a04f389a6a8e599125f85dda1f0c2579",
+        "path": "50-gate/v2/thread.stripped.md"
+      },
+      {
+        "digest": "sha256:0bf41bcd9566c416420123765ae9dcbf003273cd4649fd35519e7b6b64ef2704",
+        "path": "40-compose/v2/thread.annotated.md"
+      },
+      {
+        "digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+        "path": "15-frozen/material-spec.v1.json"
+      },
+      {
+        "digest": "sha256:2fc300843299c85694e3fa2026a4e363e3b12696037970fd49670c383dfc2db8",
+        "path": "50-gate/v2/final-eyes-brief.json"
+      }
+    ],
+    "observations": [
+      "재검 범위는 제공된 최종 초안과 동결 재료의 문장별 정합이다. L0와 round-trip은 실행하지 않았다.",
+      "파일 쓰기 도구가 제공되지 않아 response.json을 직접 생성하지 못했다.",
+      "실제 실행 모델 식별자와 effort를 확인할 수 있는 런타임 메타데이터가 제공되지 않아 두 필드를 unknown으로 기록했다. 요청된 값을 실제 실행값으로 간주하지 않았다.",
+      "제공된 최종 초안과 동결 재료 사이의 정합만 대조했다. 외부 특허 원문이나 수정 이력은 사용하지 않았다.",
+      "파일 쓰기 도구가 제공되지 않아 response.json을 직접 생성하지 못했다. 이 응답의 구조화 출력으로 결과를 반환한다.",
+      "실제 실행 모델 식별자와 effort 설정을 확인할 수 없어 두 필드에 unknown을 기록했다. 요청된 값을 실제 실행값으로 간주하지 않았다.",
+      "제공된 최종 초안과 동결 재료만 대조했다. 대체 문장은 작성하지 않았다.",
+      "이 실행 환경에서는 실제 모델 식별자와 effort 설정을 확인할 수 없어 해당 필드를 unknown으로 기재했다. 요청서의 모델명이나 사용자 메시지의 환경 설명을 실제 실행값으로 간주하지 않았다.",
+      "파일 쓰기 도구가 제공되지 않아 response.json을 디렉터리에 저장하지 못했다. 구조화된 응답으로 결과를 반환한다.",
+      "문장 앞부분은 유지보수 주기가 만료 객체를 자동으로 삭제한다고 단정한다. M74는 자동 삭제 가능성을 서술하고 M110은 선택적 만료 시간을 설명하므로, 해당 인용만으로 삭제 실행을 무조건적 동작으로 제시할 수 없다."
+    ],
+    "verdict": "veto",
+    "veto_reason": "b"
+  },
+  "reason": "b",
+  "revision_round": 5
+}

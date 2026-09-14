@@ -1,0 +1,46 @@
+{
+  "attempt": 1,
+  "duration_ms": 61044,
+  "ended_at": "2026-09-13T18:07:53Z",
+  "is_error": false,
+  "lane_id": "final-eyes/v2/batch-1",
+  "lane_self_report": {
+    "effort": "unknown",
+    "lane_id": "final-eyes/v2/batch-1",
+    "model": "unknown"
+  },
+  "note": "",
+  "num_turns": 2,
+  "observed": {
+    "main_model": "claude-fable-5-dd-artsa-6-tpg",
+    "modelUsage": {
+      "claude-fable-5-dd-artsa-6-tpg": {
+        "cacheCreationInputTokens": 0,
+        "cacheReadInputTokens": 0,
+        "canonicalModel": "claude-fable-5",
+        "contextWindow": 200000,
+        "costBasis": "list",
+        "costUSD": 0.84533,
+        "inputTokens": 74663,
+        "maxOutputTokens": 64000,
+        "outputTokens": 1974,
+        "provider": "firstParty",
+        "thinkingTokens": 0,
+        "webSearchRequests": 0
+      }
+    }
+  },
+  "request_md_sha256": "a7b46263c381142442197b0b2a60ea497427fa5f78e816f5194e649ad371a0f9",
+  "requested": {
+    "api_id": "claude-fable-5-dd-artsa-6-tpg",
+    "effort": "high",
+    "model": "gpt-6-astra"
+  },
+  "response_json_sha256": "924cb0a0d540b66a9c7df6474d23eeec3e4302a0f1352e5ea4af535775131e24",
+  "returncode": 0,
+  "session_id": "74e00504-dd21-4089-89ca-c3abc7f25b6e",
+  "started_at": "2026-09-13T18:06:51Z",
+  "stderr_tail": "⚠ claude.ai connectors are disabled because ANTHROPIC_API_KEY or another auth source is set and takes precedence over your claude.ai login · Unset it to load your organization's connectors\n",
+  "timed_out": false,
+  "total_cost_usd": 0.84533
+}

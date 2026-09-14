@@ -1,0 +1,64 @@
+{
+  "lane_id": "probe/v2/batch-1",
+  "model": "claude-haiku-4-5-20251001",
+  "effort": "low",
+  "input_digest": "42b1af3238319f7b1f87c5c1ffc9c37df0033925485f2b7afaa8296696e227b9",
+  "payload": {
+    "a_restatement": [
+      "When an AI agent claims to 'remember' you, it is actually performing a computational loop that combines your query with memory objects retrieved from a datastore, feeding both through a sequence model to generate a response.",
+      "These memory objects are created when the model predicts what is worth retaining from interactions, are structured with metadata like timestamps, and are retrieved by scoring against query embeddings using similarity measures such as cosine similarity.",
+      "The system addresses agent forgetting through explicit deletion commands, time-based expiration with automatic maintenance cycles, and memory correction over time—described as a concrete architecture rather than marketing language."
+    ],
+    "b_answers": [
+      {
+        "question_id": "Q1",
+        "target_material_id": "M3",
+        "answer_kind": "stated",
+        "answer": "Cached inputs go to the model system, which predicts what is worth remembering and extracts it; storage can also be triggered by explicit user request.",
+        "quoted_span": "A model decides what to store: cached inputs go to the model system, which predicts what is worth remembering and extracts it. It is stored as a memory value in a memory object, and one trigger is you asking the agent to remember your favorite architect."
+      },
+      {
+        "question_id": "Q2",
+        "target_material_id": "M16",
+        "answer_kind": "stated",
+        "answer": "The piece of information is stored as a memory value within a memory object.",
+        "quoted_span": "It is stored as a memory value in a memory object, and one trigger is you asking the agent to remember your favorite architect."
+      },
+      {
+        "question_id": "Q3",
+        "target_material_id": "M12",
+        "answer_kind": "stated",
+        "answer": "The system scores stored memory objects for relevance to the query, compares query embeddings to memory value embeddings using cosine similarity, keeps a top subset, and orders them by timestamp.",
+        "quoted_span": "Instead of rereading your whole history, the agent scores stored memory objects for relevance to your query. It compares a query embedding to memory value embeddings by a measure such as cosine similarity, keeps a top subset, and orders them by timestamp."
+      },
+      {
+        "question_id": "Q4",
+        "target_material_id": "M21",
+        "answer_kind": "stated",
+        "answer": "The specified information is deleted.",
+        "quoted_span": "\"forget that\" deletes the specified information,"
+      },
+      {
+        "question_id": "Q5",
+        "target_material_id": "M23",
+        "answer_kind": "stated",
+        "answer": "The system queues the information for deletion, and a maintenance cycle automatically deletes objects past their expiration time.",
+        "quoted_span": "\"forget this after three months\" queues it for deletion. A maintenance cycle deletes objects past their expiration time on its own,"
+      },
+      {
+        "question_id": "Q6",
+        "target_material_id": "M40",
+        "answer_kind": "stated",
+        "answer": "The older memory object is replaced or updated; if they are aligned, objects can merge, and if new input contradicts prior values supported by other interactions, they are refined rather than overwritten.",
+        "quoted_span": "Memories are corrected: new timestamped input is matched to the prior memory object it concerns, which is then replaced or updated. Aligned objects can merge, and a value kept with supporting interactions is refined by contradicting input, not overwritten."
+      },
+      {
+        "question_id": "Q7",
+        "target_material_id": "M116",
+        "answer_kind": "stated",
+        "answer": "The problem is that memoryless agents force users to repeatedly re-enter information. This system's approach is different because it uses a memory datastore architecture where query and retrieved memory data flow through a sequence model—an architectural solution rather than marketing language.",
+        "quoted_span": "Agents forget, so you re-enter the same details; the claim is a loop — query plus memory data from a datastore of your past interactions, into a sequence model, out as a response."
+      }
+    ]
+  }
+}

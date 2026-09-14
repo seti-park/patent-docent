@@ -4,15 +4,15 @@ checkpoint: ship_approval
 run_id: gdm-wo2026128750a1-agent-memory-3
 target:
   path: 50-gate/v2/thread.stripped.md
-  digest: sha256:c0203cc0ca7a365e07749d0b2d23c4b7c61fad1626fdf70b5b70062c1792f5f7
+  digest: sha256:e8b0dac840ad174434fd9d5f7979c762a04f389a6a8e599125f85dda1f0c2579
 decision: approved
-owner_quote: 'T68: ① A / ② accept ×4 / ③ 유지
+owner_quote: 'T71: ① A / ② A / ③ A
 
   '
 quote_provenance:
   channel: session-transcript
-  located_at: 세션 대화창 · 결정 브리핑 T68 회신
-decided_at: '2026-09-13T13:56:26Z'
+  located_at: 세션 대화창 · CP2 응답
+decided_at: '2026-09-14T01:49:39Z'
 recorded_by: orchestrator
 selected_variant: v2
 flags_adjudicated:
@@ -21,8 +21,6 @@ flags_adjudicated:
 - flag_id: f-l0-002
   verdict: accept
 - flag_id: f-l1-003
-  verdict: accept
-- flag_id: f-l1-004
   verdict: accept
 figure_overrides: []
 manual_verification_ack: []

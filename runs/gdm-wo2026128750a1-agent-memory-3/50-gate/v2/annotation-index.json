@@ -50,8 +50,8 @@
     ],
     "M112": [
       {
-        "sentence": 2,
-        "tweet": 3
+        "sentence": 1,
+        "tweet": 4
       }
     ],
     "M113": [
@@ -67,6 +67,10 @@
       }
     ],
     "M116": [
+      {
+        "sentence": 2,
+        "tweet": 1
+      },
       {
         "sentence": 1,
         "tweet": 8
@@ -144,6 +148,16 @@
       {
         "sentence": 2,
         "tweet": 2
+      }
+    ],
+    "M19": [
+      {
+        "sentence": 2,
+        "tweet": 3
+      },
+      {
+        "sentence": 2,
+        "tweet": 8
       }
     ],
     "M2": [
@@ -238,6 +252,12 @@
         "tweet": 5
       }
     ],
+    "M37": [
+      {
+        "sentence": 1,
+        "tweet": 5
+      }
+    ],
     "M39": [
       {
         "sentence": 1,
@@ -258,6 +278,12 @@
       {
         "sentence": 2,
         "tweet": 8
+      }
+    ],
+    "M41": [
+      {
+        "sentence": 1,
+        "tweet": 5
       }
     ],
     "M42": [
@@ -324,6 +350,12 @@
       {
         "sentence": 2,
         "tweet": 2
+      }
+    ],
+    "M70": [
+      {
+        "sentence": 2,
+        "tweet": 3
       }
     ],
     "M71": [
@@ -454,12 +486,13 @@
             "M3",
             "M4",
             "M5",
-            "M6"
+            "M6",
+            "M116"
           ],
           "i": 2,
           "narrative": false,
-          "text": "This filing claims a loop: your query plus memory data from a per-user datastore of objects built from your past interactions, into a sequence model, out as a response.",
-          "text_raw": "This filing claims a loop: your query plus memory data from a per-user datastore of objects built from your past interactions, into a sequence model, out as a response."
+          "text": "Agents forget, so you re-enter the same details; the claim is a loop — query plus memory data from a datastore of your past interactions, into a sequence model, out as a response.",
+          "text_raw": "Agents forget, so you re-enter the same details; the claim is a loop — query plus memory data from a datastore of your past interactions, into a sequence model, out as a response."
         }
       ],
       "slot": "hook"
@@ -513,14 +546,15 @@
         {
           "citations": [
             "M16",
+            "M19",
             "M67",
-            "M112",
+            "M70",
             "M120"
           ],
           "i": 2,
           "narrative": false,
-          "text": "That portion is written as a memory value in a memory object, and a trigger can start this pass offline, ahead of any query.",
-          "text_raw": "That portion is written as a memory value in a memory object, and a trigger can start this pass offline, ahead of any query."
+          "text": "It is stored as a memory value in a memory object, and one trigger is you asking the agent to remember your favorite architect.",
+          "text_raw": "It is stored as a memory value in a memory object, and one trigger is you asking the agent to remember your favorite architect."
         }
       ],
       "slot": "stop"
@@ -533,12 +567,13 @@
             "M12",
             "M26",
             "M63",
-            "M77"
+            "M77",
+            "M112"
           ],
           "i": 1,
           "narrative": false,
-          "text": "At query time the agent does not reread everything; it ranks stored objects by relevance to your query.",
-          "text_raw": "At query time the agent does not reread everything; it ranks stored objects by relevance to your query."
+          "text": "Instead of rereading your whole history, the agent scores stored memory objects for relevance to your query.",
+          "text_raw": "Instead of rereading your whole history, the agent scores stored memory objects for relevance to your query."
         },
         {
           "citations": [
@@ -564,8 +599,10 @@
       "sentences": [
         {
           "citations": [
+            "M37",
             "M39",
             "M40",
+            "M41",
             "M42",
             "M43",
             "M90",
@@ -575,8 +612,8 @@
           ],
           "i": 1,
           "narrative": false,
-          "text": "Memories can be corrected: new timestamped input is matched to a prior memory object and either replaces it or updates it.",
-          "text_raw": "Memories can be corrected: new timestamped input is matched to a prior memory object and either replaces it or updates it."
+          "text": "Memories are corrected: new timestamped input is matched to the prior memory object it concerns, which is then replaced or updated.",
+          "text_raw": "Memories are corrected: new timestamped input is matched to the prior memory object it concerns, which is then replaced or updated."
         },
         {
           "citations": [
@@ -586,8 +623,8 @@
           ],
           "i": 2,
           "narrative": false,
-          "text": "Aligned objects can be consolidated into one; kept supporting interactions let a contradiction refine a memory, not overwrite it.",
-          "text_raw": "Aligned objects can be consolidated into one; kept supporting interactions let a contradiction refine a memory, not overwrite it."
+          "text": "Aligned objects can merge, and a value kept with supporting interactions is refined by contradicting input, not overwritten.",
+          "text_raw": "Aligned objects can merge, and a value kept with supporting interactions is refined by contradicting input, not overwritten."
         }
       ],
       "slot": "stop"
@@ -619,8 +656,8 @@
           ],
           "i": 2,
           "narrative": false,
-          "text": "Objects past their expiration time are deleted during maintenance, and the same chat that builds the memory erases it.",
-          "text_raw": "Objects past their expiration time are deleted during maintenance, and the same chat that builds the memory erases it."
+          "text": "A maintenance cycle deletes objects past their expiration time on its own, and the chat that builds the memory erases it.",
+          "text_raw": "A maintenance cycle deletes objects past their expiration time on its own, and the chat that builds the memory erases it."
         }
       ],
       "slot": "pivot"
@@ -637,8 +674,8 @@
           ],
           "i": 1,
           "narrative": false,
-          "text": "The model first analyzes your query against the memory data, and that analysis may stay off the query's interface.",
-          "text_raw": "The model first analyzes your query against the memory data, and that analysis may stay off the query's interface."
+          "text": "The model first works through your query against the recalled memory data, and that working-out can stay off the screen.",
+          "text_raw": "The model first works through your query against the recalled memory data, and that working-out can stay off the screen."
         },
         {
           "citations": [
@@ -647,8 +684,8 @@
           ],
           "i": 2,
           "narrative": false,
-          "text": "The response that does appear can be an API call that makes a device act, so memory shapes what the agent does, not just what it says.",
-          "text_raw": "The response that does appear can be an API call that makes a device act, so memory shapes what the agent does, not just what it says."
+          "text": "What comes back can be an API call that makes a device act, so the memory shapes what the agent does, not only what it says.",
+          "text_raw": "What comes back can be an API call that makes a device act, so the memory shapes what the agent does, not only what it says."
         }
       ],
       "slot": "stop"
@@ -669,13 +706,14 @@
           "citations": [
             "M3",
             "M12",
+            "M19",
             "M21",
             "M40"
           ],
           "i": 2,
           "narrative": false,
-          "text": "What is claimed is structural: memory objects made from your own interactions, retrieved by relevance, corrected over time, and deleted when you ask.",
-          "text_raw": "What is claimed is structural: memory objects made from your own interactions, retrieved by relevance, corrected over time, and deleted when you ask."
+          "text": "What is claimed is structural: memory objects made from your interactions, some on your explicit request, retrieved by relevance, corrected over time, and deleted when you ask.",
+          "text_raw": "What is claimed is structural: memory objects made from your interactions, some on your explicit request, retrieved by relevance, corrected over time, and deleted when you ask."
         },
         {
           "citations": [

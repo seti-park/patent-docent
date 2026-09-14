@@ -1,0 +1,108 @@
+{
+  "properties": {
+    "effort": {
+      "type": "string"
+    },
+    "input_digest": {
+      "type": "string"
+    },
+    "lane_id": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": false,
+      "properties": {
+        "grades": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "evidence": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "grade": {
+                "enum": [
+                  "hit",
+                  "partial",
+                  "miss"
+                ]
+              },
+              "probe_id": {
+                "enum": [
+                  "p0",
+                  "p1",
+                  "p2",
+                  "p3",
+                  "p4"
+                ]
+              },
+              "question_id": {
+                "enum": [
+                  "Q7"
+                ]
+              }
+            },
+            "required": [
+              "probe_id",
+              "question_id",
+              "grade",
+              "evidence"
+            ],
+            "type": "object"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        },
+        "restatement": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "judgement": {
+                "enum": [
+                  "aligned",
+                  "drifted",
+                  "inverted"
+                ]
+              },
+              "probe_id": {
+                "enum": [
+                  "p0",
+                  "p1",
+                  "p2",
+                  "p3",
+                  "p4"
+                ]
+              }
+            },
+            "required": [
+              "probe_id",
+              "judgement"
+            ],
+            "type": "object"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "type": "array"
+        }
+      },
+      "required": [
+        "grades",
+        "restatement"
+      ],
+      "title": "lane-response/probe-grade",
+      "type": "object"
+    }
+  },
+  "required": [
+    "lane_id",
+    "model",
+    "effort",
+    "input_digest",
+    "payload"
+  ],
+  "type": "object"
+}

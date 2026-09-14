@@ -1,0 +1,68 @@
+{
+  "a_restatement": [
+    "The agent's memory system extracts values from user interactions and stores them in memory objects, each containing the value plus metadata like timestamp and interaction summary.",
+    "When queried, the system ranks stored objects by relevance using cosine similarity on embeddings, retrieves the top matches, and orders them by timestamp rather than rereading everything.",
+    "Memory objects are updated when new input matches prior ones, consolidated when aligned, and deleted either on explicit request or after expiration time, presenting this as a structural architecture rather than marketing."
+  ],
+  "b_answers": [
+    {
+      "answer": "A model analyzes cached inputs and predicts what is worth remembering, then extracts it as memory values.",
+      "answer_kind": "stated",
+      "question_id": "Q1",
+      "quoted_span": "A model decides what to store: cached inputs go to the model system, which predicts what is worth remembering and extracts it.",
+      "target_material_id": "M3"
+    },
+    {
+      "answer": "It is stored as a memory value in a memory object.",
+      "answer_kind": "stated",
+      "question_id": "Q2",
+      "quoted_span": "It is stored as a memory value in a memory object",
+      "target_material_id": "M16"
+    },
+    {
+      "answer": "The system compares the query embedding to memory value embeddings using cosine similarity, keeps the top-ranked subset, and orders them by timestamp.",
+      "answer_kind": "stated",
+      "question_id": "Q3",
+      "quoted_span": "It compares a query embedding to memory value embeddings by a measure such as cosine similarity, keeps a top subset, and orders them by timestamp.",
+      "target_material_id": "M12"
+    },
+    {
+      "answer": "The system deletes the specified information when told to forget it.",
+      "answer_kind": "stated",
+      "question_id": "Q4",
+      "quoted_span": "\"forget that\" deletes the specified information",
+      "target_material_id": "M21"
+    },
+    {
+      "answer": "The system queues it for deletion, and objects past their expiration time are deleted during maintenance.",
+      "answer_kind": "stated",
+      "question_id": "Q5",
+      "quoted_span": "\"forget this after three months\" queues it for deletion. Objects past their expiration time are deleted during maintenance",
+      "target_material_id": "M23"
+    },
+    {
+      "answer": "The prior memory object is replaced or updated; aligned objects can be consolidated into one, and contradictions refine the memory rather than overcorrecting it.",
+      "answer_kind": "stated",
+      "question_id": "Q6",
+      "quoted_span": "new timestamped input is matched to the prior memory object it concerns, which is then replaced or updated. Aligned objects can be consolidated into one, and a contradiction refines the matched memory rather than overcorrecting it.",
+      "target_material_id": "M40"
+    },
+    {
+      "answer": "The problem is that agents forget, requiring users to re-enter details repeatedly. This system claims to differ by being structured: memory objects created from interactions are retrieved by relevance, corrected over time, and deleted on request—a described architecture rather than marketing.",
+      "answer_kind": "stated",
+      "question_id": "Q7",
+      "quoted_span": "Agents forget, so you re-enter the same details; the claim is a loop — query plus memory data from a datastore of your past interactions, into a sequence model, out as a response. This datastore is not a transcript of your chats. Each memory object is a container holding memory values, a string, an image, or audio, plus metadata such as a timestamp, the trigger that stored it, and a summary of the interaction it came from. A model decides what to store: cached inputs go to the model system, which predicts what is worth remembering and extracts it. It is stored as a memory value in a memory object, and one trigger is you asking the agent to remember your favorite architect. At query time the agent does not reread everything; it ranks stored objects by relevance to your query. It compares a query embedding to memory value embeddings by a measure such as cosine similarity, keeps a top subset, and orders them by timestamp. Memories are corrected: new timestamped input is matched to the prior memory object it concerns, which is then replaced or updated. Aligned objects can be consolidated into one, and a contradiction refines the matched memory rather than overcorrecting it. Forgetting is claimed: \"forget that\" deletes the specified information, and \"forget this after three months\" queues it for deletion. Objects past their expiration time are deleted during maintenance, and the same chat that builds the memory erases it. The model first works through your query against the recalled memory data, and that working-out can stay off the screen. What comes back can be an API call that makes a device act, so the memory shapes what the agent does, not only what it says. No performance numbers are given. What is claimed is structural: memory objects made from your interactions, some on your explicit request, retrieved by relevance, corrected over time, and deleted when you ask. That is a described architecture, not a slogan.",
+      "target_material_id": "M116"
+    }
+  ],
+  "input_digest": "sha256:193543d05f0a8fcb7d46903989c606381655f6073796f8d29149f4b1a7264832",
+  "model": {
+    "effort": "low",
+    "model": "claude-haiku-4-5-20251001",
+    "vendor": "anthropic"
+  },
+  "probe_id": "p4",
+  "produced_at": "2026-09-13T16:59:39Z",
+  "question_set_digest": "sha256:3f3d920af8f8d9b06de88fd4dc9f0fba7cbe3a30c4a86822560a05279978afaa",
+  "schema": "probe-report/v0"
+}

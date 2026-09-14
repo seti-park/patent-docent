@@ -75,7 +75,7 @@ def delivery_fidelity(per_target: list[dict]) -> float | None:
 
 
 def build_score(*, run_id: str, variant: str, n: int, input_digest: str, question_set_digest: str, per_target: list[dict],
-                restatement: dict, invalidated: list[dict], notes: str) -> dict:
+                restatement: dict, invalidated: list[dict], notes: str, grading_input_digest: str | None = None) -> dict:
     return {
         "schema": "probe-score/v0",
         "run_id": run_id,
@@ -83,6 +83,7 @@ def build_score(*, run_id: str, variant: str, n: int, input_digest: str, questio
         "probe_n": n,
         "input_digest": input_digest,
         "question_set_digest": question_set_digest,
+        **({"grading_input_digest": grading_input_digest} if grading_input_digest else {}),
         "delivery_fidelity": delivery_fidelity(per_target),
         "per_target": per_target,
         "restatement": restatement,

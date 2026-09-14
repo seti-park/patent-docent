@@ -1,0 +1,11 @@
+{
+  "lane_id": "gate-l1/v2/batch-1",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "input_digest": "81c82a0843ab0bccb7f9edffc5740f2c010174afaa4009f74dbcee725a4133f1",
+  "payload": {
+    "defects": [],
+    "flags": [],
+    "speech_acts": []
+  }
+}

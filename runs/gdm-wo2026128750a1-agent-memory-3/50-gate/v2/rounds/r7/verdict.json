@@ -1,0 +1,605 @@
+{
+  "advisory_measurements": {
+    "extreme": false,
+    "note": "[가설] weighted_char_counts 의 이모지 그래핌 클러스터는 표준 라이브러리 근사다(unicodedata 범주 So + 이모지 블록 · ZWJ·VS16·키캡·피부색·태그 결합 · 지역 표시자 쌍). twitter-text 의 정규식 전체와 갈릴 수 있다 — engine/gate/l0/weighted_length.py",
+    "total_words": 357,
+    "weighted_char_counts": [
+      256,
+      246,
+      254,
+      255,
+      247,
+      254,
+      245,
+      258,
+      125
+    ]
+  },
+  "checks": [
+    {
+      "check_id": "gate.input-digest",
+      "checked": 7,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "run.publish-preconditions",
+      "checked": 0,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "empty-target",
+      "violations": 0
+    },
+    {
+      "check_id": "format.tweet-count",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.slot-count",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.body-length",
+      "checked": 8,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.stop-shape",
+      "checked": 6,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.hashtag-zero",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.no-link-in-body",
+      "checked": 8,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.images-per-post",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "annotation.schema",
+      "checked": 20,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "annotation.missing-tag",
+      "checked": 19,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "citation.resolve",
+      "checked": 78,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "numeric.exhaustive",
+      "checked": 2,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "numeric.unreviewed-use",
+      "checked": 2,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "strip.roundtrip-forward",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "strip.roundtrip-reverse",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "strip.reassembly",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "strip.residual-tag",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "gate.annotation-index",
+      "checked": 19,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "gate.l0-clean",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "gate.no-rewrite",
+      "checked": 0,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "empty-target",
+      "violations": 0
+    },
+    {
+      "check_id": "gate.l1-clean",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "gate.l1-lane-verified",
+      "checked": 6,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "gate.final-eyes-isolation",
+      "checked": 4,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "gate.final-eyes-scope",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "gate.final-eyes-lane-verified",
+      "checked": 3,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    }
+  ],
+  "decision": "revise",
+  "final_eyes": {
+    "inputs_read": [
+      {
+        "digest": "sha256:71099a8d65108587847fa017c05dae2f09623274950aa94cfefa0d2f77a8073d",
+        "path": "50-gate/v2/thread.stripped.md"
+      },
+      {
+        "digest": "sha256:08d5bb42b02da317a3ec4482aebbe85591ba78e599f4762fa5f94975356c590d",
+        "path": "40-compose/v2/thread.annotated.md"
+      },
+      {
+        "digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+        "path": "15-frozen/material-spec.v1.json"
+      },
+      {
+        "digest": "sha256:2fc300843299c85694e3fa2026a4e363e3b12696037970fd49670c383dfc2db8",
+        "path": "50-gate/v2/final-eyes-brief.json"
+      }
+    ],
+    "observations": [
+      "제공된 최종 초안과 동결 재료의 문장별 대응만 재검했다. 대체 문장은 작성하지 않았다.",
+      "현재 인터페이스에는 파일 쓰기 도구가 없어 response.json 파일은 생성하지 못했다. 결과는 구조화 응답으로 반환한다.",
+      "실제 실행 모델 식별자와 effort를 확인할 수 있는 런타임 메타데이터가 노출되지 않아 두 필드에 unknown을 기재했다. 요청에 적힌 값을 실제 실행값으로 간주하지 않았다.",
+      "대조 범위는 요청에 실린 최종 초안과 동결 재료다. 동결 재료 자체의 원특허 대응을 다시 검증한 결과는 아니다.",
+      "실제 실행 모델의 정확한 식별자와 effort 설정을 확인할 수 있는 런타임 정보가 제공되지 않아 해당 봉투 필드는 unknown으로 반환했다. 요청된 값을 실제 실행값으로 간주하지 않았다.",
+      "파일 쓰기 도구가 제공되지 않아 response.json을 직접 생성하지 못했다. 구조화 응답으로 결과를 반환한다.",
+      "제공된 주석본의 9개 트윗, 19개 문장을 동결 재료와 대조했다. 그 밖의 문장에서 추가 인용 불일치를 발견하지 않았다.",
+      "동결 재료 자체의 독해를 다시 판정하거나 외부 원천을 조회하지 않았다. L0와 round-trip 검사는 수행하지 않았다.",
+      "이 인터페이스에는 파일 쓰기 도구가 없어 response.json을 디렉터리에 저장하지 못했다. 결과는 구조화 응답으로 반환한다.",
+      "실제 실행 모델의 정확한 ID와 effort를 확인할 수 있는 런타임 정보가 제공되지 않아 두 필드를 unknown으로 기록했다. 요청된 모델과 effort를 확인된 실행값으로 옮겨 적지 않았다."
+    ],
+    "verdict": "veto",
+    "veto_reason": "b"
+  },
+  "final_eyes_brief_digest": "sha256:2fc300843299c85694e3fa2026a4e363e3b12696037970fd49670c383dfc2db8",
+  "free_revision_used": true,
+  "gate_version": "0.1.0",
+  "inactive_layers": [],
+  "l0": {
+    "checks": [
+      {
+        "check_id": "run.publish-preconditions",
+        "checked": 0,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "empty-target",
+        "violations": 0
+      },
+      {
+        "check_id": "format.tweet-count",
+        "checked": 9,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.slot-count",
+        "checked": 9,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.body-length",
+        "checked": 8,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.stop-shape",
+        "checked": 6,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.hashtag-zero",
+        "checked": 9,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.no-link-in-body",
+        "checked": 8,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.images-per-post",
+        "checked": 9,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "annotation.schema",
+        "checked": 20,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "annotation.missing-tag",
+        "checked": 19,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "citation.resolve",
+        "checked": 78,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "numeric.exhaustive",
+        "checked": 2,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "numeric.unreviewed-use",
+        "checked": 2,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      }
+    ],
+    "defects": [],
+    "flags": [
+      {
+        "id": "f-l0-001",
+        "layer": "l0",
+        "locus": {
+          "sentence": 1,
+          "tweet": 9
+        },
+        "note": "미검토 수치 사용 — T9/S1 의 2024-12-11| 는 M104 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
+        "origin": "advisory-rule",
+        "rule": "numeric.unreviewed-use"
+      },
+      {
+        "id": "f-l0-002",
+        "layer": "l0",
+        "locus": {
+          "sentence": 1,
+          "tweet": 9
+        },
+        "note": "미검토 수치 사용 — T9/S1 의 2026-06-18| 는 M106 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
+        "origin": "advisory-rule",
+        "rule": "numeric.unreviewed-use"
+      }
+    ],
+    "pass": true
+  },
+  "l1": {
+    "defects": [
+      {
+        "expected": "M109에 따른 정교화 설명은 기억 값과 함께 뒷받침하는 상호작용을 보존한다는 조건과, 그 보존이 정교화를 가능하게 한다는 범위를 유지해야 한다. M36·M87의 통합 동작만으로 모순 입력의 처리 결과가 보장되지는 않는다.",
+        "fix_directive": "M109에 따른 정교화 설명은 기억 값과 함께 뒷받침하는 상호작용을 보존한다는 조건과, 그 보존이 정교화를 가능하게 한다는 범위를 유지해야 한다. M36·M87의 통합 동작만으로 모순 입력의 처리 결과가 보장되지는 않는다. / 후반절은 뒷받침하는 상호작용의 보존 조건을 생략하고, 모순 입력이 덮어쓰기 대신 기억을 정교화한다고 단정한다. M109는 해당 정보를 함께 보존할 때 가능한 정교화를 설명하며, M36·M87은 정렬 관계에 따른 객체 통합을 설명할 뿐 이 단정을 뒷받침하지 않는다. — 이 좌표의 인용 재료 정합과 narrative 신고를 그에 맞게 바로잡는다.",
+        "id": "d-l1-001",
+        "layer": "l1",
+        "locus": {
+          "sentence": 2,
+          "tweet": 5
+        },
+        "observed": "후반절은 뒷받침하는 상호작용의 보존 조건을 생략하고, 모순 입력이 덮어쓰기 대신 기억을 정교화한다고 단정한다. M109는 해당 정보를 함께 보존할 때 가능한 정교화를 설명하며, M36·M87은 정렬 관계에 따른 객체 통합을 설명할 뿐 이 단정을 뒷받침하지 않는다.",
+        "rule": "l1.citation-mismatch"
+      }
+    ],
+    "disagreement_log": [],
+    "flags": [],
+    "k": 3,
+    "pass": false,
+    "votes": [
+      {
+        "defects": [
+          {
+            "expected": "M109에 따른 정교화 설명은 기억 값과 함께 뒷받침하는 상호작용을 보존한다는 조건과, 그 보존이 정교화를 가능하게 한다는 범위를 유지해야 한다. M36·M87의 통합 동작만으로 모순 입력의 처리 결과가 보장되지는 않는다.",
+            "fix_directive": "M109에 따른 정교화 설명은 기억 값과 함께 뒷받침하는 상호작용을 보존한다는 조건과, 그 보존이 정교화를 가능하게 한다는 범위를 유지해야 한다. M36·M87의 통합 동작만으로 모순 입력의 처리 결과가 보장되지는 않는다. / 후반절은 뒷받침하는 상호작용의 보존 조건을 생략하고, 모순 입력이 덮어쓰기 대신 기억을 정교화한다고 단정한다. M109는 해당 정보를 함께 보존할 때 가능한 정교화를 설명하며, M36·M87은 정렬 관계에 따른 객체 통합을 설명할 뿐 이 단정을 뒷받침하지 않는다. — 이 좌표의 인용 재료 정합과 narrative 신고를 그에 맞게 바로잡는다.",
+            "locus": {
+              "sentence": 2,
+              "tweet": 5
+            },
+            "observed": "후반절은 뒷받침하는 상호작용의 보존 조건을 생략하고, 모순 입력이 덮어쓰기 대신 기억을 정교화한다고 단정한다. M109는 해당 정보를 함께 보존할 때 가능한 정교화를 설명하며, M36·M87은 정렬 관계에 따른 객체 통합을 설명할 뿐 이 단정을 뒷받침하지 않는다.",
+            "rule": "l1.citation-mismatch"
+          }
+        ],
+        "flags": [],
+        "i": 0,
+        "speech_acts": []
+      },
+      {
+        "defects": [
+          {
+            "expected": "M109의 정교화 설명은 기억값과 함께 뒷받침하는 상호작용을 보존한다는 조건에 연결되어야 한다. M36·M87의 객체 통합 설명만으로 상충 입력에 대한 정교화 동작까지 뒷받침할 수는 없다.",
+            "fix_directive": "M109의 정교화 설명은 기억값과 함께 뒷받침하는 상호작용을 보존한다는 조건에 연결되어야 한다. M36·M87의 객체 통합 설명만으로 상충 입력에 대한 정교화 동작까지 뒷받침할 수는 없다. / 상충하는 입력이 기억을 덮어쓰지 않고 정교화한다고 서술하면서, M109가 그 가능성의 근거로 제시한 뒷받침 상호작용의 동반 보존 조건을 생략했다. 앞 절의 객체 간 정렬에 따른 통합과 이 조건은 서로 다르다. — 이 좌표의 인용 재료 정합과 narrative 신고를 그에 맞게 바로잡는다.",
+            "locus": {
+              "sentence": 2,
+              "tweet": 5
+            },
+            "observed": "상충하는 입력이 기억을 덮어쓰지 않고 정교화한다고 서술하면서, M109가 그 가능성의 근거로 제시한 뒷받침 상호작용의 동반 보존 조건을 생략했다. 앞 절의 객체 간 정렬에 따른 통합과 이 조건은 서로 다르다.",
+            "rule": "l1.citation-mismatch"
+          }
+        ],
+        "flags": [],
+        "i": 1,
+        "speech_acts": []
+      },
+      {
+        "defects": [
+          {
+            "expected": "M109에서 상충 입력을 통한 기억 정교화는 지원 상호작용을 기억 값과 함께 보존함으로써 가능한 동작이다. 이 조건과 가능성의 범위를 유지해야 하며, 상충 입력이 언제나 기억을 정교화하고 덮어쓰기는 하지 않는다는 단정에는 별도 근거가 필요하다.",
+            "fix_directive": "M109에서 상충 입력을 통한 기억 정교화는 지원 상호작용을 기억 값과 함께 보존함으로써 가능한 동작이다. 이 조건과 가능성의 범위를 유지해야 하며, 상충 입력이 언제나 기억을 정교화하고 덮어쓰기는 하지 않는다는 단정에는 별도 근거가 필요하다. / 문장 후반은 지원 상호작용 보존 조건을 드러내지 않은 채 상충 입력이 덮어쓰기 대신 기억을 정교화한다고 단정한다. M109의 조건부 가능성을 일반적인 처리 결과로 넓혔다. 함께 인용한 M36과 M87은 정렬된 기억 객체의 통합을 다룰 뿐 이 단정을 뒷받침하지 않는다. — 이 좌표의 인용 재료 정합과 narrative 신고를 그에 맞게 바로잡는다.",
+            "locus": {
+              "sentence": 2,
+              "tweet": 5
+            },
+            "observed": "문장 후반은 지원 상호작용 보존 조건을 드러내지 않은 채 상충 입력이 덮어쓰기 대신 기억을 정교화한다고 단정한다. M109의 조건부 가능성을 일반적인 처리 결과로 넓혔다. 함께 인용한 M36과 M87은 정렬된 기억 객체의 통합을 다룰 뿐 이 단정을 뒷받침하지 않는다.",
+            "rule": "l1.citation-mismatch"
+          }
+        ],
+        "flags": [],
+        "i": 2,
+        "speech_acts": []
+      }
+    ]
+  },
+  "l2": {
+    "memos": [
+      {
+        "id": "m-l2-001",
+        "layer": "l2",
+        "locus": {
+          "sentence": null,
+          "tweet": 5
+        },
+        "rule": "l2.thesis-flow",
+        "text": "T5의 첫 문장은 기존 기억을 교체하거나 갱신하는 갈래를 열지만, 다음 문장은 ‘not overwrite it’으로 닫혀 앞서 허용한 교체와 어떤 관계인지 독자가 다시 해석해야 한다. 또한 객체 통합과 지원 상호작용 보존이 한 문장에 이어져, 서로 다른 정정 방식의 소개인지 하나의 연속 절차인지 경계가 흐려진다. 정정이라는 전달 표적은 들어 있으나, 각 방식의 관계보다 동작 목록이 먼저 남는다."
+      },
+      {
+        "id": "m-l2-002",
+        "layer": "l2",
+        "locus": {
+          "sentence": null,
+          "tweet": 7
+        },
+        "rule": "l2.structure",
+        "text": "T2부터 T6까지는 저장 단위, 쓰기, 회상, 정정, 삭제로 같은 기억의 생애를 따라간다. T7의 기기 동작은 그 기억의 쓰임을 보여주는 확장이지만, 그 앞에 숨은 분석과 인터페이스 노출 여부라는 별도 주제가 끼어들어 전환이 두 갈래로 갈린다. 숨은 분석은 전달 표적에 없고 T8의 종합에서도 회수되지 않으므로, 망각까지 닫힌 설명과 최종 종합 사이에서 독립적인 부가 기능처럼 떠 있다."
+      },
+      {
+        "id": "m-l2-003",
+        "layer": "l2",
+        "locus": {
+          "sentence": null,
+          "tweet": null
+        },
+        "rule": "l2.material-balance",
+        "text": "저장·검색·정정·삭제에 해당하는 전달 표적은 본문에 자리 잡았지만, M116은 T8에서 성능 수치의 부재와 구조의 존재를 정리하는 데 주로 쓰인다. 같은 재료에 있는 반복 입력의 부담과 외부 데이터 접근의 전부 아니면 전무라는 출발 문제는 전개되지 않아, 기능들이 어떤 기존 불편에 대응하는지보다 기능 목록이 중심에 남는다. 이와 연결해 T3은 모델의 저장 판단을 설명하면서 ‘trigger’를 구체화하지 않고 넘어가며, 설계가 선택했던 명시적 기억 지시(M19·M70)는 사용하지 않는다. 따라서 T6의 삭제 명령은 구체적인 반면 기억을 만들 때 사용자가 개입하는 경로는 추상적으로 남아, 동일한 대화 채널의 양쪽 역할이 비대칭으로 읽힌다."
+      }
+    ]
+  },
+  "legislated": {
+    "defect_catalog_entries": 0,
+    "defect_catalog_version": "0",
+    "score_lint_patterns": 4,
+    "score_lint_version": "1.0",
+    "speech_act_predicate_version": "1.0",
+    "speech_act_predicates": 3
+  },
+  "revision_round": 4,
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "schema": "gate-report/v0",
+  "spec_digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+  "spec_version": 1,
+  "thread_digest": "sha256:08d5bb42b02da317a3ec4482aebbe85591ba78e599f4762fa5f94975356c590d",
+  "vacuous_pass": [
+    "run.publish-preconditions",
+    "gate.no-rewrite"
+  ],
+  "variant": "v2"
+}

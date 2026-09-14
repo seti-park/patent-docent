@@ -1,0 +1,46 @@
+{
+  "attempt": 1,
+  "duration_ms": 122707,
+  "ended_at": "2026-09-13T16:52:37Z",
+  "is_error": false,
+  "lane_id": "probe/v2/batch-0",
+  "lane_self_report": {
+    "effort": "low",
+    "lane_id": "probe/v2/batch-0",
+    "model": "claude-haiku-4-5-20251001"
+  },
+  "note": "",
+  "num_turns": 2,
+  "observed": {
+    "main_model": "claude-haiku-4-5-20251001",
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "cacheCreationInputTokens": 21383,
+        "cacheReadInputTokens": 0,
+        "canonicalModel": "claude-haiku-4-5",
+        "contextWindow": 200000,
+        "costBasis": "list",
+        "costUSD": 0.109756,
+        "inputTokens": 4415,
+        "maxOutputTokens": 32000,
+        "outputTokens": 12515,
+        "provider": "firstParty",
+        "thinkingTokens": 10837,
+        "webSearchRequests": 0
+      }
+    }
+  },
+  "request_md_sha256": "39b83756d9ac2aa64ce7dd1698a40524eeb332ba6cdd0b9af8f01abbfc05aefa",
+  "requested": {
+    "api_id": "claude-haiku-4-5-20251001",
+    "effort": "low",
+    "model": "haiku-4.5"
+  },
+  "response_json_sha256": "ea924f1d7a77045f7fcb62ceb8bc94dec6189b85ade1ba8fc8cf5518a37dc686",
+  "returncode": 0,
+  "session_id": "c05d19d2-ac3b-478f-90fd-36b7feca3caf",
+  "started_at": "2026-09-13T16:50:32Z",
+  "stderr_tail": "",
+  "timed_out": false,
+  "total_cost_usd": 0.109756
+}

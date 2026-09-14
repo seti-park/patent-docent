@@ -1,0 +1,62 @@
+{
+  "lane_id": "final-eyes/v2/batch-0",
+  "model": "claude-opus-5",
+  "effort": "max",
+  "input_digest": "085fd64b19d8e6952e3b4d37538ed6a7751c5dad448fe5cf79d59f54ea2459c0",
+  "payload": {
+    "l1_recheck": {
+      "defects": [
+        {
+          "rule": "l1.citation-mismatch",
+          "locus": {
+            "tweet": 6,
+            "sentence": 1
+          },
+          "expected": "따옴표로 묶어 사용자 명령으로 제시한 문자열은 인용 재료 안에 그대로 있어야 한다. \"forget that\" 은 M71([0293] \"Explicit forgetting may be triggered by user commands such as 'forget that,' 'delete this conversation,' or 'forget information related to [topic].'\")에 축자로 있다.",
+          "observed": "\"forget this after three months\" 가 \"forget that\" 과 같은 병렬 구문 안에서 따옴표로 제시되나 인용 재료 어디에도 그 문자열이 없다. 인용된 M73 은 명세서 자신의 서술([0057] \"The user can instruct the machine-learned agent system to forget information after three months.\")이지 사용자 발화 인용이 아니다. 세 달이라는 기간과 삭제 대기열 투입 자체는 M73·M22·M23 으로 근거가 선다 — 어긋난 것은 따옴표가 지는 축자 주장이다."
+        },
+        {
+          "rule": "l1.citation-mismatch",
+          "locus": {
+            "tweet": 6,
+            "sentence": 2
+          },
+          "expected": "인용 재료의 서법을 그대로 옮겨야 한다. M74([0295])는 \"Memory objects exceeding their expiration time may be automatically deleted during scheduled maintenance operations.\" 이고, M110 은 만료 시각을 \"optional expiration times\" 로 적는다. 유지보수 시점의 삭제도 만료 시각의 존재도 청구항 한정이 아니다 — CL-10(M22·M23)이 두는 것은 지시 수령과 삭제 대기열 투입까지다.",
+          "observed": "\"Objects past their expiration time are deleted during maintenance\" 로 허용 서법(may be automatically)이 단정(are)으로 바뀌었고, 선택적인 만료 시각이 모든 객체가 갖는 속성으로 전제되었다. 삭제 보장으로 읽히는 문장이어서 서법이 곧 내용이다."
+        },
+        {
+          "rule": "l1.citation-mismatch",
+          "locus": {
+            "tweet": 5,
+            "sentence": 2
+          },
+          "expected": "M109 는 조건부 가능성이다 — \"Keeping the supporting interactions alongside a memory value lets a later contradicting input refine the memory instead of simply overwriting it.\" (근거 인용 \"new information can serve to refine and build more nuanced memories rather than noisily overcorrecting based on limited information\"). 전건(지원 기록을 기억 값 옆에 함께 둠)과 서법(lets · can serve to)이 주장의 일부다.",
+          "observed": "\"a contradiction refines the matched memory rather than overcorrecting it\" 는 전건을 버리고(스레드 전체에 지원 기록이 한 번도 나오지 않는다) 가능성을 일어나는 일로 단정한다. 같은 트윗 앞 문장은 M40(\"replacing, in the interaction memory datastore, the prior memory object with the current memory object\")을 인용해 덮어쓰기 경로를 그대로 적고 있어, 무조건 서술이 두 문장을 충돌시킨다."
+        }
+      ],
+      "narrative_audit": [
+        {
+          "locus": {
+            "tweet": 1,
+            "sentence": 1
+          },
+          "observation": "[narrative] 감사 — \"When an AI agent says it \"remembers\" you, is that architecture or marketing?\" 는 에이전트가 스스로를 어떻게 말하는가에 대한 틀 질문이고, 특허의 구조·기제·수치에 대해서는 아무것도 주장하지 않는다. 따옴표는 \"remembers\" 를 다툼의 대상인 낱말로 표시할 뿐 기제를 서술하지 않는다. 밀반입된 기술 주장 없음."
+        },
+        {
+          "locus": {
+            "tweet": 9,
+            "sentence": 2
+          },
+          "observation": "[narrative] 감사 — \"Follow along for the next patent walk-through.\" 는 순수 독자 안내다. 특허의 기제·수치·구조에 닿는 문언이 없고 재료 항목을 필요로 하는 주장도 없다. 밀반입된 기술 주장 없음."
+        }
+      ]
+    },
+    "observations": [
+      "T8 문장 3 — \"That is a described architecture, not a slogan.[M116]\" 은 재료 인용을 달고 있으나, 하는 주장은 이 공개를 어떻게 받아들일 것인가에 대한 평가다. M116 은 배경 문제·주장된 효과·차이(\"No performance numbers are given; the claimed difference is structural: memory objects generated from prior interactions with the user, retrieved by relevance and fed into a sequence model input, rather than raw history or uncurated external sources.\")를 적을 뿐 그런 평가를 하지 않는다. 훅의 물음에 답하는 평가 문장이 [narrative] 로 자기 신고해야 하는지는 규범 문제이고 문장↔재료 정합 검사로 판가름나지 않아, 결함이 아니라 소견으로 적는다.",
+      "T1 문장 2 — \"a datastore of your past interactions\" 는 M3(\"memory objects that were generated based on one or more prior interactions between the machine-learned agent system and the user\")의 압축이다. 「~에서 만들어진」으로 읽으면 근거가 서고, 「~를 담은」으로 읽으면 바로 다음 T2 문장 1 이 부정하는 독해(\"This datastore is not a transcript of your chats.\"[M107])가 된다. 문장 안에 파생 독해가 살아 있어 결함으로 걸지 않았으나, 훅은 혼자 읽힐 확률이 가장 높은 트윗이다.",
+      "내가 쓴 선을 보이게 적는다 — 스레드는 종속항 한정을 시스템의 거동으로 단정하는 형태를 곳곳에서 쓴다(T3 \"A model decides what to store\" = CL-5 · T5 문장 1 \"Memories are corrected\" = CL-18·CL-19 · T4 \"it ranks stored objects by relevance\" = CL-4·CL-12). 이것들은 걸지 않았다 — 그 자리의 인용 재료가 청구항 문언이고 동결 재료 안에서 단정형으로 적혀 있기 때문이다. 서법으로 건 두 건(T5 문장 2 · T6 문장 2)은 재료 자신의 문언이 허용형 명세 산문(\"may be automatically deleted\" · \"optional expiration times\" · \"lets\" · \"can serve to\")이고 단정된 결과를 지탱하는 청구항 한정이 없다. 앞 형태가 도슨트 어법으로 허용되는가는 이 레인의 관할 밖 규범 문제다.",
+      "T4 문장 1 — \"the agent does not reread everything\" 이라는 부정 주장은 인용된 네 항목(M12·M26·M63·M77) 어디에도 문언으로 없다. 동결 재료는 이 주장을 갖고 있으나(M107 \"rather than re-reading raw history\" · M112 \"runtime inference reads condensed objects rather than raw history\") 둘 다 이 문장에 인용되어 있지 않다. 선별 인출(M12 · M63 \"a number of relevant stored memories\")이 그 주장을 덮는다고 보아 결함으로 걸지 않았다 — 인용 완전성만 놓고 보면 두 항목 중 하나를 함께 드는 것이 정확하다.",
+      "이 레인은 l1_recheck 만 판정했다. L0(형식·수치·문장 계수)와 round-trip 은 판단하지 않았고, 제공된 네 조각(동결 재료 · 주석본 · 브리핑 · 스트립본) 밖의 자료는 열지 않았다. 이 레인에는 셸·파일 도구가 없어 response.json 을 직접 쓰지 못하고 구조화 응답 채널로만 회신한다."
+    ]
+  }
+}

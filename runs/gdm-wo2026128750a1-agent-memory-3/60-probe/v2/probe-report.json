@@ -1,0 +1,123 @@
+{
+  "findings": [],
+  "lanes": {
+    "grader": {
+      "effort": "low",
+      "lane_id": "probe-grade/v2/batch-0",
+      "mismatch": false,
+      "model": "claude-opus-5",
+      "response_digest": "d3607a54c61587615784913f16554e8765ac31b0a4334806b15f768a7dea2feb"
+    },
+    "probes": [
+      {
+        "effort": "low",
+        "lane_id": "probe/v2/batch-0",
+        "mismatch": false,
+        "model": "claude-haiku-4-5-20251001",
+        "response_digest": "6222ad4b7a59cf079e9c18cef2913d800980972d7f4143cf3c370a4579814451"
+      },
+      {
+        "effort": "low",
+        "lane_id": "probe/v2/batch-1",
+        "mismatch": false,
+        "model": "claude-haiku-4-5-20251001",
+        "response_digest": "40cf8d458aa2d5936775b6bc31525cd92cab30b2bb1eca7b21111cc5d9b38a68"
+      },
+      {
+        "effort": "low",
+        "lane_id": "probe/v2/batch-2",
+        "mismatch": false,
+        "model": "claude-haiku-4-5-20251001",
+        "response_digest": "0e5f5c56c389bb400cd100c7c6bce9e2e3154e7d28306e33a4622ee2844ae580"
+      },
+      {
+        "effort": "low",
+        "lane_id": "probe/v2/batch-3",
+        "mismatch": false,
+        "model": "claude-haiku-4-5-20251001",
+        "response_digest": "093edc09ad0352910e90e5da25baeca3f2fac01966e258f4ab97b248cc265e00"
+      },
+      {
+        "effort": "low",
+        "lane_id": "probe/v2/batch-4",
+        "mismatch": false,
+        "model": "claude-haiku-4-5-20251001",
+        "response_digest": "a6f58d10ed8c54cffd61ffb753f349c55180cab228b0baa54f4558b7b88cb29a"
+      }
+    ],
+    "questions": {
+      "effort": "low",
+      "lane_id": "probe-q/v2/batch-0",
+      "mismatch": false,
+      "model": "claude-opus-5",
+      "response_digest": "7b57785988dccbbec94e9cbd6b62f6d793704e456a9058974aa59ec6ac491979"
+    },
+    "quorum": null
+  },
+  "produced_at": "2026-09-14T01:08:06Z",
+  "rows": [
+    {
+      "check_id": "probe.input-digest",
+      "checked": 10,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "probe.input-clean",
+      "checked": 28,
+      "ruleset": "input_clean_patterns",
+      "ruleset_size": 3,
+      "ruleset_version": "probe.yaml",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "probe.independence",
+      "checked": 5,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "probe.no-self-report",
+      "checked": 5,
+      "ruleset": "probe-report/v0",
+      "ruleset_size": 1,
+      "ruleset_version": "probe-report/v0",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "probe.target-coverage",
+      "checked": 7,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "probe.grader-separation",
+      "checked": 7,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    }
+  ],
+  "stage": "probe",
+  "status": "ok",
+  "variant": "v2"
+}

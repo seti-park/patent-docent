@@ -1,7 +1,7 @@
 schema: run/v0
 run_id: gdm-wo2026128750a1-agent-memory-3
 created_at: '2026-09-13T05:19:24Z'
-status: active
+status: shipped
 run_kind: partial
 partial_until: ship
 supersedes: null

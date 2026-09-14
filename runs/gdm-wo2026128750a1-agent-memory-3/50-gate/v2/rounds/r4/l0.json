@@ -1,0 +1,160 @@
+{
+  "checks": [
+    {
+      "check_id": "run.publish-preconditions",
+      "checked": 0,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "empty-target",
+      "violations": 0
+    },
+    {
+      "check_id": "format.tweet-count",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.slot-count",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.body-length",
+      "checked": 8,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.stop-shape",
+      "checked": 6,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.hashtag-zero",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.no-link-in-body",
+      "checked": 8,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "format.images-per-post",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "annotation.schema",
+      "checked": 20,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "annotation.missing-tag",
+      "checked": 19,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "citation.resolve",
+      "checked": 75,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "numeric.exhaustive",
+      "checked": 2,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "numeric.unreviewed-use",
+      "checked": 2,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    }
+  ],
+  "defects": [],
+  "flags": [
+    {
+      "id": "f-l0-001",
+      "layer": "l0",
+      "locus": {
+        "sentence": 1,
+        "tweet": 9
+      },
+      "note": "미검토 수치 사용 — T9/S1 의 2024-12-11| 는 M104 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
+      "origin": "advisory-rule",
+      "rule": "numeric.unreviewed-use"
+    },
+    {
+      "id": "f-l0-002",
+      "layer": "l0",
+      "locus": {
+        "sentence": 1,
+        "tweet": 9
+      },
+      "note": "미검토 수치 사용 — T9/S1 의 2026-06-18| 는 M106 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
+      "origin": "advisory-rule",
+      "rule": "numeric.unreviewed-use"
+    }
+  ],
+  "pass": true
+}

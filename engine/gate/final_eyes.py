@@ -105,6 +105,16 @@ def waive(*, run_root: str, repo: str | None = None, variant: str, owner_quote: 
         "defect_count": len(carried), "escalation": "50-gate/%s/escalation.json" % variant,
     }
     verdict["final_eyes"] = block
+    # 최종 심급의 결함은 판정 시점에 l1 블록으로 병합된다(재판정 경로를 공유하기 때문이다). 강등은 그 병합도
+    # 되돌린다 — 되돌리지 않으면 표면이 「게이트 L1 실패」로 읽히는데, 실제 게이트 L1 은 마지막 라운드에서
+    # 통과했다. 강등된 결함은 observations 로 이미 옮겨져 표면에서 사라지지 않는다.
+    l1 = dict(verdict.get("l1") or {})
+    carried_loci = {(d["locus"]["tweet"], d["locus"]["sentence"]) for d in defects if d.get("locus")}
+    l1["defects"] = [d for d in (l1.get("defects") or [])
+                     if (d.get("locus") or {}).get("tweet") is None
+                     or (d["locus"]["tweet"], d["locus"]["sentence"]) not in carried_loci]
+    l1["pass"] = not l1["defects"]
+    verdict["l1"] = l1
     verdict["decision"] = gate_stage.DECISION_ADVANCE
     write_json(verdict_path, verdict)
     return {"status": "waived", "carried": len(carried), "decision": verdict["decision"]}

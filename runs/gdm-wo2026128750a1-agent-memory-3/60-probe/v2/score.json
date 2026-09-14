@@ -1,0 +1,204 @@
+{
+  "delivery_fidelity": 0.0714,
+  "grading_input_digest": "sha256:40ce38c51c9f13aead180d957784a33c42c9bc5b9df6af1b41baf2e40c2c2217",
+  "input_digest": "sha256:e8b0dac840ad174434fd9d5f7979c762a04f389a6a8e599125f85dda1f0c2579",
+  "invalidated_answers": [
+    {
+      "probe_id": "p2",
+      "question_id": "Q7",
+      "reason": "quoted_span-not-substring"
+    }
+  ],
+  "loci": [
+    {
+      "count": 5,
+      "issue": "miss",
+      "locus": {
+        "material_id": "M3",
+        "tweet": 8
+      },
+      "n": 5
+    },
+    {
+      "count": 5,
+      "issue": "miss",
+      "locus": {
+        "material_id": "M16",
+        "tweet": 3
+      },
+      "n": 5
+    },
+    {
+      "count": 5,
+      "issue": "miss",
+      "locus": {
+        "material_id": "M12",
+        "tweet": 8
+      },
+      "n": 5
+    },
+    {
+      "count": 5,
+      "issue": "miss",
+      "locus": {
+        "material_id": "M21",
+        "tweet": 8
+      },
+      "n": 5
+    },
+    {
+      "count": 5,
+      "issue": "miss",
+      "locus": {
+        "material_id": "M23",
+        "tweet": 6
+      },
+      "n": 5
+    },
+    {
+      "count": 5,
+      "issue": "miss",
+      "locus": {
+        "material_id": "M40",
+        "tweet": 8
+      },
+      "n": 5
+    },
+    {
+      "count": 4,
+      "issue": "partial",
+      "locus": {
+        "material_id": "M116",
+        "tweet": 1
+      },
+      "n": 5
+    },
+    {
+      "count": 1,
+      "issue": "invalidated",
+      "locus": {
+        "material_id": "M116",
+        "tweet": 1
+      },
+      "n": 5
+    }
+  ],
+  "notes": "계기 5 대 · 질문 7 · 무효 답변 1 · 결정론 채점 6 표적 · 모델 채점 1 표적. 계기는 거부권이 없다(SPEC §5.7).",
+  "per_target": [
+    {
+      "answers": {
+        "hit": 0,
+        "invalidated": 0,
+        "miss": 5,
+        "not_stated": 0,
+        "partial": 0
+      },
+      "hit_rate": 0.0,
+      "kind": "component",
+      "material_id": "M3",
+      "method": "deterministic",
+      "unrepresented": false,
+      "weakest_tweet": 8
+    },
+    {
+      "answers": {
+        "hit": 0,
+        "invalidated": 0,
+        "miss": 5,
+        "not_stated": 0,
+        "partial": 0
+      },
+      "hit_rate": 0.0,
+      "kind": "component",
+      "material_id": "M16",
+      "method": "deterministic",
+      "unrepresented": false,
+      "weakest_tweet": 3
+    },
+    {
+      "answers": {
+        "hit": 0,
+        "invalidated": 0,
+        "miss": 5,
+        "not_stated": 0,
+        "partial": 0
+      },
+      "hit_rate": 0.0,
+      "kind": "component",
+      "material_id": "M12",
+      "method": "deterministic",
+      "unrepresented": false,
+      "weakest_tweet": 8
+    },
+    {
+      "answers": {
+        "hit": 0,
+        "invalidated": 0,
+        "miss": 5,
+        "not_stated": 0,
+        "partial": 0
+      },
+      "hit_rate": 0.0,
+      "kind": "component",
+      "material_id": "M21",
+      "method": "deterministic",
+      "unrepresented": false,
+      "weakest_tweet": 8
+    },
+    {
+      "answers": {
+        "hit": 0,
+        "invalidated": 0,
+        "miss": 5,
+        "not_stated": 0,
+        "partial": 0
+      },
+      "hit_rate": 0.0,
+      "kind": "component",
+      "material_id": "M23",
+      "method": "deterministic",
+      "unrepresented": false,
+      "weakest_tweet": 6
+    },
+    {
+      "answers": {
+        "hit": 0,
+        "invalidated": 0,
+        "miss": 5,
+        "not_stated": 0,
+        "partial": 0
+      },
+      "hit_rate": 0.0,
+      "kind": "component",
+      "material_id": "M40",
+      "method": "deterministic",
+      "unrepresented": false,
+      "weakest_tweet": 8
+    },
+    {
+      "answers": {
+        "hit": 0,
+        "invalidated": 1,
+        "miss": 0,
+        "not_stated": 0,
+        "partial": 4
+      },
+      "hit_rate": 0.5,
+      "kind": "positioning",
+      "material_id": "M116",
+      "method": "model",
+      "unrepresented": false,
+      "weakest_tweet": 1
+    }
+  ],
+  "probe_n": 5,
+  "question_set_digest": "sha256:3f3d920af8f8d9b06de88fd4dc9f0fba7cbe3a30c4a86822560a05279978afaa",
+  "restatement": {
+    "aligned": 5,
+    "drifted": 0,
+    "inverted": 0
+  },
+  "run_id": "gdm-wo2026128750a1-agent-memory-3",
+  "schema": "probe-score/v0",
+  "variant": "v2"
+}

@@ -26,6 +26,7 @@ from __future__ import annotations
 import datetime as _dt
 import json
 import os
+import shutil
 import re
 
 from jsonschema import Draft202012Validator
@@ -257,6 +258,53 @@ def _quorum_state(paths: RunPaths, variant: str, n: int) -> dict:
     return {"n": n, "attempts_made": 0, "instances": {str(i): {"attempt": 0, "status": "pending"} for i in range(n)}}
 
 
+def _supersede_stale_probe(paths: RunPaths, variant: str, index: int, previous_digest) -> None:
+    """출하 후보가 바뀌면 옛 관측은 **그 후보의 것이 아니다** — 계기는 후보를 재는 도구이기 때문이다.
+
+    보고와 레인 좌표를 직전 입력 지문 아래 보존하고 다시 묻는다. 이것이 없으면 옛 답변을 새 후보의
+    지문으로 채점해 `score.json#input_digest` 는 현 후보를 가리키는데 내용은 옛 판이 된다 — CP2 의
+    「계기가 현 출하 후보의 관측인가」 검사가 그대로 통과하므로 어떤 결정론 검사도 이 오염을 잡지 못한다
+    (런 -3 09:50 실측 = 무효 답변 16 인데도 `probe ok`).
+    """
+    tag = str(previous_digest or "unknown").replace("sha256:", "")[:16]
+    keep_root = os.path.join(paths.probe_dir(variant), "superseded", tag)
+    # 보고가 낡았으면 **그 보고로 만든 점수도 낡았다** — 함께 옮기지 않으면 새 답변을 받고도 옛 점수가
+    # 재진입 가드를 통과해 그대로 남는다(런 -3 10:00 실측).
+    for stale_path in (paths.score_json(variant), paths.probe_grades_json(variant)):
+        if os.path.isfile(stale_path):
+            os.makedirs(keep_root, exist_ok=True)
+            moved = os.path.join(keep_root, os.path.basename(stale_path))
+            if os.path.exists(moved):
+                os.remove(stale_path)
+            else:
+                os.replace(stale_path, moved)
+    # 채점 레인의 옛 응답도 같이 간다 — 남겨 두면 새 답변 위에 옛 등급이 붙는다.
+    grade_lane = os.path.join(paths.probe_lanes_dir(variant), LANE_GRADE, variant, "batch-0")
+    if os.path.isdir(grade_lane):
+        os.makedirs(keep_root, exist_ok=True)
+        moved = os.path.join(keep_root, "lane-grade")
+        if os.path.exists(moved):
+            shutil.rmtree(grade_lane)
+        else:
+            shutil.move(grade_lane, moved)
+    report = paths.probe_report(variant, index)
+    if os.path.isfile(report):
+        os.makedirs(keep_root, exist_ok=True)
+        target = os.path.join(keep_root, os.path.basename(report))
+        if not os.path.exists(target):
+            os.replace(report, target)
+        elif os.path.isfile(report):
+            os.remove(report)
+    lane_dir = os.path.join(paths.probe_lanes_dir(variant), LANE_PROBE, variant, f"batch-{index}")
+    if os.path.isdir(lane_dir):
+        os.makedirs(keep_root, exist_ok=True)
+        target = os.path.join(keep_root, f"lane-batch-{index}")
+        if not os.path.exists(target):
+            shutil.move(lane_dir, target)
+        else:
+            shutil.rmtree(lane_dir)
+
+
 def _collect_probes(*, paths: RunPaths, repo: str, meta: dict, variant: str, text: str, input_digest: str, questions: dict, config: dict,
                     adapter, dead: list[str], report_schema: dict) -> tuple[list[dict], list[dict], dict, dict]:
     """→ (보고 n 건 | 부분, 레인 n 건 | 부분, 대장, 처분 `{status, pending|escalation}`)."""
@@ -272,10 +320,16 @@ def _collect_probes(*, paths: RunPaths, repo: str, meta: dict, variant: str, tex
         inst = state["instances"][str(i)]
         report_path = paths.probe_report(variant, i)
         if os.path.isfile(report_path):
-            reports[i] = load_json(report_path)
-            lanes[i] = dict(inst.get("lane") or {})
-            inst["status"] = "live"
-            continue
+            kept = load_json(report_path)
+            if str(kept.get("input_digest")) == input_digest and str(kept.get("question_set_digest")) == qs_digest:
+                reports[i] = kept
+                lanes[i] = dict(inst.get("lane") or {})
+                inst["status"] = "live"
+                continue
+            # 후보가 바뀌었다 — 옛 관측은 버리지 않고 보존한 뒤 다시 묻는다.
+            _supersede_stale_probe(paths, variant, i, kept.get("input_digest"))
+            inst["attempt"] = 0
+            inst["status"] = "pending"
         request = probes_mod.build_request(paths=paths, repo=repo, meta=meta, variant=variant, thread_text=text, input_digest=input_digest,
                                            questions=questions["questions"], questions_text=questions_text, question_set_digest=qs_digest,
                                            batch=i, config=config, attempt=int(inst["attempt"]))
@@ -342,8 +396,20 @@ def _grade(*, paths: RunPaths, repo: str, meta: dict, variant: str, reports: lis
     grades_path = paths.probe_grades_json(variant)
     grading = config["grading"]
     grading_input = grade_mod.build_grading_input(reports=reports, questions=questions, items=items, grading=grading, thesis_en=thesis_en, invalid=invalid)
+    grading_input_digest = sha256_bytes(json.dumps(grading_input, ensure_ascii=False, sort_keys=True).encode("utf-8"))
     if os.path.isfile(grades_path):
-        return load_json(grades_path), {"status": STATUS_OK, "reused": True}
+        kept = load_json(grades_path)
+        if str(kept.get("grading_input_digest")) == grading_input_digest:
+            return kept, {"status": STATUS_OK, "reused": True}
+        # 채점 입력이 바뀌었다(답변이 새로 왔다) — 옛 등급을 새 답변 위에 붙이지 않는다.
+        keep_root = os.path.join(paths.probe_dir(variant), "superseded", str(kept.get("grading_input_digest") or "unknown").replace("sha256:", "")[:16])
+        os.makedirs(keep_root, exist_ok=True)
+        moved = os.path.join(keep_root, "grades.json")
+        os.remove(grades_path) if os.path.exists(moved) else os.replace(grades_path, moved)
+        lane_dir = os.path.join(paths.probe_lanes_dir(variant), LANE_GRADE, variant, "batch-0")
+        if os.path.isdir(lane_dir):
+            target = os.path.join(keep_root, "lane-grade")
+            shutil.rmtree(lane_dir) if os.path.exists(target) else shutil.move(lane_dir, target)
     deterministic: dict[str, dict] = {}
     for question in questions:
         item = items[question["target_material_id"]]
@@ -432,7 +498,19 @@ def run(*, run_root: str, repo: str | None = None, variant: str, adapter=None, d
         score = load_json(score_path)
         existing_q = _load_questions(paths, spec_digest, targets)
         if score.get("input_digest") == input_digest and existing_q is not None and score.get("question_set_digest") == existing_q.get("question_set_digest"):
-            return _result(STATUS_REENTERED, delivery_fidelity=score.get("delivery_fidelity"), score=score_path, reentered=True)
+            # 지문이 같아도 **보고가 현 후보의 것일 때만** 재진입이다. 후보가 바뀐 뒤 옛 답변으로 채점하면
+            # score 의 지문만 새 후보를 가리키게 되어 CP2 의 「현 후보의 관측인가」 검사가 무력화된다.
+            fresh = []
+            for i in range(int(config["n"])):
+                report_i = paths.probe_report(variant, i)
+                fresh.append(os.path.isfile(report_i)
+                             and str(load_json(report_i).get("input_digest")) == input_digest)
+            # 점수가 **현 채점의 산물**인지도 본다 — 후보가 그대로여도 답변이 새로 오면 값이 바뀐다.
+            grades_path = paths.probe_grades_json(variant)
+            graded_here = (os.path.isfile(grades_path) and score.get("grading_input_digest")
+                           and str(load_json(grades_path).get("grading_input_digest")) == str(score.get("grading_input_digest")))
+            if all(fresh) and graded_here:
+                return _result(STATUS_REENTERED, delivery_fidelity=score.get("delivery_fidelity"), score=score_path, reentered=True)
 
     # ② 질문지(런 단위).
     questions, q_state = _ensure_questions(paths=paths, repo=repo, meta=meta, frozen_row=frozen_row, variant=variant, targets=targets,
@@ -486,7 +564,8 @@ def run(*, run_root: str, repo: str | None = None, variant: str, adapter=None, d
              f"{sum(1 for t in per_target if t['method'] == grade_mod.METHOD_MODEL)} 표적. 계기는 거부권이 없다(SPEC §5.7).")
     score = localize_mod.build_score(run_id=run_id, variant=variant, n=config["n"], input_digest=input_digest,
                                      question_set_digest=str(questions["question_set_digest"]), per_target=per_target, restatement=restatement,
-                                     invalidated=invalidated, notes=notes)
+                                     invalidated=invalidated, notes=notes,
+                                     grading_input_digest=str(grades.get("grading_input_digest") or "") or None)
     errors = list(Draft202012Validator(score_schema).iter_errors(score))
     if errors:
         raise StageError(f"score.json 이 probe-score/v0 밖이다: {errors[0].message}")

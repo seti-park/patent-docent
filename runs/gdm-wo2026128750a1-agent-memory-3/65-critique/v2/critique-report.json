@@ -1,0 +1,75 @@
+{
+  "attempt": 1,
+  "candidate_digest": "sha256:e8b0dac840ad174434fd9d5f7979c762a04f389a6a8e599125f85dda1f0c2579",
+  "failed_checks": [],
+  "findings": [],
+  "input_digest": "sha256:7280ff143dd484a09b625b3fda8b3790b6667fb19f63443e964539e6a81eb7f0",
+  "lane": {
+    "effort": "high",
+    "model": "claude-fable-5-dd-artsa-6-tpg"
+  },
+  "memo_digest": "sha256:7356c22dd680fbe33941e8c4fc1e3360e9e9d476d497225cbafaf8628edc341b",
+  "rows": [
+    {
+      "check_id": "critique.input-digest",
+      "checked": 11,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "critique.no-score",
+      "checked": 1,
+      "ruleset": "score-lint",
+      "ruleset_size": 4,
+      "ruleset_version": "1.0",
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "critique.probe-reflected",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "critique.no-history",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "critique.extreme-flagged",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "critique.anchors-adjudicated-only",
+      "checked": 0,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "empty-target",
+      "violations": 0
+    }
+  ],
+  "status": "ok"
+}

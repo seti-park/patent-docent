@@ -1,0 +1,68 @@
+{
+  "a_restatement": [
+    "The thread describes AI memory systems as a specific technical architecture: memory objects are extracted from user interactions and stored with metadata in a datastore, not a transcript.",
+    "When queried, the system retrieves relevant memories by comparing query embeddings to stored objects, keeps the highest-scoring subset by relevance, and allows memories to be corrected, merged, or refined as new information arrives.",
+    "Users can request explicit forgetting or schedule automatic deletion after a set period, and the system uses these memories to inform both what the agent says and what actions it performs."
+  ],
+  "b_answers": [
+    {
+      "answer": "A model predicts what is worth remembering and extracts it from cached inputs.",
+      "answer_kind": "stated",
+      "question_id": "Q1",
+      "quoted_span": "A model decides what to store: cached inputs go to the model system, which predicts what is worth remembering and extracts it.",
+      "target_material_id": "M3"
+    },
+    {
+      "answer": "It is stored as a memory value in a memory object, which also contains metadata such as timestamp, trigger, and interaction summary.",
+      "answer_kind": "stated",
+      "question_id": "Q2",
+      "quoted_span": "It is stored as a memory value in a memory object, and one trigger is you asking the agent to remember your favorite architect.",
+      "target_material_id": "M16"
+    },
+    {
+      "answer": "The system scores stored memory objects for relevance by comparing query embeddings to memory value embeddings using cosine similarity, keeps the top subset, and orders them by timestamp.",
+      "answer_kind": "stated",
+      "question_id": "Q3",
+      "quoted_span": "Instead of rereading your whole history, the agent scores stored memory objects for relevance to your query. It compares a query embedding to memory value embeddings by a measure such as cosine similarity, keeps a top subset, and orders them by timestamp.",
+      "target_material_id": "M12"
+    },
+    {
+      "answer": "The system deletes the specified information when given the command.",
+      "answer_kind": "stated",
+      "question_id": "Q4",
+      "quoted_span": "Forgetting is claimed: \"forget that\" deletes the specified information",
+      "target_material_id": "M21"
+    },
+    {
+      "answer": "The system queues it for deletion, and a maintenance cycle automatically deletes objects past their expiration time.",
+      "answer_kind": "stated",
+      "question_id": "Q5",
+      "quoted_span": "\"forget this after three months\" queues it for deletion. A maintenance cycle deletes objects past their expiration time on its own",
+      "target_material_id": "M23"
+    },
+    {
+      "answer": "The older memory object is replaced or updated with the new information. Aligned objects can merge, and values are refined by contradicting input rather than overwritten.",
+      "answer_kind": "stated",
+      "question_id": "Q6",
+      "quoted_span": "Memories are corrected: new timestamped input is matched to the prior memory object it concerns, which is then replaced or updated. Aligned objects can merge, and a value kept with supporting interactions is refined by contradicting input, not overwritten.",
+      "target_material_id": "M40"
+    },
+    {
+      "answer": "The problem is that agents forget, requiring users to re-enter details repeatedly. What is different is the described technical architecture with memory objects from interactions, retrieved by relevance, corrected over time, and deletable on request.",
+      "answer_kind": "stated",
+      "question_id": "Q7",
+      "quoted_span": "When an AI agent says it \"remembers\" you, is that architecture or marketing? Agents forget, so you re-enter the same details; the claim is a loop — query plus memory data from a datastore of your past interactions, into a sequence model, out as a response.",
+      "target_material_id": "M116"
+    }
+  ],
+  "input_digest": "sha256:e8b0dac840ad174434fd9d5f7979c762a04f389a6a8e599125f85dda1f0c2579",
+  "model": {
+    "effort": "low",
+    "model": "claude-haiku-4-5-20251001",
+    "vendor": "anthropic"
+  },
+  "probe_id": "p0",
+  "produced_at": "2026-09-14T01:02:36Z",
+  "question_set_digest": "sha256:3f3d920af8f8d9b06de88fd4dc9f0fba7cbe3a30c4a86822560a05279978afaa",
+  "schema": "probe-report/v0"
+}

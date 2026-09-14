@@ -1,0 +1,22 @@
+{
+  "lane_id": "gate-l1/v2/batch-1",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "input_digest": "dd18212e5d295b40c4d21525ebf33e7ddd0ab976c7a69bfbccb1caab487b65e1",
+  "payload": {
+    "defects": [
+      {
+        "rule": "l1.citation-mismatch",
+        "locus": {
+          "tweet": 5,
+          "sentence": 2
+        },
+        "expected": "M109 의 statement_en 은 조건부 가능성이다 — 뒷받침 상호작용을 기억 값 곁에 보존해 두는 것이 나중의 모순 입력으로 하여금 덮어쓰기 대신 정교화하게 만든다는 구조이고, evidence_quotes 의 어형도 can serve to 형태의 가능 진술이다. 함께 인용된 M36·M87 은 정렬된 메모리 객체의 통합만 말할 뿐 모순 입력의 처리 방식을 말하지 않는다.",
+        "observed": "문장 후반절이 M109 가 건 조건(뒷받침 상호작용 보존)과 가능 어형을 모두 떨어뜨리고, 모순 입력이 기억을 과잉 정정하지 않고 정교화한다고 무조건 단정한다(contradicting input refines a memory rather than overcorrecting it). 전반절은 can 을 유지하나 후반절은 독립 직설절이어서 그 어형이 미치지 않는다.",
+        "fix_directive": "T5/S2 후반절을 M109 로 되돌려라 — 그 항목이 건 조건(뒷받침 상호작용을 함께 보존한다는 전제)과 가능 어형을 문장 안에 되살리거나, 무조건 단정을 유지하려면 그 단정을 직접 지지하는 재료로 바꿔 인용하라. 현재 인용 집합(M36·M87·M109) 에는 그런 항목이 없다."
+      }
+    ],
+    "flags": [],
+    "speech_acts": []
+  }
+}

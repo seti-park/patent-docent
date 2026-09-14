@@ -1,0 +1,64 @@
+{
+  "lane_id": "probe/v2/batch-3",
+  "model": "claude-haiku-4-5-20251001",
+  "effort": "low",
+  "input_digest": "ab2e5ae0bfeebb0fef77581b42dbece0f2ba1aa60a720125ea23ccda42a379d2",
+  "payload": {
+    "a_restatement": [
+      "AI memory systems for agents operate as a loop of querying a datastore of your past interactions through a sequence model, though agents still forget and require users to re-enter details.",
+      "The memory datastore consists of memory objects—containers with interaction data and metadata created when a model extracts what's worth remembering—retrieved for relevance to your current query using embedding similarity.",
+      "Stored memories are corrected and updated when new input matches prior objects and can be deleted either explicitly or automatically on schedule, presenting a technical architecture rather than marketing hype."
+    ],
+    "b_answers": [
+      {
+        "question_id": "Q1",
+        "target_material_id": "M3",
+        "answer_kind": "stated",
+        "answer": "The model decides what to store, extracting it from cached inputs that go to the model system, and stores it when triggered by user requests like asking the agent to remember something.",
+        "quoted_span": "A model decides what to store: cached inputs go to the model system, which predicts what is worth remembering and extracts it. It is stored as a memory value in a memory object, and one trigger is you asking the agent to remember your favorite architect."
+      },
+      {
+        "question_id": "Q2",
+        "target_material_id": "M16",
+        "answer_kind": "stated",
+        "answer": "It is stored as a memory value in a memory object.",
+        "quoted_span": "It is stored as a memory value in a memory object"
+      },
+      {
+        "question_id": "Q3",
+        "target_material_id": "M12",
+        "answer_kind": "stated",
+        "answer": "The agent scores stored memory objects for relevance to the query, comparing embeddings using cosine similarity, keeping a top subset, and ordering them by timestamp.",
+        "quoted_span": "Instead of rereading your whole history, the agent scores stored memory objects for relevance to your query. It compares a query embedding to memory value embeddings by a measure such as cosine similarity, keeps a top subset, and orders them by timestamp."
+      },
+      {
+        "question_id": "Q4",
+        "target_material_id": "M21",
+        "answer_kind": "stated",
+        "answer": "It deletes the specified information.",
+        "quoted_span": "Forgetting is claimed: \"forget that\" deletes the specified information"
+      },
+      {
+        "question_id": "Q5",
+        "target_material_id": "M23",
+        "answer_kind": "stated",
+        "answer": "The system queues it for deletion, and a maintenance cycle automatically deletes objects past their expiration time.",
+        "quoted_span": "\"forget this after three months\" queues it for deletion. A maintenance cycle deletes objects past their expiration time on its own"
+      },
+      {
+        "question_id": "Q6",
+        "target_material_id": "M40",
+        "answer_kind": "stated",
+        "answer": "The prior memory object is replaced or updated, and aligned objects can merge, with contradicting input refining rather than overwriting the stored value.",
+        "quoted_span": "Memories are corrected: new timestamped input is matched to the prior memory object it concerns, which is then replaced or updated. Aligned objects can merge, and a value kept with supporting interactions is refined by contradicting input, not overwritten."
+      },
+      {
+        "question_id": "Q7",
+        "target_material_id": "M116",
+        "answer_kind": "stated",
+        "answer": "The problem is that memoryless agents forget, requiring users to reenter the same details. It claims to be different by implementing a structured datastore of memory objects containing your interactions with metadata, rather than just a transcript of chats.",
+        "quoted_span": "Agents forget, so you re-enter the same details; the claim is a loop — query plus memory data from a datastore of your past interactions, into a sequence model, out as a response. This datastore is not a transcript of your chats. Each memory object is a container holding memory values, a string, an image, or audio, plus metadata such as a timestamp, the trigger that stored it, and a summary of the interaction it came from."
+      }
+    ]
+  }
+}

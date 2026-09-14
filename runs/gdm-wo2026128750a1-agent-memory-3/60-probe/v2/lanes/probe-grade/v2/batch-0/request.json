@@ -1,0 +1,98 @@
+{
+  "batch": 0,
+  "effort": "low",
+  "input_digest": "ff20dc4372bbc5ccb393a32ecdf0f40cabd66095f6d0148c6bc5a493a97529b8",
+  "instructions": "## 런 표지\n\n| 항목 | 값 |\n|---|---|\n| run_id | `gdm-wo2026128750a1-agent-memory-3` |\n| variant | `v2` |\n| 모델 채점 표적 | 1 |\n| 프로브 | 5 |\n\n너는 계기의 채점자다. 스레드를 보지 않는다 — 「원천 조각」의 채점 입력(프로브 답변 + 동결 항목의 EN 값 + 훅 논지)만 본다.\n\n## 과제\n\n① `60-probe/v2/grading-input.json#targets[]` 의 표적마다, 각 프로브 답변이 `item_values` 와 합치하는지 `hit | partial | miss` 로 판정하고 근거로 삼은 **답변 구간**을 `evidence` 에 인용한다(`not-stated` 답변은 `miss` 다 — 전달되지 않았다는 뜻이며 프로브의 잘못이 아니다).\n\n② `restatements[]` 의 프로브마다 세 문장 재서술이 `thesis_en` 과 정합하는지 `aligned | drifted | inverted` 로 판정한다.\n\n## 응답\n\n`payload` 하나를 응답 계약(`response_schema`)대로 낸다 — 답변마다 grades 1 행, 프로브마다 restatement 1 행. 총평은 쓰지 않는다.\n",
+  "lane_id": "probe-grade/v2/batch-0",
+  "model": "opus-5",
+  "prompt_path": "engine/probe/procedure-grader.md",
+  "read_run": "probe-grade",
+  "response_schema": {
+    "additionalProperties": false,
+    "properties": {
+      "grades": {
+        "items": {
+          "additionalProperties": false,
+          "properties": {
+            "evidence": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "grade": {
+              "enum": [
+                "hit",
+                "partial",
+                "miss"
+              ]
+            },
+            "probe_id": {
+              "enum": [
+                "p0",
+                "p1",
+                "p2",
+                "p3",
+                "p4"
+              ]
+            },
+            "question_id": {
+              "enum": [
+                "Q7"
+              ]
+            }
+          },
+          "required": [
+            "probe_id",
+            "question_id",
+            "grade",
+            "evidence"
+          ],
+          "type": "object"
+        },
+        "maxItems": 4,
+        "minItems": 4,
+        "type": "array"
+      },
+      "restatement": {
+        "items": {
+          "additionalProperties": false,
+          "properties": {
+            "judgement": {
+              "enum": [
+                "aligned",
+                "drifted",
+                "inverted"
+              ]
+            },
+            "probe_id": {
+              "enum": [
+                "p0",
+                "p1",
+                "p2",
+                "p3",
+                "p4"
+              ]
+            }
+          },
+          "required": [
+            "probe_id",
+            "judgement"
+          ],
+          "type": "object"
+        },
+        "maxItems": 5,
+        "minItems": 5,
+        "type": "array"
+      }
+    },
+    "required": [
+      "grades",
+      "restatement"
+    ],
+    "title": "lane-response/probe-grade",
+    "type": "object"
+  },
+  "slices": {
+    "60-probe/v2/grading-input.json": "{\n  \"restatements\": [\n    {\n      \"a_restatement\": [\n        \"The thread describes AI memory systems as a specific technical architecture: memory objects are extracted from user interactions and stored with metadata in a datastore, not a transcript.\",\n        \"When queried, the system retrieves relevant memories by comparing query embeddings to stored objects, keeps the highest-scoring subset by relevance, and allows memories to be corrected, merged, or refined as new information arrives.\",\n        \"Users can request explicit forgetting or schedule automatic deletion after a set period, and the system uses these memories to inform both what the agent says and what actions it performs.\"\n      ],\n      \"probe_id\": \"p0\"\n    },\n    {\n      \"a_restatement\": [\n        \"When an AI agent claims to 'remember' you, it is actually performing a computational loop that combines your query with memory objects retrieved from a datastore, feeding both through a sequence model to generate a response.\",\n        \"These memory objects are created when the model predicts what is worth retaining from interactions, are structured with metadata like timestamps, and are retrieved by scoring against query embeddings using similarity measures such as cosine similarity.\",\n        \"The system addresses agent forgetting through explicit deletion commands, time-based expiration with automatic maintenance cycles, and memory correction over time—described as a concrete architecture rather than marketing language.\"\n      ],\n      \"probe_id\": \"p1\"\n    },\n    {\n      \"a_restatement\": [\n        \"AI agent memory is a structural architecture, not marketing: the system creates memory objects from user interactions and stores them with metadata including timestamps and interaction summaries.\",\n        \"The system retrieves stored memories by comparing query embeddings to memory value embeddings using measures like cosine similarity, keeps a top subset, orders them by timestamp, and updates or merges memory objects when new input matches prior records.\",\n        \"Users can delete memories immediately with 'forget that' or queue them for deletion after a set period with 'forget this after three months,' which solves the problem of memoryless agents requiring repeated input of the same details.\"\n      ],\n      \"probe_id\": \"p2\"\n    },\n    {\n      \"a_restatement\": [\n        \"AI memory systems for agents operate as a loop of querying a datastore of your past interactions through a sequence model, though agents still forget and require users to re-enter details.\",\n        \"The memory datastore consists of memory objects—containers with interaction data and metadata created when a model extracts what's worth remembering—retrieved for relevance to your current query using embedding similarity.\",\n        \"Stored memories are corrected and updated when new input matches prior objects and can be deleted either explicitly or automatically on schedule, presenting a technical architecture rather than marketing hype.\"\n      ],\n      \"probe_id\": \"p3\"\n    },\n    {\n      \"a_restatement\": [\n        \"Memory is described as an architectural mechanism, not marketing—memory objects store values (text, image, or audio) and metadata including timestamp, what triggered its storage, and interaction summary.\",\n        \"When queried, the system scores stored memory objects for relevance by comparing query embeddings to memory value embeddings using cosine similarity, selects a top subset, and orders them by timestamp.\",\n        \"The system manages the memory lifecycle: new matching input replaces or updates existing memories (or aligned objects merge), \\\"forget that\\\" commands delete immediately, time-specific deletion is queued (like \\\"forget after three months\\\"), and a maintenance cycle auto-deletes expired objects.\"\n      ],\n      \"probe_id\": \"p4\"\n    }\n  ],\n  \"targets\": [\n    {\n      \"answers\": [\n        {\n          \"answer\": \"The problem is that agents forget, requiring users to re-enter details repeatedly. What is different is the described technical architecture with memory objects from interactions, retrieved by relevance, corrected over time, and deletable on request.\",\n          \"answer_kind\": \"stated\",\n          \"probe_id\": \"p0\",\n          \"quoted_span\": \"When an AI agent says it \\\"remembers\\\" you, is that architecture or marketing? Agents forget, so you re-enter the same details; the claim is a loop — query plus memory data from a datastore of your past interactions, into a sequence model, out as a response.\"\n        },\n        {\n          \"answer\": \"The problem is that memoryless agents force users to repeatedly re-enter information. This system's approach is different because it uses a memory datastore architecture where query and retrieved memory data flow through a sequence model—an architectural solution rather than marketing language.\",\n          \"answer_kind\": \"stated\",\n          \"probe_id\": \"p1\",\n          \"quoted_span\": \"Agents forget, so you re-enter the same details; the claim is a loop — query plus memory data from a datastore of your past interactions, into a sequence model, out as a response.\"\n        },\n        {\n          \"answer\": \"The problem is that memoryless agents forget, requiring users to reenter the same details. It claims to be different by implementing a structured datastore of memory objects containing your interactions with metadata, rather than just a transcript of chats.\",\n          \"answer_kind\": \"stated\",\n          \"probe_id\": \"p3\",\n          \"quoted_span\": \"Agents forget, so you re-enter the same details; the claim is a loop — query plus memory data from a datastore of your past interactions, into a sequence model, out as a response. This datastore is not a transcript of your chats. Each memory object is a container holding memory values, a string, an image, or audio, plus metadata such as a timestamp, the trigger that stored it, and a summary of the interaction it came from.\"\n        },\n        {\n          \"answer\": \"The problem is that agents forget and users must re-enter the same details repeatedly. This system is claimed to be different by being a described architecture using memory objects made from interactions (some on explicit request), retrieved by relevance, corrected over time, and deleted when requested.\",\n          \"answer_kind\": \"stated\",\n          \"probe_id\": \"p4\",\n          \"quoted_span\": \"When an AI agent says it \\\"remembers\\\" you, is that architecture or marketing? Agents forget, so you re-enter the same details; the claim is a loop — query plus memory data from a datastore of your past interactions, into a sequence model, out as a response.\"\n        }\n      ],\n      \"item_values\": {\n        \"asserted_effect\": \"The specification asserts that a user-specific, agent-curated interaction memory lets a task start from a single interaction, supports asynchronous execution of previously instructed tasks, reduces runtime load by pre-processing memories offline, and gives the user control over what is remembered and forgotten.\",\n        \"background_problem\": \"Agents without memory force users to re-enter the same details across sessions, and the alternative of wiring the agent to external data sources gives the user an all-or-nothing access choice with data the agent does not curate.\",\n        \"delta\": \"No performance numbers are given; the claimed difference is structural: memory objects generated from prior interactions with the user, retrieved by relevance and fed into a sequence model input, rather than raw history or uncurated external sources.\"\n      },\n      \"kind\": \"positioning\",\n      \"material_id\": \"M116\",\n      \"question_en\": \"What problem with memoryless agents is this system meant to solve, and what does it claim is different about its approach?\",\n      \"question_id\": \"Q7\"\n    }\n  ],\n  \"thesis_en\": \"This GDM Holding filing, with Demis Hassabis among the named inventors, claims a per-user datastore of curated memory objects that the model reads at every query, writes by itself, and erases when you ask.\"\n}\n"
+  },
+  "task": "v2"
+}

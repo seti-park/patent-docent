@@ -69,8 +69,8 @@
       ],
       "n": 1,
       "slot": "hook",
-      "text": "When an AI agent says it \"remembers\" you, is that architecture or marketing?\nThis filing claims a loop: your query plus memory data from a per-user datastore of objects built from your past interactions, into a sequence model, out as a response.",
-      "weighted_char_count": 245
+      "text": "When an AI agent says it \"remembers\" you, is that architecture or marketing?\nAgents forget, so you re-enter the same details; the claim is a loop — query plus memory data from a datastore of your past interactions, into a sequence model, out as a response.",
+      "weighted_char_count": 256
     },
     {
       "figures": [
@@ -88,8 +88,8 @@
       ],
       "n": 3,
       "slot": "stop",
-      "text": "A model decides what to store: cached inputs go to the model system, which predicts what is worth remembering and extracts it.\nThat portion is written as a memory value in a memory object, and a trigger can start this pass offline, ahead of any query.",
-      "weighted_char_count": 251
+      "text": "A model decides what to store: cached inputs go to the model system, which predicts what is worth remembering and extracts it.\nIt is stored as a memory value in a memory object, and one trigger is you asking the agent to remember your favorite architect.",
+      "weighted_char_count": 254
     },
     {
       "figures": [
@@ -97,8 +97,8 @@
       ],
       "n": 4,
       "slot": "stop",
-      "text": "At query time the agent does not reread everything; it ranks stored objects by relevance to your query.\nIt compares a query embedding to memory value embeddings by a measure such as cosine similarity, keeps a top subset, and orders them by timestamp.",
-      "weighted_char_count": 250
+      "text": "Instead of rereading your whole history, the agent scores stored memory objects for relevance to your query.\nIt compares a query embedding to memory value embeddings by a measure such as cosine similarity, keeps a top subset, and orders them by timestamp.",
+      "weighted_char_count": 255
     },
     {
       "figures": [
@@ -106,8 +106,8 @@
       ],
       "n": 5,
       "slot": "stop",
-      "text": "Memories can be corrected: new timestamped input is matched to a prior memory object and either replaces it or updates it.\nAligned objects can be consolidated into one; kept supporting interactions let a contradiction refine a memory, not overwrite it.",
-      "weighted_char_count": 252
+      "text": "Memories are corrected: new timestamped input is matched to the prior memory object it concerns, which is then replaced or updated.\nAligned objects can merge, and a value kept with supporting interactions is refined by contradicting input, not overwritten.",
+      "weighted_char_count": 256
     },
     {
       "figures": [
@@ -115,8 +115,8 @@
       ],
       "n": 6,
       "slot": "pivot",
-      "text": "Forgetting is claimed: \"forget that\" deletes the specified information, and \"forget this after three months\" queues it for deletion.\nObjects past their expiration time are deleted during maintenance, and the same chat that builds the memory erases it.",
-      "weighted_char_count": 251
+      "text": "Forgetting is claimed: \"forget that\" deletes the specified information, and \"forget this after three months\" queues it for deletion.\nA maintenance cycle deletes objects past their expiration time on its own, and the chat that builds the memory erases it.",
+      "weighted_char_count": 254
     },
     {
       "figures": [
@@ -124,8 +124,8 @@
       ],
       "n": 7,
       "slot": "stop",
-      "text": "The model first analyzes your query against the memory data, and that analysis may stay off the query's interface.\nThe response that does appear can be an API call that makes a device act, so memory shapes what the agent does, not just what it says.",
-      "weighted_char_count": 249
+      "text": "The model first works through your query against the recalled memory data, and that working-out can stay off the screen.\nWhat comes back can be an API call that makes a device act, so the memory shapes what the agent does, not only what it says.",
+      "weighted_char_count": 245
     },
     {
       "figures": [
@@ -133,8 +133,8 @@
       ],
       "n": 8,
       "slot": "landing",
-      "text": "No performance numbers are given.\nWhat is claimed is structural: memory objects made from your own interactions, retrieved by relevance, corrected over time, and deleted when you ask.\nThat is a described architecture, not a slogan.",
-      "weighted_char_count": 231
+      "text": "No performance numbers are given.\nWhat is claimed is structural: memory objects made from your interactions, some on your explicit request, retrieved by relevance, corrected over time, and deleted when you ask.\nThat is a described architecture, not a slogan.",
+      "weighted_char_count": 258
     },
     {
       "figures": [],

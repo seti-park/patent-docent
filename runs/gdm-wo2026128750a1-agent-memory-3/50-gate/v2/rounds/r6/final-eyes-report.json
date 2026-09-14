@@ -1,0 +1,411 @@
+{
+  "final_eyes": {
+    "inputs_read": [
+      {
+        "digest": "sha256:eec69f75fdea150cad9d6901f66ddfb4ad912cd5b409aad3da94a002b9538d96",
+        "path": "50-gate/v2/thread.stripped.md"
+      },
+      {
+        "digest": "sha256:032d4ab4bda4ccbd4ee6d52b7cfdda3ded322504f975a4b3bd937cd4f09eff3f",
+        "path": "40-compose/v2/thread.annotated.md"
+      },
+      {
+        "digest": "sha256:66ece496e3ffdf0320139748c01bf3f0cfdbd6d501cdd828bed02551699bf407",
+        "path": "15-frozen/material-spec.v1.json"
+      },
+      {
+        "digest": "sha256:2fc300843299c85694e3fa2026a4e363e3b12696037970fd49670c383dfc2db8",
+        "path": "50-gate/v2/final-eyes-brief.json"
+      }
+    ],
+    "observations": [
+      "대조 범위는 요청에 제공된 동결 재료, 최종 주석본, 주석 제거본과 사전 브리프로 한정했다. 외부 원천이나 수정 이력은 참조하지 않았다.",
+      "실제 실행 모델 식별자와 effort 설정을 확인할 수 있는 런타임 정보가 제공되지 않아 두 필드는 unknown으로 기록했다. 요청된 값을 실제 실행값으로 간주하지 않았다.",
+      "파일 쓰기 도구가 제공되지 않아 response.json 파일은 생성하지 못했다. 결과는 구조화 응답으로 반환한다.",
+      "재검 범위는 제공된 최종 초안, 주석본, 동결 재료와 사전 브리프로 한정했다. 다른 파일이나 수정 이력은 참조하지 않았다.",
+      "나머지 문장에서 추가로 기록할 인용 불일치나 서사 내 기술 주장 은닉은 발견하지 않았다. 형식 검사와 round-trip은 수행하지 않았다.",
+      "실행 모델의 정확한 식별자와 실제 effort 설정을 확인할 수 있는 런타임 정보가 제공되지 않아 두 필드에 unknown을 기록했다. 요청값을 실제 실행값으로 간주하지 않았다.",
+      "파일 쓰기 도구가 제공되지 않아 response.json을 저장하지 못했다. 이 구조화 출력으로 응답 내용을 반환한다.",
+      "제공된 최종 초안과 동결 재료만 대조했다. 원특허 전체나 도면 실물의 정확성을 별도로 검증한 결과는 아니다.",
+      "실행 모델의 정확한 식별자와 effort 설정을 확인할 수 있는 런타임 정보가 제공되지 않아 봉투에 unknown으로 표시했다. 요청된 값을 실제 실행값으로 간주하지 않았다.",
+      "파일 쓰기 도구가 제공되지 않아 response.json을 생성하지 못했다. 구조화된 응답으로 결과를 반환한다.",
+      "새 타임스탬프 입력을 이전 객체와 대응시키는 하나의 절차 뒤에 교체 또는 갱신을 연결했다. 입력 일부를 대응시키는 CL-19 경로와 현재 객체를 대응시키는 CL-18 경로가 합쳐졌으며, 교체 경로의 현재 객체 생성과 객체 간 대응이 사라졌다. 인용한 M39·M90과 M42·M93은 서로 다른 대응 대상을 명시한다."
+    ],
+    "verdict": "veto",
+    "veto_reason": "b"
+  },
+  "l0": {
+    "checks": [
+      {
+        "check_id": "run.publish-preconditions",
+        "checked": 0,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "empty-target",
+        "violations": 0
+      },
+      {
+        "check_id": "format.tweet-count",
+        "checked": 9,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.slot-count",
+        "checked": 9,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.body-length",
+        "checked": 8,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.stop-shape",
+        "checked": 6,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.hashtag-zero",
+        "checked": 9,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.no-link-in-body",
+        "checked": 8,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "format.images-per-post",
+        "checked": 9,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "annotation.schema",
+        "checked": 20,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "annotation.missing-tag",
+        "checked": 19,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "citation.resolve",
+        "checked": 78,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "numeric.exhaustive",
+        "checked": 2,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      },
+      {
+        "check_id": "numeric.unreviewed-use",
+        "checked": 2,
+        "ruleset": null,
+        "ruleset_size": null,
+        "ruleset_version": null,
+        "status": "pass",
+        "vacuous": "none",
+        "violations": 0
+      }
+    ],
+    "defects": [],
+    "flags": [
+      {
+        "id": "f-l0-001",
+        "layer": "l0",
+        "locus": {
+          "sentence": 1,
+          "tweet": 9
+        },
+        "note": "미검토 수치 사용 — T9/S1 의 2024-12-11| 는 M104 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
+        "origin": "advisory-rule",
+        "rule": "numeric.unreviewed-use"
+      },
+      {
+        "id": "f-l0-002",
+        "layer": "l0",
+        "locus": {
+          "sentence": 1,
+          "tweet": 9
+        },
+        "note": "미검토 수치 사용 — T9/S1 의 2026-06-18| 는 M106 이며 CP1 에서 어떤 함의·포지셔닝도 참조하지 않았다(재정 P-B). 판정자 = Owner(CP2).",
+        "origin": "advisory-rule",
+        "rule": "numeric.unreviewed-use"
+      }
+    ],
+    "pass": true
+  },
+  "l1_recheck": {
+    "defects": [
+      {
+        "expected": "M109의 정합 조건은 기억 값과 함께 뒷받침하는 상호작용을 보존할 때 후속 모순 입력이 기억을 정교화할 수 있다는 조건과 가능성을 유지하는 것이다.",
+        "fix_directive": "해당 좌표의 인용 재료 정합과 narrative 신고를 바로잡는다.",
+        "id": "d-l1-001",
+        "layer": "l1",
+        "locus": {
+          "sentence": 2,
+          "tweet": 5
+        },
+        "observed": "후반절은 모순 입력이 기억을 정교화하며 과도하게 정정하지 않는다고 단정한다. M109의 지원 기록 보존 조건과 가능성이 빠졌고, M36·M87의 객체 통합 근거도 이 결과를 보장하지 않는다.",
+        "rule": "l1.citation-mismatch"
+      },
+      {
+        "expected": "M74의 만료 후 삭제는 예정된 유지보수 작업 중 자동 삭제될 수 있다는 범위를 유지해야 한다. M110은 그 구현 기전을 설명하지만 모든 만료 객체의 삭제를 보장하지 않는다.",
+        "fix_directive": "해당 좌표의 인용 재료 정합과 narrative 신고를 바로잡는다.",
+        "id": "d-l1-002",
+        "layer": "l1",
+        "locus": {
+          "sentence": 2,
+          "tweet": 6
+        },
+        "observed": "전반절은 만료 시각을 지난 객체가 유지보수 중 삭제된다고 조건 없이 서술한다. M74가 명시한 선택적 동작을 일률적으로 발생하는 동작으로 확대한다.",
+        "rule": "l1.citation-mismatch"
+      }
+    ],
+    "disagreement_log": [
+      {
+        "against": 2,
+        "for": 1,
+        "locus": {
+          "sentence": 1,
+          "tweet": 5
+        },
+        "rule": "l1.citation-mismatch"
+      },
+      {
+        "against": 1,
+        "for": 2,
+        "locus": {
+          "sentence": 2,
+          "tweet": 6
+        },
+        "rule": "l1.citation-mismatch"
+      }
+    ],
+    "flags": [
+      {
+        "id": "f-l1-003",
+        "layer": "l1",
+        "locus": {
+          "sentence": 1,
+          "tweet": 5
+        },
+        "note": "해당 좌표의 인용 재료 정합과 narrative 신고를 바로잡는다.",
+        "origin": "minority-vote",
+        "rule": "l1.citation-mismatch",
+        "votes": {
+          "against": 2,
+          "for": 1,
+          "k": 3
+        }
+      }
+    ],
+    "k": 3,
+    "pass": false,
+    "votes": [
+      {
+        "defects": [
+          {
+            "expected": "M109의 정합 조건은 기억 값과 함께 뒷받침하는 상호작용을 보존할 때 후속 모순 입력이 기억을 정교화할 수 있다는 조건과 가능성을 유지하는 것이다.",
+            "fix_directive": "해당 좌표의 인용 재료 정합과 narrative 신고를 바로잡는다.",
+            "locus": {
+              "sentence": 2,
+              "tweet": 5
+            },
+            "observed": "후반절은 모순 입력이 기억을 정교화하며 과도하게 정정하지 않는다고 단정한다. M109의 지원 기록 보존 조건과 가능성이 빠졌고, M36·M87의 객체 통합 근거도 이 결과를 보장하지 않는다.",
+            "rule": "l1.citation-mismatch"
+          },
+          {
+            "expected": "M74의 만료 후 삭제는 예정된 유지보수 작업 중 자동 삭제될 수 있다는 범위를 유지해야 한다. M110은 그 구현 기전을 설명하지만 모든 만료 객체의 삭제를 보장하지 않는다.",
+            "fix_directive": "해당 좌표의 인용 재료 정합과 narrative 신고를 바로잡는다.",
+            "locus": {
+              "sentence": 2,
+              "tweet": 6
+            },
+            "observed": "전반절은 만료 시각을 지난 객체가 유지보수 중 삭제된다고 조건 없이 서술한다. M74가 명시한 선택적 동작을 일률적으로 발생하는 동작으로 확대한다.",
+            "rule": "l1.citation-mismatch"
+          }
+        ],
+        "flags": [],
+        "i": 0,
+        "speech_acts": []
+      },
+      {
+        "defects": [
+          {
+            "expected": "교체와 갱신을 함께 설명할 때 각 경로의 대응 대상을 보존해야 한다. CL-18의 M37~M40은 입력에서 현재 기억 객체를 만들고 그 객체를 이전 객체와 대응시킨 뒤 교체한다. CL-19의 M41~M43은 입력 일부를 이전 객체와 대응시킨 뒤 그 객체를 갱신한다.",
+            "fix_directive": "해당 좌표의 인용 재료 정합과 narrative 신고를 바로잡는다.",
+            "locus": {
+              "sentence": 1,
+              "tweet": 5
+            },
+            "observed": "새 타임스탬프 입력을 이전 객체와 대응시키는 하나의 절차 뒤에 교체 또는 갱신을 연결했다. 입력 일부를 대응시키는 CL-19 경로와 현재 객체를 대응시키는 CL-18 경로가 합쳐졌으며, 교체 경로의 현재 객체 생성과 객체 간 대응이 사라졌다. 인용한 M39·M90과 M42·M93은 서로 다른 대응 대상을 명시한다.",
+            "rule": "l1.citation-mismatch"
+          },
+          {
+            "expected": "M109의 정정 효과를 설명할 때 기억 값과 함께 뒷받침하는 상호작용을 보존한다는 조건과, 그 보존이 이후의 모순된 입력을 이용한 정교화를 가능하게 한다는 범위를 유지해야 한다.",
+            "fix_directive": "해당 좌표의 인용 재료 정합과 narrative 신고를 바로잡는다.",
+            "locus": {
+              "sentence": 2,
+              "tweet": 5
+            },
+            "observed": "모순된 입력이 과도한 정정 대신 기억을 정교하게 만든다고 단정한다. M109가 그 효과에 연결한 상호작용 보존 조건이 빠졌고, 가능하게 하는 구조가 입력 자체의 결과로 바뀌었다. 함께 인용한 M36·M87은 객체 통합을 다룰 뿐 이 조건 없는 효과를 뒷받침하지 않는다.",
+            "rule": "l1.citation-mismatch"
+          }
+        ],
+        "flags": [],
+        "i": 1,
+        "speech_acts": []
+      },
+      {
+        "defects": [
+          {
+            "expected": "M109의 정정 설명은 기억값과 함께 지원 상호작용을 보존한다는 조건과, 그로 인해 모순되는 새 입력으로 기억을 다듬을 수 있다는 가능성을 유지해야 한다.",
+            "fix_directive": "해당 좌표의 인용 재료 정합과 narrative 신고를 바로잡는다.",
+            "locus": {
+              "sentence": 2,
+              "tweet": 5
+            },
+            "observed": "M36·M87에 대응하는 객체 통합 설명은 정합한다. 그러나 뒤 절은 M109의 지원 상호작용 보존 조건을 생략하고, 모순되는 입력이 과잉 정정 대신 기억을 다듬는다고 단정한다. M109와 그 evidence_quotes는 이 결과가 항상 성립한다고 뒷받침하지 않는다.",
+            "rule": "l1.citation-mismatch"
+          },
+          {
+            "expected": "M74의 만료 후 삭제 설명은 정기 유지보수 중 자동 삭제가 가능하다는 범위를 유지해야 한다. M110은 그 구현 기제를 설명하며 모든 만료 객체의 삭제를 보장하지 않는다.",
+            "fix_directive": "해당 좌표의 인용 재료 정합과 narrative 신고를 바로잡는다.",
+            "locus": {
+              "sentence": 2,
+              "tweet": 6
+            },
+            "observed": "앞 절은 만료 시간이 지난 객체가 유지보수 중 삭제된다고 단정한다. M74는 자동 삭제가 가능하다고 서술하므로, 본문은 가능성을 확정 동작으로 강화한다. 뒤 절의 대화 채널을 통한 삭제 설명은 M111과 대응한다.",
+            "rule": "l1.citation-mismatch"
+          }
+        ],
+        "flags": [],
+        "i": 2,
+        "speech_acts": []
+      }
+    ]
+  },
+  "produced_at": "2026-09-13T18:09:04Z",
+  "roundtrip": [
+    {
+      "check_id": "strip.roundtrip-forward",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "strip.roundtrip-reverse",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "strip.reassembly",
+      "checked": 1,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "strip.residual-tag",
+      "checked": 9,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    },
+    {
+      "check_id": "gate.annotation-index",
+      "checked": 19,
+      "ruleset": null,
+      "ruleset_size": null,
+      "ruleset_version": null,
+      "status": "pass",
+      "vacuous": "none",
+      "violations": 0
+    }
+  ],
+  "runner_inputs": [
+    {
+      "digest": "sha256:40f97f86b971179e5fd8ba38bb3f080c6ac00641f109d9540e0c5f429c95d8af",
+      "path": "50-gate/v2/thread.json"
+    },
+    {
+      "digest": "sha256:a8fc8d5c39460b1cfa666a6282f2608bd28f77230db3e3486dbf485aaea9dc0d",
+      "path": "50-gate/v2/annotation-index.json"
+    }
+  ]
+}

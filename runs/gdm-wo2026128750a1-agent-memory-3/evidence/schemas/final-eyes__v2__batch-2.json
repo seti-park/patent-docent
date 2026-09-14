@@ -1,0 +1,132 @@
+{
+  "properties": {
+    "effort": {
+      "type": "string"
+    },
+    "input_digest": {
+      "type": "string"
+    },
+    "lane_id": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": false,
+      "properties": {
+        "l1_recheck": {
+          "additionalProperties": false,
+          "properties": {
+            "defects": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "expected": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "locus": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "sentence": {
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "tweet": {
+                        "minimum": 1,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "tweet",
+                      "sentence"
+                    ],
+                    "type": "object"
+                  },
+                  "observed": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "rule": {
+                    "enum": [
+                      "l1.citation-mismatch",
+                      "l1.narrative-smuggling"
+                    ]
+                  }
+                },
+                "required": [
+                  "rule",
+                  "locus",
+                  "expected",
+                  "observed"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "narrative_audit": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "locus": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "sentence": {
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "tweet": {
+                        "minimum": 1,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "tweet",
+                      "sentence"
+                    ],
+                    "type": "object"
+                  },
+                  "observation": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "locus",
+                  "observation"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "defects",
+            "narrative_audit"
+          ],
+          "type": "object"
+        },
+        "observations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "l1_recheck",
+        "observations"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "lane_id",
+    "model",
+    "effort",
+    "input_digest",
+    "payload"
+  ],
+  "type": "object"
+}

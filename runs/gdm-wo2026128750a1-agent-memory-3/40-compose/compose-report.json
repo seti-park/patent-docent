@@ -9,7 +9,7 @@
         "ruleset_size": 0,
         "vacuous": "empty-ruleset"
       },
-      "lane_id": "compose-r3/v2/batch-0"
+      "lane_id": "compose-r8/v2/batch-0"
     },
     "v2:compose.annotation-syntax": {
       "fig_selection_mismatch": [],
@@ -35,13 +35,13 @@
   "lanes": {
     "v2": {
       "effort": "xhigh",
-      "lane_id": "compose-r3/v2/batch-0",
+      "lane_id": "compose-r8/v2/batch-0",
       "mismatch": false,
       "model": "claude-opus-5",
-      "response_digest": "88482b6fedeaf7db764634580a53775734ca78acf3f483196bff4200aae2c614"
+      "response_digest": "91ad197950f493ed70815cf3ef173573ace5e1404f9dfd2c60f40f07a0ab6b76"
     }
   },
-  "law_commit": "c42f1ffe5d35804afd14a1eb02aee2453b7c9090",
+  "law_commit": "c2887aaf705a58582f244e38a097397bba3951d5",
   "pens": [
     {
       "effort": "high",
@@ -62,9 +62,9 @@
       "vendor": "anthropic"
     }
   ],
-  "round": 3,
+  "round": 8,
   "rounds": {
-    "v2": 3
+    "v2": 8
   },
   "rows": [
     {
@@ -79,7 +79,7 @@
     },
     {
       "check_id": "compose.prompt-lint",
-      "checked": 221,
+      "checked": 225,
       "ruleset": "prompt-negation",
       "ruleset_size": 1,
       "ruleset_version": "SPEC-1.9",
@@ -89,7 +89,7 @@
     },
     {
       "check_id": "compose.prompt-lint",
-      "checked": 221,
+      "checked": 225,
       "ruleset": "speech-acts+defect-catalog",
       "ruleset_size": 24,
       "ruleset_version": "1.0+0",
@@ -150,11 +150,11 @@
     },
     "v2": {
       "attempt": 0,
-      "digest": "sha256:f63ec80f7c674de2c8dcb293b2560099a4aa0d905960202a299a6bd7bbdbc1ec",
-      "lane_id": "compose-r3/v2/batch-0",
+      "digest": "sha256:0bf41bcd9566c416420123765ae9dcbf003273cd4649fd35519e7b6b64ef2704",
+      "lane_id": "compose-r8/v2/batch-0",
       "path": "/home/laptop/projects/patent-docent/.worktrees/gdm-wo2026128750a1-agent-memory-3/runs/gdm-wo2026128750a1-agent-memory-3/40-compose/v2/thread.annotated.md",
-      "preserved_previous": "/home/laptop/projects/patent-docent/.worktrees/gdm-wo2026128750a1-agent-memory-3/runs/gdm-wo2026128750a1-agent-memory-3/40-compose/v2/rounds/r2",
-      "round": 3,
+      "preserved_previous": "/home/laptop/projects/patent-docent/.worktrees/gdm-wo2026128750a1-agent-memory-3/runs/gdm-wo2026128750a1-agent-memory-3/40-compose/v2/rounds/r7",
+      "round": 8,
       "status": "ok"
     },
     "v3": {

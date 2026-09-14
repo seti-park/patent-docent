@@ -1,0 +1,122 @@
+{
+  "batch": 3,
+  "effort": "low",
+  "input_digest": "ab2e5ae0bfeebb0fef77581b42dbece0f2ba1aa60a720125ea23ccda42a379d2",
+  "instructions": "## 런 표지\n\n| 항목 | 값 |\n|---|---|\n| run_id | `gdm-wo2026128750a1-agent-memory-3` |\n| variant | `v2` |\n| input_digest | `sha256:e8b0dac840ad174434fd9d5f7979c762a04f389a6a8e599125f85dda1f0c2579` |\n| question_set_digest | `sha256:3f3d920af8f8d9b06de88fd4dc9f0fba7cbe3a30c4a86822560a05279978afaa` |\n\n너는 읽기 계기다. 「원천 조각」의 스레드 텍스트와 질문지만 본다. 다른 계기의 답도, 정답지도 없다.\n\n## 과제\n\nA. `50-gate/v2/thread.stripped.md` 을 읽고 핵심 주장을 **세 문장**으로 다시 말한다(`a_restatement`).\n\nB. `60-probe/questions.json` 의 질문마다 답한다(`b_answers`) — 스레드에서 답을 찾았으면 `answer_kind: stated` 와 답과 근거가 된 **스레드 원문 구간**(`quoted_span` · 글자 그대로 복사)을, 스레드에 없으면 `answer_kind: not-stated` 와 `answer: null` · `quoted_span: null` 을 적는다. `not-stated` 는 정당한 답이다 — 없는 것을 지어내지 않는다.\n\n## 응답\n\n`payload` 하나를 응답 계약(`response_schema`)대로 낸다.\n",
+  "lane_id": "probe/v2/batch-3",
+  "model": "haiku-4.5",
+  "prompt_path": "engine/probe/procedure-probe.md",
+  "read_run": "probe",
+  "response_schema": {
+    "additionalProperties": false,
+    "properties": {
+      "a_restatement": {
+        "items": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "maxItems": 3,
+        "minItems": 3,
+        "type": "array"
+      },
+      "b_answers": {
+        "items": {
+          "additionalProperties": false,
+          "else": {
+            "properties": {
+              "answer": {
+                "type": "null"
+              },
+              "quoted_span": {
+                "type": "null"
+              }
+            }
+          },
+          "if": {
+            "properties": {
+              "answer_kind": {
+                "const": "stated"
+              }
+            }
+          },
+          "properties": {
+            "answer": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "answer_kind": {
+              "enum": [
+                "stated",
+                "not-stated"
+              ]
+            },
+            "question_id": {
+              "enum": [
+                "Q1",
+                "Q2",
+                "Q3",
+                "Q4",
+                "Q5",
+                "Q6",
+                "Q7"
+              ]
+            },
+            "quoted_span": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "target_material_id": {
+              "enum": [
+                "M116",
+                "M12",
+                "M16",
+                "M21",
+                "M23",
+                "M3",
+                "M40"
+              ]
+            }
+          },
+          "required": [
+            "question_id",
+            "target_material_id",
+            "answer_kind",
+            "answer",
+            "quoted_span"
+          ],
+          "then": {
+            "properties": {
+              "answer": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "quoted_span": {
+                "minLength": 1,
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        },
+        "maxItems": 7,
+        "minItems": 7,
+        "type": "array"
+      }
+    },
+    "required": [
+      "a_restatement",
+      "b_answers"
+    ],
+    "title": "lane-response/probe",
+    "type": "object"
+  },
+  "slices": {
+    "50-gate/v2/thread.stripped.md": "When an AI agent says it \"remembers\" you, is that architecture or marketing?\nAgents forget, so you re-enter the same details; the claim is a loop — query plus memory data from a datastore of your past interactions, into a sequence model, out as a response.\n\nThis datastore is not a transcript of your chats.\nEach memory object is a container holding memory values, a string, an image, or audio, plus metadata such as a timestamp, the trigger that stored it, and a summary of the interaction it came from.\n\nA model decides what to store: cached inputs go to the model system, which predicts what is worth remembering and extracts it.\nIt is stored as a memory value in a memory object, and one trigger is you asking the agent to remember your favorite architect.\n\nInstead of rereading your whole history, the agent scores stored memory objects for relevance to your query.\nIt compares a query embedding to memory value embeddings by a measure such as cosine similarity, keeps a top subset, and orders them by timestamp.\n\nMemories are corrected: new timestamped input is matched to the prior memory object it concerns, which is then replaced or updated.\nAligned objects can merge, and a value kept with supporting interactions is refined by contradicting input, not overwritten.\n\nForgetting is claimed: \"forget that\" deletes the specified information, and \"forget this after three months\" queues it for deletion.\nA maintenance cycle deletes objects past their expiration time on its own, and the chat that builds the memory erases it.\n\nThe model first works through your query against the recalled memory data, and that working-out can stay off the screen.\nWhat comes back can be an API call that makes a device act, so the memory shapes what the agent does, not only what it says.\n\nNo performance numbers are given.\nWhat is claimed is structural: memory objects made from your interactions, some on your explicit request, retrieved by relevance, corrected over time, and deleted when you ask.\nThat is a described architecture, not a slogan.\n\nThe publication is WO2026-128750A1, priority 2024-12-11, published 2026-06-18.\nFollow along for the next patent walk-through.\n",
+    "60-probe/questions.json": "{\n  \"questions\": [\n    {\n      \"question_id\": \"Q1\",\n      \"target_material_id\": \"M3\",\n      \"question_en\": \"Where do the items in the agent's memory store come from in the first place?\"\n    },\n    {\n      \"question_id\": \"Q2\",\n      \"target_material_id\": \"M16\",\n      \"question_en\": \"Once the system decides a piece of what you said is worth keeping, where does that piece end up?\"\n    },\n    {\n      \"question_id\": \"Q3\",\n      \"target_material_id\": \"M12\",\n      \"question_en\": \"When you ask the agent something, how does it decide which of your stored memories to pull up?\"\n    },\n    {\n      \"question_id\": \"Q4\",\n      \"target_material_id\": \"M21\",\n      \"question_en\": \"What does the system actually do to the stored information when you tell it to forget something?\"\n    },\n    {\n      \"question_id\": \"Q5\",\n      \"target_material_id\": \"M23\",\n      \"question_en\": \"What happens if you ask the agent to forget something not now but after a set period of time?\"\n    },\n    {\n      \"question_id\": \"Q6\",\n      \"target_material_id\": \"M40\",\n      \"question_en\": \"When new input matches a memory the system already holds, what does it do with the older one?\"\n    },\n    {\n      \"question_id\": \"Q7\",\n      \"target_material_id\": \"M116\",\n      \"question_en\": \"What problem with memoryless agents is this system meant to solve, and what does it claim is different about its approach?\"\n    }\n  ]\n}\n"
+  },
+  "task": "v2"
+}

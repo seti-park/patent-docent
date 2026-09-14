@@ -1,11 +1,21 @@
 # HANDOFF — 다음 세션은 여기서 시작한다
 
-**작성 2026-09-01 · 갱신 2026-09-14(189차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
+**작성 2026-09-01 · 갱신 2026-09-14(190차) · HEAD 는 `git log -1` 로 본다(여기 적으면 낡는다).**
 **이 문서는 총괄 저작이다**(감수 원문이 아니다 · 규율 10).
 
 ---
 
 ## 0. 첫 화면 — 지금 무엇을 해야 하나
+
+**★ 09-14 190차 — **런 -3 v2 **게시본 출하 완료**(`run.yaml status: shipped`) — 재정 T70(캡 소진 처분 · 배관 수리 · 거부 강등 경로)·T71(게시본 확정 전건 A) 집행 · 파이프라인 **전 스테이지 실물 완주****(추기 159). **지금 할 일 = 반입 커밋(`runs/gdm-…-3/{40-compose,50-gate,60-probe,65-critique,70-ship,evidence}` + `ledgers/{tournament.jsonl,corrections.md}` + 엔진 수리 4파일 · 파일 명시) → 기억 갱신 → 다음은 Owner 지시.** 게시는 Owner 손(게시용 묶음 파일카드 전달 완료 · `POST.md`). 살아 있는 배경 = 없음.
+
+**런 -3 총결(2026-09-14)** — 판독 $18.19 → 설계 1.74 → 펜 3판 6.05(**xhigh 채택**) → 도면 9 → L0 → L1 → **자유 리비전 1 + 수정 라운드 5** → L2 메모 3 → 계기(재서술 5/5 · `delivery_fidelity` 0.0714) → 소견 → **최종 심급 4회 거부 → Owner 강등** → CP2 전 표면 7 → `ship` 검사 7 pass. **총 $52.15 · 호출 58 · 시험 1153 · 구동기 명령 26 · 엔진 스테이지 10**(source·read·freeze·design·figures·compose·gate·probe·critique·ship).
+
+**좌석 현황**(fable 쿼터 소진 뒤 Owner 재정) — L2·소견·설계·최종 심급 = **gpt-6-astra high**(게이트웨이 경유 · 구동기 무변경) · 펜 = opus-5 xhigh · L1 = opus-5 high ×3 · 계기 = haiku-4.5 ×5 + opus-5 low 2 · 판독 = fable low(분해·통합) + opus low(접지 2). 계약에 남은 fable 은 판독 low 둘뿐.
+
+**다음 런의 설계 과제** — T5 가 특허의 정정 **두 경로**(M39→M40 교체 · M42→M43 갱신)를 한 문장에 압축해 최종 심급이 수렴하지 않았다. 주제 아래 방법이 둘이면 슬롯을 나눈다.
+
+> [정정 2026-09-14 · 190차] 189차의 「⑦ 회수·병합 → 실행」은 전부 끝났다 — 출하 완료.
 
 **★ 09-14 189차 — **발주문 ⑦ 병합(`dd819a9` · 소견·최종 심급·출하·CP2 표면 7 · 명령 25 · 시험 1151) · L2 좌석 astra 교체·실행(메모 3) · 자유 리비전 1회 → L1 결함 1 → 수정 라운드 2 재개**(추기 158). **지금 할 일 = 라운드 2 회수(`pd-lanes/t65-figures/STATUS-revise`) → advance 면 `probe`(opus low 1 + haiku-4.5 ×5 + opus low 1) → `critique`(fable high — **쿼터 확인 필요 · 막혔으면 좌석 상신**) → `final-eyes`(opus max ×3 · 900초) → `cp2`(표면 7) → **CP2 브리핑 T70** → Owner 육성 → `approve-ship` → `ship` → 게시본 `70-ship/{thread.md, thread.json, images/, SHIP.md}` → Owner 수동 X 게시.** 살아 있는 배경 = 라운드 2(Monitor) 1. **주의** — ⓐ `critique` 좌석이 fable-5.1 high 라 쿼터에 묶인다(L2 선례대로 astra 전환 가능 · 계약 1줄 + 시험) ⓑ 자유 리비전은 소진(`free_revision_used: true`) ⓒ 수정 캡 3 중 2 사용.**
 
