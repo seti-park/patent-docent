@@ -103,3 +103,11 @@
 ## [정정 2026-09-03 · 재정 T26] 커밋 전 관문 4→5→6→7
 
 구 §6의 「관문 4종」은 재정 T20의 저자 경계 관문으로 5종이 되었고, 재정 T27의 지적 처분 관문으로 6종이 되었다. 재정 T26 실패표 재구성은 `tools/check_failure_table.py`를 일곱째 관문으로 더한다. 현행 정본은 `CLAUDE.md` §6과 `docs/SPEC.md` §8.3 7항·관문표·12항이며, 실패표(`contracts/stages/read.yaml#failure`) 변경도 관문 발화 조건이다. **일곱 도구는 각자 하나의 주장만 증명한다.** 구 문언과 앞선 정정 마커는 지우지 않는다.
+
+## [이동 2026-10-31] README 의 옛 「상태」 문단
+
+README 를 다시 쓰면서 옛 README 의 「상태」 · 「첫 런」 두 문단을 글자 그대로 이곳으로 옮겼다(삭제가 아니라 이동).
+
+상태: **M1(READ 모듈) 완료** — 문서·계약 14종에 더해 **결정론 검사 10종의 실구현**(`reader/lib/`)과 **READ 실행 경로**(`engine/`, CP1 KR 표면 렌더까지)가 실물로 있다. T64(2026-09-13)로 **설계·펜·L0 게이트**(`design` · `compose` · `gate` 의 L0 층 + strip + round-trip · 구동기 `design`·`compose`·`gate-l0`·`strip`)가, T65 ③(같은 날)으로 **도면 자산층 v1**(`figures` — 크롭 전용 프레이밍 렌더 + 포인터 선택 · `format.stop-shape` 가동 · 구동기 `figures` · `compose --variant --round` 회차 재펜)이 더해졌다. T67 ②(같은 날 · M6-a)로 **L1 국소 대조**(opus-5 high × k 독립 실행 다수결 · 화행 플래그 3종 · `gate.no-rewrite` 레인 산출 확장 · `final-eyes-brief.json` 루프 개시 전 핀 · 국소 수정 루프 캡 3 `revisions/r<n>/` · CP2 봉투 `70-ship/checkpoint2.md` · 구동기 `gate-l1`·`revise`·`cp2`·`approve-ship` · 명령 19)가 더해졌다. T69 ⑥(같은 날 · M4/M8-a · M7-a)로 **L2 자문 메모**(fable-5.1 high 1회 · 점수 금지 린트 `gate.no-score` 가동 · 펜 자유 리비전 1회 `revisions/free-r1/` · 위상 봉쇄)와 **계기**(`probe` — 질문 생성 opus-5 low → haiku-4.5 × `probe.n` 독립 프로브 → 채점 분리(결정론 3 kind + opus-5 low 모델 채점) → annotation-index 역참조 국소화 → `60-probe/<v>/score.json` 판정 키 없음 · 정족수 5/5 · 검사 5 · 구동기 `gate-l2`·`revise-free`·`probe` · 명령 22)가 더해졌다. T69 ⑦로 **소견·최종 심급·출하 패키지**(`critique` · `final-eyes` · `ship`)가 더해졌고, T70(2026-09-14)로 최종 심급 거부를 Owner 재정으로 관할 밖 소견으로 강등하는 경로(`waive-final-eyes` — 결함 문언은 CP2 표면으로 이관 · 강등 사실은 `verdict.json#final_eyes.waived` 에 남는다)가 더해져 **명령 26**이다. CP2는 핵심 표면 7종과 숫자 화이트리스트를 전량 제공하며, 출하는 승인본 바이트 복사·이미지 매핑·리포 루트 원장 이관을 수행한다. partial은 앵커 미편입이며 게시 자체는 Owner가 한다. 자작물 템플릿은 아직 미구현이다. 구동법은 [`tools/README-drive_partial_read.md`](tools/README-drive_partial_read.md)에 있다. 무엇이 실물이고 무엇이 예정인지의 정본은 [`docs/SPEC.md` §6.7](docs/SPEC.md)과 [`contracts/glossary.md`](contracts/glossary.md) §2이며, 커밋 전 검사기가 그 표와 리포 실물을 대조한다.
+
+첫 런은 **예행 런**(비게시)이며, 게시 런은 전 방어층 가동·도면 사용권 재정·템플릿 동결이 충족될 때 열린다.
