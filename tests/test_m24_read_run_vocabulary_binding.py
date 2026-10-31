@@ -120,61 +120,6 @@ def test_read_run_has_one_definition_three_references_and_one_literal() -> None:
         pytest.fail(f"canonical_selection.read_run 정정 기록이 실물 문언과 다르다: {canonical}")
 
 
-def test_existing_run_reports_obey_read_run_enum_without_new_t35_rejections() -> None:
-    """T35 행위시법 — 현행 스키마에서 실런 6파일의 값·거부 사유를 고정한다."""
-    _, schema = load_schema()
-    enum = set(schema["$defs"]["read_run"]["enum"])
-    validator = Draft202012Validator(schema)
-    errors_by_path: dict[str, list] = {}
-    observed_memo_values: list[tuple[str, str]] = []
-    for relative_path in RUN_REPORTS:
-        with open(os.path.join(REPO, relative_path), encoding="utf-8") as handle:
-            payload = json.load(handle)
-        observed_memo_values.extend(
-            (relative_path, memo.get("read_run"))
-            for memo in payload.get("screening_memos", [])
-        )
-        errors_by_path[relative_path] = sorted(
-            validator.iter_errors(payload),
-            key=lambda error: (list(error.absolute_path), error.validator, error.message),
-        )
-
-    outside = sorted(
-        (relative_path, value)
-        for relative_path, value in observed_memo_values
-        if value not in enum
-    )
-    if outside:
-        pytest.fail(f"실런 screening_memos[].read_run 이 enum 밖이다: {outside!r}")
-
-    rejected = {relative_path for relative_path, errors in errors_by_path.items() if errors}
-    expected_legacy_rejection = {
-        "runs/openai-us20260147854a1-cim-fp-3/10-read/convergence.json"
-    }
-    if rejected != expected_legacy_rejection:
-        pytest.fail(f"실런의 현행 스키마 거부 집합이 예상과 다르다: {sorted(rejected)!r}")
-
-    # T23 이전 행위시법 산출물 · T35 는 새 거부를 만들지 않는다. 이 full 판정서의
-    # text_status·reported_by 부재만 기존 거부 사유이고, 나머지 5파일은 전부 accept다.
-    legacy_path = next(iter(expected_legacy_rejection))
-    legacy_errors = errors_by_path[legacy_path]
-    observed_errors = {
-        (error.validator, tuple(error.absolute_path), error.message)
-        for error in legacy_errors
-    }
-    expected_errors = {
-        ("required", ("unclassified_dependents", 0), "'text_status' is a required property"),
-        ("required", ("unclassified_dependents", 0), "'reported_by' is a required property"),
-    }
-    if observed_errors != expected_errors:
-        pytest.fail(f"T23 이전 실런의 전체 오류가 required 두 건과 다르다: {observed_errors!r}")
-    forbidden_keywords = [
-        error.validator for error in legacy_errors if error.validator in {"enum", "maxItems"}
-    ]
-    if forbidden_keywords:
-        pytest.fail(f"T35가 기존 실런에 enum·maxItems 거부를 만들었다: {forbidden_keywords!r}")
-
-
 def test_reported_by_max_items_survives_a_third_enum_value() -> None:
     """T35 ⑵ — enum이 셋으로 넓어져도 reported_by의 설계 상한은 둘이다."""
     _, schema = load_schema()

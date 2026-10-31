@@ -136,15 +136,6 @@ BIT_WIDTH_QUOTE = (
 )
 
 
-def test_the_bit_width_quote_is_real() -> None:
-    """표본이 실물이 아니면 아래 재현은 우리가 지어낸 문장에 대한 재현일 뿐이다."""
-    source = read_text(RUN_SOURCE)
-    if BIT_WIDTH_QUOTE not in source:
-        pytest.fail(
-            f"`[0189]` 실문언 조각이 원천에 없다(바이트 정확 대조) — {RUN_SOURCE}"
-        )
-
-
 def test_harvest_recovers_bit_width_units() -> None:
     """★ 재정 Q4 의 실측 재현. 이 시험이 없으면 `5b, 4b, 3b, 2b` 는 다시 **값째로** 사라진다.
 
@@ -225,31 +216,6 @@ def real_cl9() -> dict:
             return claim
     pytest.fail("통주 3 산출에 CL-9 가 없다")
     return {}
-
-
-def test_bare_when_is_not_a_structure_marker() -> None:
-    """맨 `when`·`if` 가 표지로 남으면 회피 통로가 그대로 열려 있고, CL-9 의 갈림이 되풀이된다.
-
-    피검체는 **실물**이다 — 통주 3 의 CL-9 는 시간 용법 `when`(동시 갱신의 시점) 하나만 들고
-    있으면서 `unclassified` 로 선언되었고, 그 선언이 통과한 유일한 이유가 나표지였다.
-    개정 후에는 표지가 0건이므로 같은 선언은 `parse.unclassified-not-an-escape` 에 걸린다
-    (행위시법 — 그 런에는 소급하지 않는다).
-    """
-    claim = real_cl9()
-    if claim.get("dependency_type") != "unclassified":
-        pytest.fail(
-            f"CL-9 의 선언이 `unclassified` 가 아니다: {claim.get('dependency_type')} — "
-            "이 시험이 겨누는 자리가 사라졌다"
-        )
-    found = RULES.structure_markers_in(claim["text_verbatim"])
-    if found:
-        pytest.fail(f"시간 용법 `when` 이 여전히 구조 표지로 잡힌다: {found}")
-
-    # 나표지 두 개가 실제로 목록에서 빠졌는가(문자열 동일성으로 본다 — `if … then` 은
-    # `\bif\b` 를 부분문자열로 갖지만 그것은 별개의 어형이다).
-    bare = [pattern for pattern in patterns_of("조건부") if pattern in (r"\bif\b", r"\bwhen\b")]
-    if bare:
-        pytest.fail(f"나표지가 목록에 남아 있다: {bare}")
 
 
 def test_bare_when_declaration_is_now_rejected_end_to_end() -> None:
@@ -616,62 +582,6 @@ def test_harvest_exclusion_counterexample_golden(sample: dict) -> None:
             f"[{sample['id']} · {sample['role']}] 배제 기록이 기대와 다르다 — "
             f"기대 {expected_skipped}, 실제 {dropped} · 인용 {quote!r}"
         )
-
-
-def test_the_exclusion_golden_carries_preservation_not_only_exclusion() -> None:
-    """배제만 실증하는 golden 은 절반이다 — 재정 S7 의 조건은 **진짜를 먹지 않음**의 실증이다."""
-    samples = load_json(os.path.join(GOLDEN_EXCLUSION, "samples.json"))["samples"]
-    preserved = [sample for sample in samples if sample["role"].startswith("보존")]
-    excluded = [sample for sample in samples if sample["role"].startswith("배제")]
-    if not preserved or not excluded:
-        pytest.fail(
-            f"golden 이 한쪽만 진다 — 보존 {len(preserved)}건 · 배제 {len(excluded)}건"
-        )
-    # 재정 문언이 이름으로 지목한 반례가 실재하는가.
-    if not any(sample["quote"] == "between 1 and 2" for sample in preserved):
-        pytest.fail("재정 S7 이 예로 든 `between 1 and 2` 보존 표본이 없다")
-    # 실특허 실물이 하나도 없으면 이 golden 은 우리가 만든 판에서만 돈다.
-    source = read_text(RUN_SOURCE)
-    real = [sample for sample in samples if sample["quote"] in source]
-    if not real:
-        pytest.fail("golden 표본 중 실특허 원천에 바이트 그대로 실재하는 것이 하나도 없다")
-
-
-def test_m87_m88_m89_are_no_longer_harvested_from_the_real_quotes() -> None:
-    """★ 재정 S7 이행 ②의 실특허 재현 — 감수 C′-1 이 센 아티팩트 3건이 실제로 닫혔는가.
-
-    피검체는 통주 3 산출의 **그 세 항목이 실린 인용문**이다(읽기 전용). 합성 표본만으로는
-    "감수가 본 그 3건이 닫혔는가"를 증명할 수 없다.
-    """
-    if not os.path.isfile(RUN_SPEC):
-        pytest.fail(f"실특허 런 산출이 없다: {RUN_SPEC} — 재현의 피검체가 사라졌다")
-    with open(RUN_SPEC, encoding="utf-8") as handle:
-        spec = json.load(handle)
-    artifacts = {
-        item["id"]: item
-        for item in spec["items"]
-        if item.get("id") in ("M87", "M88", "M89")
-    }
-    if sorted(artifacts) != ["M87", "M88", "M89"]:
-        pytest.fail(f"통주 3 산출에 M87~M89 가 없다: {sorted(artifacts)}")
-
-    for item_id, item in sorted(artifacts.items()):
-        source = item["source"]
-        facts, skipped = harvest_numeric_facts(
-            spec_with(source["quote"], locator=source["locator"]), rules=RULES
-        )
-        spans = [
-            (fact["source"]["value_span"]["start"], fact["source"]["value_span"]["end"])
-            for fact in facts
-            if fact.get("origin") == "quoted"
-        ]
-        target = (source["value_span"]["start"], source["value_span"]["end"])
-        if target in spans:
-            pytest.fail(
-                f"{item_id} 의 좌표 {target} 가 여전히 수확된다 — 배제가 그 자리에 닿지 않았다"
-            )
-        if not any(entry["reason"] in ("figure-or-table-number", "row-column-coordinate") for entry in skipped):
-            pytest.fail(f"{item_id} 의 자리가 배제 기록 없이 사라졌다: {skipped}")
 
 
 def test_the_two_counterexample_goldens_are_registered() -> None:

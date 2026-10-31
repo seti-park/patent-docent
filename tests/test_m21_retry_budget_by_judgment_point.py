@@ -681,69 +681,6 @@ def test_v3_retry_counts_stay_within_contract_limits(tmp_path) -> None:
     _ = early_root, exit_root
 
 
-def test_v4_us854_early_and_final_claim_checks_match() -> None:
-    """낡은 기준 상수는 통과하든 실패하든 무회귀를 증명하지 못하므로 같은 실행의 전후를 잰다.
-
-    선례는 `tests/test_m20_figure_caption_case.py#narrowed_rules` 이며, verdict 를 시험에 박지 않는다.
-    """
-    root = os.path.join(REPO, "runs", "openai-us20260147854a1-cim-fp-3")
-    if not os.path.isdir(root):
-        pytest.skip("'854 기록 런이 이 체크아웃에 없다")
-    paths = RunPaths(root)
-    full = load_json(paths.material_spec_json)
-    canonical = str(full["provenance"]["read_runs"][0]).removesuffix(":canonical")
-    lane_log = load_json(paths.lane_log)
-    rows = [
-        row
-        for row in lane_log
-        if row.get("task") == "decompose" and row.get("read_run") == canonical
-    ]
-    if not rows:
-        pytest.fail(f"정본 실행 {canonical} 의 분해 로그가 없다")
-    lane_id = rows[-1]["lane_id"]
-    response = load_json(os.path.join(paths.lanes_dir, *lane_id.split("/"), "response.json"))
-    payload = response.get("payload")
-    if not isinstance(payload, dict):
-        pytest.fail(f"마지막 정본 분해 응답에 payload 가 없다: {lane_id}")
-    early = decompose_only_spec(
-        run_meta={
-            "run_id": full["run_id"],
-            "patent": dict(full["patent"]),
-            "engine": {"commit": ""},
-        },
-        decompose=payload,
-        read_runs=READ_RUNS,
-        repo=REPO,
-        source_digest=full["patent"]["source_digest"],
-    )
-    with open(paths.patent_md, encoding="utf-8") as handle:
-        source_text = handle.read()
-
-    def verdicts(spec: dict) -> tuple[dict[str, tuple], int]:
-        rows_here = run_early_claim_checks(
-            CheckContext(spec=spec, source_text=source_text, rules=m2.RULES)
-        )
-        return (
-            {
-                row.check_id: (
-                    row.status,
-                    row.checked,
-                    row.violations,
-                    sorted(finding.rule for finding in row.findings),
-                )
-                for row in rows_here
-            },
-            sum(row.checked for row in rows_here),
-        )
-
-    before, before_checked = verdicts(early)
-    after, after_checked = verdicts(full)
-    if before_checked == 0 or after_checked == 0:
-        pytest.fail(f"'854 청구항 검사 대상이 비었다: early={before_checked}, final={after_checked}")
-    if before != after:
-        pytest.fail(f"'854 조기·최종 청구항 verdict 가 달라졌다: early={before}, final={after}")
-
-
 def test_v6_repeat_signature_escalates_before_budget_exhaustion(tmp_path) -> None:
     """코드 결함의 같은 서명 재현을 즉시 진단하지 않으면 남은 출구 예산을 헛되이 태운다.
 

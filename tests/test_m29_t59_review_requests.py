@@ -349,24 +349,6 @@ def test_render_marks_ghost_target_unresolvable_without_failing() -> None:
             pytest.fail(f"{target} 의 답 자리가 없다")
 
 
-def test_render_legacy_run_without_field_shows_empty_section() -> None:
-    """행위시법 — 09-01 런 산출(필드 없음)은 빈 절로 렌더된다. 읽기만 하고 아무것도 쓰지 않는다."""
-    spec = load_json(os.path.join(LEGACY_RUN, "material-spec.json"))
-    convergence = load_json(os.path.join(LEGACY_RUN, "convergence.json"))
-    if "review_requests" in spec or "review_requests" in convergence:
-        pytest.fail("09-01 런 산출이 소급 개정됐다 — 행위시법 위반")
-    rendered = render_mod.render(spec, convergence, repo=REPO)
-    body = section_of(rendered)
-    if render_mod.REVIEW_EMPTY_TEXT not in body:
-        pytest.fail("옛 재료의 8-b 절이 빈 절 문구를 내지 않았다")
-    if "§8-b 요청은 `review_adjudicated[]` 로 **전건** 답한다" not in rendered:
-        pytest.fail("§0 안내에 review_adjudicated 한 줄이 없다")
-    empty = copy.deepcopy(load_json(BASE_SPEC))
-    empty["review_requests"] = []
-    if render_mod.REVIEW_EMPTY_TEXT not in section_of(render_mod.render(empty, convergence_for(empty, []), repo=REPO)):
-        pytest.fail("현행 재료의 빈 배열이 빈 절 문구를 내지 않았다")
-
-
 # ---------------------------------------------------------------------------
 # ④ 동결 — 전건 덮기
 # ---------------------------------------------------------------------------

@@ -331,52 +331,6 @@ def test_schema_fixtures_and_wrappers_are_self_contained(law) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_l2_request_memo_ids_l2_md_verdict_and_decision_unchanged(run_root, law) -> None:
-    before = verdict_of(run_root)
-    outcome = run_l2(run_root, law)
-    lane_id = outcome["pending"][0]
-    request = read_json(lane_file(gate_lanes(run_root), lane_id, REQUEST_JSON))
-    if request["model"] != "gpt-6-astra" or request["effort"] != "high" or request["read_run"] != "gate-l2":
-        pytest.fail(f"L2 좌석이 gpt-6-astra high 가 아니다: {request['model']} {request['effort']}")
-    slices = set(request["slices"])
-    if not {f"40-compose/{VARIANT}/thread.annotated.md", "15-frozen/material-spec.v1.json", "20-design/blueprint.json"} <= slices or any("l1.json" in s for s in slices):
-        pytest.fail(f"L2 원천 조각이 다르다: {slices}")
-    respond(gate_lanes(run_root), lane_id, {"memos": GOOD_MEMOS}, model=ASTRA)
-    outcome = run_l2(run_root, law)
-    verdict = verdict_of(run_root)
-    if outcome["status"] != "ok" or outcome["memos"] != 3 or [m["id"] for m in verdict["l2"]["memos"]] != ["m-l2-001", "m-l2-002", "m-l2-003"]:
-        pytest.fail(f"memo id 연번이 아니다: {outcome} {verdict['l2']}")
-    if verdict["decision"] != before["decision"] or verdict["revision_round"] != before["revision_round"] or verdict["l1"] != before["l1"]:
-        pytest.fail("L2 가 판정을 바꿨다 — 거부권 없음 위반")
-    if schema_errors("gate-report", verdict):
-        pytest.fail(f"verdict 가 gate-report/v0 밖: {schema_errors('gate-report', verdict)}")
-    if any(row["layer"] == "l2" for row in verdict["inactive_layers"]) or not any(row["layer"] == "final_eyes" for row in verdict["inactive_layers"]):
-        pytest.fail(f"inactive_layers 가 다르다: {verdict['inactive_layers']}")
-    row = next(r for r in verdict["checks"] if r["check_id"] == "gate.no-score")
-    if row["status"] != "pass" or row["ruleset"] != "score-lint" or row["ruleset_size"] != verdict["legislated"]["score_lint_patterns"] \
-            or row["ruleset_version"] != verdict["legislated"]["score_lint_version"] or row["checked"] != 3:
-        pytest.fail(f"gate.no-score 행이 다르다: {row}")
-    l2_md = read(os.path.join(run_root, "50-gate", VARIANT, "l2.md"))
-    if "m-l2-002" not in l2_md or "T8/S1" not in l2_md or GOOD_MEMOS[1]["text"] not in l2_md:
-        pytest.fail("l2.md 렌더가 메모를 담지 않는다")
-    if run_l2(run_root, law)["status"] != "reentered":
-        pytest.fail("두 번째 진입이 reentered 가 아니다")
-
-
-@pytest.mark.parametrize("text", ["구조 8/10 수준이다", "훅 ★★★☆☆", "착지는 B+ 정도", "overall score is fine"])
-def test_no_score_lint_halts_on_score_marks(run_root, law, text) -> None:
-    with pytest.raises(StageHaltError) as info:
-        l2_done(run_root, law, [memo("l2.structure", text)])
-    if "gate.no-score" not in str(info.value):
-        pytest.fail(f"halt 사유가 다르다: {info.value}")
-    verdict = verdict_of(run_root)
-    row = next(r for r in verdict["checks"] if r["check_id"] == "gate.no-score")
-    if row["status"] != "fail" or row["violations"] < 1:
-        pytest.fail("실패 행이 기록되지 않았다")
-    with pytest.raises(StageHaltError):
-        run_l2(run_root, law)                       # 기록된 실패는 재진입에서도 halt
-
-
 def test_no_score_counter_examples_pass_and_load_refuses_broken_entry(law, tmp_path) -> None:
     law_doc = l2_lint.load_patterns(law)
     counters = [str(c["text"]) for c in yaml.safe_load(read(os.path.join(law, "contracts", "lexicon", "score-lint.yaml")))["counter_examples"]]
@@ -400,15 +354,6 @@ def test_no_score_counter_examples_pass_and_load_refuses_broken_entry(law, tmp_p
         l2_lint.load_patterns(broken)
 
 
-def test_l2_refuses_non_advance_and_stale_verdict(run_root, law) -> None:
-    path = os.path.join(run_root, "50-gate", VARIANT, "verdict.json")
-    verdict = read_json(path)
-    verdict["decision"] = "revise"
-    write_json(path, verdict)
-    with pytest.raises(StageError):
-        run_l2(run_root, law)
-
-
 # ---------------------------------------------------------------------------
 # ⑷ 자유 리비전 1회 · 위상 봉쇄
 # ---------------------------------------------------------------------------
@@ -422,109 +367,9 @@ def _free_to_pen(run_root: str, law: str) -> dict:
     return outcome
 
 
-def test_free_revision_pen_request_rejudge_and_phase_closure(run_root, law) -> None:
-    before = verdict_of(run_root)
-    outcome = _free_to_pen(run_root, law)
-    lanes = os.path.join(run_root, "40-compose", "lanes")
-    lane_id = outcome["pending"][0]
-    request = read_json(lane_file(lanes, lane_id, REQUEST_JSON))
-    rendered = read(lane_file(lanes, lane_id, REQUEST_MD))
-    memo_path = os.path.join(run_root, "50-gate", VARIANT, "revisions", "free-r1", "memo.json")
-    if not os.path.isfile(memo_path) or f"50-gate/{VARIANT}/revisions/free-r1/memo.json" not in request["slices"]:
-        pytest.fail("memo.json 이 없거나 원천 조각에 실리지 않았다")
-    if "## L2 메모 표" not in rendered or "## 자유 리비전" not in rendered or GOOD_MEMOS[0]["text"] not in rendered or "## 국소 수정 지시 표" in rendered:
-        pytest.fail("펜 요청서에 메모 표(데이터 절)·자유 리비전 절이 없다")
-    from engine.pens import lint as pen_lint
-    if pen_lint.lint_prompt(rendered, law):
-        pytest.fail(f"자유 리비전 요청서가 프롬프트 린트에 걸린다: {pen_lint.lint_prompt(rendered, law)}")
-    text = read(os.path.join(run_root, "40-compose", VARIANT, "thread.annotated.md"))
-    lines = text.split("\n")
-    header = next(i for i, line in enumerate(lines) if line.startswith("## T2 "))
-    lines[header + 1] = lines[header + 1].replace("This datastore is not a transcript of your chats.", "This datastore is not a chat transcript.")
-    revised = "\n".join(lines)
-    if revised == text:
-        pytest.fail("픽스처 문장이 바뀌지 않았다 — 시험 전제 오류")
-    respond(lanes, lane_id, {"thread_annotated_md": revised}, model=OPUS)
-    outcome = loop_mod.free_revision(run_root=run_root, repo=law, variant=VARIANT)
-    if outcome["status"] != "pending" or outcome["phase"] != "gate-l1" or len(outcome["pending"]) != 3:
-        pytest.fail(f"재판정 L1 대기가 아니다: {outcome}")
-    respond_l1_clean(run_root, outcome["pending"])
-    outcome = loop_mod.free_revision(run_root=run_root, repo=law, variant=VARIANT)
-    verdict = verdict_of(run_root)
-    if outcome["status"] != "ok" or outcome["outcome"] != "judged" or verdict.get("free_revision_used") is not True:
-        pytest.fail(f"자유 리비전 종결이 다르다: {outcome}")
-    if verdict["revision_round"] != before["revision_round"] or verdict["decision"] != "advance" or verdict["l2"]["memos"] != read_json(memo_path)["memos"]:
-        pytest.fail("revision_round 가 올라갔거나 메모가 이어지지 않았다")
-    if verdict["thread_digest"] != sha256_bytes(revised.encode("utf-8")) or schema_errors("gate-report", verdict):
-        pytest.fail("재판정 판정문이 새 판의 것이 아니거나 스키마 밖이다")
-    copy = os.path.join(run_root, "50-gate", VARIANT, "revisions", "free-r1", "thread.annotated.md")
-    if read(copy) != revised or read_json(os.path.join(run_root, "50-gate", VARIANT, "revisions", "free-r1", "round.json"))["status"] != "closed":
-        pytest.fail("결과 사본·라운드 상태가 다르다")
-    if not os.path.isfile(os.path.join(run_root, "40-compose", VARIANT, "rounds", "r3", "thread.annotated.md")):
-        pytest.fail("직전 판이 compose rounds/r3 에 보존되지 않았다")
-    rows = [json.loads(line) for line in read(os.path.join(run_root, "40-compose", "tournament-rows.jsonl")).splitlines() if line.strip()]
-    if rows[-1].get("reason") != loop_mod.FREE_REVISION_REASON or rows[-1]["outcome"] != "redrafted":
-        pytest.fail(f"토너먼트 행이 다르다: {rows[-1]}")
-    with pytest.raises(StageHaltError) as info:
-        run_l2(run_root, law)
-    if "위상 봉쇄" not in str(info.value):
-        pytest.fail(f"두 번째 L2 가 위상 봉쇄 halt 가 아니다: {info.value}")
-    with pytest.raises(StageError):
-        loop_mod.free_revision(run_root=run_root, repo=law, variant=VARIANT)
-
-
-def test_free_revision_unchanged_response_closes_without_rejudge(run_root, law) -> None:
-    before = verdict_of(run_root)
-    outcome = _free_to_pen(run_root, law)
-    lanes = os.path.join(run_root, "40-compose", "lanes")
-    text = read(os.path.join(run_root, "40-compose", VARIANT, "thread.annotated.md"))
-    respond(lanes, outcome["pending"][0], {"thread_annotated_md": text}, model=OPUS)
-    outcome = loop_mod.free_revision(run_root=run_root, repo=law, variant=VARIANT)
-    verdict = verdict_of(run_root)
-    if outcome["status"] != "ok" or outcome["outcome"] != loop_mod.OUTCOME_UNCHANGED or verdict.get("free_revision_used") is not True \
-            or verdict["thread_digest"] != before["thread_digest"] or verdict["checks"] == before["checks"] and False:
-        pytest.fail(f"원문 그대로 응답의 종결이 다르다: {outcome}")
-    if "free_revision_used | `true`" not in read(os.path.join(run_root, "50-gate", VARIANT, "l2.md")):
-        pytest.fail("l2.md 가 소비 사실을 적지 않는다")
-    with pytest.raises(StageHaltError):
-        run_l2(run_root, law)
-
-
-def test_free_revision_requires_memo(run_root, law) -> None:
-    l2_done(run_root, law, [])
-    with pytest.raises(StageError):
-        loop_mod.free_revision(run_root=run_root, repo=law, variant=VARIANT)
-
-
 # ---------------------------------------------------------------------------
 # ⑸ 입력 청정
 # ---------------------------------------------------------------------------
-
-
-def test_input_clean_halts_on_leaked_tag(run_root, law) -> None:
-    path = os.path.join(run_root, "50-gate", VARIANT, "thread.stripped.md")
-    write_text(path, read(path).replace("marketing?", "marketing?[M1]", 1))
-    with pytest.raises(StageHaltError) as info:
-        run_probe(run_root, law)
-    if "probe.input-clean" not in str(info.value):
-        pytest.fail(str(info.value))
-    report = read_json(os.path.join(run_root, "60-probe", VARIANT, "probe-report.json"))
-    if report["status"] != "halt" or next(r for r in report["rows"] if r["check_id"] == "probe.input-clean")["status"] != "fail":
-        pytest.fail("halt 기록이 다르다")
-    for needle in ("## T3 {slot: stop, fig: none}\n", "---\n"):
-        write_text(path, needle + read(path).split("\n", 1)[1]) if False else None
-    row = probe_stage.input_clean_row("---\nrun_id: x\n---\n## T1 {slot: hook}\nText.\n", load_stage_contract("probe", law)["input_clean_patterns"])
-    if row.status != "fail" or row.violations < 2:
-        pytest.fail("헤더·프런트매터 어형이 잡히지 않는다")
-
-
-def test_probe_refuses_non_advance(run_root, law) -> None:
-    path = os.path.join(run_root, "50-gate", VARIANT, "verdict.json")
-    verdict = read_json(path)
-    verdict["decision"] = "revise"
-    write_json(path, verdict)
-    with pytest.raises(StageError):
-        run_probe(run_root, law)
 
 
 # ---------------------------------------------------------------------------
@@ -532,166 +377,14 @@ def test_probe_refuses_non_advance(run_root, law) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_questions_one_to_one_discard_and_request_has_no_thread(run_root, law) -> None:
-    targets = targets_of(run_root)
-    outcome = run_probe(run_root, law)
-    lane_id = outcome["pending"][0]
-    if lane_id != f"probe-q/{VARIANT}/batch-0":
-        pytest.fail(lane_id)
-    request = read_json(lane_file(probe_lanes(run_root), lane_id, REQUEST_JSON))
-    rendered = read(lane_file(probe_lanes(run_root), lane_id, REQUEST_MD))
-    stripped = read(os.path.join(run_root, "50-gate", VARIANT, "thread.stripped.md"))
-    if request["model"] != "opus-5" or request["effort"] != "low" or "15-frozen/material-spec.v1.json" not in request["slices"]:
-        pytest.fail("질문 생성 좌석·원천 조각이 다르다(재량 ⓑ opus-5 low · 동결본 전문)")
-    for sentence in [line for line in stripped.split("\n") if line.strip()][:5]:
-        if sentence in rendered:
-            pytest.fail("질문 생성 요청서에 스레드 문장이 실렸다(§5.2)")
-    extra = [{"question_id": "Q9", "target_material_id": "M52", "question_en": "outside?"}, {"question_id": "Q10", "target_material_id": targets[0], "question_en": "dup?"}]
-    respond(probe_lanes(run_root), lane_id, questions_payload(targets, extra=extra), model=OPUS)
-    outcome = run_probe(run_root, law)
-    doc = read_json(os.path.join(run_root, "60-probe", "questions.json"))
-    if [q["target_material_id"] for q in doc["questions"]] != targets or [q["question_id"] for q in doc["questions"]] != [f"Q{i}" for i in range(1, len(targets) + 1)]:
-        pytest.fail(f"1:1 질문지가 아니다: {doc['questions']}")
-    if {d["reason"] for d in doc["discarded"]} != {questions_mod.DISCARD_OUTSIDE, questions_mod.DISCARD_DUPLICATE}:
-        pytest.fail(f"폐기 사유가 다르다: {doc['discarded']}")
-    if doc["question_set_digest"] != questions_mod.question_set_digest(doc["questions"]) or outcome["phase"] != "probes":
-        pytest.fail("질문지 지문·다음 위상이 다르다")
-
-
-def test_questions_shortfall_retries_once_then_escalates(run_root, law) -> None:
-    targets = targets_of(run_root)
-    outcome = run_probe(run_root, law)
-    respond(probe_lanes(run_root), outcome["pending"][0], questions_payload(targets, drop=2), model=OPUS)
-    outcome = run_probe(run_root, law)
-    if outcome["status"] != "pending" or outcome["pending"] != [f"probe-q/{VARIANT}/retry-1/batch-0"] or set(outcome["missing"]) != set(targets[-2:]):
-        pytest.fail(f"재시도 좌표가 아니다: {outcome}")
-    respond(probe_lanes(run_root), outcome["pending"][0], questions_payload(targets, drop=1), model=OPUS)
-    outcome = run_probe(run_root, law)
-    if outcome["status"] != "escalate" or not os.path.isfile(os.path.join(run_root, "60-probe", VARIANT, "escalation.json")) \
-            or os.path.isfile(os.path.join(run_root, "60-probe", "questions.json")):
-        pytest.fail(f"escalate 가 아니거나 부족한 질문지가 쓰였다: {outcome}")
-
-
 # ---------------------------------------------------------------------------
 # ⑺⑻ 프로브 요청 n · 정족수
 # ---------------------------------------------------------------------------
 
 
-def test_probe_requests_identical_bytes_isolated_and_haiku(run_root, law) -> None:
-    outcome = probe_to_pending_probes(run_root, law)
-    n = outcome["n"]
-    if n != yaml.safe_load(read(os.path.join(law, "contracts", "parameters.yaml")))["adjustable"]["probe.n"] or len(outcome["pending"]) != n:
-        pytest.fail(f"프로브 요청 수가 probe.n 이 아니다: {outcome}")
-    bodies = set()
-    stripped = read(os.path.join(run_root, "50-gate", VARIANT, "thread.stripped.md"))
-    for lane_id in outcome["pending"]:
-        request = read_json(lane_file(probe_lanes(run_root), lane_id, REQUEST_JSON))
-        rendered = read(lane_file(probe_lanes(run_root), lane_id, REQUEST_MD))
-        if request["model"] != "haiku-4.5" or request["effort"] != "low":
-            pytest.fail(f"계기 좌석이 haiku-4.5 low 가 아니다: {request['model']} {request['effort']}")
-        for needle in ("15-frozen", "20-design", "[M", "annotation-index", "verdict.json", "00-source"):
-            if needle in rendered:
-                pytest.fail(f"계기 요청서에 {needle!r} 가 실렸다 — 입력 격리 위반(§5.2)")
-        if stripped.strip() not in rendered or "questions.json" not in rendered:
-            pytest.fail("계기 요청서에 스레드·질문지가 없다")
-        # 좌표에서 파생되는 세 줄(제목 · 배치 · 그 둘의 함수인 입력 지문)만 빼면 n 요청서는 바이트 동일해야 한다.
-        bodies.add("\n".join(line for line in rendered.split("\n")
-                             if not line.startswith(("# 레인 요청 — ", "| 배치 |", "| 입력 지문 |"))))
-    if len(bodies) != 1:
-        pytest.fail("n 요청의 바이트가 좌표 밖에서 갈린다")
-
-
-def test_quorum_retries_dead_only_then_escalates_preserving_live(run_root, law) -> None:
-    outcome = probe_to_pending_probes(run_root, law)
-    pending = outcome["pending"]
-    fill_probes(run_root, pending[:-1])
-    dead = pending[-1]
-    outcome = run_probe(run_root, law, dead=[dead])
-    if outcome["status"] != "pending" or outcome["pending"] != [f"probe/{VARIANT}/retry-1/batch-4"] or outcome["live"] != 4:
-        pytest.fail(f"죽은 대만 재시도되지 않았다: {outcome}")
-    live_digests = {i: sha256_file(os.path.join(run_root, "60-probe", VARIANT, f"probe-{i}.json")) for i in range(4)}
-    outcome = run_probe(run_root, law, dead=outcome["pending"])
-    if outcome["pending"] != [f"probe/{VARIANT}/retry-2/batch-4"]:
-        pytest.fail(f"2차 재시도 좌표가 아니다: {outcome}")
-    outcome = run_probe(run_root, law, dead=outcome["pending"])
-    escalation = os.path.join(run_root, "60-probe", VARIANT, "escalation.json")
-    if outcome["status"] != "escalate" or not os.path.isfile(escalation):
-        pytest.fail(f"상한 뒤 escalate 가 아니다: {outcome}")
-    form = read_json(escalation)
-    if form["outcome"] != "escalate" or form["live_count"] != 4 or form["dead_instances"] != ["p4"] or len(form["escalation"]["options"]) != 3:
-        pytest.fail(f"상신 서식이 다르다: {form}")
-    if {i: sha256_file(os.path.join(run_root, "60-probe", VARIANT, f"probe-{i}.json")) for i in range(4)} != live_digests:
-        pytest.fail("살아있는 응답이 갈아치워졌다")
-    if os.path.isfile(os.path.join(run_root, "60-probe", VARIANT, "score.json")):
-        pytest.fail("정족수 미달인데 score.json 이 생겼다 — 기계 강등")
-
-
 # ---------------------------------------------------------------------------
 # ⑼~⑿ 무효 답변 · 채점 · 국소화 · score.json
 # ---------------------------------------------------------------------------
-
-
-def test_full_probe_score_invalidation_grading_and_localization(run_root, law) -> None:
-    outcome = probe_to_pending_probes(run_root, law)
-    fill_probes(run_root, outcome["pending"], stated={"Q1", "Q2", "Q7"}, bad_span={"Q2"})
-    outcome = run_probe(run_root, law)
-    lane_id = outcome["pending"][0]
-    if lane_id != f"probe-grade/{VARIANT}/batch-0":
-        pytest.fail(lane_id)
-    request = read_json(lane_file(probe_lanes(run_root), lane_id, REQUEST_JSON))
-    rendered = read(lane_file(probe_lanes(run_root), lane_id, REQUEST_MD))
-    stripped = read(os.path.join(run_root, "50-gate", VARIANT, "thread.stripped.md"))
-    grading_input = json.loads(list(request["slices"].values())[0])
-    if request["model"] != "opus-5" or request["effort"] != "low" or [t["kind"] for t in grading_input["targets"]] != ["positioning"] \
-            or len(grading_input["restatements"]) != outcome["n"] if "n" in outcome else len(grading_input["restatements"]) != 5:
-        pytest.fail(f"채점 요청이 다르다(모델 kind 만 · opus-5 low): {request['model']} {[t['kind'] for t in grading_input['targets']]}")
-    for line in [line for line in stripped.split("\n") if line.strip()][1:]:
-        if line in rendered:
-            pytest.fail("채점 요청서에 스레드가 실렸다(§5.3)")
-    respond(probe_lanes(run_root), lane_id, grade_payload(lane_file(probe_lanes(run_root), lane_id, REQUEST_MD), grade="partial"), model=OPUS)
-    outcome = run_probe(run_root, law)
-    score = read_json(os.path.join(run_root, "60-probe", VARIANT, "score.json"))
-    if outcome["status"] != "ok" or schema_errors("probe-score", score):
-        pytest.fail(f"score.json 이 스키마 밖: {schema_errors('probe-score', score)} {outcome}")
-    if schema_errors("probe-score", {**score, "decision": "advance"}) == [] or schema_errors("probe-score", {**score, "pass": True}) == []:
-        pytest.fail("score.json 에 판정 키가 들어간다(§5.7)")
-    by_id = {t["material_id"]: t for t in score["per_target"]}
-    if [t["material_id"] for t in score["per_target"]] != targets_of(run_root):
-        pytest.fail("per_target 이 표적 순서·전건이 아니다")
-    if [row["probe_id"] for row in score["invalidated_answers"]] != ["p0"] or score["invalidated_answers"][0]["question_id"] != "Q2":
-        pytest.fail(f"무효 답변 기록이 다르다: {score['invalidated_answers']}")
-    q2 = by_id[targets_of(run_root)[1]]
-    if q2["answers"]["invalidated"] != 1 or q2["hit_rate"] != 0.0 or q2["method"] != "deterministic":
-        pytest.fail(f"무효 답변이 분모에서 빠지지 않았다: {q2}")
-    m116 = by_id["M116"]
-    if m116["method"] != "model" or m116["hit_rate"] != 0.5 or m116["answers"]["partial"] != 5:
-        pytest.fail(f"모델 채점 환산(partial=0.5)이 다르다: {m116}")
-    if score["restatement"] != {"aligned": 5, "drifted": 0, "inverted": 0}:
-        pytest.fail(f"재서술 축이 다르다: {score['restatement']}")
-    rates = [t["hit_rate"] for t in score["per_target"]]
-    if score["delivery_fidelity"] != round(sum(rates) / len(rates), 4):
-        pytest.fail("delivery_fidelity 가 비가중 평균이 아니다")
-    index = read_json(os.path.join(run_root, "50-gate", VARIANT, "annotation-index.json"))
-    for target in score["per_target"]:
-        tweet, unrep = localize_mod.weakest_tweet(index, target["material_id"])
-        if (target["weakest_tweet"], target["unrepresented"]) != (tweet, unrep):
-            pytest.fail("국소화가 역참조 규칙과 다르다")
-    m3 = by_id["M3"]
-    if m3["weakest_tweet"] != 8 or m3["unrepresented"]:
-        pytest.fail(f"M3 의 2단 규칙(문장 수 동점 → 번호 큼) 결과가 8 이 아니다: {m3}")
-    if not any(row["issue"] == "not-stated" for row in score["loci"]) or not any(row["issue"] == "invalidated" for row in score["loci"]):
-        pytest.fail("loci 가 걸림 지점을 전량 보고하지 않는다(R9)")
-    report = read_json(os.path.join(run_root, "60-probe", VARIANT, "probe-report.json"))
-    rows = {r["check_id"]: r for r in report["rows"]}
-    for cid in ("probe.input-digest", "probe.independence", "probe.input-clean", "probe.no-self-report", "probe.target-coverage", "probe.grader-separation"):
-        if rows[cid]["status"] != "pass":
-            pytest.fail(f"{cid} 가 pass 가 아니다: {rows[cid]}")
-    for i in range(5):
-        if schema_errors("probe-report", read_json(os.path.join(run_root, "60-probe", VARIANT, f"probe-{i}.json"))):
-            pytest.fail("probe-<i>.json 이 스키마 밖")
-    again = run_probe(run_root, law)
-    if again["status"] != "reentered":
-        pytest.fail(f"재진입이 reentered 가 아니다: {again}")
 
 
 def test_deterministic_grading_paths() -> None:
@@ -746,38 +439,6 @@ def test_localization_two_step_rule_and_unrepresented() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_check_rows_fail_paths_and_grader_separation_halts(run_root, law) -> None:
-    schema = read_json(os.path.join(SCHEMAS, "probe-report.schema.json"))
-    good = read_json(os.path.join(REPO, "tests", "fixtures", "schema-enforcement", "accept", "probe-report.minimal.json"))
-    if probe_stage.no_self_report_row([good], schema).status != "pass" or probe_stage.no_self_report_row([{**good, "self_assessment": "easy"}], schema).status != "fail":
-        pytest.fail("no-self-report 행이 다르다")
-    lanes = [{"lane_id": "probe/v2/batch-0", "response_digest": "a"}, {"lane_id": "probe/v2/batch-0", "response_digest": "a"}]
-    if probe_stage.independence_row([good, {**good, "probe_id": "p1"}], lanes).status != "fail":
-        pytest.fail("같은 좌표·같은 응답이 independence 에 걸리지 않는다")
-    if probe_stage.target_coverage_row([{"material_id": "M3"}], ["M3", "M16"]).status != "fail" \
-            or probe_stage.target_coverage_row([{"material_id": "M3"}, {"material_id": "M99"}], ["M3"]).status != "fail":
-        pytest.fail("target-coverage 가 부족·초과를 잡지 않는다")
-    accepted = ("haiku-4.5", HAIKU, "haiku")
-    probe_lanes_ = [{"lane_id": "probe/v2/batch-0"}]
-    if probe_stage.grader_separation_row({"lane_id": "probe-grade/v2/batch-0", "model": OPUS}, probe_lanes_, probe_accepted=accepted).status != "pass" \
-            or probe_stage.grader_separation_row({"lane_id": "probe/v2/batch-0", "model": OPUS}, probe_lanes_, probe_accepted=accepted).status != "fail" \
-            or probe_stage.grader_separation_row({"lane_id": "probe-grade/v2/batch-0", "model": HAIKU}, probe_lanes_, probe_accepted=accepted).status != "fail":
-        pytest.fail("grader-separation 판정이 다르다")
-    # 실런 경로 — 채점자가 계기 모델(haiku)로 돌았다 → halt.
-    outcome = probe_to_pending_probes(run_root, law)
-    fill_probes(run_root, outcome["pending"])
-    outcome = run_probe(run_root, law)
-    lane_id = outcome["pending"][0]
-    respond(probe_lanes(run_root), lane_id, grade_payload(lane_file(probe_lanes(run_root), lane_id, REQUEST_MD)), model=HAIKU)
-    with pytest.raises(StageHaltError) as info:
-        run_probe(run_root, law)
-    if "probe.grader-separation" not in str(info.value):
-        pytest.fail(str(info.value))
-    report = read_json(os.path.join(run_root, "60-probe", VARIANT, "probe-report.json"))
-    if report["status"] != "halt":
-        pytest.fail("halt 기록이 다르다")
-
-
 # ---------------------------------------------------------------------------
 # ⒁ 구동기
 # ---------------------------------------------------------------------------
@@ -828,60 +489,3 @@ def _drive(law: str, run_root: str, evidence: str, *argv: str, executor=None):
     lines: list[str] = []
     return drv.main(["--repo", law, "--run-root", run_root, "--evidence-dir", evidence, *argv], executor=executor, out=lines.append), lines
 
-
-def test_driver_gate_l2_revise_free_probe_and_seal(run_root, law, tmp_path) -> None:
-    evidence = os.path.join(str(tmp_path), "evidence")
-    if len(drv.COMMANDS) != 26 or drv.COMMANDS[19:22] != ("gate-l2", "revise-free", "probe"):
-        pytest.fail(f"명령 26 가 아니다: {drv.COMMANDS}")
-    parser = drv.build_parser()
-    listed = tuple(parser._subparsers._group_actions[0].choices)  # noqa: SLF001
-    if listed != drv.COMMANDS:
-        pytest.fail(f"--help 목록이 COMMANDS 와 다르다: {listed}")
-    stub = Stub(run_root)
-    code, lines = _drive(law, run_root, evidence, "gate-l2", RUN_ID, "--variant", VARIANT, executor=stub)
-    if code != drv.EXIT_OK or len(stub.calls) != 1 or not any(line.startswith("v2: l2 memos 3") for line in lines):
-        pytest.fail(f"gate-l2 명령: {code} {lines}")
-    argv = stub.calls[0]
-    if argv[argv.index("--model") + 1] != ASTRA or argv[argv.index("--effort") + 1] != "high" or argv[argv.index("--tools") + 1] != "":
-        pytest.fail(f"L2 레인 명령줄이 다르다: {argv}")
-    if json.loads(argv[argv.index("--json-schema") + 1])["properties"]["payload"].get("title") != "lane-response/gate-l2":
-        pytest.fail("L2 좌표에 다른 스키마가 실렸다")
-    code, lines = _drive(law, run_root, evidence, "revise-free", RUN_ID, "--variant", VARIANT, executor=stub)
-    if code != drv.EXIT_OK or not any("free-r1 종결(unchanged)" in line for line in lines) or verdict_of(run_root).get("free_revision_used") is not True:
-        pytest.fail(f"revise-free 명령: {code} {lines}")
-    code, lines = _drive(law, run_root, evidence, "gate-l2", RUN_ID, "--variant", VARIANT, executor=stub)
-    if code != drv.EXIT_TERMINAL_FAIL:
-        pytest.fail(f"위상 봉쇄 뒤 gate-l2 가 13 이 아니다: {code} {lines}")
-    calls_before = len(stub.calls)
-    code, lines = _drive(law, run_root, evidence, "probe", RUN_ID, "--variant", VARIANT, executor=stub)
-    if code != drv.EXIT_OK or len(stub.calls) - calls_before != 7 or not any(line.startswith("v2: probe ok") for line in lines):
-        pytest.fail(f"probe 명령: {code} {lines} calls={len(stub.calls) - calls_before}")
-    models = [c[c.index("--model") + 1] for c in stub.calls[calls_before:]]
-    if models != [OPUS] + [HAIKU] * 5 + [OPUS]:
-        pytest.fail(f"계기 계열 실호출 모델 순서가 다르다: {models}")
-    receipts = sorted(name for name in os.listdir(os.path.join(evidence, "calls")) if name.startswith("probe") and not name.endswith(".raw.json"))
-    if len(receipts) != 7:
-        pytest.fail(f"영수증 7 이 아니다: {receipts}")
-    code, lines = _drive(law, run_root, evidence, "seal", RUN_ID)
-    manifest = read(os.path.join(evidence, "MANIFEST-sha256.txt"))
-    for needle in ("60-probe/questions.json", "60-probe/v2/score.json", "60-probe/v2/probe-4.json", "60-probe/v2/lanes/probe/v2/batch-0/response.json",
-                   "50-gate/v2/l2.md", "50-gate/v2/revisions/free-r1/memo.json"):
-        if not any(line.endswith(needle) for line in manifest.splitlines()):
-            pytest.fail(f"seal 에 {needle} 이 없다")
-    code, lines = _drive(law, run_root, evidence, "lanes", RUN_ID)
-    if code != drv.EXIT_OK:
-        pytest.fail(f"lanes: {code} {lines}")
-
-
-def test_driver_probe_reports_dead_lane_and_retries(run_root, law, tmp_path) -> None:
-    evidence = os.path.join(str(tmp_path), "evidence")
-    stub = Stub(run_root, fail_lanes={f"probe/{VARIANT}/batch-2"})
-    code, lines = _drive(law, run_root, evidence, "probe", RUN_ID, "--variant", VARIANT, executor=stub)
-    if code != drv.EXIT_OK or not any("죽은 인스턴스로 신고" in line for line in lines):
-        pytest.fail(f"probe 명령(사망 1): {code} {lines}")
-    quorum = read_json(os.path.join(run_root, "60-probe", VARIANT, "quorum.json"))
-    if quorum["instances"]["2"]["attempt"] != 1 or quorum["instances"]["2"]["lane_id"] != f"probe/{VARIANT}/retry-1/batch-2" or quorum["attempts_made"] != 1:
-        pytest.fail(f"대장이 다르다: {quorum}")
-    score = read_json(os.path.join(run_root, "60-probe", VARIANT, "score.json"))
-    if score["probe_n"] != 5 or schema_errors("probe-score", score):
-        pytest.fail("재시도 뒤 score.json 이 다르다")

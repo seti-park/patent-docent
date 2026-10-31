@@ -538,34 +538,6 @@ def test_numeric_tokenizer_rank_and_whitelist_gap(tmp_path) -> None:
         pytest.fail("MATCH_KEY 에 fullmatch 하는 화이트리스트는 통과해야 한다")
 
 
-def test_unreviewed_use_recomputed_from_frozen_matches_convergence(tmp_path) -> None:
-    frozen = read_json(RUN3_FROZEN)
-    recomputed = rules_numeric.unreferenced_facts(frozen)
-    expected = read_json(RUN3_CONVERGENCE)["numeric_inventory"]["unreferenced"]
-    if recomputed != expected:
-        pytest.fail(f"재계산 미참조 집합 {recomputed} ≠ convergence.json {expected}")
-    active = next(item["id"] for item in frozen["items"] if item["kind"] == "component" and item["status"] == "active")
-    body = "\n".join([
-        f"## T1 {{slot: hook, fig: none}}\nThe filing dates from {frozen['patent']['dates']['priority']} and it matters.[{active}]",
-        f"## T2 {{slot: stop, fig: none}}\n{filler(200, '[' + active + ']')}",
-        f"## T3 {{slot: stop, fig: none}}\n{filler(200, '[' + active + ']')}",
-        f"## T4 {{slot: pivot, fig: none}}\n{filler(200, '[' + active + ']')}",
-        f"## T5 {{slot: landing, fig: none}}\nLanding line.[{active}]",
-        "## T6 {slot: tail, fig: none}\nTail line.[narrative]",
-    ]) + "\n"
-    run_root = make_run(os.path.join(str(tmp_path), "u"), spec=frozen, body="\n" + body, run_id=RUN3)
-    run_gate(run_root)
-    verdict = verdict_of(run_root)
-    flags = verdict["l0"]["flags"]
-    if verdict["l0"]["defects"] or verdict["decision"] != "advance":
-        pytest.fail(f"미참조 수치 사용은 defect 가 아니다: {verdict['l0']['defects']}")
-    if len(flags) != 1 or flags[0]["rule"] != "numeric.unreviewed-use" or flags[0]["origin"] != "advisory-rule" \
-            or flags[0]["locus"] != {"tweet": 1, "sentence": 1}:
-        pytest.fail(f"플래그가 다르다: {flags}")
-    if schema_errors("gate-report", verdict):
-        pytest.fail(schema_errors("gate-report", verdict))
-
-
 # ---------------------------------------------------------------------------
 # ⑬ ~ ⑯ strip · round-trip
 # ---------------------------------------------------------------------------

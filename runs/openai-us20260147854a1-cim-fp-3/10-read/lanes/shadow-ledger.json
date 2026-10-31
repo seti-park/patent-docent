@@ -1,9 +1,0 @@
-{
-  "appended": true,
-  "ledger": "/home/laptop/projects/patent-docent/ledgers/shadow/screening.jsonl",
-  "memo_count": 2,
-  "root": "/home/laptop/projects/patent-docent",
-  "root_source": "main-worktree-resolved",
-  "run_repo": "/home/laptop/projects/patent-docent/.worktrees/openai-us20260147854a1-cim-fp-3",
-  "terminated": true
-}

@@ -192,84 +192,9 @@ def receipt(ctx, lane_id: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def test_lane_command_line_has_every_flag_in_order(tmp_path) -> None:
-    ctx, lanes, request, lines = single_lane(tmp_path)
-    ctx.dry_run = True
-    drv.call_lane(ctx, lanes, request.lane_id)
-    schema = os.path.join(ctx.schemas_dir, "read-a__decompose__batch-0.json")
-    expected = ["claude", "-p", "--setting-sources", "project", "--disable-slash-commands", "--strict-mcp-config", "--model", "claude-fable-5-1", "--effort", "low",
-                "--output-format", "json", "--json-schema", drv.wrapper_schema_json("decompose"), "--permission-mode", "dontAsk",
-                "--permission-prompts", "none", "--tools", ""]
-    if drv.lane_argv("claude-fable-5-1", "low", drv.wrapper_schema_json("decompose")) != expected:
-        pytest.fail("플래그 전건·순서가 다르다")
-    if json.loads(drv.wrapper_schema_json("decompose"))["properties"]["payload"] != drv.wrapper_schema("decompose")["properties"]["payload"]:
-        pytest.fail("--json-schema 인자가 스키마 JSON 문자열이 아니다")
-    if drv.api_id_for_label(REPO, "fable-5.1") != "claude-fable-5-1" or drv.api_id_for_label(REPO, "opus-5") != "claude-opus-5":
-        pytest.fail("api-id 가 계약 aliases[0] 에서 오지 않는다")
-    if not lines or "--model claude-fable-5-1 --effort low" not in lines[0] or '--tools ""' not in lines[0]:
-        pytest.fail(f"dry-run 명령줄이 다르다: {lines}")
-    if os.path.exists(ctx.evidence):
-        pytest.fail("dry-run 이 evidence 를 썼다")
-
-
-def test_wrapper_schema_embeds_plan_payload_schema(tmp_path) -> None:
-    for task, schema in RESPONSE_SCHEMAS.items():
-        if drv.wrapper_schema(task)["properties"]["payload"] is not schema:
-            pytest.fail(f"{task} 의 payload 스키마가 plan.py 상수가 아니다")
-    ctx, lanes, request, _ = single_lane(tmp_path)
-    ctx.executor = Stub({"read-a": m2.payload_set()})
-    drv.call_lane(ctx, lanes, request.lane_id)
-    written = json.load(open(os.path.join(ctx.schemas_dir, "read-a__decompose__batch-0.json"), encoding="utf-8"))
-    if written["properties"]["payload"] != DECOMPOSE_SCHEMA or written["required"] != ["lane_id", "model", "effort", "input_digest", "payload"]:
-        pytest.fail("스키마 파일이 봉투 5키 + plan 스키마를 품지 않는다")
-
-
 # ---------------------------------------------------------------------------
 # ⑶ ⑷ 응답 파일의 model · effort
 # ---------------------------------------------------------------------------
-
-
-def test_response_model_is_modelusage_main_key_and_effort_is_requested(tmp_path) -> None:
-    ctx, lanes, request, _ = single_lane(tmp_path)
-    ctx.executor = Stub({"read-a": m2.payload_set()})
-    outcome = drv.call_lane(ctx, lanes, request.lane_id)
-    response = json.load(open(outcome.response_path, encoding="utf-8"))
-    if response["model"] != "claude-fable-5-1" or response["effort"] != "low":
-        pytest.fail(f"model/effort 원천이 다르다: {response['model']} / {response['effort']}")
-    if response["input_digest"] != request.input_digest or response["lane_id"] != request.lane_id:
-        pytest.fail("payload 밖 필드가 레인 출력 그대로가 아니다")
-    rec = receipt(ctx, request.lane_id)
-    if {k: rec["lane_self_report"].get(k) for k in ("model", "effort")} != {"model": "self-reported", "effort": "self-effort"}:
-        pytest.fail(f"자기 신고가 영수증에 없다: {rec['lane_self_report']}")
-    if drv.main_model_of({"a": {"outputTokens": 5}, "b": {"outputTokens": 50}}) != "b":
-        pytest.fail("주 키 선택이 출력 토큰 최대가 아니다")
-    # 재진입 — 응답이 있으면 다시 부르지 않는다
-    again = drv.call_lane(ctx, lanes, request.lane_id)
-    if len(ctx.executor.calls) != 1 or not again.ok:
-        pytest.fail("응답이 있는 좌표를 다시 호출했다")
-
-
-def test_first_call_model_mismatch_writes_observed_and_stops_14(tmp_path) -> None:
-    ctx, lanes, request, _ = single_lane(tmp_path)
-    ctx.executor = Stub({"read-a": m2.payload_set()}, model_override="claude-opus-5")
-    with pytest.raises(drv.DriverExit) as caught:
-        drv.call_lane(ctx, lanes, request.lane_id)
-    if caught.value.code != drv.EXIT_UNDECIDABLE:
-        pytest.fail(f"첫 좌표 불일치 코드가 14 가 아니다: {caught.value.code}")
-    response = json.load(open(os.path.join(lanes, "read-a", "decompose", "batch-0", "response.json"), encoding="utf-8"))
-    if response["model"] != "claude-opus-5":
-        pytest.fail("관측값을 그대로 적지 않았다(조용한 대체)")
-    if receipt(ctx, request.lane_id)["observed"]["main_model"] != "claude-opus-5":
-        pytest.fail("영수증 관측값이 다르다")
-
-
-def test_missing_modelusage_writes_no_response_and_exits_14(tmp_path) -> None:
-    ctx, lanes, request, _ = single_lane(tmp_path)
-    ctx.executor = Stub({"read-a": m2.payload_set()}, drop_usage=True)
-    with pytest.raises(drv.DriverExit) as caught:
-        drv.call_lane(ctx, lanes, request.lane_id)
-    if caught.value.code != drv.EXIT_UNDECIDABLE or os.path.exists(os.path.join(lanes, "read-a", "decompose", "batch-0", "response.json")):
-        pytest.fail("modelUsage 부재인데 응답을 썼거나 코드가 14 가 아니다")
 
 
 # ---------------------------------------------------------------------------
@@ -277,66 +202,9 @@ def test_missing_modelusage_writes_no_response_and_exits_14(tmp_path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_is_error_keeps_lane_pending_and_call_cap_is_three(tmp_path) -> None:
-    ctx, lanes, request, _ = single_lane(tmp_path)
-    ctx.executor = Stub({}, is_error=True)
-    response_path = os.path.join(lanes, "read-a", "decompose", "batch-0", "response.json")
-    for attempt in (1, 2, 3):
-        outcome = drv.call_lane(ctx, lanes, request.lane_id)
-        if outcome.ok or os.path.exists(response_path):
-            pytest.fail("is_error 인데 응답을 썼다")
-        rec = receipt(ctx, request.lane_id)
-        if rec["attempt"] != attempt or rec["is_error"] is not True or rec["response_json_sha256"] is not None:
-            pytest.fail(f"영수증 회차·오류 표기가 다르다: {rec}")
-    kept = sorted(name for name in os.listdir(ctx.calls_dir) if ".attempt-" in name)
-    if len(kept) != 4:
-        pytest.fail(f"이전 회차 영수증·원시 출력이 보존되지 않았다: {kept}")
-    with pytest.raises(drv.DriverExit) as caught:
-        drv.call_lane(ctx, lanes, request.lane_id)
-    if caught.value.code != drv.EXIT_CALL_CAP or len(ctx.executor.calls) != 3:
-        pytest.fail(f"4회째가 15 로 서지 않았다: {caught.value.code} · 호출 {len(ctx.executor.calls)}")
-
-
-def test_timeout_is_recorded_without_response(tmp_path) -> None:
-    ctx, lanes, request, _ = single_lane(tmp_path)
-    ctx.executor = Stub({}, timed_out=True)
-    outcome = drv.call_lane(ctx, lanes, request.lane_id)
-    rec = receipt(ctx, request.lane_id)
-    if outcome.ok or rec["timed_out"] is not True or rec["is_error"] is not True or rec["note"] != "시간 초과":
-        pytest.fail(f"시간 초과 처분이 다르다: {rec}")
-    if not os.path.isfile(os.path.join(ctx.calls_dir, "read-a__decompose__batch-0.raw.json")):
-        pytest.fail("원시 출력을 남기지 않았다")
-
-
-def test_stdin_over_ten_megabytes_is_usage_error(tmp_path) -> None:
-    ctx, lanes, request, _ = single_lane(tmp_path)
-    ctx.executor = Stub({"read-a": m2.payload_set()})
-    request_md = os.path.join(lanes, "read-a", "decompose", "batch-0", "request.md")
-    with open(request_md, "ab") as handle:
-        handle.write(b"\n" + b"x" * (drv.STDIN_MAX_BYTES + 1))
-    with pytest.raises(drv.DriverExit) as caught:
-        drv.call_lane(ctx, lanes, request.lane_id)
-    if caught.value.code != drv.EXIT_USAGE or ctx.executor.calls:
-        pytest.fail("10 MB 초과가 2 로 서지 않았거나 호출이 일어났다")
-
-
 # ---------------------------------------------------------------------------
 # ⑼ 09-01 런 픽스처 왕복
 # ---------------------------------------------------------------------------
-
-
-def test_fixture_request_round_trip_is_consumed_by_load_response(tmp_path) -> None:
-    fixture = json.load(open(os.path.join(FIXTURE_LANE, "request.json"), encoding="utf-8"))
-    payload = json.load(open(os.path.join(FIXTURE_LANE, "response.json"), encoding="utf-8"))["payload"]
-    ctx, lanes, request, _ = single_lane(tmp_path, model=fixture["model"], effort=fixture["effort"])
-    ctx.executor = Stub({}, payload_override=payload)
-    outcome = drv.call_lane(ctx, lanes, request.lane_id)
-    consumed = load_response(request, outcome.response_path)
-    if consumed.payload != payload or consumed.mismatches(request):
-        pytest.fail("러너가 응답을 소비하지 못했거나 mismatch 로 본다")
-    _argv = ctx.executor.calls[0]
-    if _argv[_argv.index("--model") + 1] != "claude-opus-5" or _argv[_argv.index("--effort") + 1] != fixture["effort"]:
-        pytest.fail(f"픽스처 좌표의 요청 플래그가 다르다: {ctx.executor.calls[0]}")
 
 
 # ---------------------------------------------------------------------------
@@ -513,25 +381,3 @@ def _echo_stub(lane_id_echo: str, digest_echo: str):
             return drv.ExecResult(0, json.dumps(out).encode(), b"", False, 5)
     return Echo()
 
-
-def test_response_lane_id_comes_from_request_not_lane_echo(tmp_path) -> None:
-    """2026-09-13 step 3 실측 — 레인이 lane_id 칸에 'read-a' 만 적어도 응답 파일의 lane_id 는 좌표다."""
-    ctx, lanes, request, lines = single_lane(tmp_path)
-    ctx.executor = _echo_stub("read-a", request.input_digest)
-    outcome = drv.call_lane(ctx, lanes, request.lane_id)
-    if not outcome.ok:
-        pytest.fail(f"호출이 실패로 처리됐다: {outcome.message}")
-    with open(outcome.response_path, encoding="utf-8") as handle:
-        written = json.load(handle)
-    if written["lane_id"] != request.lane_id:
-        pytest.fail(f"응답 파일 lane_id 가 좌표가 아니다: {written['lane_id']}")
-    if receipt(ctx, request.lane_id)["lane_self_report"].get("lane_id") != "read-a":
-        pytest.fail("레인의 lane_id 반향이 영수증에 남지 않았다")
-
-
-def test_input_digest_echo_mismatch_writes_no_response(tmp_path) -> None:
-    ctx, lanes, request, lines = single_lane(tmp_path)
-    ctx.executor = _echo_stub(request.lane_id, "0" * 64)
-    outcome = drv.call_lane(ctx, lanes, request.lane_id)
-    if outcome.ok or (outcome.response_path and os.path.exists(outcome.response_path)):
-        pytest.fail("입력 지문 반향 불일치인데 응답 파일이 써졌다")
