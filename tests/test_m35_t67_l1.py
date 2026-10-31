@@ -37,26 +37,13 @@ from engine.stages import compose as compose_stage  # noqa: E402
 from engine.stages import gate as gate_stage  # noqa: E402
 from tools import drive_partial_read as drv  # noqa: E402
 
-RUN_ID = "gdm-wo2026128750a1-agent-memory-3"
-RUN3 = os.path.join(REPO, "runs", RUN_ID)
 # 런 -3 는 살아 있는 런이라 반입마다 상태가 앞으로 간다. 이 시험의 전제(L0 통과 · L1 미실행)는 `98ce4e7^`(= c42f1ff) 상태의
 # 바이트 사본 `tests/fixtures/run3-snapshots/pre-l1/` 에 고정한다(40-compose · 50-gate/v2 두 트리 · 나머지는 실물 그대로).
-SNAPSHOT = os.path.join(REPO, "tests", "fixtures", "run3-snapshots", "pre-l1")
 VARIANT = "v2"
 SCHEMAS = os.path.join(REPO, "contracts", "schemas")
-REGRESSION = os.path.join(REPO, "ledgers", "regression")
-GOLDEN = os.path.join(REGRESSION, "golden", "rc-0009-agent-memory-v2")
-MUTATED = {"rc-0009": "rc-0009-hallucinated-claim", "rc-0010": "rc-0010-smuggled-claim", "rc-0011": "rc-0011-solicitation"}
 LAW_TREES = ("contracts", "reader")
 LAW_FILES = (("docs", "CHARTER.md"), ("engine", "procedure", "design.md"), ("engine", "pens", "prompt-template.md"),
              ("engine", "gate", "l1", "procedure.md"))
-COPIED_DIRS = ("15-frozen", "20-design", "30-figures", "40-compose", os.path.join("50-gate", VARIANT))
-SNAPSHOT_DIRS = ("40-compose", os.path.join("50-gate", VARIANT))
-
-
-def run3_source(rel: str) -> str:
-    return os.path.join(SNAPSHOT if rel in SNAPSHOT_DIRS else RUN3, rel)
-L1_MODEL = "claude-opus-5"
 
 
 def read(path: str) -> str:
@@ -67,20 +54,6 @@ def read(path: str) -> str:
 def read_json(path: str):
     with open(path, encoding="utf-8") as handle:
         return json.load(handle)
-
-
-def write_json(path: str, payload) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, ensure_ascii=False, indent=2)
-
-
-def validator(name: str) -> Draft202012Validator:
-    return Draft202012Validator(read_json(os.path.join(SCHEMAS, f"{name}.schema.json")))
-
-
-def schema_errors(name: str, instance) -> list[str]:
-    return [error.message for error in validator(name).iter_errors(instance)]
 
 
 def _git(cwd: str, *args: str) -> None:
@@ -108,56 +81,9 @@ def make_law(destination: str) -> str:
     return destination
 
 
-def make_run(root: str, *, variants=(VARIANT,), partial_until: str = "gate") -> str:
-    """런 -3 v2 2회차 실물을 tmp 로 복사(읽기만) + 합성 run.yaml. `variants` 에 v1 이 있으면 v2 사본에 L0 결함을 심는다."""
-    run_root = os.path.join(root, "runs", RUN_ID)
-    for rel in COPIED_DIRS:
-        shutil.copytree(run3_source(rel), os.path.join(run_root, rel))
-    frozen = os.path.join(run_root, "15-frozen", "material-spec.v1.json")
-    os.chmod(frozen, 0o444)
-    real = yaml.safe_load(read(os.path.join(RUN3, "run.yaml")))
-    meta = {
-        "schema": "run/v0", "run_id": RUN_ID, "status": "active", "run_kind": "partial", "partial_until": partial_until,
-        "patent": real["patent"], "engine": {"commit": "e" * 40, "worktree": None},
-        "numeric_whitelist": real["numeric_whitelist"], "frozen": real["frozen"],
-        "pens": real["pens"], "comparison_axis": real["comparison_axis"],
-    }
-    with open(os.path.join(run_root, "run.yaml"), "w", encoding="utf-8") as handle:
-        yaml.safe_dump(meta, handle, allow_unicode=True, sort_keys=False)
-    if sha256_file(frozen) != real["frozen"][-1]["spec_digest"]:
-        pytest.fail("런 -3 동결본 사본의 지문이 run.yaml 기록과 다르다")
-    for variant in variants:
-        if variant == VARIANT:
-            continue
-        text = read(os.path.join(run_root, "40-compose", VARIANT, "thread.annotated.md"))
-        text = text.replace(f"variant: {VARIANT}\n", f"variant: {variant}\n", 1).replace("[M1,M2,M3,M4,M5,M6]", "[M999,M2,M3,M4,M5,M6]", 1)
-        path = os.path.join(run_root, "40-compose", variant, "thread.annotated.md")
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w", encoding="utf-8") as handle:
-            handle.write(text)
-    return run_root
-
-
 @pytest.fixture
 def law(tmp_path) -> str:
     return make_law(os.path.join(str(tmp_path), "law"))
-
-
-@pytest.fixture
-def run_root(tmp_path) -> str:
-    return make_run(os.path.join(str(tmp_path), "r"))
-
-
-def verdict_of(run_root: str, variant: str = VARIANT) -> dict:
-    return read_json(os.path.join(run_root, "50-gate", variant, "verdict.json"))
-
-
-def rows_by_id(verdict: dict) -> dict:
-    return {row["check_id"]: row for row in verdict["checks"]}
-
-
-def lanes_root(run_root: str, variant: str = VARIANT) -> str:
-    return os.path.join(run_root, "50-gate", variant, "lanes")
 
 
 def clean_payload() -> dict:
@@ -169,51 +95,8 @@ def defect(rule: str, tweet: int, sentence: int, directive: str | None = None) -
             "observed": "재료가 말하지 않는 단정", "fix_directive": directive or f"T{tweet}/S{sentence} 가 인용한 재료로 재서술하라 — 재료 밖 단정을 빼라"}
 
 
-def respond_l1(run_root: str, payloads: list[dict], *, model: str = L1_MODEL, effort: str = "high", variant: str = VARIANT) -> None:
-    root = lanes_root(run_root, variant)
-    for index, payload in enumerate(payloads):
-        lane_id = f"gate-l1/{variant}/batch-{index}"
-        request = read_json(lane_file(root, lane_id, REQUEST_JSON))
-        write_json(lane_file(root, lane_id, RESPONSE_JSON), {
-            "lane_id": lane_id, "model": model, "effort": effort, "input_digest": request["input_digest"], "payload": payload,
-        })
-
-
 def run_l1(run_root: str, law: str, variant: str = VARIANT) -> dict:
     return gate_stage.run_l1(run_root=run_root, repo=law, variant=variant)
-
-
-def l1_to_pending(run_root: str, law: str) -> dict:
-    outcome = run_l1(run_root, law)
-    if outcome["status"] != "pending" or len(outcome["pending"]) != 3:
-        pytest.fail(f"첫 진입이 대기 3 이 아니다: {outcome}")
-    return outcome
-
-
-def replace_sentence(text: str, tweet: int, sentence: int, new_line: str) -> str:
-    """주석본에서 T<n>/S<i> 줄을 통째로 바꾼다(태그 포함)."""
-    lines = text.split("\n")
-    header = next(i for i, line in enumerate(lines) if line.startswith(f"## T{tweet} "))
-    lines[header + sentence] = new_line
-    return "\n".join(lines)
-
-
-def respond_pen(run_root: str, lane_id: str, text: str) -> None:
-    root = os.path.join(run_root, "40-compose", "lanes")
-    request = read_json(lane_file(root, lane_id, REQUEST_JSON))
-    write_json(lane_file(root, lane_id, RESPONSE_JSON), {
-        "lane_id": lane_id, "model": L1_MODEL, "effort": request["effort"], "input_digest": request["input_digest"],
-        "payload": {"thread_annotated_md": text},
-    })
-
-
-T4S2_TAG = "[M24,M27,M28,M75,M78,M79,M115,M119]"
-
-
-def revised_line(round_no: int) -> str:
-    """T4/S2 의 정당한 국소 수정 — 인용 그대로 · 재료 안 문언(회차마다 한 낱말이 달라 지문이 바뀐다)."""
-    extra = " again" * (round_no - 1)
-    return f"It compares a query embedding to memory value embeddings by cosine similarity and keeps a top subset{extra}.{T4S2_TAG}"
 
 
 # ---------------------------------------------------------------------------
@@ -353,12 +236,6 @@ def test_merge_majority_minority_advisory_speech_act_and_ids(law) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _l1_defect_state(run_root: str, law: str) -> dict:
-    l1_to_pending(run_root, law)
-    respond_l1(run_root, [{"defects": [defect("l1.citation-mismatch", 4, 2)], "flags": [], "speech_acts": []}] * 3)
-    return run_l1(run_root, law)
-
-
 def test_revision_cap_matches_schema_maximum(law) -> None:
     """캡은 두 곳에 있다 — 계약 `gate.yaml#loop.revision_cap` 과 판정문 스키마의 `revision_round.maximum`.
 
@@ -376,79 +253,9 @@ def test_revision_cap_matches_schema_maximum(law) -> None:
 # ---------------------------------------------------------------------------
 
 
-def synthesize_downstream(run_root: str, law: str, variant: str = VARIANT) -> None:
-    """CP2 는 T69 ⑦ 부터 L2·계기·소견·최종 심급을 전제한다. 이 모듈은 ⑤(L1·수정 루프·봉투) 시험이므로
-    그 네 층은 **최소 합성**으로만 세운다 — 각 층의 본시험은 m36(L2·계기)·m37(소견·최종 심급·출하)이다."""
-    from engine.gate import final_eyes as fe_mod
-    from engine.stages import write_text as _write_text
-
-    paths = RunPaths(run_root, law)
-    stripped = paths.thread_stripped_md(variant)
-    digest = sha256_file(stripped)
-    targets = read_json(paths.blueprint_json)["transmission_targets"]
-    write_json(paths.score_json(variant), {
-        "input_digest": digest, "delivery_fidelity": 0.5,
-        "per_target": [{"material_id": t, "hit_rate": 0.5, "weakest_tweet": 1} for t in targets],
-        "restatement": {"aligned": len(targets)},
-    })
-    _write_text(paths.l2_md(variant), "# L2 자문 메모\n구조의 흐름을 확인했다.\n")
-    memo_path = paths.critique_memo(variant)
-    _write_text(memo_path, "# 소견\n훅은 조응하고 착지는 안도감으로 닫힌다.\n")
-    write_json(os.path.join(paths.critique_dir(variant), "critique-report.json"), {
-        "status": "ok", "candidate_digest": digest, "memo_digest": sha256_file(memo_path),
-    })
-    meta = yaml.safe_load(read(paths.run_yaml))
-    version = int(meta["frozen"][-1]["spec_version"])
-    verdict = read_json(paths.verdict_json(variant))
-    verdict["inactive_layers"] = []
-    verdict["final_eyes"] = {
-        "verdict": "pass", "veto_reason": None, "observations": [],
-        "inputs_read": fe_mod.input_records(paths, fe_mod.provided_files(paths, variant, version)),
-    }
-    write_json(paths.verdict_json(variant), verdict)
-
-
-def _advanced_with_flags(run_root: str, law: str) -> dict:
-    l1_to_pending(run_root, law)
-    sa = {"predicate": "sa-02", "locus": {"tweet": 8, "sentence": 3}, "note": "전망"}
-    respond_l1(run_root, [{"defects": [], "flags": [], "speech_acts": [sa]}] * 3)
-    return run_l1(run_root, law)
-
-
 # ---------------------------------------------------------------------------
 # ⒁ 구동기
 # ---------------------------------------------------------------------------
-
-
-class L1Stub:
-    """`claude -p` json 출력 흉내 — L1 좌표엔 깨끗한 payload, 펜 좌표엔 국소 수정 초안."""
-
-    def __init__(self, run_root: str):
-        self.run_root = run_root
-        self.calls: list[list[str]] = []
-
-    def __call__(self, argv, stdin, env, timeout):
-        self.calls.append(list(argv))
-        text = stdin.decode("utf-8")
-        lane_id = text.split("\n", 1)[0].replace("# 레인 요청 — ", "").strip()
-        digest = next(line for line in text.split("\n") if line.startswith("| 입력 지문 | `")).split("`")[1]
-        observed = argv[argv.index("--model") + 1]
-        if lane_id.startswith("gate-l1/"):
-            payload = clean_payload()
-        else:
-            before = read(os.path.join(self.run_root, "40-compose", VARIANT, "thread.annotated.md"))
-            payload = {"thread_annotated_md": replace_sentence(before, 4, 2, revised_line(1))}
-        body = {"type": "result", "subtype": "success", "is_error": False, "num_turns": 1, "duration_ms": 3, "total_cost_usd": 0.0,
-                "session_id": "stub", "structured_output": {"lane_id": lane_id, "model": "self", "effort": "self", "input_digest": digest,
-                                                             "payload": payload},
-                "modelUsage": {observed: {"inputTokens": 1, "outputTokens": 9}}}
-        return drv.ExecResult(0, json.dumps(body, ensure_ascii=False).encode(), b"", False, 3)
-
-
-def _drive(law: str, run_root: str, evidence: str, *argv: str, executor=None):
-    lines: list[str] = []
-    head = ["--repo", law, "--run-root", run_root, "--evidence-dir", evidence]
-    return drv.main([*head, *argv], executor=executor, out=lines.append), lines
 
 
 # ---------------------------------------------------------------------------

@@ -37,36 +37,11 @@ GOLDEN_DIR = os.path.join(
 )
 CASES_PATH = os.path.join(REPO, "ledgers", "regression", "cases.jsonl")
 DEPENDENCY_SOURCE = os.path.join(REPO, "reader", "lib", "dependency_parse.py")
-US854_SOURCE = os.path.join(
-    REPO, "runs", "openai-us20260147854a1-cim-fp-3", "00-source", "patent.md"
-)
-US854_SPEC = os.path.join(
-    REPO,
-    "runs",
-    "openai-us20260147854a1-cim-fp-3",
-    "15-frozen",
-    "material-spec.v1.json",
-)
-
-
-def narrowed_rules() -> Rules:
-    """`all-preceding` 어형을 뺀 규칙 — 재정 T11 이전의 폭을 그대로 재현한다."""
-    raw = copy.deepcopy(Rules.load().raw)
-    forms = raw["dependency_citation"]["forms"]
-    raw["dependency_citation"]["forms"] = [
-        form for form in forms if form.get("id") != "all-preceding"
-    ]
-    return Rules(raw, "<pre-T11>")
 
 
 def load_json(path: str) -> dict:
     if not os.path.isfile(path):
         pytest.fail(f"golden 표본이 없다: {path} — 반례가 사라지면 그 주장은 근거를 잃는다")
-    with open(path, encoding="utf-8") as handle:
-        return json.load(handle)
-
-
-def read_json(path: str) -> dict:
     with open(path, encoding="utf-8") as handle:
         return json.load(handle)
 

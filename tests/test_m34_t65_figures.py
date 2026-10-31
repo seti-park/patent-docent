@@ -22,7 +22,6 @@ import shutil
 import struct
 import subprocess
 import sys
-import zlib
 
 import pytest
 import yaml
@@ -46,11 +45,6 @@ from engine.stages import figures as figures_stage  # noqa: E402
 from engine.stages import gate as gate_stage  # noqa: E402
 from tools import drive_partial_read as drv  # noqa: E402
 
-RUN_ID = "gdm-wo2026128750a1-agent-memory-3"
-RUN3 = os.path.join(REPO, "runs", RUN_ID)
-RUN3_FROZEN = os.path.join(RUN3, "15-frozen", "material-spec.v1.json")
-RUN3_BLUEPRINT = os.path.join(RUN3, "20-design", "blueprint.json")
-RUN3_V2_THREAD = os.path.join(RUN3, "40-compose", "v2", "thread.annotated.md")
 GOLDEN_THREAD = os.path.join(REPO, "ledgers", "regression", "golden", "rc-0001-numberless", "thread.annotated.md")
 GOLDEN_0001 = os.path.join(REPO, "ledgers", "regression", "golden", "rc-0001-numberless")
 GOLDEN_0008 = os.path.join(REPO, "ledgers", "regression", "golden", "rc-0008-thread-marker-counterexamples", "samples.json")
@@ -58,9 +52,6 @@ SCHEMAS = os.path.join(REPO, "contracts", "schemas")
 FIXTURES = os.path.join(REPO, "tests", "fixtures", "schema-enforcement")
 LAW_TREES = ("contracts", "reader", "studio")
 LAW_FILES = (("docs", "CHARTER.md"), ("engine", "procedure", "design.md"), ("engine", "pens", "prompt-template.md"))
-COMPOSITE_FILE = "fig-08-09.png"
-SLOT_ENUM = compose_stage.sheet_values(REPO)["slot_enum"]
-SHEET = compose_stage.sheet_values(REPO)
 
 
 # ---------------------------------------------------------------------------
@@ -82,16 +73,6 @@ def write_json(path: str, payload) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=True)
-
-
-def make_png(width: int, height: int, seed: int = 0) -> bytes:
-    """표준 라이브러리만으로 8비트 그레이 PNG(필터 0)."""
-    def chunk(kind: bytes, body: bytes) -> bytes:
-        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body) & 0xFFFFFFFF)
-    row = bytes([0]) + bytes([(seed + x) % 256 for x in range(width)])
-    raw = row * height
-    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 0, 0, 0, 0))
-            + chunk(b"IDAT", zlib.compress(raw, 1)) + chunk(b"IEND", b""))
 
 
 def _git(cwd: str, *args: str) -> str:
@@ -117,146 +98,6 @@ def make_law(destination: str) -> str:
     return destination
 
 
-def fixture_frozen() -> dict:
-    """런 -3 동결본 사본 + 복합 시트: FIG-8 의 raw_path 를 실측 파일명(fig-08-09.png)으로, FIG-9 를 같은 파일로 추가."""
-    frozen = read_json(RUN3_FROZEN)
-    figures = frozen["figures"]
-    for figure in figures:
-        if figure["id"] == "FIG-8":
-            figure["raw_path"] = f"00-source/figures-raw/{COMPOSITE_FILE}"
-    template = copy.deepcopy(next(figure for figure in figures if figure["id"] == "FIG-8"))
-    template["id"] = "FIG-9"
-    template["caption_quote"] = "Figure 9 is a block diagram that illustrates aspects of a machine-learned agent system."
-    template["numerals"] = []
-    figures.insert([f["id"] for f in figures].index("FIG-8") + 1, template)
-    return frozen
-
-
-def make_run(root: str, *, partial_until: str = "gate", frozen: dict | None = None, run_kind: str = "partial",
-             blueprint_mutate=None, drafts: dict | None = None) -> str:
-    run_root = os.path.join(root, "runs", RUN_ID)
-    frozen = frozen or fixture_frozen()
-    frozen_dir = os.path.join(run_root, "15-frozen")
-    os.makedirs(frozen_dir, exist_ok=True)
-    frozen_path = os.path.join(frozen_dir, "material-spec.v1.json")
-    write_json(frozen_path, frozen)
-    os.chmod(frozen_path, 0o444)
-    digest = sha256_file(frozen_path)
-    # 원천 도면 — raw_path 이름 그대로 1×1 PNG(복합 시트는 파일 하나)
-    raw_dir = os.path.join(run_root, "00-source", "figures-raw")
-    os.makedirs(raw_dir, exist_ok=True)
-    rows = []
-    seen: set[str] = set()
-    for index, figure in enumerate(frozen["figures"]):
-        name = os.path.basename(figure["raw_path"])
-        if name in seen:
-            continue
-        seen.add(name)
-        blob = make_png(1, 1, seed=index)
-        with open(os.path.join(raw_dir, name), "wb") as handle:
-            handle.write(blob)
-        rows.append({"filename": name, "sha256": sha256_bytes(blob), "figure_number": index + 1, "bytes": len(blob),
-                     "counted_as": 1, "counting_unit": "source-figure-file"})
-    write_json(os.path.join(run_root, "00-source", "source-report.json"),
-               {"stage": "source", "run_id": RUN_ID, "figure_count": len(rows), "figures": rows,
-                "figures_manifest_digest": "sha256:" + "0" * 64, "source": {"canonical_sha256": "sha256:" + "0" * 64}})
-    meta = {
-        "schema": "run/v0", "run_id": RUN_ID, "status": "active", "run_kind": run_kind, "partial_until": partial_until,
-        "engine": {"commit": "e" * 40, "worktree": None}, "numeric_whitelist": [],
-        "frozen": [{"spec_version": 1, "path": "15-frozen/material-spec.v1.json", "spec_digest": digest}],
-    }
-    with open(os.path.join(run_root, "run.yaml"), "w", encoding="utf-8") as handle:
-        yaml.safe_dump(meta, handle, allow_unicode=True, sort_keys=False)
-    blueprint = read_json(RUN3_BLUEPRINT)
-    blueprint["spec_digest"] = digest
-    blueprint["run_id"] = RUN_ID
-    if blueprint_mutate:
-        blueprint_mutate(blueprint)
-    write_json(os.path.join(run_root, "20-design", "blueprint.json"), blueprint)
-    for variant, text in (drafts or {}).items():
-        path = os.path.join(run_root, "40-compose", variant, "thread.annotated.md")
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w", encoding="utf-8") as handle:
-            handle.write(text)
-    return run_root
-
-
-class FakeRenderer:
-    """`renderer(jobs, jobs_path) -> results` — 2400×1350 PNG 를 합성한다. `size` 로 틀린 치수를, `fail` 로 실패 자산을 심는다."""
-
-    def __init__(self, size=(2400, 1350), fail=()):
-        self.size = size
-        self.fail = set(fail)
-        self.calls: list[list[dict]] = []
-
-    def __call__(self, jobs, jobs_path):
-        self.calls.append(list(jobs))
-        results = []
-        for job in jobs:
-            if job["asset_id"] in self.fail:
-                results.append({"out": job["out"], "ok": False, "error": "planted"})
-                continue
-            os.makedirs(os.path.dirname(job["out"]), exist_ok=True)
-            with open(job["out"], "wb") as handle:
-                handle.write(make_png(*self.size, seed=len(self.calls)))
-            results.append({"out": job["out"], "ok": True})
-        return results
-
-
-def run_digest(run_root: str) -> str:
-    return yaml.safe_load(read(os.path.join(run_root, "run.yaml")))["frozen"][0]["spec_digest"]
-
-
-def prepared(run_root: str, law: str, **kwargs):
-    renderer = FakeRenderer(**kwargs)
-    outcome = figures_stage.prepare(run_root, law, renderer=renderer)
-    return outcome, renderer
-
-
-def validator(name: str) -> Draft202012Validator:
-    return Draft202012Validator(read_json(os.path.join(SCHEMAS, f"{name}.schema.json")))
-
-
-def rows_by_id(outcome: dict) -> dict:
-    return {row.check_id: row for row in outcome["rows"]}
-
-
-def frontmatter_for(variant: str, digest: str, effort: str) -> str:
-    return (f"---\nrun_id: {RUN_ID}\nvariant: {variant}\npen: {{ vendor: anthropic, model: opus-5, effort: {effort} }}\n"
-            f"spec_version: 1\nspec_digest: {digest}\n---\n")
-
-
-def golden_body() -> str:
-    return read(GOLDEN_THREAD).split("---\n", 2)[2]
-
-
-def draft_for(variant: str, run_root: str, *, headers: dict[int, str] | None = None) -> str:
-    """골든 본문 + 픽스처 프런트매터. `headers` = {T: figspec} 로 헤더 fig 를 바꾼다."""
-    efforts = {pen["variant"]: pen["effort"] for pen in compose_stage.registry.pens(REPO)}
-    body = golden_body()
-    if headers:
-        def swap(match):
-            n = int(match.group(1))
-            return f"## T{n} {{slot: {match.group(2)}, fig: {headers.get(n, match.group(3))}}}"
-        body = re.sub(r"^## T(\d+) \{slot: ([a-z]+), fig: ([^}]+)\}$", swap, body, flags=re.M)
-    return frontmatter_for(variant, run_digest(run_root), efforts[variant]) + body
-
-
-def headers_from_selection(selection: dict) -> dict[int, str]:
-    by_tweet = figures_stage.selection_assets_by_tweet(selection)
-    return {n: "+".join(assets) for n, assets in by_tweet.items()}
-
-
-def respond(run_root: str, lane_id: str, payload: dict, *, model: str = "claude-opus-5") -> str:
-    directory = os.path.join(run_root, "40-compose", "lanes", *lane_id.split("/"))
-    request = read_json(os.path.join(directory, "request.json"))
-    path = os.path.join(directory, "response.json")
-    with open(path, "w", encoding="utf-8") as handle:
-        json.dump({"lane_id": lane_id, "model": model, "effort": request["effort"], "input_digest": request["input_digest"],
-                   "payload": payload}, handle, ensure_ascii=False)
-    return path
-
-
 def tournament(run_root: str) -> list[dict]:
     path = os.path.join(run_root, "40-compose", "tournament-rows.jsonl")
     return [json.loads(line) for line in read(path).splitlines() if line.strip()] if os.path.isfile(path) else []
@@ -265,11 +106,6 @@ def tournament(run_root: str) -> list[dict]:
 @pytest.fixture
 def law(tmp_path) -> str:
     return make_law(os.path.join(str(tmp_path), "law"))
-
-
-@pytest.fixture
-def run_root(tmp_path) -> str:
-    return make_run(str(tmp_path))
 
 
 # ---------------------------------------------------------------------------
@@ -354,19 +190,6 @@ def test_figures_schemas_accept_and_reject_fixtures() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _rename_source(run_root: str, old: str, new: str, *, extra_row: bool = False) -> None:
-    raw_dir = os.path.join(run_root, "00-source", "figures-raw")
-    os.rename(os.path.join(raw_dir, old), os.path.join(raw_dir, new))
-    report_path = os.path.join(run_root, "00-source", "source-report.json")
-    report = read_json(report_path)
-    for row in report["figures"]:
-        if row["filename"] == old:
-            row["filename"] = new
-            if extra_row:
-                report["figures"].append(dict(row, filename=old + ".dup"))
-    write_json(report_path, report)
-
-
 # ---------------------------------------------------------------------------
 # ⑺ 원천 지문 불일치 → 환경 오류 · ⑧ 렌더 환경 부재
 # ---------------------------------------------------------------------------
@@ -385,17 +208,6 @@ def _rename_source(run_root: str, old: str, new: str, *, extra_row: bool = False
 # ---------------------------------------------------------------------------
 # ⑪ stop-shape 가동 — 실제 manifest + 런 -3 v2 주석본
 # ---------------------------------------------------------------------------
-
-
-def context_for(text: str, law_root: str, manifest: dict | None, frozen: dict) -> L0Context:
-    law = L0Law.load(law_root)
-    parsed = parse_mod.parse(text, slot_enum=SLOT_ENUM)
-    if parsed.errors:
-        pytest.fail(f"표본이 파싱되지 않는다: {parsed.errors[:2]}")
-    stripped = strip_mod.strip(text)
-    return L0Context(law=law, repo=law_root, parsed=parsed, stripped=stripped, index=None, frozen=frozen,
-                     spec_digest="sha256:" + "0" * 64, meta={}, manifest=manifest, inactive={}, url_re=gate_stage.URL_RE,
-                     slot_enum=tuple(SLOT_ENUM))
 
 
 # ---------------------------------------------------------------------------
@@ -467,26 +279,6 @@ def test_golden_rc0001_still_passes_every_rule_with_new_tokenizer(tmp_path) -> N
 # ---------------------------------------------------------------------------
 
 
-def _round_one(law: str, run_root: str) -> dict:
-    """1회차 확정본 3판 + 토너먼트 행 3 + 도면 자산층(prepare·select). 반환 = selection."""
-    prepared(run_root, law)
-    figures_stage.select(run_root, law)
-    for variant in ("v1", "v2", "v3"):
-        path = os.path.join(run_root, "40-compose", variant, "thread.annotated.md")
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w", encoding="utf-8") as handle:
-            handle.write(draft_for(variant, run_root))
-    rows = []
-    for pen in compose_stage.registry.pens(law):
-        rows.append({"variant": pen["variant"], "pen": compose_stage.registry.pen_assignment(pen), "comparison_axis": "effort",
-                     "taste_weight": "low", "spec_version": 1, "spec_digest": run_digest(run_root), "recorded_at": "2026-09-13T09:42:30Z",
-                     "outcome": "drafted"})
-    with open(os.path.join(run_root, "40-compose", "tournament-rows.jsonl"), "w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
-    return read_json(os.path.join(run_root, "30-figures", "selection.json"))
-
-
 # ---------------------------------------------------------------------------
 # ⑮ gate 재판정 — rounds/r1 보존
 # ---------------------------------------------------------------------------
@@ -495,37 +287,6 @@ def _round_one(law: str, run_root: str) -> dict:
 # ---------------------------------------------------------------------------
 # ⑯ 구동기
 # ---------------------------------------------------------------------------
-
-
-class PenStub:
-    """`claude -p` json 출력 흉내 — 좌표의 변주에 맞는 초안(선택과 같은 헤더)을 낸다."""
-
-    def __init__(self, run_root: str, headers: dict[int, str]):
-        self.run_root = run_root
-        self.headers = headers
-        self.calls: list[list[str]] = []
-
-    def __call__(self, argv, stdin, env, timeout):
-        self.calls.append(list(argv))
-        text = stdin.decode("utf-8")
-        lane_id = text.split("\n", 1)[0].replace("# 레인 요청 — ", "").strip()
-        digest = next(line for line in text.split("\n") if line.startswith("| 입력 지문 | `")).split("`")[1]
-        variant = lane_id.split("/")[1]
-        observed = argv[argv.index("--model") + 1]
-        payload = {"thread_annotated_md": draft_for(variant, self.run_root, headers=self.headers)}
-        body = {"type": "result", "subtype": "success", "is_error": False, "num_turns": 1, "duration_ms": 3, "total_cost_usd": 0.0,
-                "session_id": "stub", "structured_output": {"lane_id": lane_id, "model": "self", "effort": "self", "input_digest": digest,
-                                                             "payload": payload},
-                "modelUsage": {observed: {"inputTokens": 1, "outputTokens": 9}}}
-        return drv.ExecResult(0, json.dumps(body, ensure_ascii=False).encode(), b"", False, 3)
-
-
-def _drive(law: str, run_root: str, evidence: str, *argv: str, executor=None, dry_run: bool = False):
-    lines: list[str] = []
-    head = ["--repo", law, "--run-root", run_root, "--evidence-dir", evidence]
-    if dry_run:
-        head.append("--dry-run")
-    return drv.main([*head, *argv], executor=executor, out=lines.append), lines
 
 
 # ---------------------------------------------------------------------------

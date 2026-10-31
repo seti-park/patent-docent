@@ -23,14 +23,6 @@ import test_m21_retry_budget_by_judgment_point as m21  # noqa: E402
 
 
 SCHEMA_PATH = os.path.join(REPO, "contracts", "schemas", "convergence.schema.json")
-RUN_REPORTS = (
-    "runs/gdm-wo2026128750a1-agent-memory/10-read/convergence.json",
-    "runs/gdm-wo2026128750a1-agent-memory/10-read/convergence-early.json",
-    "runs/openai-us20260147854a1-cim-fp-2/10-read/convergence.json",
-    "runs/openai-us20260147854a1-cim-fp-2/10-read/convergence-early.json",
-    "runs/openai-us20260147854a1-cim-fp-3/10-read/convergence.json",
-    "runs/openai-us20260147854a1-cim-fp-3/10-read/convergence-early.json",
-)
 
 
 def load_schema() -> tuple[str, dict]:

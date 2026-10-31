@@ -33,30 +33,8 @@ GOLDEN_DIR = os.path.join(
 )
 CASES_PATH = os.path.join(REPO, "ledgers", "regression", "cases.jsonl")
 
-US854_SOURCE = os.path.join(
-    REPO, "runs", "openai-us20260147854a1-cim-fp-3", "00-source", "patent.md"
-)
-WO_SOURCE = os.path.expanduser(
-    "~/projects/workspaces/docent-rehearsal-01-source/input-raw/WO2026-128750A1.txt"
-)
 
 # WO 원천의 도면 절이 선언한 도면 수. 이 수의 정본은 원천 자신이다(`Figure 1`~`Figure 21`).
-WO_DECLARED_FIGURES = 21
-
-
-def narrowed_rules() -> Rules:
-    """`case_insensitive` 선언을 걷어낸 규칙 — **재정 T7 이전의 폭**을 그대로 재현한다.
-
-    ★ 무회귀를 **박아 둔 상수**로 재지 않고 이렇게 재는 이유가 있다. 상수는 고치는 시점과
-    늘어나는 시점이 달라 반드시 낡으며(백로그 B-3 · 재정 T5 가 그 처분이다), 낡은 상수를 든
-    시험은 통과하든 실패하든 무엇도 증명하지 못한다. 전후를 **같은 실행 안에서** 재면
-    기준값을 적을 필요가 없다.
-    """
-    import copy
-
-    raw = copy.deepcopy(Rules.load().raw)
-    raw["figure_captions"].pop("case_insensitive", None)
-    return Rules(raw, "<pre-T7>")
 
 
 def load_json(path: str) -> dict:
@@ -64,11 +42,6 @@ def load_json(path: str) -> dict:
         pytest.fail(f"golden 표본이 없다: {path} — 반례가 사라지면 그 주장은 근거를 잃는다")
     with open(path, encoding="utf-8") as handle:
         return json.load(handle)
-
-
-def read_source(path: str) -> str:
-    with open(path, encoding="utf-8") as handle:
-        return handle.read()
 
 
 def caption_ids(text: str, rules: Rules | None = None) -> list[str]:

@@ -49,9 +49,6 @@ CORPUS_BASE = os.path.join(REPO, "tests", "fixtures", "reader", "base")
 
 # 실특허 통주 3 — 재정 P-13 의 1급 산출물이 나온 그 런. **읽기 전용**이다(이 레인의 소관이
 # 아니며, 행위시법상 이 라운드의 개정은 그 런에 소급하지 않는다).
-RUN_DIR = os.path.join(REPO, "runs", "openai-us20260147854a1-cim-fp-3")
-RUN_SOURCE = os.path.join(RUN_DIR, "00-source", "patent.md")
-RUN_SPEC = os.path.join(RUN_DIR, "10-read", "material-spec.json")
 
 RULES = Rules.load()
 SCHEMA = load_schema()
@@ -203,19 +200,6 @@ def test_unit_vocabulary_and_l0_value_unit_pattern_agree_on_b() -> None:
 # ---------------------------------------------------------------------------
 # ② 재정 Q5 ② — 나표지 제거, 조건부는 명확 구문만
 # ---------------------------------------------------------------------------
-
-
-def real_cl9() -> dict:
-    """통주 3 의 CL-9 실물(읽기 전용). 두 독립 실행이 갈린 바로 그 자리다."""
-    if not os.path.isfile(RUN_SPEC):
-        pytest.fail(f"실특허 런 산출이 없다: {RUN_SPEC} — 실측의 피검체가 사라졌다")
-    with open(RUN_SPEC, encoding="utf-8") as handle:
-        spec = json.load(handle)
-    for claim in spec["claims"]["dependents"]:
-        if claim.get("id") == "CL-9":
-            return claim
-    pytest.fail("통주 3 산출에 CL-9 가 없다")
-    return {}
 
 
 def test_bare_when_declaration_is_now_rejected_end_to_end() -> None:

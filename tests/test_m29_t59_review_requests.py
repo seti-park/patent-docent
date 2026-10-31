@@ -48,7 +48,6 @@ MATERIAL_SCHEMA = os.path.join(REPO, "reader", "schemas", "material-spec.schema.
 ENVELOPE_SCHEMA = os.path.join(REPO, "contracts", "schemas", "approval-envelope.schema.json")
 CONVERGENCE_SCHEMA = os.path.join(REPO, "contracts", "schemas", "convergence.schema.json")
 BASE_SPEC = os.path.join(REPO, "tests", "fixtures", "reader", "base", "material-spec.json")
-LEGACY_RUN = os.path.join(REPO, "runs", "gdm-wo2026128750a1-agent-memory", "10-read")
 
 SECTION_TITLE = "## 8-b. ★ Owner 판독 요청 — 레인 자기 신고 (재정 T58 ③)"
 

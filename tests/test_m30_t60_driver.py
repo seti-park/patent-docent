@@ -32,10 +32,6 @@ from engine.paths import RunPaths  # noqa: E402
 from engine.stages import freeze as freeze_stage  # noqa: E402
 from tools import drive_partial_read as drv  # noqa: E402
 
-FIXTURE_LANE = os.path.join(
-    REPO, "runs", "gdm-wo2026128750a1-agent-memory", "10-read", "lanes",
-    "read-a", "decompose", "batch-0",
-)
 PROFILES = lane_profiles(REPO)
 
 
@@ -166,21 +162,6 @@ def payloads_with_requests() -> dict:
     payloads["read-a"]["ground-independent"]["review_requests"] = [{"target": "M4", "reason": "조응."}]
     payloads["read-a"]["synthesize"]["review_requests"] = [{"target": "M10", "reason": "귀속."}]
     return payloads
-
-
-def single_lane(tmp_path, *, model: str = "fable-5.1", effort: str = "low", task: str = "decompose"):
-    """엔진 어댑터로 요청 한 좌표를 렌더한 단독 문맥(법 = 본 리포)."""
-    lanes = os.path.join(str(tmp_path), "lanes")
-    fixture = json.load(open(os.path.join(FIXTURE_LANE, "request.json"), encoding="utf-8"))
-    fields = {k: v for k, v in fixture.items() if k != "input_digest"}
-    fields.update({"model": model, "effort": effort, "task": task, "lane_id": f"read-a/{task}/batch-0"})
-    accepted = _accepted_models(load_stage_contract("read", REPO).get("lane") or {}, model)
-    request = LaneRequest(**fields, repo_root=REPO, accepted_models=accepted)
-    FileLaneAdapter(lanes, repo=REPO).write_request(request)
-    lines: list[str] = []
-    ctx = drv.Context(run_id="x", repo=REPO, worktree=str(tmp_path), run_root=os.path.join(str(tmp_path), "runs", "x"),
-                      evidence=os.path.join(str(tmp_path), "evidence"), law=REPO, executor=lambda *a: None, out=lines.append)
-    return ctx, lanes, request, lines
 
 
 def receipt(ctx, lane_id: str) -> dict:
@@ -366,18 +347,4 @@ def test_help_lists_fourteen_commands() -> None:
     listed = parser._subparsers._group_actions[0].choices  # noqa: SLF001 - 명령 집합 대조
     if tuple(listed) != drv.COMMANDS or len(drv.COMMANDS) != 26:
         pytest.fail(f"명령 26 가 아니다(T69 ⑥ · gate-l2·revise-free·probe): {tuple(listed)}")
-
-
-def _echo_stub(lane_id_echo: str, digest_echo: str):
-    class Echo:
-        calls: list = []
-        def __call__(self, argv, stdin, env, timeout):
-            self.calls.append(argv)
-            body = {"lane_id": lane_id_echo, "model": "fable-5.1", "effort": "low",
-                    "input_digest": digest_echo, "payload": {"items": []}}
-            out = {"result": json.dumps(body), "structured_output": body, "is_error": False,
-                   "modelUsage": {"claude-fable-5-1": {"outputTokens": 10}}, "num_turns": 1,
-                   "total_cost_usd": 0.1, "duration_ms": 5, "session_id": "s"}
-            return drv.ExecResult(0, json.dumps(out).encode(), b"", False, 5)
-    return Echo()
 

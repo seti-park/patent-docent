@@ -39,20 +39,13 @@ from engine.stages import gate as gate_stage  # noqa: E402
 from engine.stages import probe as probe_stage  # noqa: E402
 from tools import drive_partial_read as drv  # noqa: E402
 
-RUN_ID = "gdm-wo2026128750a1-agent-memory-3"
-RUN3 = os.path.join(REPO, "runs", RUN_ID)
 # 런 -3 는 살아 있는 런이라 반입마다 상태가 앞으로 간다. 이 시험의 전제(L1 pass · advance · L2 미실행)는 `d428830` 상태의
 # 바이트 사본 `tests/fixtures/run3-snapshots/post-l1/` 에 고정한다(40-compose · 50-gate/v2 두 트리 · 나머지는 실물 그대로).
-SNAPSHOT = os.path.join(REPO, "tests", "fixtures", "run3-snapshots", "post-l1")
 VARIANT = "v2"
-SCHEMAS = os.path.join(REPO, "contracts", "schemas")
 LAW_TREES = ("contracts", "reader")
 LAW_FILES = (("docs", "CHARTER.md"), ("engine", "procedure", "design.md"), ("engine", "pens", "prompt-template.md"),
              ("engine", "gate", "l1", "procedure.md"), ("engine", "gate", "l2", "procedure.md"),
              ("engine", "probe", "procedure-questions.md"), ("engine", "probe", "procedure-probe.md"), ("engine", "probe", "procedure-grader.md"))
-COPIED_DIRS = ("15-frozen", "20-design", "30-figures", "40-compose", os.path.join("50-gate", VARIANT))
-SNAPSHOT_DIRS = ("40-compose", os.path.join("50-gate", VARIANT))
-ASTRA = "claude-fable-5-dd-artsa-6-tpg"  # L2 좌석 — Owner 재정 2026-09-14(fable 쿼터 장애) · 게이트웨이가 노출하는 Claude 호환 id
 OPUS = "claude-opus-5"
 HAIKU = "claude-haiku-4-5-20251001"
 
@@ -71,16 +64,6 @@ def write_json(path: str, payload) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, ensure_ascii=False, indent=2)
-
-
-def write_text(path: str, text: str) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as handle:
-        handle.write(text)
-
-
-def schema_errors(name: str, instance) -> list[str]:
-    return [e.message for e in Draft202012Validator(read_json(os.path.join(SCHEMAS, f"{name}.schema.json"))).iter_errors(instance)]
 
 
 def _git(cwd: str, *args: str) -> None:
@@ -107,40 +90,9 @@ def make_law(destination: str) -> str:
     return destination
 
 
-def make_run(root: str, *, partial_until: str = "ship") -> str:
-    run_root = os.path.join(root, "runs", RUN_ID)
-    for rel in COPIED_DIRS:
-        shutil.copytree(os.path.join(SNAPSHOT if rel in SNAPSHOT_DIRS else RUN3, rel), os.path.join(run_root, rel))
-    frozen = os.path.join(run_root, "15-frozen", "material-spec.v1.json")
-    os.chmod(frozen, 0o444)
-    real = yaml.safe_load(read(os.path.join(RUN3, "run.yaml")))
-    meta = {"schema": "run/v0", "run_id": RUN_ID, "status": "active", "run_kind": "partial", "partial_until": partial_until,
-            "patent": real["patent"], "engine": {"commit": "e" * 40, "worktree": None}, "numeric_whitelist": real["numeric_whitelist"],
-            "frozen": real["frozen"], "pens": real["pens"], "comparison_axis": real["comparison_axis"]}
-    with open(os.path.join(run_root, "run.yaml"), "w", encoding="utf-8") as handle:
-        yaml.safe_dump(meta, handle, allow_unicode=True, sort_keys=False)
-    verdict = read_json(os.path.join(run_root, "50-gate", VARIANT, "verdict.json"))
-    if verdict["decision"] != "advance" or verdict["l1"]["pass"] is not True:
-        pytest.fail("런 -3 v2 픽스처가 advance · L1 pass 가 아니다 — 이 시험의 전제가 서지 않는다")
-    return run_root
-
-
 @pytest.fixture
 def law(tmp_path) -> str:
     return make_law(os.path.join(str(tmp_path), "law"))
-
-
-@pytest.fixture
-def run_root(tmp_path) -> str:
-    return make_run(os.path.join(str(tmp_path), "r"))
-
-
-def verdict_of(run_root: str) -> dict:
-    return read_json(os.path.join(run_root, "50-gate", VARIANT, "verdict.json"))
-
-
-def gate_lanes(run_root: str) -> str:
-    return os.path.join(run_root, "50-gate", VARIANT, "lanes")
 
 
 def probe_lanes(run_root: str) -> str:
@@ -164,19 +116,6 @@ GOOD_MEMOS = [memo("l2.structure", "T5 가 T4 의 전제를 반복해 T6 의 반
 
 def run_l2(run_root: str, law: str) -> dict:
     return gate_stage.run_l2(run_root=run_root, repo=law, variant=VARIANT)
-
-
-def l2_done(run_root: str, law: str, memos=None) -> dict:
-    outcome = run_l2(run_root, law)
-    if outcome["status"] != "pending" or outcome["pending"] != [f"gate-l2/{VARIANT}/batch-0"]:
-        pytest.fail(f"L2 첫 진입이 대기 1 이 아니다: {outcome}")
-    respond(gate_lanes(run_root), outcome["pending"][0], {"memos": GOOD_MEMOS if memos is None else memos}, model=ASTRA)
-    return run_l2(run_root, law)
-
-
-def respond_l1_clean(run_root: str, pending: list[str]) -> None:
-    for lane_id in pending:
-        respond(gate_lanes(run_root), lane_id, {"defects": [], "flags": [], "speech_acts": []}, model=OPUS)
 
 
 def targets_of(run_root: str) -> list[str]:
@@ -359,14 +298,6 @@ def test_no_score_counter_examples_pass_and_load_refuses_broken_entry(law, tmp_p
 # ---------------------------------------------------------------------------
 
 
-def _free_to_pen(run_root: str, law: str) -> dict:
-    l2_done(run_root, law)
-    outcome = loop_mod.free_revision(run_root=run_root, repo=law, variant=VARIANT)
-    if outcome["status"] != "pending" or outcome["phase"] != "compose" or outcome["pending"] != [f"compose-r4/{VARIANT}/batch-0"]:
-        pytest.fail(f"자유 리비전 펜 대기가 아니다: {outcome}")
-    return outcome
-
-
 # ---------------------------------------------------------------------------
 # ⑸ 입력 청정
 # ---------------------------------------------------------------------------
@@ -442,50 +373,4 @@ def test_localization_two_step_rule_and_unrepresented() -> None:
 # ---------------------------------------------------------------------------
 # ⒁ 구동기
 # ---------------------------------------------------------------------------
-
-
-class Stub:
-    """`claude -p` json 출력 흉내 — 좌표 접두로 payload 를 고른다."""
-
-    def __init__(self, run_root: str, *, fail_lanes: set[str] = frozenset()):
-        self.run_root = run_root
-        self.calls: list[list[str]] = []
-        self.fail_lanes = set(fail_lanes)
-
-    def __call__(self, argv, stdin, env, timeout):
-        self.calls.append(list(argv))
-        text = stdin.decode("utf-8")
-        lane_id = text.split("\n", 1)[0].replace("# 레인 요청 — ", "").strip()
-        if lane_id in self.fail_lanes:
-            return drv.ExecResult(1, b"", b"boom", False, 1)
-        digest = next(line for line in text.split("\n") if line.startswith("| 입력 지문 | `")).split("`")[1]
-        observed = argv[argv.index("--model") + 1]
-        stripped = read(os.path.join(self.run_root, "50-gate", VARIANT, "thread.stripped.md"))
-        if lane_id.startswith("gate-l2/"):
-            payload = {"memos": GOOD_MEMOS}
-        elif lane_id.startswith("gate-l1/"):
-            payload = {"defects": [], "flags": [], "speech_acts": []}
-        elif lane_id.startswith("compose-r"):
-            payload = {"thread_annotated_md": read(os.path.join(self.run_root, "40-compose", VARIANT, "thread.annotated.md"))}
-        elif lane_id.startswith("probe-q/"):
-            payload = questions_payload(targets_of(self.run_root))
-        elif lane_id.startswith("probe-grade/"):
-            start = text.index("```text", text.index("grading-input.json")) + len("```text\n")
-            grading_input = json.loads(text[start:text.index("\n```", start)])
-            payload = {"grades": [{"probe_id": a["probe_id"], "question_id": t["question_id"], "grade": "hit", "evidence": "x"}
-                                  for t in grading_input["targets"] for a in t["answers"]],
-                       "restatement": [{"probe_id": r["probe_id"], "judgement": "aligned"} for r in grading_input["restatements"]]}
-        else:
-            questions = read_json(os.path.join(self.run_root, "60-probe", "questions.json"))["questions"]
-            payload = probe_payload(questions, stripped)
-            payload["a_restatement"][2] = f"The user can erase it ({lane_id})."
-        body = {"type": "result", "subtype": "success", "is_error": False, "num_turns": 1, "duration_ms": 3, "total_cost_usd": 0.0, "session_id": lane_id,
-                "structured_output": {"lane_id": lane_id, "model": "self", "effort": "self", "input_digest": digest, "payload": payload},
-                "modelUsage": {observed: {"inputTokens": 1, "outputTokens": 9}}}
-        return drv.ExecResult(0, json.dumps(body, ensure_ascii=False).encode(), b"", False, 3)
-
-
-def _drive(law: str, run_root: str, evidence: str, *argv: str, executor=None):
-    lines: list[str] = []
-    return drv.main(["--repo", law, "--run-root", run_root, "--evidence-dir", evidence, *argv], executor=executor, out=lines.append), lines
 

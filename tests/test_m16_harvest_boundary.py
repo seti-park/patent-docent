@@ -52,9 +52,6 @@ RULES = Rules.load()
 
 # 실특허 통주 런(재정 P-9 의 1급 산출물이 나온 그 런). **읽기 전용**이다 — 구 커밋의 런이며
 # 이 레인의 소관이 아니다. 읽어서 복사한 뒤 그 복사본에 현행 수확기를 돌린다.
-RUN_SPEC = os.path.join(
-    REPO, "runs", "openai-us20260147854a1-cim-fp-2", "10-read", "material-spec.json"
-)
 
 
 def spec_with(quote: str) -> dict:
