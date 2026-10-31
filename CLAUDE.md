@@ -63,7 +63,7 @@
 | 지적 처분 | `docs/decisions/DISPOSITIONS.md`(관문 `tools/check_dispositions.py`) |
 | 감수 원문 | `docs/lessons/` |
 | 단계 I/O 계약 | `contracts/stages/*.yaml`(source · read · freeze · design · figures · compose · gate · probe · critique · ship) |
-| 재료 명세 스키마 | `reader/schemas/material-spec.schema.json` |
+| 재료 명세 스키마(프로젝트 간 계약 · 단일 진원) | `reader/schemas/material-spec.schema.json` |
 | 형식 수치 · L0 규칙 | `contracts/format-parameters.yaml` · `contracts/l0-format.yaml` |
 | 런 종류 · 조정 파라미터 | `contracts/run-kinds.yaml` · `contracts/parameters.yaml`(변경은 재정으로만) |
 | 화행 술어 · 결함 카탈로그 · 점수 린트 | `contracts/lexicon/`(등재는 재정으로만) |
